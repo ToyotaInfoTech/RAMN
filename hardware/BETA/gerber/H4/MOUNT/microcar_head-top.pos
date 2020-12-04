@@ -1,0 +1,19 @@
+### Module positions - created on 12/12/2019 19:55:05 ###
+### Printed by Pcbnew version kicad (5.1.4)-1
+## Unit = mm, Angle = deg.
+## Side : top
+# Ref     Val          Package                                     PosX       PosY       Rot  Side
+C1        100n         C_0603_1608Metric                        24.1300   -11.4300  180.0000  top
+D1        LED          LED_0603_1608Metric                      36.8300   -13.9700  270.0000  top
+D2        LED          LED_0603_1608Metric                      49.5300   -31.7500  270.0000  top
+D3        LED          LED_0603_1608Metric                      40.6400   -22.8600  270.0000  top
+D4        LED          LED_0603_1608Metric                      31.1150   -22.8600  270.0000  top
+D5        LED          LED_0603_1608Metric                      30.4800   -31.7500  270.0000  top
+D6        LED          LED_0603_1608Metric                      49.5300   -22.8600  270.0000  top
+D7        LED          LED_0603_1608Metric                      41.9100   -13.9700  270.0000  top
+D8        LED          LED_0603_1608Metric                      41.2750   -31.7500  270.0000  top
+R1        R_Small_US   R_0603_1608Metric                        27.9400   -13.7160  180.0000  top
+R2        100          R_0603_1608Metric                         3.1750   -26.0350  270.0000  top
+R3        100          R_0603_1608Metric                         3.1750   -33.6550  270.0000  top
+U1        STP08CP05XT  HTSSOP-16-1EP_4.4x5mm_P0.65mm_EP3x3mm    22.2250   -15.2400    0.0000  top
+## End
