@@ -1,0 +1,20 @@
+### Module positions - created on 12/12/2019 20:05:21 ###
+### Printed by Pcbnew version kicad (5.1.4)-1
+## Unit = mm, Angle = deg.
+## Side : top
+# Ref     Val                                     Package                           PosX       PosY       Rot  Side
+C1        1_uF                                    C_1206_3216Metric              31.1150   -33.9090  180.0000  top
+C2        1_uF                                    C_1206_3216Metric              31.1150   -26.9240  180.0000  top
+C3        100n                                    C_0603_1608Metric              23.4950   -27.8130  180.0000  top
+C6        100n                                    C_0603_1608Metric               1.9050   -29.8450  270.0000  top
+R1        0ohm                                    R_0603_1608Metric              17.1450   -21.5900  180.0000  top
+R2        0ohm                                    R_0603_1608Metric              17.0180   -27.3050  270.0000  top
+R3        1MOhm                                   R_0603_1608Metric              27.6860   -30.6070   90.0000  top
+R4        0ohm                                    R_0603_1608Metric              22.9870   -37.0840    0.0000  top
+R6        0ohm                                    R_0603_1608Metric               1.9050   -26.0350  270.0000  top
+R7        0ohm                                    R_0603_1608Metric               1.9050   -34.6710  270.0000  top
+R9        0ohm                                    R_0603_1608Metric              17.9070   -37.0840  180.0000  top
+U1        SOIC8_3.9x4.9                           SOIC-8_3.9x4.9mm_P1.27mm       21.2090   -31.6230    0.0000  top
+U2        S25FL256LAGMFV000_NOR__SOIC16_7.5x10.3  SOIC-16W_7.5x10.3mm_P1.27mm     9.5250   -31.1150    0.0000  top
+U3        NCV8163                                 TSOP-5_1.65x3.05mm_P0.95mm     31.1150   -30.5890   90.0000  top
+## End
