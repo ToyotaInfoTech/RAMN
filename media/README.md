@@ -15,15 +15,21 @@ RAMN can be connected in closed-loop with the autonomous driving simulator [CARL
 <img src="https://github.com/ToyotaInfoTech/RAMN/blob/main/media/pictures/ramn_simulator.jpg?raw=true" width="1000">
 
 RAMN can be expanded with many stackable expansions:
-- screens (OLED, TFT, etc.).
-- sensors/actuators (powertrain, chassis, body).
-- debugger breakout board (with JTAG connection).
+- Screens (OLED, TFT, etc.).
+- Sensors/actuators (powertrain, chassis, body).
+- Debugger breakout board (with JTAG connection).
 - Trusted Platform Module (TPM).
-- external quadSPI memories.
+- External quadSPI memory.
 
 <img src="https://github.com/ToyotaInfoTech/RAMN/blob/main/media/pictures/ramn_advanced_setup.jpg?raw=true" width="1000">
 
 All ECUs can be programmed from the USB port using the microcontrollers' built-in bootloader. Debuggers and flash progammers are **not** needed to get started.
+
+<img src="https://github.com/ToyotaInfoTech/RAMN/blob/main/media/pictures/ramn_reprogram.jpg?raw=true" width="1000">
+
+RAMN features many signal probes to easily connect tools such as oscilloscopes and logic analyzers.
+
+<img src="https://github.com/ToyotaInfoTech/RAMN/blob/main/media/pictures/ramn_oscilloscope.jpg?raw=true" width="1000">
 
 *Copyright (c) 2020 TOYOTA MOTOR CORPORATION. ALL RIGHTS RESERVED.*
 
