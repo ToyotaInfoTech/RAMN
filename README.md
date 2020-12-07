@@ -24,7 +24,7 @@ Contains design files, from KiCAD project files to gerber files and partial BOM 
 ### Scripts folder
 Contains python scripts for 
 - Reprogramming ECUs (canboot folder)
-- Connecting the board to [CARLA](https://github.com/carla-simulator/carla) (CARLA folder)
+- Connecting the board to [CARLA](https://github.com/carla-simulator/carla) (carla folder)
 
 ### Firmware folder
 Contains firmware of ECUs, with two different project. 
