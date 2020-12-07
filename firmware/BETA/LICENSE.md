@@ -1,6 +1,8 @@
 [Please check STM32CubeL4 github page for the most recent license information.](https://github.com/STMicroelectronics/STM32CubeL4/blob/master/License.md)
 
-Below is a copy of the license file as of 2020/12/07
+Content added to generated source code is licensed under BSD-3-Clause, Copyright (c) 2020 TOYOTA MOTOR CORPORATION. ALL RIGHTS RESERVED.
+
+Below is a copy of the STM32CubeL4 License file as of 2020/12/07
 
 | Component                       | License              | Copyright |
 |:---------                       |:-------              |:----------|
