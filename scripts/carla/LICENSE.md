@@ -1,7 +1,7 @@
 MIT License
 
 Copyright (c) 2017 Computer Vision Center (CVC) at the Universitat Autonoma de
-Barcelona (UAB).
+Barcelona (UAB).  
 Copyright (c) 2020 TOYOTA MOTOR CORPORATION. ALL RIGHTS RESERVED.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
