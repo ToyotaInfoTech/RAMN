@@ -6,6 +6,8 @@ Demonstrations are uploaded [here](https://twitter.com/ramn_auto).
 
 <img src="https://github.com/ToyotaInfoTech/RAMN/blob/main/media/pictures/ramn_simple_setup.jpg?raw=true" width="1000">
 
+RAMN consists solely of Printed Circuit Boards (PCB) of two layers, with all components on the same side.
+
 <img src="https://github.com/ToyotaInfoTech/RAMN/blob/main/media/pictures/ramn_board.jpg?raw=true" width="500">   <img src="https://github.com/ToyotaInfoTech/RAMN/blob/main/media/pictures/ramn_blockdiagram.jpg?raw=true" width="500">
 
 RAMN is powered by USB and is recognized as a standard CAN adapter (slcan or native socketCAN). No other tools are needed to get started.
