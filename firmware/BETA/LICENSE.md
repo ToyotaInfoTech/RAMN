@@ -1,4 +1,4 @@
-[Please check STM32L4 HAL github page for the most recent license information.](https://github.com/STMicroelectronics/STM32CubeL4/blob/master/License.md)
+[Please check STM32CubeL4 github page for the most recent license information.](https://github.com/STMicroelectronics/STM32CubeL4/blob/master/License.md)
 
 Below is a copy of the license file as of 2020/12/07
 
