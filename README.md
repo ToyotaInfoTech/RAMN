@@ -36,10 +36,10 @@ Firmware of ECUs not connected to USB share the same peripheral configuration (u
 ### Media folder
 Contains presentation documents, pictures and videos.
 
-### License
+## License
 Please check the LICENSE.md file for more details. 
 
-### Contact
-Feel free to [contact us](https://twitter.com/ramn_auto) if you have questions !
+## Contact
+Feel free to [contact us](https://twitter.com/ramn_auto) if you have questions.
 
 Copyright (c) 2020 TOYOTA MOTOR CORPORATION. ALL RIGHTS RESERVED.
