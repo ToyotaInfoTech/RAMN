@@ -10,3 +10,5 @@ python canboot.py --help
 '''
 
 <img src="https://github.com/ToyotaInfoTech/RAMN/blob/main/media/pictures/ramn_reprogram.jpg?raw=true" width="1000">
+
+*Copyright (c) 2020 TOYOTA MOTOR CORPORATION. ALL RIGHTS RESERVED.*
