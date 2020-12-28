@@ -1,0 +1,146 @@
+EESchema Schematic File Version 4
+EELAYER 30 0
+EELAYER END
+$Descr A4 11693 8268
+encoding utf-8
+Sheet 9 9
+Title "RAMN: Resistant Automotive Miniature Network V1.0"
+Date "2020-12-02"
+Rev "A"
+Comp "Copyright (c) 2020 TOYOTA MOTOR CORPORATION. ALL RIGHTS RESERVED."
+Comment1 ""
+Comment2 ""
+Comment3 "License: CC BY-SA 4.0"
+Comment4 "https://github.com/toyotainfotech/ramn"
+$EndDescr
+$Comp
+L Regulator_Linear:NCV8114ASN120T1G U?
+U 1 1 5D80EE58
+P 4500 2900
+AR Path="/5D80EE58" Ref="U?"  Part="1" 
+AR Path="/5D80E812/5D80EE58" Ref="U?"  Part="1" 
+AR Path="/5D8BFFCE/5D7D0A92/5D80EE58" Ref="U3"  Part="1" 
+AR Path="/5D815E09/5D82B40A/5D80EE58" Ref="U6"  Part="1" 
+AR Path="/5D8EDE42/5D82B40A/5D80EE58" Ref="U9"  Part="1" 
+AR Path="/5D7DEA89/5D7F286F/5D80EE58" Ref="U12"  Part="1" 
+F 0 "U12" H 4500 3267 50  0000 C CNN
+F 1 "NCV8163" H 4500 3176 50  0000 C CNN
+F 2 "Package_SO:TSOP-5_1.65x3.05mm_P0.95mm" H 4500 2500 50  0001 C CIN
+F 3 "" H 4500 2400 50  0001 C CNN
+	1    4500 2900
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	4900 2800 5100 2800
+$Comp
+L Device:C_Small C?
+U 1 1 5D80EE60
+P 3200 3050
+AR Path="/5D80EE60" Ref="C?"  Part="1" 
+AR Path="/5D80E812/5D80EE60" Ref="C?"  Part="1" 
+AR Path="/5D8BFFCE/5D7D0A92/5D80EE60" Ref="C11"  Part="1" 
+AR Path="/5D815E09/5D82B40A/5D80EE60" Ref="C21"  Part="1" 
+AR Path="/5D8EDE42/5D82B40A/5D80EE60" Ref="C31"  Part="1" 
+AR Path="/5D7DEA89/5D7F286F/5D80EE60" Ref="C41"  Part="1" 
+F 0 "C41" H 3292 3096 50  0000 L CNN
+F 1 "1uF" H 3292 3005 50  0000 L CNN
+F 2 "Capacitor_SMD:C_1206_3216Metric" H 3200 3050 50  0001 C CNN
+F 3 "~" H 3200 3050 50  0001 C CNN
+	1    3200 3050
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:C_Small C?
+U 1 1 5D80EE66
+P 5100 3050
+AR Path="/5D80EE66" Ref="C?"  Part="1" 
+AR Path="/5D80E812/5D80EE66" Ref="C?"  Part="1" 
+AR Path="/5D8BFFCE/5D7D0A92/5D80EE66" Ref="C12"  Part="1" 
+AR Path="/5D815E09/5D82B40A/5D80EE66" Ref="C22"  Part="1" 
+AR Path="/5D8EDE42/5D82B40A/5D80EE66" Ref="C32"  Part="1" 
+AR Path="/5D7DEA89/5D7F286F/5D80EE66" Ref="C42"  Part="1" 
+F 0 "C42" H 5192 3096 50  0000 L CNN
+F 1 "1uF" H 5192 3005 50  0000 L CNN
+F 2 "Capacitor_SMD:C_1206_3216Metric" H 5100 3050 50  0001 C CNN
+F 3 "~" H 5100 3050 50  0001 C CNN
+	1    5100 3050
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	5100 2950 5100 2800
+$Comp
+L power:GND #PWR?
+U 1 1 5D80EE76
+P 4500 3350
+AR Path="/5D80EE76" Ref="#PWR?"  Part="1" 
+AR Path="/5D80E812/5D80EE76" Ref="#PWR?"  Part="1" 
+AR Path="/5D8BFFCE/5D7D0A92/5D80EE76" Ref="#PWR022"  Part="1" 
+AR Path="/5D815E09/5D82B40A/5D80EE76" Ref="#PWR041"  Part="1" 
+AR Path="/5D8EDE42/5D82B40A/5D80EE76" Ref="#PWR060"  Part="1" 
+AR Path="/5D7DEA89/5D7F286F/5D80EE76" Ref="#PWR079"  Part="1" 
+F 0 "#PWR079" H 4500 3100 50  0001 C CNN
+F 1 "GND" H 4505 3177 50  0000 C CNN
+F 2 "" H 4500 3350 50  0001 C CNN
+F 3 "" H 4500 3350 50  0001 C CNN
+	1    4500 3350
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR?
+U 1 1 5D80EE7C
+P 5100 3400
+AR Path="/5D80EE7C" Ref="#PWR?"  Part="1" 
+AR Path="/5D80E812/5D80EE7C" Ref="#PWR?"  Part="1" 
+AR Path="/5D8BFFCE/5D7D0A92/5D80EE7C" Ref="#PWR023"  Part="1" 
+AR Path="/5D815E09/5D82B40A/5D80EE7C" Ref="#PWR042"  Part="1" 
+AR Path="/5D8EDE42/5D82B40A/5D80EE7C" Ref="#PWR061"  Part="1" 
+AR Path="/5D7DEA89/5D7F286F/5D80EE7C" Ref="#PWR080"  Part="1" 
+F 0 "#PWR080" H 5100 3150 50  0001 C CNN
+F 1 "GND" H 5105 3227 50  0000 C CNN
+F 2 "" H 5100 3400 50  0001 C CNN
+F 3 "" H 5100 3400 50  0001 C CNN
+	1    5100 3400
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	5100 3150 5100 3400
+Wire Wire Line
+	4500 3200 4500 3350
+$Comp
+L power:GND #PWR?
+U 1 1 5D80EE8C
+P 3200 3350
+AR Path="/5D80EE8C" Ref="#PWR?"  Part="1" 
+AR Path="/5D80E812/5D80EE8C" Ref="#PWR?"  Part="1" 
+AR Path="/5D8BFFCE/5D7D0A92/5D80EE8C" Ref="#PWR021"  Part="1" 
+AR Path="/5D815E09/5D82B40A/5D80EE8C" Ref="#PWR040"  Part="1" 
+AR Path="/5D8EDE42/5D82B40A/5D80EE8C" Ref="#PWR059"  Part="1" 
+AR Path="/5D7DEA89/5D7F286F/5D80EE8C" Ref="#PWR078"  Part="1" 
+F 0 "#PWR078" H 3200 3100 50  0001 C CNN
+F 1 "GND" H 3205 3177 50  0000 C CNN
+F 2 "" H 3200 3350 50  0001 C CNN
+F 3 "" H 3200 3350 50  0001 C CNN
+	1    3200 3350
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	3200 3150 3200 3350
+Wire Wire Line
+	4100 3000 4000 3000
+Text HLabel 6550 2800 2    50   Output ~ 0
+3.3V
+Text HLabel 2900 2800 0    50   Input ~ 0
+5V
+Wire Wire Line
+	3200 2950 3200 2800
+Wire Wire Line
+	2900 2800 3200 2800
+Connection ~ 3200 2800
+Wire Wire Line
+	3200 2800 4100 2800
+Text HLabel 4000 3000 0    50   Input ~ 0
+ENABLE
+Wire Wire Line
+	6550 2800 5100 2800
+Connection ~ 5100 2800
+$EndSCHEMATC

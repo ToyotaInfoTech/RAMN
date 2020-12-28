@@ -6,6 +6,7 @@ RAMN (Resistant Automotive Miniature Network) is a miniature CAN/CAN-FD testbed 
 
 ## Status
 We are currently reviewing the design for better manufacturability (better layout, more accessible components, etc.). Files of the current state are provided for reference, but we do not advise using them as they are now.
+We plan to release better hardware/software by the end of march.
 
 ## Hardware design guidelines
 RAMN aims to promote education and research in automotive systems. To stay close to automotive electronics, we use AEC-Qxxx grade 0 components for the ECU network board. However, the ECUs' microcontrollers (STM32L4/STM32L5 series) and connectors are not automotive grade. The board is designed to operate at a temperature range of -40 to 125 degrees Celsius. **This does not mean the board is strictly automotive-grade, or that it can be used in a real automotive system**. To keep the board small and affordable, many protections (e.g. ESD protection, pull-up/pull-down resistors, etc.) are omitted, and the board would not meet reliabilily levels required in safety-critical systems. Expansion boards (sensors, actuators, debuggers, screens, TPM, external memories, etc.) are not designed using automotive grade components. 
