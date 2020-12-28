@@ -741,9 +741,6 @@ def game_loop(args):
                 world.render(display)
                 pygame.display.flip()
                 control = agent.run_step()
-                
-               
-                print("wut")
 
                 control.manual_gear_shift = False
                 world.player.apply_control(control)
