@@ -1,0 +1,24 @@
+### Module positions - created on 02/23/21 11:51:57 ###
+### Printed by Pcbnew version pcbnew (5.1.9)-1
+## Unit = mm, Angle = deg.
+## Side : top
+# Ref     Val          Package                                     PosX       PosY       Rot  Side
+C1        100nF        C_0603_1608Metric                        16.7640   -26.9240  180.0000  top
+D1        LED          LED_0603_1608Metric                      42.4180   -11.6840  270.0000  top
+D2        LED          LED_0603_1608Metric                      45.4660   -11.6840  270.0000  top
+D3        LED          LED_0603_1608Metric                      36.0680   -20.0660  270.0000  top
+D4        LED          LED_0603_1608Metric                      46.4820   -20.0660  270.0000  top
+D5        LED          LED_0603_1608Metric                      55.6260   -20.0660  270.0000  top
+D6        LED          LED_0603_1608Metric                      36.0680   -28.5750  270.0000  top
+D7        LED          LED_0603_1608Metric                      46.2280   -28.5750  270.0000  top
+D8        LED          LED_0603_1608Metric                      54.9910   -27.6352  270.0000  top
+FID1      Fiducial     Fiducial_1mm_Mask2mm                      7.6200   -33.4010    0.0000  top
+FID2      Fiducial     Fiducial_1mm_Mask2mm                      7.6200    -7.1120    0.0000  top
+FID3      Fiducial     Fiducial_1mm_Mask2mm                     43.9420    -7.1120    0.0000  top
+R12       10k          R_0603_1608Metric                        10.1600   -26.9240    0.0000  top
+R13       10k          R_0603_1608Metric                        10.1600   -16.2560    0.0000  top
+R14       10k          R_0603_1608Metric                        10.1600   -19.3040    0.0000  top
+R15       1.8k         R_0603_1608Metric                        13.4620   -26.9240  180.0000  top
+TVS7      D_TVS        D_SOD-123F                               10.1600   -22.8600  180.0000  top
+U1        STP08CP05XT  HTSSOP-16-1EP_4.4x5mm_P0.65mm_EP3x3mm    21.3360   -30.3530   90.0000  top
+## End

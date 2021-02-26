@@ -1,0 +1,18 @@
+### Module positions - created on 02/23/21 11:50:27 ###
+### Printed by Pcbnew version pcbnew (5.1.9)-1
+## Unit = mm, Angle = deg.
+## Side : top
+# Ref     Val       Package                    PosX       PosY       Rot  Side
+C4        100nF     C_0603_1608Metric       17.2720   -32.3850  270.0000  top
+FID1      Fiducial  Fiducial_1mm_Mask2mm    15.4940   -20.8280    0.0000  top
+FID2      Fiducial  Fiducial_1mm_Mask2mm    50.2920   -37.5920    0.0000  top
+FID3      Fiducial  Fiducial_1mm_Mask2mm    15.4940   -37.5920    0.0000  top
+R7        10k       R_0603_1608Metric       17.2720   -27.9400  270.0000  top
+R8        10k       R_0603_1608Metric       20.3200   -27.9400   90.0000  top
+R9        10k       R_0603_1608Metric       23.3680   -27.9400   90.0000  top
+R10       10k       R_0603_1608Metric       26.4160   -27.9400  270.0000  top
+R11       10k       R_0603_1608Metric       29.3370   -27.9400   90.0000  top
+TVS4      D_TVS     D_SOD-123F              21.2090   -32.2580  270.0000  top
+TVS5      D_TVS     D_SOD-123F              25.3365   -32.2580  270.0000  top
+TVS6      D_TVS     D_SOD-123F              29.4640   -32.2580  270.0000  top
+## End
