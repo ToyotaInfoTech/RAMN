@@ -1,7 +1,7 @@
 
 # LICENSE
 
-Copyright (c) 2020 TOYOTA MOTOR CORPORATION. ALL RIGHTS RESERVED.
+Copyright (c) 2021 TOYOTA MOTOR CORPORATION. ALL RIGHTS RESERVED.
 
 Unless otherwise specified, all information in this repository except software is licensed under [Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)](https://creativecommons.org/licenses/by-sa/4.0/).
 
