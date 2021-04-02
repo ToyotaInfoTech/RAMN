@@ -99,10 +99,3 @@ Design Rules
    
    hardware/designrules
    
-Example Setups
---------------  
-  
-.. toctree::
-   :maxdepth: 2
-
-   hardware/setups

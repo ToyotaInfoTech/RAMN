@@ -48,7 +48,7 @@ For the USB line, no impedance matching is attempted. Instead, we follow `FTDI's
 * Ground plane under the D+ and D-
 * Etc.
 
-.. figure:: img/usb_layout.png
+.. figure:: img/USB_layout.png
 
    Layout of the USB connection.
    
