@@ -15,24 +15,29 @@ Data can be sent over USB serial using the :C:func:`CDC_Transmit_FS` function.
    
    CDC_Transmit_FS(usbSendBuffer,sizeof(usbSendBuffer));
    
+.. note:: :C:func:`CDC_Transmit_FS` may return USBD_BUSY, in which case the buffer data will not be sent. In practice, we use :C:func:`CDC_Transmit_FS` as below:
+
+   .. code-block:: 
    
-Data can be received over USB serial by modifying the :C:func:`CDC_Receive_FS` callback function in :file:`usbd_cdc_if.c`. We use a freeRTOS queue to transfer received characters to the main tasks.
+		while(CDC_Transmit_FS((uint8_t*)usb_send_buffer,6+2*msg.RxHeader.DLC) == USBD_BUSY) taskYIELD(); 						
+   
+   A `freeRTOS Message buffer <https://www.freertos.org/RTOS-message-buffer-example.html>`_ cannot be used for buffering, as they can only handle one reader and one writer, but we want to keep the USB serial port accessible to different tasks.
+	
+Data can be received over USB serial by modifying the :C:func:`CDC_Receive_FS` callback function in :file:`usbd_cdc_if.c`. We use a freeRTOS `Stream Buffer <https://www.freertos.org/RTOS-stream-buffer-example.html>`_ to transfer received characters to the main tasks.
 
 .. code-block:: C
    
-
 	static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 	{
 		/* USER CODE BEGIN 6 */
-		BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-
 		USBD_CDC_SetRxBuffer(&hUsbDeviceFS, &Buf[0]);
 		USBD_CDC_ReceivePacket(&hUsbDeviceFS);
 
-		for (uint32_t i = 0; i < *Len; ++i) {
-			if (xQueueSendFromISR(USBD_RxQueue, &Buf[i], &xHigherPriorityTaskWoken) != pdTRUE )
+		if(USBD_RxStreamBuffer != NULL){
+
+			if (xStreamBufferSendFromISR( USBD_RxStreamBuffer,( void * ) Buf, *Len, NULL ) != *Len)
 			{
-				//process error
+				//TODO: report error
 			}
 		}
 

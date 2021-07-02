@@ -5,8 +5,8 @@ $Descr A4 11693 8268
 encoding utf-8
 Sheet 1 9
 Title "RAMN V1 (4-layer, ESD-protected)"
-Date "2021-02-25"
-Rev "A"
+Date "2021-06-01"
+Rev "B4L"
 Comp "Copyright (c) 2021 TOYOTA MOTOR CORPORATION. ALL RIGHTS RESERVED."
 Comment1 ""
 Comment2 ""
@@ -257,8 +257,6 @@ $EndSheet
 Wire Wire Line
 	7750 2700 7750 3350
 Wire Wire Line
-	9150 2000 9350 2000
-Wire Wire Line
 	9150 2100 9350 2100
 Wire Wire Line
 	7750 2700 8250 2700
@@ -331,9 +329,6 @@ Wire Wire Line
 	9350 2100 9350 2450
 Wire Wire Line
 	9350 1850 9750 1850
-Connection ~ 9350 1850
-Wire Wire Line
-	9350 1850 9350 2000
 Wire Wire Line
 	9750 2450 9350 2450
 Connection ~ 9350 2450
@@ -376,8 +371,8 @@ $Comp
 L Power_Protection:SP0502BAHT TVS1
 U 1 1 6037B58B
 P 10650 1600
-F 0 "TVS1" H 10445 1554 50  0000 R CNN
-F 1 "DF3D18FU" H 10445 1645 50  0000 R CNN
+F 0 "TVS1" H 11050 1450 50  0000 R CNN
+F 1 "DF3D18FU" H 11250 1550 50  0000 R CNN
 F 2 "Package_TO_SOT_SMD:SOT-323_SC-70" H 10875 1550 50  0001 L CNN
 F 3 "" H 10775 1725 50  0001 C CNN
 	1    10650 1600
@@ -444,7 +439,7 @@ Wire Notes Line
 	650  1650 2250 1650
 Wire Notes Line
 	650  2050 650  1650
-Text Notes 700  1950 0    50   ~ 0
+Text Notes 700  1850 0    50   ~ 0
 /!\ Select hold/trip current of polyfuse \nbased on expected usage /!\
 Wire Wire Line
 	650  3450 650  3650
@@ -489,8 +484,8 @@ AR Path="/5D80E812/6026B19D" Ref="C?"  Part="1"
 AR Path="/5D8BFFCE/6026B19D" Ref="C?"  Part="1" 
 AR Path="/5D815E09/6026B19D" Ref="C?"  Part="1" 
 AR Path="/5D8EDE42/6026B19D" Ref="C?"  Part="1" 
-F 0 "C43" V 1150 3300 50  0000 L CNN
-F 1 "100nF" V 1050 3150 50  0000 L CNN
+F 0 "C43" V 1150 3400 50  0000 L CNN
+F 1 "100nF" V 1050 3300 50  0000 L CNN
 F 2 "Capacitor_SMD:C_0603_1608Metric" H 950 3450 50  0001 C CNN
 F 3 "~" H 950 3450 50  0001 C CNN
 F 4 "" H 950 3450 50  0001 C CNN "not mounted"
@@ -501,83 +496,6 @@ Wire Wire Line
 	1350 3650 1350 3850
 Wire Wire Line
 	650  3650 850  3650
-$Comp
-L Mechanical:Fiducial FID3
-U 1 1 5FD0A49C
-P 2000 5150
-F 0 "FID3" H 2085 5196 50  0000 L CNN
-F 1 "Fiducial" H 2085 5105 50  0000 L CNN
-F 2 "Fiducial:Fiducial_1mm_Mask2mm" H 2000 5150 50  0001 C CNN
-F 3 "~" H 2000 5150 50  0001 C CNN
-	1    2000 5150
-	1    0    0    -1  
-$EndComp
-$Comp
-L Mechanical:Fiducial FID2
-U 1 1 5FD08432
-P 1450 5150
-F 0 "FID2" H 1535 5196 50  0000 L CNN
-F 1 "Fiducial" H 1535 5105 50  0000 L CNN
-F 2 "Fiducial:Fiducial_1mm_Mask2mm" H 1450 5150 50  0001 C CNN
-F 3 "~" H 1450 5150 50  0001 C CNN
-	1    1450 5150
-	1    0    0    -1  
-$EndComp
-$Comp
-L Mechanical:Fiducial FID1
-U 1 1 5FD00FC6
-P 900 5150
-F 0 "FID1" H 985 5196 50  0000 L CNN
-F 1 "Fiducial" H 985 5105 50  0000 L CNN
-F 2 "Fiducial:Fiducial_1mm_Mask2mm" H 900 5150 50  0001 C CNN
-F 3 "~" H 900 5150 50  0001 C CNN
-	1    900  5150
-	1    0    0    -1  
-$EndComp
-$Comp
-L Mechanical:MountingHole H4
-U 1 1 5DEAACF1
-P 1750 4700
-F 0 "H4" H 1850 4746 50  0000 L CNN
-F 1 "MountingHole" H 1850 4655 50  0000 L CNN
-F 2 "MountingHole:MountingHole_3.2mm_M3_ISO7380" H 1750 4700 50  0001 C CNN
-F 3 "~" H 1750 4700 50  0001 C CNN
-	1    1750 4700
-	1    0    0    -1  
-$EndComp
-$Comp
-L Mechanical:MountingHole H2
-U 1 1 5DE9F71C
-P 900 4700
-F 0 "H2" H 1000 4746 50  0000 L CNN
-F 1 "MountingHole" H 1000 4655 50  0000 L CNN
-F 2 "MountingHole:MountingHole_3.2mm_M3_ISO7380" H 900 4700 50  0001 C CNN
-F 3 "~" H 900 4700 50  0001 C CNN
-	1    900  4700
-	1    0    0    -1  
-$EndComp
-$Comp
-L Mechanical:MountingHole H3
-U 1 1 5D81305F
-P 1750 4300
-F 0 "H3" H 1850 4346 50  0000 L CNN
-F 1 "MountingHole" H 1850 4255 50  0000 L CNN
-F 2 "MountingHole:MountingHole_3.2mm_M3_ISO7380" H 1750 4300 50  0001 C CNN
-F 3 "~" H 1750 4300 50  0001 C CNN
-	1    1750 4300
-	1    0    0    -1  
-$EndComp
-$Comp
-L Mechanical:MountingHole H1
-U 1 1 5D8122E0
-P 900 4300
-F 0 "H1" H 1000 4346 50  0000 L CNN
-F 1 "MountingHole" H 1000 4255 50  0000 L CNN
-F 2 "MountingHole:MountingHole_3.2mm_M3_ISO7380" H 900 4300 50  0001 C CNN
-F 3 "~" H 900 4300 50  0001 C CNN
-	1    900  4300
-	1    0    0    -1  
-$EndComp
 $Comp
 L power:GND #PWR01
 U 1 1 5D7F6962
@@ -620,17 +538,6 @@ Wire Wire Line
 	1750 3000 1800 3000
 Wire Wire Line
 	1750 3050 1750 3000
-$Comp
-L power:GND #PWR0102
-U 1 1 603D7926
-P 1750 3050
-F 0 "#PWR0102" H 1750 2800 50  0001 C CNN
-F 1 "GND" H 1755 2877 50  0000 C CNN
-F 2 "" H 1750 3050 50  0001 C CNN
-F 3 "" H 1750 3050 50  0001 C CNN
-	1    1750 3050
-	1    0    0    -1  
-$EndComp
 $Comp
 L power:+5V #PWR0103
 U 1 1 603DE628
@@ -707,10 +614,98 @@ L power:GND #PWR081
 U 1 1 6042F0E7
 P 3150 3200
 F 0 "#PWR081" H 3150 2950 50  0001 C CNN
-F 1 "GND" H 3155 3027 50  0000 C CNN
+F 1 "GND" H 3150 3050 50  0000 C CNN
 F 2 "" H 3150 3200 50  0001 C CNN
 F 3 "" H 3150 3200 50  0001 C CNN
 	1    3150 3200
 	1    0    0    -1  
 $EndComp
+$Comp
+L power:GND #PWR0102
+U 1 1 603D7926
+P 1750 3050
+F 0 "#PWR0102" H 1750 2800 50  0001 C CNN
+F 1 "GND" H 1750 2900 50  0000 C CNN
+F 2 "" H 1750 3050 50  0001 C CNN
+F 3 "" H 1750 3050 50  0001 C CNN
+	1    1750 3050
+	1    0    0    -1  
+$EndComp
+Text Notes 1750 3800 0    50   ~ 0
+refer to datasheet for preferred layout\n
+Wire Notes Line
+	1300 2900 1300 2650
+Wire Notes Line
+	1300 2650 1450 2650
+Wire Notes Line
+	1450 2650 1450 2900
+Wire Notes Line
+	1450 2900 1300 2900
+Text Notes 1100 3000 0    50   ~ 0
+90 ohm diff
+Wire Notes Line
+	3650 2150 3800 2150
+Wire Notes Line
+	3800 2150 3800 1900
+Wire Notes Line
+	3800 1900 3650 1900
+Wire Notes Line
+	3650 1900 3650 2150
+Text Notes 3300 2050 0    50   ~ 0
+120 ohm\n  diff
+Wire Notes Line
+	4900 2150 5050 2150
+Wire Notes Line
+	5050 2150 5050 1900
+Wire Notes Line
+	5050 1900 4900 1900
+Wire Notes Line
+	4900 1900 4900 2150
+Text Notes 4850 1850 0    50   ~ 0
+120 ohm\n  diff
+Wire Notes Line
+	6300 2150 6450 2150
+Wire Notes Line
+	6450 2150 6450 1900
+Wire Notes Line
+	6450 1900 6300 1900
+Wire Notes Line
+	6300 1900 6300 2150
+Text Notes 6250 1850 0    50   ~ 0
+120 ohm\n  diff
+Wire Notes Line
+	7800 2150 7950 2150
+Wire Notes Line
+	7950 2150 7950 1900
+Wire Notes Line
+	7950 1900 7800 1900
+Wire Notes Line
+	7800 1900 7800 2150
+Text Notes 7750 1850 0    50   ~ 0
+120 ohm\n  diff
+Wire Notes Line
+	9200 1900 9200 2150
+Text Notes 9400 1800 0    50   ~ 0
+120 ohm diff
+Connection ~ 9350 1850
+Wire Wire Line
+	9150 2000 9350 2000
+Wire Notes Line
+	9300 2150 9300 1900
+Wire Wire Line
+	9350 1850 9350 2000
+Wire Notes Line
+	9200 2150 9300 2150
+Wire Notes Line
+	9200 1900 9300 1900
+Text Notes 1000 2000 0    50   ~ 0
+All capacitors ceramic
+Wire Wire Line
+	2100 2600 2300 2600
+Connection ~ 2100 2600
+Connection ~ 2300 2600
+Wire Wire Line
+	2100 3400 2300 3400
+Connection ~ 2100 3400
+Connection ~ 2300 3400
 $EndSCHEMATC

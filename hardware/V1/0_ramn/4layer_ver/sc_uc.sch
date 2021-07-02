@@ -5,8 +5,8 @@ $Descr A4 11693 8268
 encoding utf-8
 Sheet 8 9
 Title "RAMN V1 (4-layer, ESD-protected)"
-Date "2021-02-25"
-Rev "A"
+Date "2021-06-01"
+Rev "B4L"
 Comp "Copyright (c) 2021 TOYOTA MOTOR CORPORATION. ALL RIGHTS RESERVED."
 Comment1 ""
 Comment2 ""
@@ -29,8 +29,6 @@ F 3 "" H 2500 2350 50  0001 C CNN
 	1    2500 2350
 	1    0    0    -1  
 $EndComp
-Text Notes 2700 2450 0    50   ~ 0
-internal pull-ups\nSTBY high -> transceiver OFF
 Wire Wire Line
 	2000 2150 1850 2150
 Wire Wire Line
@@ -255,7 +253,7 @@ Text Label 8400 3450 2    50   ~ 0
 BOOT0
 Wire Wire Line
 	8450 3650 8400 3650
-Text Label 9800 4950 0    50   ~ 0
+Text Label 8300 3750 2    50   ~ 0
 CAN_STB
 Wire Wire Line
 	8250 4850 8450 4850
@@ -600,8 +598,6 @@ F 3 "http://www.st.com/st-web-ui/static/active/en/resource/technical/document/da
 	1    9050 4250
 	1    0    0    -1  
 $EndComp
-Text Notes 7050 3150 0    50   ~ 0
-internal pull-up. LOW = RESET
 Wire Wire Line
 	7500 2650 7500 2600
 Wire Wire Line
@@ -615,7 +611,6 @@ Wire Wire Line
 Connection ~ 6400 3350
 Wire Wire Line
 	6400 3350 6400 3450
-NoConn ~ 8450 3750
 NoConn ~ 8450 3850
 $Sheet
 S 1950 3000 800  300 
@@ -653,8 +648,6 @@ Text Label 950  2000 0    50   ~ 0
 3V3_ECU
 Text Label 8400 2450 2    50   ~ 0
 3V3_ECU
-Wire Wire Line
-	8400 2450 8850 2450
 Text HLabel 1850 3100 0    50   Input ~ 0
 ECU_ENABLE
 NoConn ~ 8450 4550
@@ -854,8 +847,6 @@ F 3 "~" H 5700 5250 50  0001 C CNN
 $EndComp
 Text HLabel 8150 3450 0    50   Input ~ 0
 BOOT0
-Wire Wire Line
-	9800 4950 9650 4950
 $Comp
 L Device:R_Small_US R?
 U 1 1 5DF157FA
@@ -897,4 +888,129 @@ Wire Wire Line
 	9250 2750 9250 2850
 Wire Wire Line
 	2900 3200 3700 3200
+$Comp
+L Device:C_Small C?
+U 1 1 60892E4A
+P 8550 2600
+AR Path="/60892E4A" Ref="C?"  Part="1" 
+AR Path="/5D80E812/60892E4A" Ref="C?"  Part="1" 
+AR Path="/5D8BFFCE/60892E4A" Ref="C?"  Part="1" 
+AR Path="/5D815E09/60892E4A" Ref="C?"  Part="1" 
+AR Path="/5D8EDE42/60892E4A" Ref="C?"  Part="1" 
+AR Path="/5D7DEA89/60892E4A" Ref="C56"  Part="1" 
+F 0 "C56" H 8300 2600 50  0000 L CNN
+F 1 "100nF" H 8250 2500 50  0000 L CNN
+F 2 "Capacitor_SMD:C_0603_1608Metric" H 8550 2600 50  0001 C CNN
+F 3 "~" H 8550 2600 50  0001 C CNN
+F 4 "" H 8550 2600 50  0001 C CNN "not mounted"
+	1    8550 2600
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	8550 2500 8550 2450
+$Comp
+L power:GND #PWR?
+U 1 1 60892E51
+P 8550 2700
+AR Path="/60892E51" Ref="#PWR?"  Part="1" 
+AR Path="/5D8BFFCE/60892E51" Ref="#PWR?"  Part="1" 
+AR Path="/5D7DEA89/60892E51" Ref="#PWR0113"  Part="1" 
+F 0 "#PWR0113" H 8550 2450 50  0001 C CNN
+F 1 "GND" H 8555 2527 50  0000 C CNN
+F 2 "" H 8550 2700 50  0001 C CNN
+F 3 "" H 8550 2700 50  0001 C CNN
+	1    8550 2700
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:CP1_Small C?
+U 1 1 608CA356
+P 9600 2500
+AR Path="/608CA356" Ref="C?"  Part="1" 
+AR Path="/5D8BFFCE/608CA356" Ref="C?"  Part="1" 
+AR Path="/5D815E09/608CA356" Ref="C?"  Part="1" 
+AR Path="/5D8EDE42/608CA356" Ref="C?"  Part="1" 
+AR Path="/5D7DEA89/608CA356" Ref="C54"  Part="1" 
+F 0 "C54" H 9691 2546 50  0000 L CNN
+F 1 "1uF" H 9691 2455 50  0000 L CNN
+F 2 "" H 9600 2500 50  0001 C CNN
+F 3 "" H 9600 2500 50  0001 C CNN
+	1    9600 2500
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:C_Small C?
+U 1 1 608CA35D
+P 10000 2500
+AR Path="/608CA35D" Ref="C?"  Part="1" 
+AR Path="/5D80E812/608CA35D" Ref="C?"  Part="1" 
+AR Path="/5D8BFFCE/608CA35D" Ref="C?"  Part="1" 
+AR Path="/5D815E09/608CA35D" Ref="C?"  Part="1" 
+AR Path="/5D8EDE42/608CA35D" Ref="C?"  Part="1" 
+AR Path="/5D7DEA89/608CA35D" Ref="C55"  Part="1" 
+F 0 "C55" H 10100 2500 50  0000 L CNN
+F 1 "10nF" H 10100 2400 50  0000 L CNN
+F 2 "Capacitor_SMD:C_0603_1608Metric" H 10000 2500 50  0001 C CNN
+F 3 "~" H 10000 2500 50  0001 C CNN
+F 4 "" H 10000 2500 50  0001 C CNN "not mounted"
+	1    10000 2500
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	10000 2400 10000 2300
+Wire Wire Line
+	9150 2300 9150 2750
+Wire Wire Line
+	9600 2400 9600 2300
+Wire Wire Line
+	9600 2300 10000 2300
+Connection ~ 9600 2300
+Wire Notes Line
+	9400 2250 9400 2900
+Wire Notes Line
+	9400 2250 10350 2250
+Wire Wire Line
+	9150 2300 9600 2300
+Wire Notes Line
+	10350 2250 10350 2900
+Wire Notes Line
+	9400 2900 10350 2900
+$Comp
+L power:GND #PWR?
+U 1 1 608D1275
+P 9600 2600
+AR Path="/608D1275" Ref="#PWR?"  Part="1" 
+AR Path="/5D8BFFCE/608D1275" Ref="#PWR?"  Part="1" 
+AR Path="/5D7DEA89/608D1275" Ref="#PWR0114"  Part="1" 
+F 0 "#PWR0114" H 9600 2350 50  0001 C CNN
+F 1 "GND" H 9605 2427 50  0000 C CNN
+F 2 "" H 9600 2600 50  0001 C CNN
+F 3 "" H 9600 2600 50  0001 C CNN
+	1    9600 2600
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR?
+U 1 1 608D16F2
+P 10000 2600
+AR Path="/608D16F2" Ref="#PWR?"  Part="1" 
+AR Path="/5D8BFFCE/608D16F2" Ref="#PWR?"  Part="1" 
+AR Path="/5D7DEA89/608D16F2" Ref="#PWR0115"  Part="1" 
+F 0 "#PWR0115" H 10000 2350 50  0001 C CNN
+F 1 "GND" H 10005 2427 50  0000 C CNN
+F 2 "" H 10000 2600 50  0001 C CNN
+F 3 "" H 10000 2600 50  0001 C CNN
+	1    10000 2600
+	1    0    0    -1  
+$EndComp
+Text Notes 9400 2200 0    50   ~ 0
+close to VDDA
+Wire Wire Line
+	8850 2450 8550 2450
+Wire Wire Line
+	8400 2450 8550 2450
+Connection ~ 8550 2450
+Wire Wire Line
+	8450 3750 8300 3750
+NoConn ~ 9650 4950
 $EndSCHEMATC

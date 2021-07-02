@@ -5,8 +5,8 @@ $Descr A4 11693 8268
 encoding utf-8
 Sheet 9 9
 Title "RAMN V1 (4-layer, ESD-protected)"
-Date "2021-02-25"
-Rev "A"
+Date "2021-06-01"
+Rev "B4L"
 Comp "Copyright (c) 2021 TOYOTA MOTOR CORPORATION. ALL RIGHTS RESERVED."
 Comment1 ""
 Comment2 ""

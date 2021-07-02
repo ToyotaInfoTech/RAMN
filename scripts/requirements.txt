@@ -1,0 +1,4 @@
+click
+intelhex
+pyserial
+python-can

@@ -7,5 +7,6 @@ Work in progress.
    :maxdepth: 2
 
    firmware/usb
+   firmware/canfd
    firmware/common_issues
    firmware/option_bytes

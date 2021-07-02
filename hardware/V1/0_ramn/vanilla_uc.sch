@@ -5,8 +5,8 @@ $Descr A4 11693 8268
 encoding utf-8
 Sheet 4 9
 Title "RAMN: Resistant Automotive Miniature Network V1.0"
-Date "2021-02-20"
-Rev "A"
+Date "2021-06-01"
+Rev "B2L"
 Comp "Copyright (c) 2021 TOYOTA MOTOR CORPORATION. ALL RIGHTS RESERVED."
 Comment1 ""
 Comment2 ""
@@ -252,10 +252,6 @@ Wire Wire Line
 	9800 5150 9950 5150
 Text Label 8550 3350 2    50   ~ 0
 BOOT0
-Wire Wire Line
-	8600 3550 8550 3550
-Text Label 9950 4850 0    50   ~ 0
-CAN_STB
 Wire Wire Line
 	8400 4750 8600 4750
 Text Label 8400 4750 2    50   ~ 0
@@ -608,7 +604,6 @@ Wire Wire Line
 Connection ~ 6550 3250
 Wire Wire Line
 	6550 3250 6550 3350
-NoConn ~ 8600 3650
 NoConn ~ 8600 3750
 $Sheet
 S 2100 2900 800  300 
@@ -697,7 +692,6 @@ F 3 "" H 2000 2450 50  0001 C CNN
 $EndComp
 Text Label 8200 2700 0    50   ~ 0
 nRST
-NoConn ~ 8550 3550
 NoConn ~ 9800 4950
 NoConn ~ 9800 3950
 Text Label 5800 4950 0    50   ~ 0
@@ -797,8 +791,6 @@ nRST
 Text HLabel 8300 3350 0    50   Input ~ 0
 BOOT0
 Wire Wire Line
-	9950 4850 9800 4850
-Wire Wire Line
 	3050 3150 3050 3100
 Connection ~ 3050 3100
 Wire Wire Line
@@ -835,4 +827,10 @@ F 3 "~" H 3050 3250 50  0001 C CNN
 	1    3050 3250
 	1    0    0    -1  
 $EndComp
+Text Label 8450 3650 2    50   ~ 0
+CAN_STB
+NoConn ~ 8600 3550
+Wire Wire Line
+	8600 3650 8450 3650
+NoConn ~ 9800 4850
 $EndSCHEMATC

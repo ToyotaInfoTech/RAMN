@@ -27,8 +27,8 @@ One side effect is that it may cause the interrupt vector table to be improperly
 .. warning:: the `ST-LINK Utility <https://www.st.com/en/development-tools/stsw-link004.html>`_, which can be used to overwrite option bytes of the STM32L4 microcontrollers, does not work with STM32L5. Instead, use `STM32Cubeprog <https://www.st.com/en/development-tools/stm32cubeprog.html>`_.
   
   
-Check Link Settings
-*******************
+Check Linker Settings
+*********************
 
 The default project template of `STM32CubeIDE <https://www.st.com/en/development-tools/stm32cubeide.html>`_ comes with very restricted memory settings. Increasing the Minimum Heap Size and Minimum Stack Size may solve your issues.
 
@@ -68,5 +68,21 @@ The `DfuSe tool <https://www.st.com/en/development-tools/stsw-stm32080.html>`_ f
 If ECU A is recognized as "DFU in FS Mode" over USB by Windows, but device information are "Unknown" or "Unavailable", you may need to separately install STM32 DFU drivers, which are located in the DFuse installation folder, for example:
 
 :file:`C:\\Program Files (x86)\\STMicroelectronics\\Software\\DfuSe v3.0.6\\Bin\\Driver`
-  
+
+
+Failed reprogramming over CAN
+-----------------------------
+
+When ECUs are reprogrammed over CAN, it is possible that the CAN bitrate changes from the usual bitrate. If reprogramming over CAN fails, it may be caused by an external CAN adapter that has been left open, and is actively destroying the traffic with error frames (because it is still functioning with the original bitrate, and fails to understand the frames with a different bitrate.
+Before reprogramming over CAN, make sure external CAN adapters are turned off and/or unplugged.
+
+STM32CubeIDE
+------------
+
+.. warning:: Be careful when using STM32CubeIDE:
+
+	* A frequent bug happens when the whole source code is deleted. Make manual backups regularly.
+	* Do not overwrite code outside the :code:`USER CODE BEGIN` and :code:`USER CODE END` comments.
+	* Do not change the name of tasks - the whole task function body will be deleted.
+	  
 

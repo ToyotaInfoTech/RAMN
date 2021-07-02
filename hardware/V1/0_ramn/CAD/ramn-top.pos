@@ -1,10 +1,10 @@
-### Module positions - created on 02/23/21 11:51:03 ###
-### Printed by Pcbnew version pcbnew (5.1.9)-1
+### Module positions - created on 06/01/21 18:34:26 ###
+### Printed by Pcbnew version kicad (5.1.9)-1
 ## Unit = mm, Angle = deg.
 ## Side : top
 # Ref     Val                      Package                               PosX       PosY       Rot  Side
-C1        1nF                      C_0603_1608Metric                  55.2450   -75.5650   90.0000  top
-C2        1nF                      C_0603_1608Metric                 109.9820   -53.0860  180.0000  top
+C1        4.7nF                    C_0603_1608Metric                  55.2450   -75.5650   90.0000  top
+C2        4.7nF                    C_0603_1608Metric                 109.9820   -53.0860  180.0000  top
 C3        100nF                    C_0603_1608Metric                  54.3560   -71.1810  270.0000  top
 C4        100nF                    C_0603_1608Metric                  54.3560   -66.7410   90.0000  top
 C5        10pF                     C_0603_1608Metric                  72.0090   -58.3350   90.0000  top
