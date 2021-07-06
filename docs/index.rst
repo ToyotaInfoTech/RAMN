@@ -10,12 +10,6 @@ Documentation of RAMN: Resistant Automotive Miniature Network
 
    general 
    hardware
-   system
    firmware
-   programming
-   simulator
-   gettingstarted 
-   examples
+   scripts
    
-"General" and "Hardware" sections have been published 2021/04/01. Other sections are coming soon.
-

@@ -1,12 +1,12 @@
 Firmware
 ========
 
-Work in progress.
+This section details the source code of the ECUs' firmware.
 
 .. toctree::
    :maxdepth: 2
 
-   firmware/usb
-   firmware/canfd
+   firmware/architecture
+   firmware/memory_layout
    firmware/common_issues
-   firmware/option_bytes
+   firmware/modules

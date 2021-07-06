@@ -14,18 +14,27 @@ If your firmware has unexpected behavior, you may want to check all items in thi
 Check Option Bytes
 ******************
 
-The BOOT0 pin of RAMN's hardware is pulled-up, so that ECU A will start in DFU mode when the microcontroller is unprogrammed.
+The **BOOT0** pin of RAMN's hardware is pulled-up, so that ECU A will start in DFU mode when the microcontroller is unprogrammed.
 One side effect is that it may cause the interrupt vector table to be improperly configured when executing user code. Concretely, this will result in the Systick timer keeping a value of zero and never increasing.
 
-.. warning:: Even when using an external JTAG debugger, the BOOT Option bytes need to be correctly configured.
+Additionally, the **SWAP_BANK** option byte should be unchecked, or it will prevent reprogramming/debugging with ST-LINK.
 
-.. figure:: img/optionbytes_bootmode.png
+.. warning:: Even when using an external JTAG debugger, the **nSWBOOT0**, **nBOOT0** and **SWAP_BANK** Option bytes need to be correctly configured.
 
-   Correct configuration for BOOT option bytes.
-   
+   - ECU A: SWAP_BANK unchecked, nSWBOOT0 unchecked, nBOOT0 checked.
+   - ECU B,C,D: SWAP_BANK unchecked, nSWBOOT0 checked, nBOOT0 checked.
+
+.. figure:: img/OptionBytes_ECUA.png
+
+   Correct configuration for BOOT option bytes of ECU A.
+
+.. figure:: img/OptionBytes_ECUBCD.png
+
+   Correct configuration for BOOT option bytes of ECU B, C, and D.   
   
 .. warning:: the `ST-LINK Utility <https://www.st.com/en/development-tools/stsw-link004.html>`_, which can be used to overwrite option bytes of the STM32L4 microcontrollers, does not work with STM32L5. Instead, use `STM32Cubeprog <https://www.st.com/en/development-tools/stm32cubeprog.html>`_.
   
+
   
 Check Linker Settings
 *********************
