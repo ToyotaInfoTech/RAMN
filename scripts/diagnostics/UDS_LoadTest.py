@@ -11,7 +11,7 @@ sys.path.append("..")
 from utils.RAMN_Diag_Main import *
              
 #Number of time echo function is tested on each ECU             
-FRAME_COUNT=500
+FRAME_COUNT=10
 
 #Payload Size for the echo Function. Must be below 0xFFB, since the "routine control" header already takes 4 bytes.
 ECHO_PAYLOAD_SIZE = 0xFFB             

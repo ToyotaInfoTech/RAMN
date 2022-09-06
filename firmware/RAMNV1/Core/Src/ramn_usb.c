@@ -86,11 +86,15 @@ RAMN_Result_t RAMN_USB_SendFromTask(uint8_t* data, uint32_t length)
 	size_t xBytesSent = 0;
 	RAMN_Result_t result = RAMN_OK;
 	while (xSemaphoreTake(USB_TX_SEMAPHORE, portMAX_DELAY ) != pdTRUE);
-	xBytesSent = xStreamBufferSend(*usbTxBuffer, data, length, portMAX_DELAY );
+	xBytesSent = xStreamBufferSend(*usbTxBuffer, data, length, 2000 );
 	xSemaphoreGive(USB_TX_SEMAPHORE);
 	if (xBytesSent != length)
 	{
 		RAMN_USB_Config.USBTxOverflowCnt++;
+		result = RAMN_ERROR;
+
+		//Clear buffer
+		while( xStreamBufferReset(*usbTxBuffer) != pdPASS) osDelay(10);
 	}
 
 	return result;

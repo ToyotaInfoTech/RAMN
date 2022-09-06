@@ -108,4 +108,3 @@ void MX_USB_Device_Init(void)
   * @}
   */
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

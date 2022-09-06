@@ -107,8 +107,8 @@ RAMN_FDCAN_Status_t RAMN_FDCAN_Status = {
 				.FilterIndex = 0,
 				.FilterType = FDCAN_FILTER_MASK,
 				.FilterConfig = FDCAN_FILTER_TO_RXFIFO0,
-				.FilterID1 = 0x0,
-				.FilterID2 = 0x0,
+				.FilterID1 = 0xFFFFFFFF,
+				.FilterID2 = 0xFFFFFFFF,
 		}
 };
 
@@ -246,8 +246,8 @@ RAMN_Result_t RAMN_FDCAN_SendMessage(const FDCAN_TxHeaderTypeDef* header, const 
 #if defined(TARGET_ECUA)
 void RAMN_FDCAN_SetupForSTBootloader(void)
 {
-	//Assumes a 20MHz clock
-	hfdcan->Init.ClockDivider = FDCAN_CLOCK_DIV1;
+	//Assumes a 40MHz clock
+	hfdcan->Init.ClockDivider = FDCAN_CLOCK_DIV2;
 	hfdcan->Init.FrameFormat = FDCAN_FRAME_FD_BRS;
 	hfdcan->Init.Mode = FDCAN_MODE_NORMAL;
 	hfdcan->Init.AutoRetransmission = DISABLE;
@@ -285,6 +285,7 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
 		{
 			// No place in the buffer, forced to drop the frame
 			RAMN_FDCAN_Status.CANRxOverrunCnt++;
+			//Close slcan by default
 			vTaskNotifyGiveFromISR(*errTask,&xHigherPriorityTaskWoken);
 		}
 		else

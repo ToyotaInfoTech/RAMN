@@ -11,11 +11,20 @@ import serial
 import click
 import platform 
 import time
+import sys
+import os
+
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+import utils.RAMN_Utils    
     
 @click.command()
 @click.argument('serial_port')
 def ECUA_goToDFU(serial_port):
     click.echo("Putting ECU A into DFU Mode")
+    
+    if serial_port == "AUTO":
+        serial_port = utils.RAMN_Utils.getRamnPort()
+    
     try:
         click.echo("Opening port {}".format(serial_port)) 
         ser = serial.Serial(serial_port,timeout=10)
@@ -26,7 +35,10 @@ def ECUA_goToDFU(serial_port):
             r = ser.read(ser.in_waiting)
         time.sleep(2)    
         click.echo("Done")
-    except:
+    except Exception as e:
+        click.echo("ERROR: " + str(e))
         pass
 
+if __name__ == '__main__':
+    ECUA_goToDFU()
    

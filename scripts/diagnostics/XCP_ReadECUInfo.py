@@ -4,7 +4,7 @@
 # This work is licensed under the terms of the MIT license.
 # For a copy, see <https://opensource.org/licenses/MIT>.
 
-#This is an example script showing how to use Read ECU Info XCP commands on RAMN
+#This is an example script showing how to use Tester Present with KWP2000 on RAMN
 import sys
 sys.path.append("..")
 from utils.RAMN_Diag_Main import *

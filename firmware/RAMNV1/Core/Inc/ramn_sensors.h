@@ -23,7 +23,7 @@
 #include "main.h"
 
 //Define below variable if the rotating potentiometer is of the logarithmic kind
-#define CHASSIS_LOGARITHMIC_POTENTIOMETER
+//#define CHASSIS_LOGARITHMIC_POTENTIOMETER
 
 //Possible position of the "4-position Light switch" on the Chassis Expansion
 typedef enum

@@ -30,18 +30,18 @@
 #define SIM_LOOP_CLOCK_MS 10
 
 //Enable watchdogs - Application needs to kick it every 1s
-//#define WATCHDOG_ENABLE
+#define WATCHDOG_ENABLE
 
 #if defined(TARGET_ECUA)
 #define ENABLE_USB
 #define ENABLE_SCREEN
 
 //Automatically stops transceiving when serial port close is detected. May not work well with some OS/Applications
-#define ENABLE_USB_AUTODETECT
+//#define ENABLE_USB_AUTODETECT
 //#define GENERATE_RUNTIME_STATS //requires to add "volatile" keyword to static uint32_t ulTotalRunTime = 0UL;
 //If CAN_ECHO is enabled, ECU A will repeat whatever message it accepts over USB
 //#define CAN_ECHO
-#define ENABLE_REPROGRAMMING
+//#define ENABLE_REPROGRAMMING
 #define ENABLE_UDS
 //#define ENABLE_KWP
 //#define ENABLE_XCP

@@ -51,6 +51,9 @@
   * @brief Defines.
   * @{
   */
+/* Define size for the receive and transmit buffer over CDC */
+#define APP_RX_DATA_SIZE  2048
+#define APP_TX_DATA_SIZE  2048
 /* USER CODE BEGIN EXPORTED_DEFINES */
 /* Define size for the receive and transmit buffer over CDC */
 /* It's up to user to redefine and/or remove those define */
@@ -141,4 +144,3 @@ uint8_t RAMN_CDC_GetTXStatus();
 
 #endif /* __USBD_CDC_IF_H__ */
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
