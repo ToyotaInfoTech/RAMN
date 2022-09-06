@@ -39,8 +39,6 @@ void 	RAMN_DEBUG_DumpCANErrorRegisters(const FDCAN_ErrorCountersTypeDef* pErrCnt
 
 //Function to display information about CAN Error (human readable)
 void	RAMN_DEBUG_PrintCANError(const FDCAN_ErrorCountersTypeDef* pErrorCount, const FDCAN_ProtocolStatusTypeDef* pProtocolStatus, const RAMN_FDCAN_Status_t* pGw_freeze, uint32_t err);
-
-
 #endif
 
 #endif /* INC_RAMN_DEBUG_H_ */

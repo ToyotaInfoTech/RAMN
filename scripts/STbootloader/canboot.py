@@ -13,6 +13,10 @@ import click
 from intelhex import IntelHex
 from pathlib import Path
 import os
+import sys
+
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+import utils.RAMN_Utils
     
 #Memory address ranges of STM32L552 (STM32L552CE) are as below (manual p179)
 #CODE NON-SECURE 
@@ -549,6 +553,8 @@ class slRAMN():
                 end = seg[1]
                 if not checkAddressValidity(start,end):
                     log("Addresses not in expected ranges: {:08x}-{:08x}".format(start,end),LOG_WARNING)
+                    log("Skipping",LOG_WARNING)
+                    continue
                 if not otp:
                     otp_start = readableRange['OTP'][0]
                     otp_end = readableRange['OTP'][1]
@@ -573,6 +579,8 @@ class slRAMN():
                 end = seg[1]
                 if not checkAddressValidity(start,end):
                     log("Addresses not in expected ranges: {:08x}-{:08x}".format(start,end),LOG_WARNING)
+                    log("Skipping",LOG_WARNING)
+                    continue
 
                 val = self.readAddressRange(start,end,bar)
                 if val == None:
@@ -623,12 +631,18 @@ def canboot(serial_port,ecu_name,readout_unprotect,readout_protect,write_unprote
             if binary:
                 Path(output).mkdir(parents=True, exist_ok=True)
      
+    if serial_port == "AUTO":
+        serial_port = utils.RAMN_Utils.getRamnPort()
+     
     s = slRAMN(serial_port,ecu_name)
+    
+    errHappened = False
     
     if s.startBootloader():
         log("Successfully entered Bootloader of ECU " + ecu_name,LOG_OUTPUT)
     else:
         log("Error - make sure that external CAN adapters are disconnected, they prevent a required baudrate change",LOG_ERROR)
+        errHappened = True
     
     if info:
         log("Asking target uC for info",LOG_OUTPUT)
@@ -673,12 +687,18 @@ def canboot(serial_port,ecu_name,readout_unprotect,readout_protect,write_unprote
     if erase_all:
         log("Erasing memory",LOG_OUTPUT)
         if s.eraseMemory():
-            log("Memory erase successful",LOG_OUTPUT)         
+            log("Memory erase successful",LOG_OUTPUT)      
+        else:
+            log("Fail",LOG_ERROR)
+            errHappened = True
 
     if program:
         log("Starting writing memory",LOG_OUTPUT)
         if s.downloadHex(input,otp=otp):
             log("Memory writing successful")
+        else:
+            log("Fail",LOG_ERROR)
+            errHappened = True
     # log("Memory write successful",LOG_OUTPUT)
  
     if write_protect:        
@@ -693,7 +713,10 @@ def canboot(serial_port,ecu_name,readout_unprotect,readout_protect,write_unprote
     if readout_protect:
         log("Protecting memory readout",LOG_OUTPUT)
         if s.readoutProtect():
-            log("Memory readout protection successful",LOG_OUTPUT)   
+            log("Memory readout protection successful",LOG_OUTPUT)  
+        else:
+            log("Fail",LOG_ERROR)
+            errHappened = True
     
     if jump != None:
         log("Jumping to Application")
@@ -714,6 +737,9 @@ def canboot(serial_port,ecu_name,readout_unprotect,readout_protect,write_unprote
         s.write("n")
         
     s.close()
+    if errHappened:
+        log("Errors happened",LOG_ERROR)
+        time.sleep(5000)
     log("Done", LOG_OUTPUT)
     
 if __name__ == '__main__':

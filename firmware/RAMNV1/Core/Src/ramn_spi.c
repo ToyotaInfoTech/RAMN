@@ -93,10 +93,13 @@ void HAL_SPI_TxCpltCallback (SPI_HandleTypeDef * hspi)
 void RAMN_SPI_InitScreen(void)
 {
 	const uint8_t LCD_INIT_INVERSE = 1U;
-	const uint8_t LCD_INIT_MADCTL[] = {0x00};
+	//const uint8_t LCD_INIT_MADCTL[] = {0x00};  //For RAMN 2layers
+	const uint8_t LCD_INIT_MADCTL[] = {0x00}; //For RAMN 4 layers
 	const uint8_t LCD_INIT_COLMOD[] = {0x55};
-	const uint8_t LCD_INIT_CASET[] = {0x00, 0x00, (LCD_WIDTH)>>8, LCD_WIDTH&0xFF};
-	const uint8_t LCD_INIT_RASET[] = {0x00, 0x00, (LCD_HEIGHT)>>8, LCD_HEIGHT&0xFF };
+//	const uint8_t LCD_INIT_CASET[] = {0x00, 0x00, (LCD_WIDTH)>>8, LCD_WIDTH&0xFF};
+//	const uint8_t LCD_INIT_RASET[] = {0x00, 0x00, (LCD_HEIGHT)>>8, LCD_HEIGHT&0xFF };
+	const uint8_t LCD_INIT_CASET[] = {(LCD_WIDTH)>>8, LCD_WIDTH&0xFF, 0, 0};
+	const uint8_t LCD_INIT_RASET[] = {(LCD_HEIGHT)>>8, LCD_HEIGHT&0xFF, 0,0};
 	const uint8_t LCD_INIT_RAMCTRL[] = {0x00,0xF8};
 	//Initialize Screen
 	writeCommand_DMA(ST7789_SWRESET); //Reset
@@ -105,10 +108,11 @@ void RAMN_SPI_InitScreen(void)
 	writeCommand_DMA(ST7789_SPLOUT); //Leave Sleep mode
 	osDelay(100);
 
-	if (LCD_INIT_INVERSE != 0U)	writeCommand_DMA(ST7789_INVON); //Inverse Screen
+	if (LCD_INIT_INVERSE != 0U)	writeCommand_DMA(ST7789_INVON); //Inverse Screen colors
 
 	//Memory Data Access Control
-	//Left to Right
+	//Left to Right, Top to Bottom
+
 	writeCommand_DMA(ST7789_MADCTL);
 	writeData_DMA(LCD_INIT_MADCTL,sizeof(LCD_INIT_MADCTL));
 
@@ -247,7 +251,7 @@ void RAMN_SPI_UpdateScreen(uint32_t tick)
 	if (tick - lastScreenUpdate > SCREEN_FRAMERATE_MS)
 	{
 		lastScreenUpdate = tick;
-
+#if defined(ENABLE_USB_AUTODETECT)
 		if(RAMN_USB_Config.serialOpened != currentUSBState)
 		{
 			currentUSBState = RAMN_USB_Config.serialOpened;
@@ -260,7 +264,7 @@ void RAMN_SPI_UpdateScreen(uint32_t tick)
 				RAMN_SPI_DrawStringColor(16,20,COLOR_BLUE,COLOR_BLACK,"    ");
 			}
 		}
-
+#endif
 		if(RAMN_USB_Config.slcanOpened != currentSLCANState)
 		{
 			currentSLCANState = RAMN_USB_Config.slcanOpened;

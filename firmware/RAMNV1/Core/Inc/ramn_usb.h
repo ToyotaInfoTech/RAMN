@@ -35,15 +35,13 @@
 typedef struct
 {
 	volatile RAMN_Bool_t slcanOpened;					//Flag to specify whether the slcan feature (CAN<->USB) is active or not
-#ifdef ENABLE_USB_AUTODETECT
 	volatile RAMN_Bool_t serialOpened;					//Flag to specify whether a receiving opened serial port has been detected
-#endif
 	volatile RAMN_Bool_t simulatorActive;				//Flag to specify whether a driving simulator is connected or not
 	volatile RAMN_Bool_t slcan_enableTimestamp;			//Flag to ENABLE/DISABLE Hardware Timestamp of CAN-FD Messages
 	volatile RAMN_Bool_t autoreportErrors;				//Automatically dump registers and error messages when an error is detected
 	volatile RAMN_Bool_t addESIFlag; 					//When active, an "i" will be added at the end of received CAN-FD frames that had their ESI flag set.
 	volatile uint32_t 	 USBErrCnt;						//Number of time USB errors (except overflows) were detected
-	volatile uint32_t 	 USBTxOverflowCnt;					//Number of time USB TX Overflows were detected
+	volatile uint32_t 	 USBTxOverflowCnt;				//Number of time USB TX Overflows were detected
 } RAMN_USB_Status_t;
 
 extern RAMN_USB_Status_t RAMN_USB_Config;

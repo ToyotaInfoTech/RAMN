@@ -54,7 +54,7 @@ uint32_t ASCIItoUint32(const uint8_t* src);
 uint8_t  DLCtoUINT8(uint32_t dlc_enum);
 uint32_t UINT8toDLC(uint8_t dlc);
 
-//Regulator memcpy operation
+//Regular memcpy operation
 void RAMN_memcpy(uint8_t* dst, const uint8_t* src, uint32_t size);
 
 #endif /* INC_RAMN_UTILS_H_ */
