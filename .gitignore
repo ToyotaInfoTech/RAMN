@@ -1,3 +1,7 @@
 docs/_build
 docs/_static
 docs/_templates
+.DS_Store
+*.zip
+hardware/STM32_100pin_Variant/fp-info-cache
+*.kicad_prl
