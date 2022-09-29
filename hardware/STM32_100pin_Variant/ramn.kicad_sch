@@ -2566,9 +2566,6 @@
     (path "/00000000-0000-0000-0000-00005d8e7e6c"
       (reference "TP7") (unit 1) (value " ") (footprint "TestPoint:TestPoint_Loop_D2.54mm_Drill1.5mm_Beaded")
     )
-    (path "/00000000-0000-0000-0000-00005d7dea89/12c507f2-0a8a-4381-807a-2bc6ce9960f2"
-      (reference "TP8") (unit 1) (value " ") (footprint "TestPoint:TestPoint_Loop_D2.54mm_Drill1.5mm_Beaded")
-    )
     (path "/00000000-0000-0000-0000-00005d7dea89/00000000-0000-0000-0000-00005d80fd91"
       (reference "TP9") (unit 1) (value " ") (footprint "TestPoint:TestPoint_Loop_D2.54mm_Drill1.5mm_Beaded")
     )
