@@ -55,8 +55,8 @@
     (pcbplotparams
       (layerselection 0x00010f0_ffffffff)
       (disableapertmacros false)
-      (usegerberextensions false)
-      (usegerberattributes false)
+      (usegerberextensions true)
+      (usegerberattributes true)
       (usegerberadvancedattributes false)
       (creategerberjobfile false)
       (svguseinch false)
@@ -75,7 +75,7 @@
       (psnegative false)
       (psa4output false)
       (plotreference true)
-      (plotvalue true)
+      (plotvalue false)
       (plotinvisibletext false)
       (sketchpadsonfab false)
       (subtractmaskfromsilk false)
@@ -83,7 +83,7 @@
       (mirror false)
       (drillshape 0)
       (scaleselection 1)
-      (outputdirectory "./CAD")
+      (outputdirectory "Gerber/")
     )
   )
 

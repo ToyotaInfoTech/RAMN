@@ -6,8 +6,8 @@
 
   (title_block
     (title "RAMN: Resistant Automotive Miniature Network V1.0")
-    (date "2021-06-01")
-    (rev "B2L")
+    (date "2022-09-30")
+    (rev "100Pin Variant")
     (company "Copyright (c) 2021 TOYOTA MOTOR CORPORATION. ALL RIGHTS RESERVED.")
     (comment 3 "License: CC BY-SA 4.0")
     (comment 4 "https://github.com/toyotainfotech/ramn")
