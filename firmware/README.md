@@ -15,7 +15,7 @@ Memory protection can be activated using the RDP option bytes ("0xDC": non-perma
 
 This makes it possible to implement various embedded CTF challenges. Because JTAG is not disabled, PWN challenges can be implemented as well. Because SRAM2 can be protected, flags cannot trivially be recovered by dumping ECU memory.
 
-CTF firmware can only be used for ECU B, C, and D. ECU settings use large timeout values to make them more accessible to beginners.
+CTF firmware can only be used for ECU B, C, and D. ECU settings use large timeout values to make RAMN more accessible to beginners.
 
 
 Copyright (c) 2022 TOYOTA MOTOR CORPORATION. ALL RIGHTS RESERVED.
