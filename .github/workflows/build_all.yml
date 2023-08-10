@@ -1,0 +1,58 @@
+name: build all, clean release and debug
+
+on:
+  push:
+
+jobs:
+  build_all:
+    strategy:
+      fail-fast: false
+      matrix:
+        spice: [RAMNV1, RAMNV1_CTF]
+        conf: [Release, Debug]
+    
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+
+      - name: Build ECUB
+        uses: xanderhendriks/action-build-stm32cubeide@v7.0
+        with:
+          project-path: firmware/${{ matrix.spice }} -D TARGET_ECUB
+          project-target: ${{ matrix.spice}}/${{ matrix.conf}} -D TARGET_ECUB
+      - name: Copy ECUB hex
+        run: cp firmware/${{ matrix.spice }}/${{ matrix.conf }}/${{ matrix.spice }}.hex scripts/firmware/ECUB.hex
+
+      - name: Build ECUC
+        uses: xanderhendriks/action-build-stm32cubeide@v7.0
+        with:
+          project-path: firmware/${{ matrix.spice }} -D TARGET_ECUC
+          project-target: ${{ matrix.spice}}/${{ matrix.conf}} -D TARGET_ECUC
+      - name: Copy ECUC hex
+        run: cp firmware/${{ matrix.spice }}/${{ matrix.conf }}/${{ matrix.spice }}.hex scripts/firmware/ECUC.hex
+        
+      - name: Build ECUD
+        uses: xanderhendriks/action-build-stm32cubeide@v7.0
+        with:
+          project-path: firmware/${{ matrix.spice }} -D TARGET_ECUD
+          project-target: ${{ matrix.spice}}/${{ matrix.conf}} -D TARGET_ECUD
+      - name: Copy ECUD hex
+        run: cp firmware/${{ matrix.spice }}/${{ matrix.conf }}/${{ matrix.spice }}.hex scripts/firmware/ECUD.hex
+      
+      - name: Build ECUA
+        if: ${{ matrix.spice!='RAMNV1_CTF' }}
+        uses: xanderhendriks/action-build-stm32cubeide@v7.0
+        with:
+          project-path: firmware/${{ matrix.spice }} -D TARGET_ECUA
+          project-target: ${{ matrix.spice}}/${{ matrix.conf}} -D TARGET_ECUA
+      - name: Copy ECUA hex
+        if: ${{ matrix.spice!='RAMNV1_CTF' }}
+        run: cp firmware/${{ matrix.spice }}/${{ matrix.conf }}/${{ matrix.spice }}.hex scripts/firmware/ECUA.hex
+      
+
+      - name: upload RAMN dir as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.spice }}-${{ matrix.conf}}
+          path: .
