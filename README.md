@@ -6,6 +6,8 @@ RAMN (Resistant Automotive Miniature Network) is a miniature CAN/CAN-FD testbed 
 
 Please check the [Documentation](https://ramn.readthedocs.io/) for demonstrations and details.
 
+[![build all, clean release and debug](https://github.com/ToyotaInfoTech/RAMN/actions/workflows/build_all.yml/badge.svg)](https://github.com/ToyotaInfoTech/RAMN/actions/workflows/build_all.yml)
+
 ## Project structure
 ### Hardware folder
 Contains design files, from KiCAD project files to gerber files and partial BOM (not including common components such as resistors and capacitors).
