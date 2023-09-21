@@ -52,6 +52,7 @@ jobs:
       
 
       - name: upload RAMN dir as artifact
+        if: ${{ !env.ACT }}
         uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.spice }}-${{ matrix.conf}}
