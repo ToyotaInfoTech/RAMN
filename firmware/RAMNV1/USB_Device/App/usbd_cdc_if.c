@@ -303,7 +303,12 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 
 	for(uint32_t i=0; i < *Len; i++)
 	{
-		if(Buf[i] != '\r') //End of Line, should be treated as command
+		if (currentIndex >= sizeof(recvBuf)) //remove check for USB BOF POC
+		{
+			//no room in buffer, reset
+			currentIndex = 0;
+		}
+		else if(Buf[i] != '\r') //End of Line, should be treated as command
 		{
 			recvBuf[currentIndex] = Buf[i];
 			currentIndex++;
