@@ -318,7 +318,7 @@ RAMN_Result_t RAMN_ISOTP_Update(RAMN_ISOTPHandler_t* pHandler, uint32_t tick)
 
 	if ((pHandler->rxStatus == ISOTP_RX_TRANSFERRING))
 	{
-		uint32_t lapse = 	tick - pHandler->rxLastTimestamp;
+		int32_t lapse = 	tick - pHandler->rxLastTimestamp;
 		if (lapse > ISOTP_RX_TIMEOUT_MS)
 		{
 			report_Error(pHandler, ISOTP_RX,N_TIMEOUT_Cr); //TODO: better report ?
