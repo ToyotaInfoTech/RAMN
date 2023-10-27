@@ -6,10 +6,7 @@ RAMN (Resistant Automotive Miniature Network) is a miniature CAN/CAN-FD testbed 
 
 Please check the [Documentation](https://ramn.readthedocs.io/) for demonstrations and details.
 
-## Firmware programming guidelines
-Firmware is based on [FreeRTOS](https://www.freertos.org/) and [STM32 HAL](https://github.com/STMicroelectronics/STM32CubeL4) packages. Both are compliant with MISRA-C guidelines, often required for automotive software. To avoid overcomplicating the project, we are not following MISRA-C rules for the ECUs' applications - but we might consider doing so in the future.  
-
-To keep the firmware accessible to beginners, configuration of peripherals (e.g. CAN baud rate, etc.) and RTOS definitions (threads, queues, etc.) are done using STM32CubeIDE's graphical interface. The code generation feature of STM32CudeIDE can be used at any time without inadvertently overwriting the ECUs' application code.
+[![build all, clean release and debug](https://github.com/ToyotaInfoTech/RAMN/actions/workflows/build_all.yml/badge.svg)](https://github.com/ToyotaInfoTech/RAMN/actions/workflows/build_all.yml)
 
 ## Project structure
 ### Hardware folder
