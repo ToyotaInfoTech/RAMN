@@ -2,6 +2,7 @@ name: build all, clean release and debug
 
 on:
   push:
+  pull_request:
 
 jobs:
   build_all:
