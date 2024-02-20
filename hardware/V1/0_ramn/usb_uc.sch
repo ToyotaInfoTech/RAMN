@@ -5,9 +5,9 @@ $Descr A4 11693 8268
 encoding utf-8
 Sheet 2 9
 Title "RAMN: Resistant Automotive Miniature Network V1.0"
-Date "2021-06-01"
+Date "2024-02-20"
 Rev "B2L"
-Comp "Copyright (c) 2021 TOYOTA MOTOR CORPORATION. ALL RIGHTS RESERVED."
+Comp "Copyright (c) 2024 TOYOTA MOTOR CORPORATION. ALL RIGHTS RESERVED."
 Comment1 ""
 Comment2 ""
 Comment3 "License: CC BY-SA 4.0"
@@ -560,7 +560,7 @@ P 8900 4000
 AR Path="/5D8CC0AC" Ref="U?"  Part="1" 
 AR Path="/5D8BFFCE/5D8CC0AC" Ref="U2"  Part="1" 
 F 0 "U2" H 9250 2500 50  0000 C CNN
-F 1 "STM32L443CCTx" H 9350 2400 50  0000 C CNN
+F 1 "STM32L552/STM32L562" H 9350 2400 50  0000 C CNN
 F 2 "Package_QFP:LQFP-48_7x7mm_P0.5mm" H 8400 2600 50  0001 R CNN
 F 3 "http://www.st.com/st-web-ui/static/active/en/resource/technical/document/datasheet/DM00254865.pdf" H 8900 4000 50  0001 C CNN
 	1    8900 4000
@@ -749,7 +749,7 @@ AR Path="/5D815E09/5FC52C89" Ref="R?"  Part="1"
 AR Path="/5D8EDE42/5FC52C89" Ref="R?"  Part="1" 
 AR Path="/5D8BFFCE/5FC52C89" Ref="R9"  Part="1" 
 F 0 "R9" H 6850 3950 50  0000 C CNN
-F 1 "10k" H 6850 3850 50  0000 C CNN
+F 1 "DNM" H 6850 3850 50  0000 C CNN
 F 2 "Resistor_SMD:R_0603_1608Metric" H 6950 3950 50  0001 C CNN
 F 3 "~" H 6950 3950 50  0001 C CNN
 	1    6950 3950
@@ -783,7 +783,7 @@ AR Path="/5D815E09/5FC99F6B" Ref="R?"  Part="1"
 AR Path="/5D8EDE42/5FC99F6B" Ref="R?"  Part="1" 
 AR Path="/5D8BFFCE/5FC99F6B" Ref="R8"  Part="1" 
 F 0 "R8" H 6800 3550 50  0000 C CNN
-F 1 "DNM" H 6800 3450 50  0000 C CNN
+F 1 "10k" H 6800 3450 50  0000 C CNN
 F 2 "Resistor_SMD:R_0603_1608Metric" H 6950 3550 50  0001 C CNN
 F 3 "~" H 6950 3550 50  0001 C CNN
 	1    6950 3550

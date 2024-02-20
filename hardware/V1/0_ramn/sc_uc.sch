@@ -5,9 +5,9 @@ $Descr A4 11693 8268
 encoding utf-8
 Sheet 8 9
 Title "RAMN: Resistant Automotive Miniature Network V1.0"
-Date "2021-06-01"
+Date "2024-02-20"
 Rev "B2L"
-Comp "Copyright (c) 2021 TOYOTA MOTOR CORPORATION. ALL RIGHTS RESERVED."
+Comp "Copyright (c) 2024 TOYOTA MOTOR CORPORATION. ALL RIGHTS RESERVED."
 Comment1 ""
 Comment2 ""
 Comment3 "License: CC BY-SA 4.0"
@@ -594,7 +594,7 @@ AR Path="/5D815E09/5D7F2860" Ref="U?"  Part="1"
 AR Path="/5D8EDE42/5D7F2860" Ref="U?"  Part="1" 
 AR Path="/5D7DEA89/5D7F2860" Ref="U11"  Part="1" 
 F 0 "U11" H 9400 2750 50  0000 C CNN
-F 1 "STM32L443CCTx" H 9500 2650 50  0000 C CNN
+F 1 "STM32L552/STM32L562" H 9500 2650 50  0000 C CNN
 F 2 "Package_QFP:LQFP-48_7x7mm_P0.5mm" H 8550 2850 50  0001 R CNN
 F 3 "http://www.st.com/st-web-ui/static/active/en/resource/technical/document/datasheet/DM00254865.pdf" H 9050 4250 50  0001 C CNN
 	1    9050 4250

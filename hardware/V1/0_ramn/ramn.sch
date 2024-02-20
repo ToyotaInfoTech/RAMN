@@ -5,9 +5,9 @@ $Descr A4 11693 8268
 encoding utf-8
 Sheet 1 9
 Title "RAMN: Resistant Automotive Miniature Network V1.0"
-Date "2021-06-01"
+Date "2024-02-20"
 Rev "B2L"
-Comp "Copyright (c) 2021 TOYOTA MOTOR CORPORATION. ALL RIGHTS RESERVED."
+Comp "Copyright (c) 2024 TOYOTA MOTOR CORPORATION. ALL RIGHTS RESERVED."
 Comment1 ""
 Comment2 ""
 Comment3 "License: CC BY-SA 4.0"
