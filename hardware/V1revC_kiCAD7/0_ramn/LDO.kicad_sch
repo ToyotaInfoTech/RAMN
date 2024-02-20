@@ -310,7 +310,7 @@
   (symbol (lib_id "Regulator_Linear:NCV8114ASN120T1G") (at 114.3 73.66 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 00000000-0000-0000-0000-00005d80ee58)
-    (property "Reference" "U11" (at 114.3 64.3382 0)
+    (property "Reference" "U6" (at 114.3 64.3382 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "NCV8163" (at 114.3 66.6496 0)
@@ -330,16 +330,16 @@
     (instances
       (project "ramn"
         (path "/a57c57ad-7d19-43e7-b34c-fd39133eecde/00000000-0000-0000-0000-00005d815e09/00000000-0000-0000-0000-00005d82b40a"
-          (reference "U11") (unit 1)
+          (reference "U6") (unit 1)
         )
         (path "/a57c57ad-7d19-43e7-b34c-fd39133eecde/00000000-0000-0000-0000-00005d7dea89/00000000-0000-0000-0000-00005d7f286f"
-          (reference "U9") (unit 1)
+          (reference "U12") (unit 1)
         )
         (path "/a57c57ad-7d19-43e7-b34c-fd39133eecde/00000000-0000-0000-0000-00005d8bffce/00000000-0000-0000-0000-00005d7d0a92"
-          (reference "U10") (unit 1)
+          (reference "U3") (unit 1)
         )
         (path "/a57c57ad-7d19-43e7-b34c-fd39133eecde/00000000-0000-0000-0000-00005d8ede42/00000000-0000-0000-0000-00005d82b40a"
-          (reference "U12") (unit 1)
+          (reference "U9") (unit 1)
         )
       )
     )
@@ -348,7 +348,7 @@
   (symbol (lib_id "Device:C_Small") (at 81.28 77.47 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 00000000-0000-0000-0000-00005d80ee60)
-    (property "Reference" "C40" (at 83.6168 76.3016 0)
+    (property "Reference" "C21" (at 83.6168 76.3016 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
     (property "Value" "1uF" (at 83.6168 78.613 0)
@@ -365,16 +365,16 @@
     (instances
       (project "ramn"
         (path "/a57c57ad-7d19-43e7-b34c-fd39133eecde/00000000-0000-0000-0000-00005d815e09/00000000-0000-0000-0000-00005d82b40a"
-          (reference "C40") (unit 1)
+          (reference "C21") (unit 1)
         )
         (path "/a57c57ad-7d19-43e7-b34c-fd39133eecde/00000000-0000-0000-0000-00005d7dea89/00000000-0000-0000-0000-00005d7f286f"
-          (reference "C36") (unit 1)
+          (reference "C41") (unit 1)
         )
         (path "/a57c57ad-7d19-43e7-b34c-fd39133eecde/00000000-0000-0000-0000-00005d8bffce/00000000-0000-0000-0000-00005d7d0a92"
-          (reference "C38") (unit 1)
+          (reference "C11") (unit 1)
         )
         (path "/a57c57ad-7d19-43e7-b34c-fd39133eecde/00000000-0000-0000-0000-00005d8ede42/00000000-0000-0000-0000-00005d82b40a"
-          (reference "C42") (unit 1)
+          (reference "C31") (unit 1)
         )
       )
     )
@@ -383,7 +383,7 @@
   (symbol (lib_id "Device:C_Small") (at 129.54 77.47 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 00000000-0000-0000-0000-00005d80ee66)
-    (property "Reference" "C41" (at 131.8768 76.3016 0)
+    (property "Reference" "C22" (at 131.8768 76.3016 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
     (property "Value" "1uF" (at 131.8768 78.613 0)
@@ -400,16 +400,16 @@
     (instances
       (project "ramn"
         (path "/a57c57ad-7d19-43e7-b34c-fd39133eecde/00000000-0000-0000-0000-00005d815e09/00000000-0000-0000-0000-00005d82b40a"
-          (reference "C41") (unit 1)
+          (reference "C22") (unit 1)
         )
         (path "/a57c57ad-7d19-43e7-b34c-fd39133eecde/00000000-0000-0000-0000-00005d7dea89/00000000-0000-0000-0000-00005d7f286f"
-          (reference "C37") (unit 1)
+          (reference "C42") (unit 1)
         )
         (path "/a57c57ad-7d19-43e7-b34c-fd39133eecde/00000000-0000-0000-0000-00005d8bffce/00000000-0000-0000-0000-00005d7d0a92"
-          (reference "C39") (unit 1)
+          (reference "C12") (unit 1)
         )
         (path "/a57c57ad-7d19-43e7-b34c-fd39133eecde/00000000-0000-0000-0000-00005d8ede42/00000000-0000-0000-0000-00005d82b40a"
-          (reference "C43") (unit 1)
+          (reference "C32") (unit 1)
         )
       )
     )
@@ -418,7 +418,7 @@
   (symbol (lib_id "power:GND") (at 114.3 85.09 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 00000000-0000-0000-0000-00005d80ee76)
-    (property "Reference" "#PWR076" (at 114.3 91.44 0)
+    (property "Reference" "#PWR080" (at 114.3 91.44 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GND" (at 114.427 89.4842 0)
@@ -434,16 +434,16 @@
     (instances
       (project "ramn"
         (path "/a57c57ad-7d19-43e7-b34c-fd39133eecde/00000000-0000-0000-0000-00005d815e09/00000000-0000-0000-0000-00005d82b40a"
-          (reference "#PWR076") (unit 1)
+          (reference "#PWR080") (unit 1)
         )
         (path "/a57c57ad-7d19-43e7-b34c-fd39133eecde/00000000-0000-0000-0000-00005d7dea89/00000000-0000-0000-0000-00005d7f286f"
-          (reference "#PWR070") (unit 1)
+          (reference "#PWR074") (unit 1)
         )
         (path "/a57c57ad-7d19-43e7-b34c-fd39133eecde/00000000-0000-0000-0000-00005d8bffce/00000000-0000-0000-0000-00005d7d0a92"
-          (reference "#PWR073") (unit 1)
+          (reference "#PWR077") (unit 1)
         )
         (path "/a57c57ad-7d19-43e7-b34c-fd39133eecde/00000000-0000-0000-0000-00005d8ede42/00000000-0000-0000-0000-00005d82b40a"
-          (reference "#PWR079") (unit 1)
+          (reference "#PWR083") (unit 1)
         )
       )
     )
@@ -452,7 +452,7 @@
   (symbol (lib_id "power:GND") (at 129.54 86.36 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 00000000-0000-0000-0000-00005d80ee7c)
-    (property "Reference" "#PWR077" (at 129.54 92.71 0)
+    (property "Reference" "#PWR081" (at 129.54 92.71 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GND" (at 129.667 90.7542 0)
@@ -468,16 +468,16 @@
     (instances
       (project "ramn"
         (path "/a57c57ad-7d19-43e7-b34c-fd39133eecde/00000000-0000-0000-0000-00005d815e09/00000000-0000-0000-0000-00005d82b40a"
-          (reference "#PWR077") (unit 1)
+          (reference "#PWR081") (unit 1)
         )
         (path "/a57c57ad-7d19-43e7-b34c-fd39133eecde/00000000-0000-0000-0000-00005d7dea89/00000000-0000-0000-0000-00005d7f286f"
-          (reference "#PWR071") (unit 1)
+          (reference "#PWR075") (unit 1)
         )
         (path "/a57c57ad-7d19-43e7-b34c-fd39133eecde/00000000-0000-0000-0000-00005d8bffce/00000000-0000-0000-0000-00005d7d0a92"
-          (reference "#PWR074") (unit 1)
+          (reference "#PWR078") (unit 1)
         )
         (path "/a57c57ad-7d19-43e7-b34c-fd39133eecde/00000000-0000-0000-0000-00005d8ede42/00000000-0000-0000-0000-00005d82b40a"
-          (reference "#PWR080") (unit 1)
+          (reference "#PWR084") (unit 1)
         )
       )
     )
@@ -486,7 +486,7 @@
   (symbol (lib_id "power:GND") (at 81.28 85.09 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 00000000-0000-0000-0000-00005d80ee8c)
-    (property "Reference" "#PWR075" (at 81.28 91.44 0)
+    (property "Reference" "#PWR079" (at 81.28 91.44 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GND" (at 81.407 89.4842 0)
@@ -502,16 +502,16 @@
     (instances
       (project "ramn"
         (path "/a57c57ad-7d19-43e7-b34c-fd39133eecde/00000000-0000-0000-0000-00005d815e09/00000000-0000-0000-0000-00005d82b40a"
-          (reference "#PWR075") (unit 1)
+          (reference "#PWR079") (unit 1)
         )
         (path "/a57c57ad-7d19-43e7-b34c-fd39133eecde/00000000-0000-0000-0000-00005d7dea89/00000000-0000-0000-0000-00005d7f286f"
-          (reference "#PWR069") (unit 1)
+          (reference "#PWR073") (unit 1)
         )
         (path "/a57c57ad-7d19-43e7-b34c-fd39133eecde/00000000-0000-0000-0000-00005d8bffce/00000000-0000-0000-0000-00005d7d0a92"
-          (reference "#PWR072") (unit 1)
+          (reference "#PWR076") (unit 1)
         )
         (path "/a57c57ad-7d19-43e7-b34c-fd39133eecde/00000000-0000-0000-0000-00005d8ede42/00000000-0000-0000-0000-00005d82b40a"
-          (reference "#PWR078") (unit 1)
+          (reference "#PWR082") (unit 1)
         )
       )
     )
@@ -520,7 +520,7 @@
   (symbol (lib_id "Device:D_Schottky") (at 114.3 57.15 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 00000000-0000-0000-0000-000060235d0a)
-    (property "Reference" "D2" (at 114.3 51.6382 0)
+    (property "Reference" "D1" (at 114.3 51.6382 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "D_Schottky" (at 114.3 53.9496 0)
@@ -537,16 +537,16 @@
     (instances
       (project "ramn"
         (path "/a57c57ad-7d19-43e7-b34c-fd39133eecde/00000000-0000-0000-0000-00005d8bffce/00000000-0000-0000-0000-00005d7d0a92"
-          (reference "D2") (unit 1)
-        )
-        (path "/a57c57ad-7d19-43e7-b34c-fd39133eecde/00000000-0000-0000-0000-00005d8ede42/00000000-0000-0000-0000-00005d82b40a"
-          (reference "D4") (unit 1)
-        )
-        (path "/a57c57ad-7d19-43e7-b34c-fd39133eecde/00000000-0000-0000-0000-00005d7dea89/00000000-0000-0000-0000-00005d7f286f"
           (reference "D1") (unit 1)
         )
-        (path "/a57c57ad-7d19-43e7-b34c-fd39133eecde/00000000-0000-0000-0000-00005d815e09/00000000-0000-0000-0000-00005d82b40a"
+        (path "/a57c57ad-7d19-43e7-b34c-fd39133eecde/00000000-0000-0000-0000-00005d8ede42/00000000-0000-0000-0000-00005d82b40a"
           (reference "D3") (unit 1)
+        )
+        (path "/a57c57ad-7d19-43e7-b34c-fd39133eecde/00000000-0000-0000-0000-00005d7dea89/00000000-0000-0000-0000-00005d7f286f"
+          (reference "D4") (unit 1)
+        )
+        (path "/a57c57ad-7d19-43e7-b34c-fd39133eecde/00000000-0000-0000-0000-00005d815e09/00000000-0000-0000-0000-00005d82b40a"
+          (reference "D2") (unit 1)
         )
       )
     )
