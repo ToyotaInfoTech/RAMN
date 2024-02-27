@@ -283,13 +283,14 @@ class slRAMN():
                          
     def startBootloader(self):
         if self.ecuName not in "BCD":
-            log("received a request for inexisting ECU",LOG_ERROR)
+            log("Received a request for inexisting ECU",LOG_ERROR)
             return False
         self.write('p' + self.ecuName + '\r')
         #note that we might receive some old receive frames before receiving the bootloader ACK
         #hence we don't wait for the CR of the command
         if self.readline() == None:
             return False
+        log("Successfully entered Bootloader of ECU " + self.ecuName,LOG_OUTPUT)
         return True
         
     def waitForCR(self):
@@ -499,7 +500,7 @@ class slRAMN():
         return False
             
     def readoutProtect(self):
-        if self.sendCommand(COMMAND_READOUTPROTECT,params="00"):
+        if self.sendCommand(COMMAND_READOUTPROTECT,params="00"): 
             if self.waitForACK(COMMAND_READOUTPROTECT):
                 #readout protect succeeded, expect reset
                 time.sleep(1)
@@ -510,7 +511,7 @@ class slRAMN():
         return False
                 
     def readoutUnprotect(self):
-        if self.sendCommand(COMMAND_READOUTUNPROTECT,params="00"):
+        if self.sendCommand(COMMAND_READOUTUNPROTECT,params="00"): 
             if self.waitForACK(COMMAND_READOUTUNPROTECT_ANSWER):
                 #readout unprotect succeeded, expect reset
                 time.sleep(1)
@@ -632,15 +633,13 @@ def canboot(serial_port,ecu_name,readout_unprotect,readout_protect,write_unprote
                 Path(output).mkdir(parents=True, exist_ok=True)
      
     if serial_port == "AUTO":
-        serial_port = utils.RAMN_Utils.getRamnPort()
+        serial_port = utils.RAMN_Utils.autoDetectRAMNPort()
      
     s = slRAMN(serial_port,ecu_name)
     
     errHappened = False
     
-    if s.startBootloader():
-        log("Successfully entered Bootloader of ECU " + ecu_name,LOG_OUTPUT)
-    else:
+    if not s.startBootloader():
         log("Error - make sure that external CAN adapters are disconnected, they prevent a required baudrate change",LOG_ERROR)
         errHappened = True
     
@@ -734,12 +733,14 @@ def canboot(serial_port,ecu_name,readout_unprotect,readout_protect,write_unprote
             
     if reset:     
         log("Resetting ECUs")
-        s.write("n")
+        s.write('n' + '\r')
+        if s.readline() == None:
+            log("ECU did not answer reset command")
         
     s.close()
     if errHappened:
         log("Errors happened",LOG_ERROR)
-        time.sleep(5000)
+        time.sleep(2)
     log("Done", LOG_OUTPUT)
     
 if __name__ == '__main__':
