@@ -1,3 +1,11 @@
 docs/_build
 docs/_static
 docs/_templates
+hardware/V1revC_kiCAD7/0_ramn/~ramn.kicad_pcb.lck
+hardware/V1revC_kiCAD7/0_ramn/~ramn.kicad_sch.lck
+firmware/RAMNV1/Debug
+firmware/RAMNV1/.settings
+firmware/RAMNV1/RAMNV1 Debug.launch
+firmware/RAMNV1/RAMNV1 Debug.cfg
+hardware/V1revC_kiCAD7/0_ramn/ramn-backups
+.metadata
