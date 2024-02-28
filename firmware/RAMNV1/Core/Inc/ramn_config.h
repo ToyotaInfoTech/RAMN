@@ -79,6 +79,9 @@
 #if defined(ENABLE_UDS) || defined(ENABLE_KWP) || defined(ENABLE_XCP)
 #define ENABLE_DIAG
 #define ENABLE_EEPROM_EMULATION
+#if defined(ENABLE_SCREEN)
+#define UDS_DRAW_BUFFER_SIZE 0x1000
+#endif
 #endif
 
 #if defined(ENABLE_UDS) || defined(ENABLE_KWP)

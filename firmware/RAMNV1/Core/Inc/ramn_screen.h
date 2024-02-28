@@ -36,12 +36,20 @@ typedef struct COLOR_THEME_STRUCT {
 } ColorTheme_t ;
 
 //Inits the Screen
-void RAMN_Screen_Init(SPI_HandleTypeDef* handler, osThreadId_t* pTask);
+void RAMN_SCREEN_Init(SPI_HandleTypeDef* handler, osThreadId_t* pTask);
+
+#ifdef ENABLE_UDS
+//Request to draw a picture on screen (Used by UDS services)
+RAMN_SCREEN_RequestDrawImage(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const uint8_t* image);
+
+//Returns 1U if a previous UDS draw command is not completed
+uint8_t RAMN_SCREEN_IsUDSScreenUpdatePending();
+#endif
 
 //Updates the Screen. Must be called periodically
-void RAMN_Screen_Update(uint32_t tick);
+void RAMN_SCREEN_Update(uint32_t tick);
 
 //Update the color theme
-void RAMN_Screen_UpdateTheme(uint8_t new_theme);
+void RAMN_SCREEN_UpdateTheme(uint8_t new_theme);
 
 #endif /* INC_RAMN_SCREEN_H_ */

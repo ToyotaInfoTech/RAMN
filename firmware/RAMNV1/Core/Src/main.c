@@ -1242,13 +1242,13 @@ void RAMN_ReceiveUSBFunc(void *argument)
 							else
 							{
 								token = strtok(NULL, " ");
-								if (strcmp(token, "1") == 0) {  RAMN_Screen_UpdateTheme(1); RAMN_USB_SendStringFromTask("Updated.\r");
-								} else if (strcmp(token, "2") == 0) {  RAMN_Screen_UpdateTheme(2); RAMN_USB_SendStringFromTask("Updated.\r");
-								} else if (strcmp(token, "3") == 0) {  RAMN_Screen_UpdateTheme(3); RAMN_USB_SendStringFromTask("Updated.\r");
-								} else if (strcmp(token, "4") == 0) {  RAMN_Screen_UpdateTheme(4); RAMN_USB_SendStringFromTask("Updated.\r");
-								} else if (strcmp(token, "5") == 0) {  RAMN_Screen_UpdateTheme(5); RAMN_USB_SendStringFromTask("Updated.\r");
-								} else if (strcmp(token, "6") == 0) {  RAMN_Screen_UpdateTheme(6); RAMN_USB_SendStringFromTask("Updated.\r");
-								} else if (strcmp(token, "7") == 0) {  RAMN_Screen_UpdateTheme(7); RAMN_USB_SendStringFromTask("Updated.\r");
+								if (strcmp(token, "1") == 0) {  RAMN_SCREEN_UpdateTheme(1); RAMN_USB_SendStringFromTask("Updated.\r");
+								} else if (strcmp(token, "2") == 0) {  RAMN_SCREEN_UpdateTheme(2); RAMN_USB_SendStringFromTask("Updated.\r");
+								} else if (strcmp(token, "3") == 0) {  RAMN_SCREEN_UpdateTheme(3); RAMN_USB_SendStringFromTask("Updated.\r");
+								} else if (strcmp(token, "4") == 0) {  RAMN_SCREEN_UpdateTheme(4); RAMN_USB_SendStringFromTask("Updated.\r");
+								} else if (strcmp(token, "5") == 0) {  RAMN_SCREEN_UpdateTheme(5); RAMN_USB_SendStringFromTask("Updated.\r");
+								} else if (strcmp(token, "6") == 0) {  RAMN_SCREEN_UpdateTheme(6); RAMN_USB_SendStringFromTask("Updated.\r");
+								} else if (strcmp(token, "7") == 0) {  RAMN_SCREEN_UpdateTheme(7); RAMN_USB_SendStringFromTask("Updated.\r");
 
 								}
 								else
@@ -1296,10 +1296,10 @@ void RAMN_ReceiveUSBFunc(void *argument)
 						}
 						else if (strcmp(token, "stop") == 0)
 						{
-							if (RAMN_Chip8_IsGameActive() != 0U)
+							if (RAMN_CHIP8_IsGameActive() != 0U)
 							{
 								RAMN_USB_SendStringFromTask("Stopping game.\r");
-								RAMN_Chip8_StopGame(1);
+								RAMN_CHIP8_StopGame(1);
 							}
 							else
 							{
@@ -1921,7 +1921,7 @@ void RAMN_PeriodicTaskFunc(void *argument)
 	RAMN_SIM_Init();
 
 #if defined(ENABLE_SCREEN)
-	RAMN_Screen_Init(&hspi2, &RAMN_PeriodicHandle);
+	RAMN_SCREEN_Init(&hspi2, &RAMN_PeriodicHandle);
 #endif
 
 	/* Infinite loop */
@@ -1940,7 +1940,7 @@ void RAMN_PeriodicTaskFunc(void *argument)
 			RAMN_DBC_Send(xLastWakeTime);
 		}
 #ifdef ENABLE_SCREEN
-		RAMN_Screen_Update(xLastWakeTime);
+		RAMN_SCREEN_Update(xLastWakeTime);
 #endif
 
 #if defined(ENABLE_DIAG)

@@ -45,6 +45,16 @@ static uint32_t spi_refresh_counter = 0U;
 char ascii_string[16] = {0};
 char random_char_line[19] = {0};
 
+#ifdef ENABLE_UDS
+volatile uint8_t uds_draw_request = 0U;
+uint8_t uds_draw_x = 0;
+uint8_t uds_draw_y = 0;
+uint8_t uds_draw_w = 0;
+uint8_t uds_draw_h = 0;
+uint8_t uds_draw_need_refresh= 0U;
+volatile uint8_t uds_draw_buffer[UDS_DRAW_BUFFER_SIZE];
+#endif
+
 static void uint16toBCDPercent(uint16_t val, char* dst)
 {
 	if (dst != 0U)
@@ -83,7 +93,7 @@ static void uint16toBCDSteering(int16_t val, char* dst)
 }
 
 
-void RAMN_Screen_DrawSubconsoleStatic()
+void RAMN_SCREEN_DrawSubconsoleStatic()
 {
 	SPI_SUBCONSOLE_BACKGROUNDCOLOR = SPI_COLOR_THEME.BACKGROUND;
 	SPI_SUBCONSOLE_COLORCONTOUR = SPI_COLOR_THEME.WHITE;
@@ -108,7 +118,7 @@ void RAMN_Screen_DrawSubconsoleStatic()
 	prev_shift = 0xFF;
 }
 
-void RAMN_Screen_UpdateTheme(uint8_t new_theme)
+void RAMN_SCREEN_UpdateTheme(uint8_t new_theme)
 {
 	if (new_theme != current_theme)
 	{
@@ -118,7 +128,7 @@ void RAMN_Screen_UpdateTheme(uint8_t new_theme)
 	}
 }
 
-void RAMN_SPI_DrawSubconsoleUpdate()
+void RAMN_SCREEN_DrawSubconsoleUpdate()
 {
 	char cntStr[6] = {0};
 
@@ -229,7 +239,7 @@ void RAMN_SPI_DrawSubconsoleUpdate()
 
 }
 
-void RAMN_Screen_DrawBase(uint8_t theme)
+void RAMN_SCREEN_DrawBase(uint8_t theme)
 {
 	SPI_COLOR_THEME.BACKGROUND = 0x0000;
 	SPI_COLOR_THEME.WHITE = 0xFFFF;
@@ -280,11 +290,11 @@ void RAMN_Screen_DrawBase(uint8_t theme)
 
 	RAMN_SPI_DrawRectangle(0,0,LCD_WIDTH,LCD_HEIGHT-32,SPI_COLOR_THEME.BACKGROUND);
 	RAMN_SPI_DrawContour(0, 0, LCD_WIDTH, LCD_HEIGHT-41, CONTOUR_WIDTH, SPI_COLOR_THEME.LIGHT);
-	RAMN_Screen_DrawSubconsoleStatic();
+	RAMN_SCREEN_DrawSubconsoleStatic();
 
 }
 
-void RAMN_Screen_Init(SPI_HandleTypeDef* handler, osThreadId_t* pTask)
+void RAMN_SCREEN_Init(SPI_HandleTypeDef* handler, osThreadId_t* pTask)
 {
 	RAMN_SPI_Init(handler, pTask);
 	RAMN_SPI_InitScreen();
@@ -294,20 +304,50 @@ void RAMN_Screen_Init(SPI_HandleTypeDef* handler, osThreadId_t* pTask)
 		current_theme = 1; // make theme 1 more likely, and don't select theme 5 to 7
 	else  current_theme %= 5;
 
-	RAMN_Screen_DrawBase(current_theme);
+	RAMN_SCREEN_DrawBase(current_theme);
 
 }
 
-void RAMN_Screen_Update(uint32_t tick)
+#ifdef ENABLE_UDS
+RAMN_SCREEN_RequestDrawImage(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const uint8_t* image)
+{
+	uds_draw_request = 1U;
+	if (uds_draw_buffer != 0U) osDelay(10);
+	uds_draw_x = x;
+	uds_draw_y = y;
+	uds_draw_w = w;
+	uds_draw_h = h;
+	memcpy(uds_draw_buffer, image, w*h*2);
+	uds_draw_need_refresh = 1U;
+}
+#endif
+
+uint8_t RAMN_SCREEN_IsUDSScreenUpdatePending()
+{
+	return uds_draw_need_refresh;
+}
+
+void RAMN_SCREEN_Update(uint32_t tick)
 {
 
 	if (theme_change_requested != 0U)
 	{
-		RAMN_Screen_DrawBase(current_theme);
+		RAMN_SCREEN_DrawBase(current_theme);
 		theme_change_requested = 0U;
 	}
 
-	if (RAMN_Chip8_IsGameActive())
+#ifdef ENABLE_UDS
+	if (uds_draw_request != 0)
+	{
+
+		if (uds_draw_need_refresh != 0U)
+		{
+			RAMN_SPI_DrawImage(uds_draw_x,uds_draw_y,uds_draw_w,uds_draw_h,uds_draw_buffer);
+			uds_draw_need_refresh = 0U;
+		}
+	} else
+#endif
+	if (RAMN_CHIP8_IsGameActive())
 	{
 		//Adjust game speed (number of instructions) based on current brake slider position
 		uint16_t loop_max_count = 1+4*(100 - RAMN_DBC_Handle.control_brake*100 /(0xfff));
@@ -343,7 +383,7 @@ void RAMN_Screen_Update(uint32_t tick)
 			memcpy(ascii_string,"ERR",4);
 			RAMN_SPI_DrawStringColor(5, 5+(1*16), SPI_COLOR_THEME.BACKGROUND, SPI_COLOR_THEME.LIGHT, ascii_string);
 		}
-		RAMN_SPI_DrawSubconsoleUpdate();
+		RAMN_SCREEN_DrawSubconsoleUpdate();
 	}
 
 	//	//Code to display a message if a loop execution takes too much time

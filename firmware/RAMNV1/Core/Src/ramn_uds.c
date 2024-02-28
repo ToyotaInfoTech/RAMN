@@ -784,6 +784,75 @@ static void RAMN_UDS_RoutineControlComputeCRC(const uint8_t* data, uint16_t size
 	}
 }
 
+static void loadChip8Game(const uint8_t* data, uint16_t size)
+{
+	uint16_t game_size = 0;
+	if(size < 3U )
+	{
+		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
+	}
+	else
+	{
+		game_size = (uint16_t)(data[1] << 8) | data[2];
+		if (game_size != (size-3))
+		{
+			RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
+		}
+		else if (game_size > (0x1000 - 0x250) || game_size < 2)
+		{
+			RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_ROOR);
+		}
+		else
+		{
+			RAMN_CHIP8_StopGame();
+			osDelay(200); //leave some time to quit the game (TODO optimize this)
+			RAMN_CHIP8_Init(&data[3], game_size);
+			RAMN_CHIP8_StartGame(xTaskGetTickCount());
+			uds_answerData[0] = data[0] + 0x40; //positive response
+			*uds_answerSize = 1;
+		}
+	}
+}
+
+static void displayPixels(const uint8_t* data, uint16_t size)
+{
+	uint8_t x = 0;
+	uint8_t y = 0;
+	uint32_t w = 0;
+	uint32_t h = 0;
+	if(size < 5U )
+	{
+		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
+	}
+	else {
+		x = data[1] % 240;
+		y = data[2] % 240;
+		w = data[3];
+		h = data[4];
+		if ((w*h)*2 != (size-5))
+		{
+			RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
+		}
+		else if ((w == 0 || h == 0) || ((w*h) > 57600))
+		{
+			RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_ROOR);
+		}
+		else
+		{
+			if (RAMN_SCREEN_IsUDSScreenUpdatePending() == 0U)
+			{
+			RAMN_SCREEN_RequestDrawImage(x,y,w,h,&data[5]);
+			uds_answerData[0] = data[0] + 0x40; //positive response
+			*uds_answerSize = 1;
+			}
+			else
+			{
+				RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_BRR); //busy, ask to repeat later
+			}
+		}
+	}
+}
+
 //0000 to 00FF ISO Reserved
 //0100 to 01FF Tachograph
 //0200 to 0DFF Manufacturer Specific
@@ -1396,6 +1465,12 @@ void RAMN_UDS_ProcessDiagPayload(uint32_t tick, const uint8_t* data, uint16_t si
 				break;
 			case 0x3E: //TESTER PRESENT
 				RAMN_UDS_TesterPresent(data, size);
+				break;
+			case 0x42: //custom service to load chip-8 games
+				loadChip8Game(data, size);
+				break;
+			case 0x43: //custom service to display pixels on screen
+				displayPixels(data, size);
 				break;
 			case 0x83: //ACCESS TIMING PARAMETERS
 				RAMN_UDS_AccessTimingParameters(data, size);
