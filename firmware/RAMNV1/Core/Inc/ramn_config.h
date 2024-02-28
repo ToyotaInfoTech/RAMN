@@ -30,7 +30,7 @@
 #define SIM_LOOP_CLOCK_MS 10
 
 //Enable watchdogs - Application needs to kick it every 1s
-#define WATCHDOG_ENABLE
+//#define WATCHDOG_ENABLE
 
 #if defined(TARGET_ECUA)
 #define ENABLE_USB
@@ -60,6 +60,7 @@
 
 #if defined(TARGET_ECUC)
 //#define ENABLE_SCREEN
+#define CHASSIS_LOGARITHMIC_POTENTIOMETER
 #define EXPANSION_POWERTRAIN
 #define ENABLE_REPROGRAMMING
 #define ENABLE_UDS

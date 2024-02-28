@@ -53,14 +53,6 @@
 #define COLOR_GREEN 0x07E0
 #define COLOR_BLUE 0x001F
 
-//Screen update framerate
-#define SCREEN_FRAMERATE_MS 1000U
-
-//Logo To display on screen (two frames)
-extern const uint8_t happy1[];
-extern const uint8_t happy2[];
-#define LOGO_HEIGHT 95
-#define COLOR_BLOCK_SIZE 16
 #endif
 
 #if defined(ENABLE_SCREEN) || defined(EXPANSION_BODY)
@@ -81,6 +73,9 @@ void 	RAMN_SPI_DrawPixel(uint16_t x, uint16_t y, uint16_t pixel16);
 //Draws a rectangle of the specified color on the screen
 void 	RAMN_SPI_DrawRectangle(uint16_t startx, uint16_t starty, uint16_t w, uint16_t h,uint16_t color);
 
+//Draws a contour (empty rectangle)
+void RAMN_SPI_DrawContour(uint8_t startx, uint8_t starty, uint8_t endx, uint8_t endy, uint8_t width, uint16_t color);
+
 //Draws a 565 color image from specified array (Little Endian)
 void 	RAMN_SPI_DrawImage(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const uint8_t* image);
 
@@ -96,8 +91,9 @@ void 	RAMN_SPI_DrawStringColor(uint16_t x, uint16_t y, uint16_t fg_color, uint16
 //Draws specified zero-terminated string with default background/foreground color. \n and \r treated as newLines.
 void 	RAMN_SPI_DrawString(uint16_t x, uint16_t y, char* src);
 
-//Updates the Screen. Must be called periodically
-void	RAMN_SPI_UpdateScreen(uint32_t tick);
+//Function that updates a string by only drawing characters that changed
+void RAMN_SPI_RefreshStringColor(uint16_t x, uint16_t y, uint16_t fg_color, uint16_t bg_color, const char* src, char* prev);
+
 #endif
 
 #ifdef EXPANSION_BODY
