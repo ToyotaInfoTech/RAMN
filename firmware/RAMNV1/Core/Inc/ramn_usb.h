@@ -55,6 +55,9 @@ void 			RAMN_USB_SendFromTask_Blocking(uint8_t* data, uint32_t length);
 //Sends Data over USB. Returns as soon as buffer is filled.
 RAMN_Result_t 	RAMN_USB_SendFromTask(uint8_t* data, uint32_t length);
 
+//Sends a string over serial USB
+RAMN_Result_t RAMN_USB_SendStringFromTask(char* data);
+
 //Callback for when USB errors are detected
 void 			RAMM_USB_ErrorCallback(USBD_HandleTypeDef* hUsbDeviceFS);
 
@@ -63,6 +66,9 @@ void 			RAMM_USB_SerialOpenCallback(USBD_HandleTypeDef* hUsbDeviceFS);
 
 //Callback for when USB Serial Port CLOSE has been detected
 void 			RAMN_USB_SerialCloseCallback(USBD_HandleTypeDef* hUsbDeviceFS);
+
+
+
 
 #endif
 

@@ -100,6 +100,12 @@ RAMN_Result_t RAMN_USB_SendFromTask(uint8_t* data, uint32_t length)
 	return result;
 }
 
+RAMN_Result_t RAMN_USB_SendStringFromTask(char* data)
+{
+	return RAMN_USB_SendFromTask(data, strlen(data));
+}
+
+
 void RAMM_USB_ErrorCallback(USBD_HandleTypeDef* hUsbDeviceFS)
 {
 	RAMN_USB_Config.USBErrCnt += 1;
@@ -129,6 +135,8 @@ void RAMN_USB_SerialCloseCallback(USBD_HandleTypeDef* hUsbDeviceFS)
 	}
 #endif
 }
+
+
 
 #endif
 

@@ -38,6 +38,8 @@
 
 //Automatically stops transceiving when serial port close is detected. May not work well with some OS/Applications
 //#define ENABLE_USB_AUTODETECT
+//#define START_IN_CLI_MODE  // will start in CLI mode instead of slcan if enabled
+
 //#define GENERATE_RUNTIME_STATS //requires to add "volatile" keyword to static uint32_t ulTotalRunTime = 0UL;
 //If CAN_ECHO is enabled, ECU A will repeat whatever message it accepts over USB
 //#define CAN_ECHO
@@ -92,9 +94,9 @@
 
 #ifdef TARGET_ECUA
 #define USB_RX_BUFFER_SIZE 				20000
-#define USB_TX_BUFFER_SIZE 				40000
+#define USB_TX_BUFFER_SIZE 				20000
 #define CAN_RX_BUFFER_SIZE 				20000
-#define CAN_TX_BUFFER_SIZE 				60000
+#define CAN_TX_BUFFER_SIZE 				40000
 #define UDS_ISOTP_RX_BUFFER_SIZE 		0xFFF+2 //Add +2 for buffer-size
 #define UDS_ISOTP_TX_BUFFER_SIZE 		0xFFF+2
 
