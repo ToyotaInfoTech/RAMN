@@ -298,16 +298,8 @@ void RAMN_Screen_Init(SPI_HandleTypeDef* handler, osThreadId_t* pTask)
 
 }
 
-void	RAMN_Screen_Update(uint32_t tick)
+void RAMN_Screen_Update(uint32_t tick)
 {
-	//random value for the "digital rain" effect on screen
-	uint16_t random_colors[] = {SPI_COLOR_THEME.DARK, SPI_COLOR_THEME.DARK, SPI_COLOR_THEME.MEDIUM, SPI_COLOR_THEME.MEDIUM, SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.WHITE};
-	uint8_t random_X_line = RAMN_RNG_Pop8() % sizeof(random_char_line);
-	uint8_t random_Y_line = RAMN_RNG_Pop8() % 12;
-	uint8_t random_val = RAMN_RNG_Pop8();
-	uint16_t color = random_colors[random_val % ((sizeof(random_colors)/sizeof(uint16_t)))];
-	uint16_t background_color = SPI_COLOR_THEME.BACKGROUND;
-	uint8_t random_char = (random_val % 75) + '0';
 
 	if (theme_change_requested != 0U)
 	{
@@ -315,7 +307,27 @@ void	RAMN_Screen_Update(uint32_t tick)
 		theme_change_requested = 0U;
 	}
 
-	RAMN_SPI_DrawCharColor(5+(random_X_line*12), 5+(random_Y_line*16), color, background_color, random_char);
+	if (RAMN_Chip8_IsGameActive())
+	{
+		//Adjust game speed (number of instructions) based on current brake slider position
+		uint16_t loop_max_count = 1+4*(100 - RAMN_DBC_Handle.control_brake*100 /(0xfff));
+		for(uint16_t i = 0; i < loop_max_count; i++) {
+			RAMN_CHIP8_Update(tick);
+		}
+	}
+	else
+	{
+
+		//random value for the "digital rain" effect on screen
+		uint16_t random_colors[] = {SPI_COLOR_THEME.DARK, SPI_COLOR_THEME.DARK, SPI_COLOR_THEME.MEDIUM, SPI_COLOR_THEME.MEDIUM, SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.WHITE};
+		uint8_t random_X_line = RAMN_RNG_Pop8() % sizeof(random_char_line);
+		uint8_t random_Y_line = RAMN_RNG_Pop8() % 12;
+		uint8_t random_val = RAMN_RNG_Pop8();
+		uint16_t color = random_colors[random_val % ((sizeof(random_colors)/sizeof(uint16_t)))];
+		uint8_t random_char = (random_val % 75) + '0';
+
+		RAMN_SPI_DrawCharColor(5+(random_X_line*12), 5+(random_Y_line*16), color, SPI_COLOR_THEME.BACKGROUND, random_char);
+	}
 
 	//Code to display a message if problems happened happened
 	if (spi_refresh_counter % 5 == 0)

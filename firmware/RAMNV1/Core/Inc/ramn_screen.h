@@ -22,6 +22,7 @@
 #include "main.h"
 #include "ramn_spi.h"
 #include "ramn_dbc.h"
+#include "ramn_chip8.h"
 
 #define CONTOUR_WIDTH 2
 #define CONTROL_WINDOW_Y LCD_HEIGHT-34
@@ -38,7 +39,7 @@ typedef struct COLOR_THEME_STRUCT {
 void RAMN_Screen_Init(SPI_HandleTypeDef* handler, osThreadId_t* pTask);
 
 //Updates the Screen. Must be called periodically
-void	RAMN_Screen_Update(uint32_t tick);
+void RAMN_Screen_Update(uint32_t tick);
 
 //Update the color theme
 void RAMN_Screen_UpdateTheme(uint8_t new_theme);
