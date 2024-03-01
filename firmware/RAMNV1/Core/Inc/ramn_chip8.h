@@ -33,6 +33,16 @@
 #define MAX_SCREEN_WIDTH 128
 #define MAX_SCREEN_HEIGHT 64
 
+//Games stored in ECU memory
+extern const uint8_t cave_explorer[];
+extern const uint16_t cave_explorer_size;
+
+extern const uint8_t danmaku[];
+extern const uint16_t danmaku_size;
+
+extern const uint8_t octopeg[];
+extern const uint16_t octopeg_size;
+
 //Sets the foreground and background colors used for display
 void RAMN_CHIP8_SetColor(uint16_t fg, uint16_t bg);
 
@@ -47,9 +57,6 @@ void RAMN_CHIP8_StartGame(uint32_t xLastWakeTime);
 
 //Asks interpreter to stop current game
 void RAMN_CHIP8_StopGame();
-
-//Load a game stored in ECU memory
-void RAMN_CHIP8_InitFromIndex(uint8_t index);
 
 //Update the interpreter (main loop to update periodically)
 uint8_t RAMN_CHIP8_Update(uint32_t xLastWakeTime);

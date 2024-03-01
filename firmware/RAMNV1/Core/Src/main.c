@@ -1283,9 +1283,9 @@ void RAMN_ReceiveUSBFunc(void *argument)
 							else
 							{
 								token = strtok(NULL, " ");
-								if (strcmp(token, "1") == 0) {  RAMN_CHIP8_InitFromIndex(1); RAMN_USB_SendStringFromTask("Starting game 1.\r");
-								} else if (strcmp(token, "2") == 0) {  RAMN_CHIP8_InitFromIndex(2); RAMN_USB_SendStringFromTask("Starting game 2.\r");
-								} else if (strcmp(token, "3") == 0) {  RAMN_CHIP8_InitFromIndex(3); RAMN_USB_SendStringFromTask("Starting game 3.\r");
+								if (strcmp(token, "1") == 0) {  RAMN_SCREEN_StartGameFromIndex(1); RAMN_USB_SendStringFromTask("Starting game 1.\r");
+								} else if (strcmp(token, "2") == 0) {  RAMN_SCREEN_StartGameFromIndex(2); RAMN_USB_SendStringFromTask("Starting game 2.\r");
+								} else if (strcmp(token, "3") == 0) {  RAMN_SCREEN_StartGameFromIndex(3); RAMN_USB_SendStringFromTask("Starting game 3.\r");
 								}
 								else
 								{
@@ -1475,6 +1475,7 @@ void RAMN_ReceiveUSBFunc(void *argument)
 				case 's':
 					hfdcan1.Init.NominalTimeSeg1 = ASCIItoUint8(&USBRxBuffer[1U]);
 					hfdcan1.Init.NominalTimeSeg2 = ASCIItoUint8(&USBRxBuffer[3U]);
+					RAMN_FDCAN_ResetPeripheral();
 					RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
 					break;
 				case 'F':
@@ -1514,6 +1515,10 @@ void RAMN_ReceiveUSBFunc(void *argument)
 					break;
 
 					/* BELOW ARE RAMN SPECIFIC COMMANDS */
+				case 'w': //Update CAN controller settings
+					RAMN_FDCAN_ResetPeripheral();
+					RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
+					break;
 				case 'i': //Enable/Disable ISO mode
 					if (USBRxBuffer[1U] == '0') HAL_FDCAN_DisableISOMode(&hfdcan1);
 					else HAL_FDCAN_EnableISOMode(&hfdcan1);

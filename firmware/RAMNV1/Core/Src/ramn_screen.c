@@ -309,7 +309,7 @@ void RAMN_SCREEN_Init(SPI_HandleTypeDef* handler, osThreadId_t* pTask)
 }
 
 #ifdef ENABLE_UDS
-RAMN_SCREEN_RequestDrawImage(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const uint8_t* image)
+void RAMN_SCREEN_RequestDrawImage(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const uint8_t* image)
 {
 	uds_draw_request = 1U;
 	if (uds_draw_buffer != 0U) osDelay(10);
@@ -321,6 +321,37 @@ RAMN_SCREEN_RequestDrawImage(uint16_t x, uint16_t y, uint16_t w, uint16_t h, con
 	uds_draw_need_refresh = 1U;
 }
 #endif
+
+void RAMN_SCREEN_RequestGame(const uint8_t* game_to_load, uint16_t game_size)
+{
+	RAMN_SCREEN_RequestGameStop();
+	osDelay(200); //leave some time to quit the game (TODO optimize this)
+	RAMN_CHIP8_Init(game_to_load, game_size);
+	RAMN_CHIP8_StartGame(xTaskGetTickCount());
+	uds_draw_request = 0U; //make sure we override UDS draw requests
+}
+
+void RAMN_SCREEN_RequestGameStop()
+{
+	RAMN_CHIP8_StopGame();
+}
+
+void RAMN_SCREEN_StartGameFromIndex(uint8_t index)
+{
+	switch(index){
+	case 0x01:
+		RAMN_SCREEN_RequestGame(danmaku, danmaku_size);
+		break;
+	case 0x02:
+		RAMN_SCREEN_RequestGame(cave_explorer, cave_explorer_size);
+		break;
+	case 0x03:
+		RAMN_SCREEN_RequestGame(octopeg, octopeg_size);
+		break;
+	default:
+		break;
+	}
+}
 
 uint8_t RAMN_SCREEN_IsUDSScreenUpdatePending()
 {

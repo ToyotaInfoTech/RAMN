@@ -40,7 +40,16 @@ void RAMN_SCREEN_Init(SPI_HandleTypeDef* handler, osThreadId_t* pTask);
 
 #ifdef ENABLE_UDS
 //Request to draw a picture on screen (Used by UDS services)
-RAMN_SCREEN_RequestDrawImage(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const uint8_t* image);
+void RAMN_SCREEN_RequestDrawImage(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const uint8_t* image);
+
+//Request to start a game on screen
+void RAMN_SCREEN_RequestGame(const uint8_t* game_to_load, uint16_t game_size);
+
+//Request to stop any ongoing game
+void RAMN_SCREEN_RequestGameStop();
+
+//Load a game stored in ECU memory
+void RAMN_SCREEN_StartGameFromIndex(uint8_t index);
 
 //Returns 1U if a previous UDS draw command is not completed
 uint8_t RAMN_SCREEN_IsUDSScreenUpdatePending();

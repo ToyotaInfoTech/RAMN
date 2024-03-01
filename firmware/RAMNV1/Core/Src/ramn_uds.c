@@ -804,10 +804,9 @@ static void loadChip8Game(const uint8_t* data, uint16_t size)
 		}
 		else
 		{
-			RAMN_CHIP8_StopGame();
+			RAMN_SCREEN_RequestGameStop();
 			osDelay(200); //leave some time to quit the game (TODO optimize this)
-			RAMN_CHIP8_Init(&data[3], game_size);
-			RAMN_CHIP8_StartGame(xTaskGetTickCount());
+			RAMN_SCREEN_RequestGame(&data[3], game_size);
 			uds_answerData[0] = data[0] + 0x40; //positive response
 			*uds_answerSize = 1;
 		}
@@ -1466,11 +1465,11 @@ void RAMN_UDS_ProcessDiagPayload(uint32_t tick, const uint8_t* data, uint16_t si
 			case 0x3E: //TESTER PRESENT
 				RAMN_UDS_TesterPresent(data, size);
 				break;
+			case 0x41: //custom service to display pixels on screen
+				displayPixels(data, size);
+				break;
 			case 0x42: //custom service to load chip-8 games
 				loadChip8Game(data, size);
-				break;
-			case 0x43: //custom service to display pixels on screen
-				displayPixels(data, size);
 				break;
 			case 0x83: //ACCESS TIMING PARAMETERS
 				RAMN_UDS_AccessTimingParameters(data, size);
