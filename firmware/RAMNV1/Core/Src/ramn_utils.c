@@ -148,13 +148,12 @@ inline uint32_t ASCIItoUint32(const uint8_t* src)
 const uint8_t DlcToUint8convTable[] = {0,1,2,3,4,5,6,7,8,12,16,20,24,32,48,64};
 uint8_t DLCtoUINT8(uint32_t dlc_enum)
 {
-	return DlcToUint8convTable[(uint8_t)(dlc_enum >> 16U)];
+	return DlcToUint8convTable[(uint8_t)(dlc_enum)];
 }
 
 uint32_t UINT8toDLC(uint8_t dlc)
 {
-	//TODO: implement more elegantly (?)
-	return dlc << 16U;
+	return dlc; //no conversion needed with new STM32 library
 }
 
 void RAMN_memcpy(uint8_t* dst, const uint8_t* src, uint32_t size)

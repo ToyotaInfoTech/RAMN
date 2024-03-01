@@ -3,7 +3,7 @@
  ******************************************************************************
  * @attention
  *
- * <h2><center>&copy; Copyright (c) 2021 TOYOTA MOTOR CORPORATION.
+ * <h2><center>&copy; Copyright (c) 2024 TOYOTA MOTOR CORPORATION.
  * ALL RIGHTS RESERVED.</center></h2>
  *
  * This software component is licensed by TOYOTA MOTOR CORPORATION under BSD 3-Clause license,
@@ -15,6 +15,7 @@
  */
 
 #include "ramn_actuators.h"
+#include "ramn_sensors.h"
 
 #ifdef EXPANSION_BODY
 static uint8_t LEDState;
@@ -26,13 +27,6 @@ void RAMN_ACTUATORS_Init(void)
 #ifdef EXPANSION_BODY
 	LEDState = (uint8_t)(RAMN_DBC_Handle.control_lights&0xFF);
 	RAMN_SPI_UpdateLED(&LEDState);
-#endif
-
-#ifdef ENABLE_SCREEN
-	RAMN_SPI_InitScreen();
-	RAMN_SPI_DrawRectangle(0,0,LCD_WIDTH,LCD_HEIGHT,COLOR_BLACK);
-	RAMN_SPI_DrawStringColor(16,LCD_HEIGHT-48,COLOR_BLUE,COLOR_BLACK,"CANFD TX");
-	RAMN_SPI_DrawStringColor(LCD_WIDTH/2+16,LCD_HEIGHT-48,COLOR_BLUE,COLOR_BLACK,"CANFD RX");
 #endif
 
 }
@@ -54,7 +48,7 @@ void RAMN_ACTUATORS_ApplyControls(uint32_t tick)
 #elif defined(EXPANSION_POWERTRAIN) //POWERTRAIN
 	msg_control_brake.data->ramn_data.payload = RAMN_DBC_Handle.control_brake;
 	msg_control_accel.data->ramn_data.payload = RAMN_DBC_Handle.control_accel;
-	msg_control_shift.data->ramn_data.payload = RAMN_DBC_Handle.control_shift;
+	msg_control_shift.data->ramn_data.payload = RAMN_DBC_Handle.control_shift | (RAMN_SENSORS_POWERTRAIN.shift_lever << 8);
 	msg_command_horn.data->ramn_data.payload = RAMN_DBC_Handle.command_horn;
 	msg_command_turnindicator.data->ramn_data.payload = RAMN_DBC_Handle.command_turnindicator;
 

@@ -171,8 +171,8 @@ void RAMN_FDCAN_UpdateBaudrate(uint8_t newSelection)
 		break;
 	case '6': // 500k
 		hfdcan->Init.NominalPrescaler = 1;
-		hfdcan->Init.NominalTimeSeg1 = 20;
-		hfdcan->Init.NominalTimeSeg2 = 19;
+		hfdcan->Init.NominalTimeSeg1 = 63;
+		hfdcan->Init.NominalTimeSeg2 = 16;
 		break;
 	case '7': // 800k
 		hfdcan->Init.NominalPrescaler = 1;
@@ -181,13 +181,13 @@ void RAMN_FDCAN_UpdateBaudrate(uint8_t newSelection)
 		break;
 	case '8': // 1M
 		hfdcan->Init.NominalPrescaler = 1;
-		hfdcan->Init.NominalTimeSeg1 = 10;
-		hfdcan->Init.NominalTimeSeg2 = 9;
+		hfdcan->Init.NominalTimeSeg1 = 20;
+		hfdcan->Init.NominalTimeSeg2 = 19;
 		break;
 	default: // 500k
 		hfdcan->Init.NominalPrescaler = 1;
-		hfdcan->Init.NominalTimeSeg1 = 20;
-		hfdcan->Init.NominalTimeSeg2 = 19;
+		hfdcan->Init.NominalTimeSeg1 = 63;
+		hfdcan->Init.NominalTimeSeg2 = 16;
 		break;
 	}
 }
@@ -351,5 +351,4 @@ void HAL_FDCAN_ErrorStatusCallback(FDCAN_HandleTypeDef *hfdcan, uint32_t ErrorSt
 		RAMN_FDCAN_Status.busOff = True;
 	}
 }
-
 

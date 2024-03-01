@@ -6,13 +6,12 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics.
-  * All rights reserved.</center></h2>
+  * Copyright (c) 2019 STMicroelectronics.
+  * All rights reserved.
   *
-  * This software component is licensed by ST under BSD 3-Clause license,
-  * the "License"; You may not use this file except in compliance with the
-  * License. You may obtain a copy of the License at:
-  *                        opensource.org/licenses/BSD-3-Clause
+  * This software is licensed under terms that can be found in the LICENSE file in
+  * the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
@@ -152,7 +151,7 @@ typedef struct
   * @{
   */
 #define  MPU_ACCESS_NOT_SHAREABLE        0U
-#define  MPU_ACCESS_OUTER_SHAREABLE      1U
+#define  MPU_ACCESS_OUTER_SHAREABLE      2U
 #define  MPU_ACCESS_INNER_SHAREABLE      3U
 /**
   * @}
@@ -278,11 +277,15 @@ void HAL_SYSTICK_Callback(void);
 #if (__MPU_PRESENT == 1)
 void HAL_MPU_Enable(uint32_t MPU_Control);
 void HAL_MPU_Disable(void);
+void HAL_MPU_EnableRegion(uint32_t RegionNumber);
+void HAL_MPU_DisableRegion(uint32_t RegionNumber);
 void HAL_MPU_ConfigRegion(MPU_Region_InitTypeDef *MPU_RegionInit);
 void HAL_MPU_ConfigMemoryAttributes(MPU_Attributes_InitTypeDef *MPU_AttributesInit);
 #ifdef MPU_NS
 void HAL_MPU_Enable_NS(uint32_t MPU_Control);
 void HAL_MPU_Disable_NS(void);
+void HAL_MPU_EnableRegion_NS(uint32_t RegionNumber);
+void HAL_MPU_DisableRegion_NS(uint32_t RegionNumber);
 void HAL_MPU_ConfigRegion_NS(MPU_Region_InitTypeDef *MPU_RegionInit);
 void HAL_MPU_ConfigMemoryAttributes_NS(MPU_Attributes_InitTypeDef *MPU_AttributesInit);
 #endif /* MPU_NS */
@@ -373,4 +376,3 @@ void HAL_MPU_ConfigMemoryAttributes_NS(MPU_Attributes_InitTypeDef *MPU_Attribute
 #endif /* STM32L5xx_HAL_CORTEX_H */
 
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
