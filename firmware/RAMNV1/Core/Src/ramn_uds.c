@@ -784,6 +784,7 @@ static void RAMN_UDS_RoutineControlComputeCRC(const uint8_t* data, uint16_t size
 	}
 }
 
+#ifdef ENABLE_SCREEN
 static void loadChip8Game(const uint8_t* data, uint16_t size)
 {
 	uint16_t game_size = 0;
@@ -851,6 +852,7 @@ static void displayPixels(const uint8_t* data, uint16_t size)
 		}
 	}
 }
+#endif
 
 //0000 to 00FF ISO Reserved
 //0100 to 01FF Tachograph
@@ -1465,12 +1467,14 @@ void RAMN_UDS_ProcessDiagPayload(uint32_t tick, const uint8_t* data, uint16_t si
 			case 0x3E: //TESTER PRESENT
 				RAMN_UDS_TesterPresent(data, size);
 				break;
+#ifdef ENABLE_SCREEN
 			case 0x41: //custom service to display pixels on screen
 				displayPixels(data, size);
 				break;
 			case 0x42: //custom service to load chip-8 games
 				loadChip8Game(data, size);
 				break;
+#endif
 			case 0x83: //ACCESS TIMING PARAMETERS
 				RAMN_UDS_AccessTimingParameters(data, size);
 				break;
