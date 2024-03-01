@@ -347,11 +347,11 @@ UDSAnalyzer.UDS_SID_STRINGS[r[1]] + ")",LOG_ERROR)
             log("Read Memory By Address Failed, Did not receive enough bytes", LOG_ERROR)
         return dump
         
-    #Dumps the area of memory in charge of EEPROM emulation
+    #Dump the area of memory in charge of EEPROM emulation
     def dumpEEPROM(self,blockSize=0xFF0):
         return self.dumpArea(0x0803E000,0x08040000)
     
-    #Erases the current EEPROM emulation layer
+    #Erase the current EEPROM emulation layer
     def eraseCurrentEEPROM(self):
         return self.routineControl(0x01,0x0201) 
         
@@ -359,11 +359,59 @@ UDSAnalyzer.UDS_SID_STRINGS[r[1]] + ")",LOG_ERROR)
     def copyEEPROMtoAlternative(self):
         return self.routineControl(0x01,0x0202) 
      
-    #Erases the alternative firmware. Required before reprogramming.
+    #Erase the alternative firmware. Required before reprogramming.
     def eraseAlternativeBank(self):
         return self.routineControl(0x01,0xFF00)
+       
+    #Load a Chip8 game over UDS
+    def loadChip8(self, game_path):
+        bc = os.path.getsize(game_path)
+        with open(game_path, 'rb') as f:
+            data = [bc >> 8, bc&0xFF]
+            while 1:
+                b = f.read(1)
+                if not b:
+                    break
+                data += [ord(b)]
+
+        self.sendCommand(0x42,data)
+        
+    #Displays an image (236 x 195 pixels)
+    def displayImage(self, image_path):
+        from PIL import Image
+        image = Image.open(image_path).convert("RGB")
+        #size should be 236 195 to fit on RAMN canvas.
+        STARTX = 2
+        STARTY = 2
+        WIDTH = image.size[0]
+        HEIGHT = image.size[1]
+        STEP = 8 #8 max
+        log("Sending image with size {} x {}".format(WIDTH, HEIGHT), LOG_DEBUG)
+
+        payloads = []
+        for i in range(0, HEIGHT + 1, STEP):
+            Y = i
+            YLEN = (min(HEIGHT-i,STEP))
+            payload = [STARTX, STARTY+Y, WIDTH, YLEN]
+
+            for y in range(YLEN):
+                for x in range(WIDTH):
+                    r,g,b = image.getpixel((x,Y+y))
+
+                    R = r >> 3
+                    G = g >> 2
+                    B = b >> 3
+
+                    rgb565 = (R << 11) | (G << 5) | B
+             
+                    payload += [(rgb565)&0xFF]
+                    payload += [(rgb565 >> 8)&0xFF]
+
+            payloads.append(payload)
+        for payload in payloads:
+            self.sendCommand(0x41,payload)
     
-    #Verifies that firmware is correctly flashed
+    #Verify that firmware is correctly flashed
     def verify(self,filename):
         addr, size, data = getDownloadData(filename)
         log("Verifying area at address {:08x} with size {:08x}".format(addr,size),LOG_DEBUG)

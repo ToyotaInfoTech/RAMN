@@ -86,13 +86,17 @@ class RAMN_USB_Handler():
       
     def close(self,reset=True,autoReopen=False):
         #reset Filter
-        self.sendCommand(b'M00000000')
-        self.sendCommand(b'm00000000')
+        self.sendCommand(b'M00000000') #Reset CAN filter
+        self.sendCommand(b'm00000000') 
+        self.sendCommand(b'w') #Apply CAN changes
+
         
         if reset:
             self.sendCommand(b'n')
         elif autoReopen:
             self.sendCommand(b'O')
+        else:
+            self.sendCommand(b'C') #Close port
         self.flush()  
         
         time.sleep(0.2)
