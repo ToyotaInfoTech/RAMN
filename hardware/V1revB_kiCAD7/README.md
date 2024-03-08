@@ -1,1 +1,0 @@
-This folder contains the same schematics as V1 folder, but using KiCAD 7 file format.
