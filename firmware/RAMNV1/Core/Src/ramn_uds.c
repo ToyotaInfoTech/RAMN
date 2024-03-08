@@ -1258,79 +1258,75 @@ static void RAMN_UDS_ResponseOnEvent(const uint8_t* data, uint16_t size)
 
 static void RAMN_UDS_LinkControl(const uint8_t* data, uint16_t size)
 {
-	if ( size < 3U)
-	{
+	if (size <= 1U) {
 		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
+		return;
 	}
-	else
-	{
-		switch(data[1])
-		{
-		case 0x01:
-			switch(data[2])
-			{
-			case 0x10: //125000
+	switch (data[1]) {
+	case 0x01:
+		if (size < 3U) {
+			RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
+			return;
+		}
+		switch (data[2]) {
+		case 0x10: //125000
 			linkControlManager.newSettings = '4';
 			break;
-			case 0x11: //250000
-				linkControlManager.newSettings = '5';
-				break;
-			case 0x12: //500000
-				linkControlManager.newSettings = '6';
-				break;
-			case 0x13: //1000000
-				linkControlManager.newSettings = '8';
-				break;
-			case 0x01: //9600
-			case 0x02: //19200
-			case 0x03: //38400
-			case 0x04: //57600
-			case 0x05: //115200
-			case 0x20: //ProgrammingSetup
-			default:
-				linkControlManager.newSettings = 0U;
-				break;
-			}
-			if (linkControlManager.newSettings != 0U)
-			{
+		case 0x11: //250000
+			linkControlManager.newSettings = '5';
+			break;
+		case 0x12: //500000
+			linkControlManager.newSettings = '6';
+			break;
+		case 0x13: //1000000
+			linkControlManager.newSettings = '8';
+			break;
+		case 0x01: //9600
+		case 0x02: //19200
+		case 0x03: //38400
+		case 0x04: //57600
+		case 0x05: //115200
+		case 0x20: //ProgrammingSetup
+		default:
+			linkControlManager.newSettings = 0U;
+			break;
+		}
+		if (linkControlManager.newSettings != 0U) {
+			RAMN_UDS_FormatPositiveResponseEcho(data, 2U);
+		} else {
+			RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_ROOR);
+		}
+		break;
+	case 0x83: //suppressPosRspMsgIndicationBit
+	case 0x03:
+		if (size < 2U) {
+			RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
+			return;
+		}
+		if (linkControlManager.newSettings == 0U) {
+			RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_CNC);
+		} else {
+			//Request Silence
+			uint8_t tmp = RAMN_DBC_RequestSilence;
+			RAMN_DBC_RequestSilence = 1U;
+			RAMN_FDCAN_Disable();
+			//Delay to let other ECU adapt to new baudrate
+			osDelay(1000);
+			//Authorize communication again
+			RAMN_FDCAN_UpdateBaudrate(linkControlManager.newSettings);
+			RAMN_FDCAN_ResetPeripheral();
+			//Restore original settings
+			RAMN_DBC_RequestSilence = tmp;
+			if ((data[1] & 0x80) == 0U) {
+				//Send response if required
 				RAMN_UDS_FormatPositiveResponseEcho(data, 2U);
 			}
-			else
-			{
-				RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_ROOR);
-			}
-			break;
-			case 0x83: //suppressPosRspMsgIndicationBit
-			case 0x03:
-				if (linkControlManager.newSettings == 0U)
-				{
-					RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_CNC);
-				}
-				else
-				{
-					//Request Silence
-					uint8_t tmp = RAMN_DBC_RequestSilence;
-					RAMN_DBC_RequestSilence = 1U;
-					RAMN_FDCAN_Disable();
-					//Delay to let other ECU adapt to new baudrate
-					osDelay(1000);
-					//Authorize communication again
-					RAMN_FDCAN_UpdateBaudrate(linkControlManager.newSettings);
-					RAMN_FDCAN_ResetPeripheral();
-					//Restore original settings
-					RAMN_DBC_RequestSilence = tmp;
-					if ((data[1]&0x80) == 0U)
-					{
-						//Send response if required
-						RAMN_UDS_FormatPositiveResponseEcho(data, 2U);
-					}
-				}
-				break;
-			default:
-				RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SFNS);
-				break;
-
 		}
+		break;
+	default:
+		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SFNS);
+		break;
+
 	}
 }
 
