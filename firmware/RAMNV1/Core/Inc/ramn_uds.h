@@ -29,7 +29,7 @@
 #include "ramn_dbc.h"
 #include "ramn_trng.h"
 #include "ramn_crc.h"
-
+#include "ramn_screen.h"
 #if defined(ENABLE_EEPROM_EMULATION)
 #include "ramn_dtc.h"
 #endif

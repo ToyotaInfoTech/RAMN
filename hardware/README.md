@@ -1,7 +1,7 @@
-V1 folder contains hardware design files for the recommended "V1" version, using 48-pin STM32L5 microcontrollers.
+# Design files
 
-STM32_100pin_Variant contains hardware design files for a RAMN using 100-pin STM32L5 microcontrollers, potentially easier to source.
+This project contains KiCAD projects for RAMN's hardware.
 
-BETA folder contains hardware design for the deprecated "BETA" version, for reference only.
-
-Copyright (c) 2022 TOYOTA MOTOR CORPORATION. ALL RIGHTS RESERVED.
+- V1_revB is the default version for RAMN. It is designed with KiCAD 5.
+- V1_revC is a recent version of RAMN, modified to be compatible with STM32U5 microcontrollers. It is designed with KiCAD 7.
+- STM32_100pin_Variant is an alternative version of RAMN, modified to be compatible with 100-pin microcontrollers.

@@ -42,6 +42,8 @@ typedef volatile struct
 	volatile uint64_t command_turnindicator;	//CANID_COMMAND_TURNINDICATOR
 	volatile uint64_t control_enginekey;		//CANID_CONTROL_ENGINEKEY
 	volatile uint64_t control_lights; 			//CANID_CONTROL_LIGHTS
+	volatile uint32_t horn_count; //counts how many times the horn button has been pressed
+
 } RAMN_DBC_Handle_t;
 
 //DBC Database, always holds the most recent input and ouput of CAN/Sensors/Actuators

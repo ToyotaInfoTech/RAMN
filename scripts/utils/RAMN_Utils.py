@@ -45,7 +45,8 @@ class RAMN_Utils:
     CAN_REFRESH_RATE = 200
     VCAND_HARDWARE_PORT = None
     SERIAL_FORWARD_TARGET = ''
-    
+
+
     @staticmethod
     def setVerboseLevel(level):
         RAMN_Utils.VERBOSE_LEVEL = level
@@ -468,6 +469,8 @@ class UDSAnalyzer(object):
         0x37:"Request Transfer Exit",
         0x38:"Request File Transfer",
         0x3F:"Negative",
+        0x41:"RAMN Custom Image Service",
+        0x42:"RAMN Custom CHIP8 Service",
         0x83:"Access Timing Parameters",
         0x84:"Secured Data Transmission",
         0x85:"Control DTC Settings",

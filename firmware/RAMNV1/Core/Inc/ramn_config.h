@@ -30,7 +30,7 @@
 #define SIM_LOOP_CLOCK_MS 10
 
 //Enable watchdogs - Application needs to kick it every 1s
-#define WATCHDOG_ENABLE
+//#define WATCHDOG_ENABLE
 
 #if defined(TARGET_ECUA)
 #define ENABLE_USB
@@ -38,6 +38,8 @@
 
 //Automatically stops transceiving when serial port close is detected. May not work well with some OS/Applications
 //#define ENABLE_USB_AUTODETECT
+//#define START_IN_CLI_MODE  // will start in CLI mode instead of slcan if enabled
+
 //#define GENERATE_RUNTIME_STATS //requires to add "volatile" keyword to static uint32_t ulTotalRunTime = 0UL;
 //If CAN_ECHO is enabled, ECU A will repeat whatever message it accepts over USB
 //#define CAN_ECHO
@@ -50,6 +52,7 @@
 #if defined(TARGET_ECUB)
 //#define ENABLE_SCREEN
 #define EXPANSION_CHASSIS
+#define CHASSIS_LOGARITHMIC_POTENTIOMETER
 #define ENABLE_REPROGRAMMING
 #define ENABLE_UDS
 #define ENABLE_KWP
@@ -76,6 +79,9 @@
 #if defined(ENABLE_UDS) || defined(ENABLE_KWP) || defined(ENABLE_XCP)
 #define ENABLE_DIAG
 #define ENABLE_EEPROM_EMULATION
+#if defined(ENABLE_SCREEN)
+#define UDS_DRAW_BUFFER_SIZE 0x1000
+#endif
 #endif
 
 #if defined(ENABLE_UDS) || defined(ENABLE_KWP)
@@ -92,9 +98,9 @@
 
 #ifdef TARGET_ECUA
 #define USB_RX_BUFFER_SIZE 				20000
-#define USB_TX_BUFFER_SIZE 				40000
+#define USB_TX_BUFFER_SIZE 				20000
 #define CAN_RX_BUFFER_SIZE 				20000
-#define CAN_TX_BUFFER_SIZE 				60000
+#define CAN_TX_BUFFER_SIZE 				20000
 #define UDS_ISOTP_RX_BUFFER_SIZE 		0xFFF+2 //Add +2 for buffer-size
 #define UDS_ISOTP_TX_BUFFER_SIZE 		0xFFF+2
 
