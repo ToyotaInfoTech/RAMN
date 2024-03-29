@@ -1,4 +1,3 @@
-
 # Canboot
 
 <img src="https://github.com/ToyotaInfoTech/RAMN/blob/main/docs/gif/reprog.gif?raw=true" width="1000">
@@ -8,6 +7,8 @@ Canboot is a tool written in python to reprogram RAMN's ECUs over CAN using STM3
 It can be used to reprogram ECUs B, C, and D. 
 
 ECU A can be reprogrammed using DFU over USB.
+
+Check the [Documentation](https://ramn.readthedocs.io/en/latest/hardware/Fabrication/flashing.html) for details.
 
 ## Usage
 
@@ -44,15 +45,15 @@ ECU A can then be reprogrammed on Linux with dfu-util, or on Windows with STM32_
 
 
 ```
-$dfu-util  -d 0x0483:0xdf11 -c1 -a0 -D "ECUA.hex"
+$dfu-util  -d 0x0483:0xdf11 -c1 -a0 -D ECUA.bin --dfuse-address 0x08000000:leave	
 ```
 
 ### Windows
 
 ```
-$STM32_Programmer_CLI.exe -c port=usb1 pid=0xdf11 vid=0x0483 -d ..\..\firmware\ECUA.hex --verify --start 0x08000000 
+$STM32_Programmer_CLI.exe -c port=usb1 pid=0xdf11 vid=0x0483 -d ECUA.hex --verify --start 0x08000000 
 ```
 
 ## Other
 
-*Copyright (c) 2021 TOYOTA MOTOR CORPORATION. ALL RIGHTS RESERVED.*
+*Copyright (c) 2024 TOYOTA MOTOR CORPORATION. ALL RIGHTS RESERVED.*
