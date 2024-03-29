@@ -148,7 +148,7 @@ void RAMN_DBC_ProcessCANMessage(uint32_t canid, uint32_t dlc, const RAMN_CANFram
 #endif
 #ifdef RECEIVE_COMMAND_LIGHTS
 		case CAN_SIM_COMMAND_LIGHTS_CANID:
-			RAMN_DBC_Handle.command_lights 				= dataframe->ramn_data.payload&0xFF;
+			RAMN_DBC_Handle.command_lights 				= dataframe->ramn_data.payload&0xFFFF;
 			break;
 #endif
 #ifdef RECEIVE_CONTROL_LIGHTS

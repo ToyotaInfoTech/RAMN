@@ -20,10 +20,10 @@
 #define INC_RAMN_CONFIG_H_
 
 #if !defined(TARGET_ECUA) && !defined(TARGET_ECUB) && !defined(TARGET_ECUC) && !defined(TARGET_ECUD)
-#define TARGET_ECUA
+//#define TARGET_ECUA
 //#define TARGET_ECUB
 //#define TARGET_ECUC
-//#define TARGET_ECUD
+#define TARGET_ECUD
 #endif
 
 //Loop time for the "simulator" that is executed periodically
