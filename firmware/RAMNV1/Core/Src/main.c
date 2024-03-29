@@ -1717,6 +1717,7 @@ void RAMN_ReceiveUSBFunc(void *argument)
 							USBRxBuffer[ansSize*2+4] = '\r';
 							//add 1 for %, 1 for \r
 							RAMN_USB_SendFromTask(USBRxBuffer,(ansSize*2)+5);
+							RAMN_UDS_PerformPostAnswerActions(xTaskGetTickCount(), diagRxUSBbuf, reqSize, diagTxUSBbuf, &ansSize);
 						}
 						else RAMN_USB_SendFromTask((uint8_t*)"\a",1);
 					}
@@ -2052,6 +2053,7 @@ void RAMN_DiagRXFunc(void *argument)
 						if( xBytesSent != (diagTxSize + sizeof(diagTxSize) )) Error_Handler();
 						xTaskNotifyGive(RAMN_DiagTXHandle);
 					}
+					RAMN_UDS_PerformPostAnswerActions(xTaskGetTickCount(), diagRxbuf, diagRxSize, diagTxbuf, &diagTxSize);
 				}
 			}
 		}

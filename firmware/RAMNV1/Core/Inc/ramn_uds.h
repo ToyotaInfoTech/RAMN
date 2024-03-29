@@ -67,6 +67,8 @@ RAMN_Bool_t		RAMN_UDS_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, 
 //Process a fully reconstructed ISO-TP Diag Frame.
 void	 		RAMN_UDS_ProcessDiagPayload(uint32_t tick, const uint8_t* data, uint16_t size, uint8_t* answerData, uint16_t* answerSize);
 
+//Performs an action after the ECU sent the UDS answer. Used by services that cannot answer after execution, e.g., because they reset the board.
+void 			RAMN_UDS_PerformPostAnswerActions(uint32_t tick, const uint8_t* data, uint16_t size, uint8_t* answerData, uint16_t* answerSize);
 
 
 #endif

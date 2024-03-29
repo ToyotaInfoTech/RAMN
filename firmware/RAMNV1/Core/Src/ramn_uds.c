@@ -267,8 +267,7 @@ static void RAMN_UDS_ECUReset(const uint8_t* data, uint16_t size)
 		{
 		case RESET_HARD_RESET:
 			RAMN_UDS_FormatPositiveResponseEcho(data, size);
-			HAL_NVIC_SystemReset();
-			//TODO: wait successful transmission before reset
+			//Note that actual reset is performed after sending the answer
 			break;
 		default:
 			RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SFNS);
@@ -1314,6 +1313,21 @@ static void RAMN_UDS_ResponseOnEvent(const uint8_t* data, uint16_t size)
 	RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SNS);
 }
 
+static void performLinkControlUpdate()
+{
+	//Request Silence
+	uint8_t tmp = RAMN_DBC_RequestSilence;
+	RAMN_DBC_RequestSilence = 1U;
+	RAMN_FDCAN_Disable();
+	//Delay to let other ECU adapt to new baudrate
+	osDelay(1000);
+	//Authorize communication again
+	RAMN_FDCAN_UpdateBaudrate(linkControlManager.newSettings);
+	RAMN_FDCAN_ResetPeripheral();
+	//Restore original settings
+	RAMN_DBC_RequestSilence = tmp;
+}
+
 static void RAMN_UDS_LinkControl(const uint8_t* data, uint16_t size)
 {
 	if (size <= 1U) {
@@ -1364,20 +1378,16 @@ static void RAMN_UDS_LinkControl(const uint8_t* data, uint16_t size)
 			if (linkControlManager.newSettings == 0U) {
 				RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_CNC);
 			} else {
-				//Request Silence
-				uint8_t tmp = RAMN_DBC_RequestSilence;
-				RAMN_DBC_RequestSilence = 1U;
-				RAMN_FDCAN_Disable();
-				//Delay to let other ECU adapt to new baudrate
-				osDelay(1000);
-				//Authorize communication again
-				RAMN_FDCAN_UpdateBaudrate(linkControlManager.newSettings);
-				RAMN_FDCAN_ResetPeripheral();
-				//Restore original settings
-				RAMN_DBC_RequestSilence = tmp;
+
 				if ((data[1] & 0x80) == 0U) {
 					//Send response if required
 					RAMN_UDS_FormatPositiveResponseEcho(data, 2U);
+					//actual update performed after answer is sent
+				}
+				else
+				{
+					//If no answer requested, perform action now
+					performLinkControlUpdate();
 				}
 			}
 			break;
@@ -1549,6 +1559,34 @@ void RAMN_UDS_ProcessDiagPayload(uint32_t tick, const uint8_t* data, uint16_t si
 				RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SNS);
 				break;
 			}
+		}
+	}
+}
+
+void RAMN_UDS_PerformPostAnswerActions(uint32_t tick, const uint8_t* data, uint16_t size, uint8_t* answerData, uint16_t* answerSize)
+{
+	if (*answerSize > 0){
+		switch (answerData[0])
+		{
+		case (0x11+0x40):
+				//Reset was accepted
+				osDelay(500);
+				HAL_NVIC_SystemReset();
+		break;
+		case (0x87+0x40):
+			//Link Control update was accepted
+			if (*answerSize > 1)
+			{
+				if (answerData[1] == 0x03)
+				{
+					osDelay(500);
+					performLinkControlUpdate();
+				}
+			}
+			break;
+		default:
+			break;
+
 		}
 	}
 }
