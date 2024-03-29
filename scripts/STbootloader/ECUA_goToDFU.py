@@ -23,20 +23,19 @@ def ECUA_goToDFU(serial_port):
     click.echo("Putting ECU A into DFU Mode")
     
     if serial_port == "AUTO":
-        serial_port = utils.RAMN_Utils.getRamnPort()
+        serial_port = utils.RAMN_Utils.autoDetectRAMNPort()
     
     try:
-        click.echo("Opening port {}".format(serial_port)) 
         ser = serial.Serial(serial_port,timeout=10)
+        click.echo("Opening port {}".format(serial_port)) 
         ser.write(b'DzZ\r')
         ser.flush()
-        time.sleep(2)
+        time.sleep(1)
         while ser.in_waiting != 0:
-            r = ser.read(ser.in_waiting)
-        time.sleep(2)    
+            r = ser.read(ser.in_waiting)  
         click.echo("Done")
     except Exception as e:
-        click.echo("ERROR: " + str(e))
+        click.echo("No COM Port (device probably in DFU mode)" + str(e))
         pass
 
 if __name__ == '__main__':
