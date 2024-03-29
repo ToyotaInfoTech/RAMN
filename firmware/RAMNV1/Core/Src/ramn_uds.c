@@ -752,6 +752,28 @@ static void RAMN_UDS_RoutineControlRequestSilence(const uint8_t* data, uint16_t 
 	}
 }
 
+//Emergency Routine to reset BOOT0 option bytes
+//Used to salvage a board on which the wrong firmware was flashed, that refuses to go to bootloader mode
+//Note that this command should reset board automatically, so it should not answer
+static void RAMN_UDS_RoutineControlResetBootOptionBytes(const uint8_t* data, uint16_t size)
+{
+	if( size != 4U )
+	{
+		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
+	}
+	else{
+		switch (data[1]){
+		case 0x01://Start
+			RAMN_FLASH_ConfigureOptionBytesBootloaderMode();
+			RAMN_UDS_FormatPositiveResponseEcho(data, size);
+			break;
+		default: //Invalid
+			RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SFNS);
+			break;
+		}
+	}
+}
+
 //Routine Control that returns the CRC for specified area
 static void RAMN_UDS_RoutineControlComputeCRC(const uint8_t* data, uint16_t size)
 {
@@ -926,6 +948,9 @@ static void RAMN_UDS_RoutineControl(const uint8_t* data, uint16_t size)
 			break;
 		case 0x0206: //Compute CRC
 			RAMN_UDS_RoutineControlComputeCRC(data,size);
+			break;
+		case 0x0210: //Reset Option Bytes:
+			RAMN_UDS_RoutineControlResetBootOptionBytes(data,size)
 			break;
 		default:
 			RAMN_UDS_FormatNegativeResponse(data,UDS_NRC_ROOR);
