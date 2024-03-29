@@ -46,7 +46,7 @@ By default, the CAN bus is always active when the power is on, so you may leave 
 
 - LED D1 is the left turn indicator. It should start blinking if you left-press the joystick of ECU C.
 - LED D2 is the right turn indicator. It should start blinking if you right-press the joystick of ECU C.
-- LED D3, D4, and D5 represent the clearance light, lhe lo-beam, and the hi-beam, respectively. They light up in order when you turn the lighting control switch on ECU B.
+- LED D3, D4, and D5 represent the clearance light, the lo-beam, and the hi-beam, respectively. They should light up in order when you turn the lighting control switch on ECU B.
 - LED D6 is the "battery" indicator. By default, it is ON when the engine key is either on "ACC" or "IGN".
 - LED D7 is the "check engine" indicator. By default, it is ON when the steering wheel potentiometer is not centered. It is used to indicate that the self-driving algorithm commands are currently ignored, and the current position of the steering wheel potentiometer is applied instead.
 - LED D8 is the "parking brake" LED. It is ON when the parking brake is active. Contrary to a real vehicle, this LED is also ON when the brake pedal is pressed.
@@ -59,8 +59,8 @@ By default, the CAN bus is always active when the power is on, so you may leave 
     The board is still usable as is, but you will probably need to update the firmware of ECU B if you want the drive a vehicle in the simulator.
 
 Before going any further, you should verify that you board works correctly. Connect your board to the USB port of your computer, or to a USB power supply that can provide more than 300mA. The status of each control should be displayed at the bottom of the screen of ECU A.
-Move each control and verify that their status are updated on the screen (and LEDs, when applicable).
-If that is not the case, you may need to reprogram you board (See :ref:`flashing`).
+Move each control and verify that its status is updated on the screen (and LEDs, when applicable).
+If that is not the case, you may need to reflash you board (See :ref:`flashing`).
 
 
 Choosing Your CAN Tools
@@ -72,15 +72,16 @@ To interact with RAMN's CAN bus, you have two options:
 - Use RAMN built-in tools.
 
 If you want to use your own tools, you only need to connect the "CANH" and "CANL" wires of your tool to the terminal block of the CAN bus of RAMN, located at the top right of the board (RAMN itself acts as an "slcan" adapter over USB, so if your software is compatible with slcan you do not need to connect any hardware).
-Each pin of the terminal block consist of a large round hole, and a smaller rectangular hole. You should insert the wire that you want to connect in the round hole, and an internal spring will lock it in place. To remove a wire, insert something in the rectangular hole (e.g., a precision driver) and pull the wire.
-The terminal block has three pins, and the corresponding signals are shown on the silkscreen next to it:
+Each pin of the terminal block consists of a large round hole, and a smaller rectangular hole. You should insert the wire that you want to connect in the round hole, and an internal spring will lock it in place.
+To remove a wire, insert something in the rectangular hole (e.g., a precision scewdriver) and pull the wire.
+The terminal block has three pins, and the corresponding signals are labeled on the silkscreen next to it:
 
 - Top pin is GND (Ground).
 - Middle pin is CANL (CAN Low).
 - Bottom pin is CANH (CAN High).
 
 You only need to connect the CANH and CANL pins of RAMN to the CANH and CANL pins of your CAN adapter.
-After that, you should be ready to use your favorite set of tools. The CAN bus is always active as long as the RAMN board is powered, and you can interact with UDS features at ID 0x7e0/0x7e8 for ECU A, ID 0x7e1/0x7e9 for ECU B, ID 0x7e2/0x7ea for ECU C, and ID 0x7e3/0x7eb for ECU D.
+After that, you should be ready to use your favorite set of tools. The CAN bus is always active as long as the RAMN board is powered.
 
 The rest of this documentation focuses on built-in tools.
 
@@ -99,8 +100,8 @@ On Windows, we recommend that you install VirtualBox and use a Linux distributio
 
 - `Download and install VirtualBox <https://www.virtualbox.org/wiki/Downloads>`_.
 - `Download a Kali Linux VirtualBox Image <https://www.kali.org/get-kali/#kali-installer-images>`_.
-- Unzip the 7z image using `7zip <https://www.7-zip.org/>`_).
-- Double-click the vbox file to open it with VirtualBox. For faster USB communications, you can open Settings > USB and select USB 2.0 or USB 3.0.
+- Unzip the 7z image using `7zip <https://www.7-zip.org/>`_.
+- Double-click the vbox file to open it with VirtualBox. If you encounter USB issues, open Settings > USB and try USB 2.0 or USB 3.0 (virtual machine must be powered off).
 - Login with username kali (password kali).
 
 From here, you should be able to follow the Linux instructions below.
@@ -108,7 +109,7 @@ From here, you should be able to follow the Linux instructions below.
 Linux
 """""
 
-- Open a terminal window (e.g., right-click the desktop and click "Open Terminal here".
+- Open a terminal window (e.g., right-click the desktop and click "Open Terminal here").
 - Type the following commands to install can-utils
 
 .. code-block:: bash
@@ -120,10 +121,11 @@ USB Connection
 ^^^^^^^^^^^^^^
 
 Connect your board to your computer using a USB cable. On Windows, it should appear as a "USB Serial Device" and be attributed a COM port number (e.g., COM1).
-If that is not the case, you may need to install `STM32 COM Port Drivers <https://www.st.com/en/development-tools/stsw-stm32102.html>`_.
+If that is not the case, you may need to install `STM32 Virtual COM Port Drivers <https://www.st.com/en/development-tools/stsw-stm32102.html>`_.
 
-Once the board is recognized by windows, you must forward the USB port to the Virtual Box. Select Devices > USB > Toyota Motor Corporation RAMN Virtual ComPort.
-You can use Devices > USB > USB Settings..., click the + icon and add RAMN so that Virtual Box will always automatically forward the USB port automatically.
+Once the board is recognized by windows, you must forward the USB port to Virtual Box. Select Devices > USB and click Toyota Motor Corporation RAMN Virtual ComPort.
+You can open Devices > USB > USB Settings..., then click the + icon to add RAMN so that Virtual Box will always automatically forward the USB port.
+
 On Linux, RAMN should appear at the end of the dmesg command, and be attributed a device file (typically, /dev/ttyACM0).
 
 
@@ -153,13 +155,13 @@ To observe the most recent CAN message for each identifier and highlight bit cha
 
     $ cansniffer -c can0
 
-The first two bytes of each message represent the status of something on the board. Try moving actuators and observe how these values change.
+The first two bytes of each message represent the status of something on the board. Try moving controls and observe how these values change.
 The following two bytes represent a message counter, and the last 4 bytes represent a random value.
 
 Dumping CAN Traffic
 ^^^^^^^^^^^^^^^^^^^
 
-If you want to see all CAN frames instead of the most recent frame, you can use the candump command.
+If you want to see all CAN frames instead of the most recent frame for each identifier, you can use the candump command.
 
 .. code-block:: bash
 
@@ -223,7 +225,7 @@ Open yet another terminal, and type the following command:
 
     $ isotprecv -s 7e9 -d 7e1 -l can0
 
-This command will receive and display the answers to the UDS commands that you send.
+This command will receive and display the answers to the UDS commands that you send to ECU B.
 
 Finally, open a fourth terminal and type the following command to send your first UDS command to ECU B:
 
@@ -245,7 +247,7 @@ You can use UDS to send and receive large payloads. For example, use the "Read D
     $ echo "22 F1 84" | isotpsend -s 7e1 -d 7e9 can0
 
 You should see in your "isotprecv" terminal that you have received a large answer, that should be interpreted by your "isotpdump" terminal.
-If you observe your "candump" terminal, you will observe that many CAN messages have been exchanged. This corresponds to the ISO-TP layer, which allows sending large messages using only CAN frames with less than 8 bytes each.
+In your "candump" terminal, you can observe that many CAN messages have been exchanged. This corresponds to the ISO-TP layer, which allows sending large messages using only CAN frames with less than 8 bytes each.
 Isotpdump, isotpsend, and isotprecv make this layer transparent to you.
 
 Finally, you can use RAMN custom routine controls (UDS service 0x31) to ask ECU B to stop sending CAN messages (Routine 0x0200).
@@ -254,7 +256,7 @@ Finally, you can use RAMN custom routine controls (UDS service 0x31) to ask ECU 
 
     $ echo "31 01 02 00" | isotpsend -s 7e1 -d 7e9 can0
 
-move the lighting switch and observe how the LEDs of ECU D do not change anymore.
+Move the lighting switch and observe how the LEDs of ECU D do not change anymore.
 You can now control the lighting switch with the following commands, without ECU B being in your way.
 
 .. code-block:: bash
