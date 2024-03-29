@@ -47,7 +47,9 @@
 //#define GENERATE_RUNTIME_STATS //requires to add "volatile" keyword to static uint32_t ulTotalRunTime = 0UL;
 //If CAN_ECHO is enabled, ECU A will repeat whatever message it accepts over USB
 //#define CAN_ECHO
-//#define ENABLE_REPROGRAMMING
+
+//UDS programming do not work on microcontrollers with 256 kb memory
+#define ENABLE_REPROGRAMMING
 #define ENABLE_UDS
 //#define ENABLE_KWP
 //#define ENABLE_XCP

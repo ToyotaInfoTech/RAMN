@@ -1059,7 +1059,15 @@ static void RAMN_UDS_RequestDownloadUpload(const uint8_t* data, uint16_t size, T
 static void RAMN_UDS_RequestDownload(const uint8_t* data, uint16_t size)
 {
 #if defined(ENABLE_REPROGRAMMING)
-	RAMN_UDS_RequestDownloadUpload(data, size,TRANSFER_DOWNLOADING);
+	uint16_t memsize = *(const uint16_t*)FLASHSIZE_BASE;
+	if (memsize == 512)
+	{
+		RAMN_UDS_RequestDownloadUpload(data, size,TRANSFER_DOWNLOADING);
+	}
+	else
+	{
+		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SNS);
+	}
 #else
 	RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SNS);
 #endif
