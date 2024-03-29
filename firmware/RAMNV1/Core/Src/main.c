@@ -1952,6 +1952,7 @@ void RAMN_PeriodicTaskFunc(void *argument)
 #if defined(ENABLE_DIAG)
 		RAMN_DIAG_Update(xLastWakeTime);
 #endif
+
 		vTaskDelayUntil(&xLastWakeTime, SIM_LOOP_CLOCK_MS);
 
 #if defined (ENABLE_USB) && defined(ENABLE_USB_AUTODETECT)
@@ -2000,6 +2001,14 @@ void RAMN_ErrorTaskFunc(void *argument)
 #if defined(ENABLE_USB)
 		RAMN_DEBUG_PrintCANError(&errorCount, &protocolStatus, &gw_freeze, err);
 #endif
+
+#if defined(AUTO_RECOVER_BUSOFF)
+		if (protocolStatus.BusOff != 0U)
+		{
+			RAMN_FDCAN_ResetPeripheral();
+		}
+#endif
+
 		//If a transmission failed, the "transmission complete" notification will not be sent. We may need to wake up the CAN send thread (?) TODO: check
 		//Normally, we should only require it if protocolStatus.Activity == FDCAN_COM_STATE_TX, but it is safer to notify the thread whatever the error is.
 		/* if (protocolStatus.Activity == FDCAN_COM_STATE_TX) */

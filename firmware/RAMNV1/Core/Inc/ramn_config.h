@@ -38,7 +38,11 @@
 
 //Automatically stops transceiving when serial port close is detected. May not work well with some OS/Applications
 //#define ENABLE_USB_AUTODETECT
+
 //#define START_IN_CLI_MODE  // will start in CLI mode instead of slcan if enabled
+
+//This define can be used to reset peripheral if it enters bus-off mode (not recommended unless you know what you are doing)
+//#define AUTO_RECOVER_BUSOFF
 
 //#define GENERATE_RUNTIME_STATS //requires to add "volatile" keyword to static uint32_t ulTotalRunTime = 0UL;
 //If CAN_ECHO is enabled, ECU A will repeat whatever message it accepts over USB
