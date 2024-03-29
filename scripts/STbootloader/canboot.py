@@ -643,6 +643,16 @@ def canboot(serial_port,ecu_name,readout_unprotect,readout_protect,write_unprote
         log("Error - make sure that external CAN adapters are disconnected, they prevent a required baudrate change",LOG_ERROR)
         errHappened = True
     
+   
+    try:
+        option_byte = s.readMemory(0x40022042,1) 
+        option_byte_integer = int(option_byte, 16)
+
+        if (option_byte_integer >> 4)&0x1 != 0:
+            log("Bank swap active! You may want to check the option bytes.", LOG_WARNING)
+    except:
+        log("Could not read option bytes", LOG_ERROR)
+    
     if info:
         log("Asking target uC for info",LOG_OUTPUT)
         s.printTargetInfo()
