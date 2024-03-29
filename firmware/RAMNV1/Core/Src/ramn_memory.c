@@ -85,6 +85,8 @@ RAMN_Result_t RAMN_FLASH_ConfigureOptionBytesApplicationMode(void)
 	else return RAMN_ERROR;
 }
 
+#endif
+
 RAMN_Result_t RAMN_FLASH_ConfigureOptionBytesBootloaderMode(void)
 {
 	//TODO: Do not overwrite option bytes, but simply jump to bootloader ?
@@ -119,7 +121,6 @@ RAMN_Result_t RAMN_FLASH_ConfigureOptionBytesBootloaderMode(void)
 	else return RAMN_ERROR;
 }
 
-#endif
 
 RAMN_Result_t RAMN_FLASH_SwitchActiveBank(void)
 {

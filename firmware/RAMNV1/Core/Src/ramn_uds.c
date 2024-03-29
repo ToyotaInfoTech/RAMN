@@ -763,8 +763,14 @@ static void RAMN_UDS_RoutineControlResetBootOptionBytes(const uint8_t* data, uin
 	else{
 		switch (data[1]){
 		case 0x01://Start
-			RAMN_FLASH_ConfigureOptionBytesBootloaderMode();
-			RAMN_UDS_FormatPositiveResponseEcho(data, size);
+			if (RAMN_FLASH_ConfigureOptionBytesBootloaderMode() != RAMN_OK)
+			{
+				RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_GPF);
+			}
+			else
+			{
+				RAMN_UDS_FormatPositiveResponseEcho(data, size);
+			}
 			break;
 		default: //Invalid
 			RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SFNS);
@@ -1568,12 +1574,12 @@ void RAMN_UDS_PerformPostAnswerActions(uint32_t tick, const uint8_t* data, uint1
 	if (*answerSize > 0){
 		switch (answerData[0])
 		{
-		case (0x11+0x40):
-				//Reset was accepted
-				osDelay(500);
-				HAL_NVIC_SystemReset();
-		break;
-		case (0x87+0x40):
+		case 0x51:
+			//Reset was accepted
+			osDelay(500);
+			HAL_NVIC_SystemReset();
+			break;
+		case 0xC7:
 			//Link Control update was accepted
 			if (*answerSize > 1)
 			{
