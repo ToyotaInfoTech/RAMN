@@ -19,7 +19,7 @@
 # -- Project information -----------------------------------------------------
 
 project = 'RAMN'
-copyright = '2021 TOYOTA MOTOR CORPORATION. ALL RIGHTS RESERVED'
+copyright = '2024 TOYOTA MOTOR CORPORATION. ALL RIGHTS RESERVED'
 author = 'Toyota Motor Corporation'
 
 # The full version, including alpha/beta/rc tags
@@ -44,7 +44,7 @@ templates_path = ['_templates']
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = []
+exclude_patterns = ['venv/*']
 
 
 # -- Options for HTML output -------------------------------------------------
