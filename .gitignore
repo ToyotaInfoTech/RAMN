@@ -13,3 +13,7 @@ firmware/RAMNV1_CTF/.settings/language.settings.xml
 firmware/RAMNV1/.cproject
 firmware/RAMNV1/.mxproject
 /firmware/RAMNV1/Release
+/scripts/utils/__pycache__
+/docs/.idea
+/hardware/V1_revC/0_ramn/ramn-backups
+hardware/V1_revC/0_ramn/fp-info-cache

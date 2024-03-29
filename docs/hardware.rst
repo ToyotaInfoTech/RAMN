@@ -98,4 +98,11 @@ Design Rules
    :maxdepth: 2
    
    hardware/designrules
-   
+
+Fabrication
+-----------
+
+.. toctree::
+   :maxdepth: 2
+
+   hardware/fabrication

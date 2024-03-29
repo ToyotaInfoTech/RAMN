@@ -12,4 +12,5 @@ Documentation of RAMN: Resistant Automotive Miniature Network
    hardware
    firmware
    scripts
-   
+   quickstart
+   userguide
