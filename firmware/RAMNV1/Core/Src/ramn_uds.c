@@ -774,6 +774,36 @@ static void RAMN_UDS_RoutineControlResetBootOptionBytes(const uint8_t* data, uin
 	}
 }
 
+//Emergency Routine to force an ECU to swap its memory banks.
+//This can be used to revert to a previous firmware (WITHOUT ANY CHECK) and fix issues when STM32 embedded bootloader/STM32CubeProgrammer/STM32CubeIDE do not work well with bank swaps.
+//Do not use unless you know what you are doing.
+static void RAMN_UDS_RoutineControlForceMemorySwap(const uint8_t* data, uint16_t size)
+{
+	if( size != 4U )
+	{
+		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
+	}
+	else{
+		switch (data[1]){
+		case 0x01://Start
+			if (RAMN_FLASH_SwitchActiveBank() != RAMN_OK)
+			{
+				RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_GPF);
+			}
+			else
+			{
+				RAMN_UDS_FormatPositiveResponseEcho(data, size);
+			}
+			break;
+		default: //Invalid
+			RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SFNS);
+			break;
+		}
+	}
+}
+
+
+
 //Routine Control that returns the CRC for specified area
 static void RAMN_UDS_RoutineControlComputeCRC(const uint8_t* data, uint16_t size)
 {
@@ -863,9 +893,9 @@ static void displayPixels(const uint8_t* data, uint16_t size)
 		{
 			if (RAMN_SCREEN_IsUDSScreenUpdatePending() == 0U)
 			{
-			RAMN_SCREEN_RequestDrawImage(x,y,w,h,&data[5]);
-			uds_answerData[0] = data[0] + 0x40; //positive response
-			*uds_answerSize = 1;
+				RAMN_SCREEN_RequestDrawImage(x,y,w,h,&data[5]);
+				uds_answerData[0] = data[0] + 0x40; //positive response
+				*uds_answerSize = 1;
 			}
 			else
 			{
@@ -950,7 +980,10 @@ static void RAMN_UDS_RoutineControl(const uint8_t* data, uint16_t size)
 			RAMN_UDS_RoutineControlComputeCRC(data,size);
 			break;
 		case 0x0210: //Reset Option Bytes:
-			RAMN_UDS_RoutineControlResetBootOptionBytes(data,size)
+			RAMN_UDS_RoutineControlResetBootOptionBytes(data,size);
+			break;
+		case 0x0211: //Force Memory Swap:
+			RAMN_UDS_RoutineControlForceMemorySwap(data,size);
 			break;
 		default:
 			RAMN_UDS_FormatNegativeResponse(data,UDS_NRC_ROOR);
@@ -1198,9 +1231,9 @@ static void RAMN_UDS_WriteMemoryByAddress(const uint8_t* data, uint16_t size)
 				RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_ROOR);
 			}
 			else if (writeSize == 2U) //Write short all at once
-					{
+			{
 				*(volatile uint16_t*)(startaddr) = (uint16_t)(((uint16_t)data[8]<<8) + (uint16_t)data[9]);
-					}
+			}
 			else if (writeSize == 4U) //Write integer all at once
 			{
 				*(volatile uint32_t*)(startaddr) = (uint32_t)(((uint32_t)data[8] << 24) + ((uint32_t)data[9] << 16) + ((uint32_t)data[10] << 8) + ((uint32_t)data[11]));
@@ -1322,35 +1355,35 @@ static void RAMN_UDS_LinkControl(const uint8_t* data, uint16_t size)
 			RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_ROOR);
 		}
 		break;
-	case 0x83: //suppressPosRspMsgIndicationBit
-	case 0x03:
-		if (size < 2U) {
-			RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
-			return;
-		}
-		if (linkControlManager.newSettings == 0U) {
-			RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_CNC);
-		} else {
-			//Request Silence
-			uint8_t tmp = RAMN_DBC_RequestSilence;
-			RAMN_DBC_RequestSilence = 1U;
-			RAMN_FDCAN_Disable();
-			//Delay to let other ECU adapt to new baudrate
-			osDelay(1000);
-			//Authorize communication again
-			RAMN_FDCAN_UpdateBaudrate(linkControlManager.newSettings);
-			RAMN_FDCAN_ResetPeripheral();
-			//Restore original settings
-			RAMN_DBC_RequestSilence = tmp;
-			if ((data[1] & 0x80) == 0U) {
-				//Send response if required
-				RAMN_UDS_FormatPositiveResponseEcho(data, 2U);
+		case 0x83: //suppressPosRspMsgIndicationBit
+		case 0x03:
+			if (size < 2U) {
+				RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
+				return;
 			}
-		}
-		break;
-	default:
-		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SFNS);
-		break;
+			if (linkControlManager.newSettings == 0U) {
+				RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_CNC);
+			} else {
+				//Request Silence
+				uint8_t tmp = RAMN_DBC_RequestSilence;
+				RAMN_DBC_RequestSilence = 1U;
+				RAMN_FDCAN_Disable();
+				//Delay to let other ECU adapt to new baudrate
+				osDelay(1000);
+				//Authorize communication again
+				RAMN_FDCAN_UpdateBaudrate(linkControlManager.newSettings);
+				RAMN_FDCAN_ResetPeripheral();
+				//Restore original settings
+				RAMN_DBC_RequestSilence = tmp;
+				if ((data[1] & 0x80) == 0U) {
+					//Send response if required
+					RAMN_UDS_FormatPositiveResponseEcho(data, 2U);
+				}
+			}
+			break;
+		default:
+			RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SFNS);
+			break;
 
 	}
 }
