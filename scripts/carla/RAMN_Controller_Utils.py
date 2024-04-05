@@ -67,17 +67,17 @@ class RAMN_Inputs(object):
             return
             
         if  msg.arbitration_id == 0x24:    #Brake
-            self.brake_control = int.from_bytes(msg.data[0:2],"little")/0xFFF
+            self.brake_control = int.from_bytes(msg.data[0:2],"big")/0xFFF
             
         elif msg.arbitration_id == 0x39:    #Accel
-            self.accel_control = int.from_bytes(msg.data[0:2],"little")/0xFFF
+            self.accel_control = int.from_bytes(msg.data[0:2],"big")/0xFFF
     
         elif msg.arbitration_id == 0x62:    #Steering
-            self.steering_control = ((int.from_bytes(msg.data[0:2],"little")) - 0x7FF)/0x800
+            self.steering_control = ((int.from_bytes(msg.data[0:2],"big")) - 0x7FF)/0x800
             
         elif msg.arbitration_id == 0x77:    #Shift
-            s = int.from_bytes(msg.data[0:2],"little")  
-              
+            s = int.from_bytes(msg.data[0:1],"big")  
+  
             if s == 0xFF:
                 self.reverse = True
                 self.shift_control = 1
@@ -86,8 +86,8 @@ class RAMN_Inputs(object):
                 self.reverse = False
                 
         elif msg.arbitration_id == 0x1D3:   #Sidebrake
-        
-            val = int.from_bytes(msg.data[0:2],"little")
+            
+            val = int.from_bytes(msg.data[0:2],"big")
             if val != 0:
                 self.sidebrake_control = True
             else:

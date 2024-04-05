@@ -9,6 +9,8 @@ from RAMN_Controller_Utils import *
 import can
 import random
 
+USE_BIG_ENDIAN = True
+
 class RAMN_Controller_CAN(object):
 
     def __init__(self):
@@ -59,25 +61,38 @@ class RAMN_Controller_CAN(object):
             
             canid = 0x1A
             r = random.randint(0,0xFFFFFFFF)
-            data = [brake_command&0xFF,(brake_command>>8)&0xFF,0,0] + [(r  >> i & 0xff) for i in (24,16,8,0)]
+            if USE_BIG_ENDIAN:
+                data = [(brake_command>>8)&0xFF, brake_command&0xFF,0,0] + [(r  >> i & 0xff) for i in (24,16,8,0)]
+            else:
+                data = [brake_command&0xFF,(brake_command>>8)&0xFF,0,0] + [(r  >> i & 0xff) for i in (24,16,8,0)]
+
             msg = can.Message(arbitration_id=canid, data=data,is_extended_id=False)
             self.bus.send(msg)
             
             canid = 0x2F
             r = random.randint(0,0xFFFFFFFF)
-            data = [accel_command&0xFF,(accel_command>>8)&0xFF, 0,0] + [(r  >> i & 0xff) for i in (24,16,8,0)]
+            if USE_BIG_ENDIAN:
+                data = [(accel_command>>8)&0xFF, accel_command&0xFF,0,0] + [(r  >> i & 0xff) for i in (24,16,8,0)]
+            else:   
+                data = [accel_command&0xFF,(accel_command>>8)&0xFF,0,0] + [(r  >> i & 0xff) for i in (24,16,8,0)]
             msg = can.Message(arbitration_id=canid, data=data,is_extended_id=False)
             self.bus.send(msg)
             
             canid = 0x43
             r = random.randint(0,0xFFFFFFFF)
-            data = [rpm_state&0xFF,(rpm_state>>8)&0xFF, 0,0] + [(r  >> i & 0xff) for i in (24,16,8,0)]
+            if USE_BIG_ENDIAN:
+                data = [(rpm_state>>8)&0xFF, rpm_state&0xFF,0,0] + [(r  >> i & 0xff) for i in (24,16,8,0)]
+            else:
+                data = [rpm_state&0xFF,(rpm_state>>8)&0xFF,0,0] + [(r  >> i & 0xff) for i in (24,16,8,0)]
             msg = can.Message(arbitration_id=canid, data=data,is_extended_id=False)
             self.bus.send(msg)
             
             canid = 0x58
             r = random.randint(0,0xFFFFFFFF)
-            data = [steering_command&0xFF,(steering_command>>8)&0xFF,0,0] + [(r  >> i & 0xff) for i in (24,16,8,0)]
+            if USE_BIG_ENDIAN:
+                data = [(steering_command>>8)&0xFF, steering_command&0xFF,0,0] + [(r  >> i & 0xff) for i in (24,16,8,0)]
+            else:
+                data = [steering_command&0xFF,(steering_command>>8)&0xFF,0,0] + [(r  >> i & 0xff) for i in (24,16,8,0)]
             msg = can.Message(arbitration_id=canid, data=data,is_extended_id=False)
             self.bus.send(msg)
             
@@ -89,7 +104,7 @@ class RAMN_Controller_CAN(object):
             
             canid = 0x1C9
             r = random.randint(0,0xFFFFFFFF)
-            data = [0,sidebrake_command&0xFF,0,0] + [(r  >> i & 0xff) for i in (24,16,8,0)]
+            data = [sidebrake_command&0xFF,0,0,0] + [(r  >> i & 0xff) for i in (24,16,8,0)]
             msg = can.Message(arbitration_id=canid, data=data,is_extended_id=False)
             self.bus.send(msg)
 

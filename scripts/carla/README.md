@@ -82,4 +82,4 @@ Felipe Codevilla, Antonio Lopez, Vladlen Koltun; PMLR 78:1-16
 
 ## Other
 
-*Copyright (c) 2024 TOYOTA MOTOR CORPORATION. ALL RIGHTS RESERVED.*
+*Copyright (c) 2021 TOYOTA MOTOR CORPORATION. ALL RIGHTS RESERVED.*
