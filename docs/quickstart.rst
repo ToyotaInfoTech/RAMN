@@ -43,6 +43,9 @@ You can look at the silkscreen to identify the role of each control:
 Trying Out Controls
 -------------------
 
+Before going any further, you should verify that you board works correctly. Connect your board to the USB port of your computer, or to a USB power supply that can provide more than 300mA. The status of each control should be displayed at the bottom of the screen of ECU A.
+Move each control and verify that its status is updated on the screen (and LEDs, when applicable).
+If that is not the case, you may need to reflash you board (See :ref:`flashing`).
 The LEDs on ECU D's expansion simulate a simple dashboard. They can help you verify that each control is working correctly.
 By default, the CAN bus is always active when the power is on, so you may leave the controls in whatever state you prefer (e.g., engine key OFF).
 
@@ -59,10 +62,6 @@ By default, the CAN bus is always active when the power is on, so you may leave 
 .. warning::
     If the screen does not say "STEER 0%" when you center the steering wheel, it means that you have installed a logarithmic firmware for a board with linear potentiometers, of vice-versa.
     The board is still usable as is, but you will probably need to update the firmware of ECU B if you want the drive a vehicle in the simulator.
-
-Before going any further, you should verify that you board works correctly. Connect your board to the USB port of your computer, or to a USB power supply that can provide more than 300mA. The status of each control should be displayed at the bottom of the screen of ECU A.
-Move each control and verify that its status is updated on the screen (and LEDs, when applicable).
-If that is not the case, you may need to reflash you board (See :ref:`flashing`).
 
 
 Choosing Your CAN Tools
