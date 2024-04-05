@@ -15,6 +15,18 @@ class RAMN_Controller_CAN(object):
         self.bus = can.interface.Bus(RAMN_Utils.CAN_NAME, bustype=RAMN_Utils.CAN_TYPE)
         self.inputs = RAMN_Inputs()
         self.lastSent = 0
+        
+    def enable_autopilot(self):
+        #Use UDS Routine Control 0207 to enable auto pilot features
+        msg = can.Message(arbitration_id=0x7e1, data=[0x04, 0x31, 0x01, 0x02, 0x07],is_extended_id=False)
+        self.bus.send(msg)
+        
+        msg = can.Message(arbitration_id=0x7e2, data=[0x04, 0x31, 0x01, 0x02, 0x07],is_extended_id=False)
+        self.bus.send(msg)
+        
+        msg = can.Message(arbitration_id=0x7e3, data=[0x04, 0x31, 0x01, 0x02, 0x07],is_extended_id=False)
+        self.bus.send(msg)
+  
           
     def update(self):
         msg = self.bus.recv(timeout=0)
@@ -82,4 +94,16 @@ class RAMN_Controller_CAN(object):
             self.bus.send(msg)
 
     def close(self):
+    
+        #Use UDS Routine Control 0207 to disable auto pilot features
+        msg = can.Message(arbitration_id=0x7e1, data=[0x04, 0x31, 0x02, 0x02, 0x07],is_extended_id=False)
+        self.bus.send(msg)
+        
+        msg = can.Message(arbitration_id=0x7e2, data=[0x04, 0x31, 0x02, 0x02, 0x07],is_extended_id=False)
+        self.bus.send(msg)
+        
+        msg = can.Message(arbitration_id=0x7e3, data=[0x04, 0x31, 0x02, 0x02, 0x07],is_extended_id=False)
+        self.bus.send(msg)
+        
+        time.sleep(0.1)
         self.bus.shutdown()
