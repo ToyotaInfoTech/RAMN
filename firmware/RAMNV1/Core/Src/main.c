@@ -1399,7 +1399,7 @@ void RAMN_ReceiveUSBFunc(void *argument)
 			}*/
 
 
-				while (RAMN_FDCAN_SendMessage(&CANTxHeader,CANTxData) != RAMN_OK)
+				while (RAMN_FDCAN_SendMessage(&CANTxHeader,CANTxData) == RAMN_TRY_LATER)
 				{
 					//Buffer is Full, Try later
 					osDelay(10U);
@@ -1436,7 +1436,7 @@ void RAMN_ReceiveUSBFunc(void *argument)
 				}
 
 				//TODO: prevent blocking
-				while (RAMN_FDCAN_SendMessage(&CANTxHeader,CANTxData) != RAMN_OK) osDelay(20U);
+				while (RAMN_FDCAN_SendMessage(&CANTxHeader,CANTxData) == RAMN_TRY_LATER) osDelay(20U);
 
 #if defined(CAN_ECHO)
 				RAMN_USB_SendFromTask(USBRxBuffer,commandLength);
@@ -1639,7 +1639,7 @@ void RAMN_ReceiveUSBFunc(void *argument)
 						RAMN_ECU_SetBoot0(USBRxBuffer[1U],GPIO_PIN_SET);
 						RAMN_ECU_SetEnable(USBRxBuffer[1U],GPIO_PIN_SET);
 						osDelay(20 + j*20); //add increasingly long delay if bootloader transition failed
-						while (RAMN_FDCAN_SendMessage(&CANTxHeader,CANTxData) != RAMN_OK)
+						while (RAMN_FDCAN_SendMessage(&CANTxHeader,CANTxData) == RAMN_TRY_LATER)
 						{
 							//Buffer is Full, Try later
 							osDelay(10U);
@@ -1751,6 +1751,9 @@ void RAMN_ReceiveUSBFunc(void *argument)
  * @param argument: Not used
  * @retval None
  */
+//Header for RTR answers
+FDCAN_TxHeaderTypeDef RTRTxHeader;
+uint8_t RTRTxData[8];
 /* USER CODE END Header_RAMN_ReceiveCANFunc */
 void RAMN_ReceiveCANFunc(void *argument)
 {
@@ -1774,6 +1777,25 @@ void RAMN_ReceiveCANFunc(void *argument)
 				RAMN_DIAG_ProcessRxCANMessage(&CANRxHeader, CANRxData, xTaskGetTickCount());
 #endif
 			}
+
+#ifdef RTR_DEMO_ID
+			else if (CANRxHeader.RxFrameType == FDCAN_REMOTE_FRAME)
+			{
+
+				if (CANRxHeader.Identifier == RTR_DEMO_ID)
+				{
+					RTRTxHeader.BitRateSwitch = FDCAN_BRS_OFF;
+					RTRTxHeader.FDFormat = FDCAN_CLASSIC_CAN;
+					RTRTxHeader.TxFrameType = FDCAN_DATA_FRAME;
+					RTRTxHeader.IdType = CANRxHeader.IdType;
+					RTRTxHeader.Identifier = CANRxHeader.Identifier;
+					RTRTxHeader.DataLength = CANRxHeader.DataLength;
+					if (RTRTxHeader.DataLength > 8U) RTRTxHeader.DataLength = 8U;
+					RAMN_memcpy((uint8_t*)RTRTxData,(uint8_t*)DEVICE_HARDWARE_ID_ADDRESS,8); // Copy 8 last bytes of ECU hardware ID
+					RAMN_FDCAN_SendMessage(&RTRTxHeader,RTRTxData);
+				}
+			}
+#endif
 
 #if defined(ENABLE_USB)
 			if (RAMN_USB_Config.slcanOpened)
@@ -1882,7 +1904,10 @@ void RAMN_SendCANFunc(void *argument)
 			index += xStreamBufferReceive(CANTxDataStreamBufferHandle, (void *)(&CANTxHeader+index),sizeof(CANTxHeader)-index, portMAX_DELAY);
 		}
 		payloadSize = DLCtoUINT8(CANTxHeader.DataLength);
-		if (CANTxHeader.TxFrameType == FDCAN_REMOTE_FRAME) payloadSize = 0;  // no payload for remote requests
+		if (CANTxHeader.TxFrameType == FDCAN_REMOTE_FRAME)
+		{
+			payloadSize = 0;  // no payload for remote requests
+		}
 		if (payloadSize > 0 )
 		{
 			index = 0;

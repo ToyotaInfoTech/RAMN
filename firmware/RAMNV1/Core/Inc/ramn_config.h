@@ -39,6 +39,7 @@
 #define ENABLE_USB
 #define ENABLE_SCREEN
 
+
 //Automatically stops transceiving when serial port close is detected. May not work well with some OS/Applications
 //#define ENABLE_USB_AUTODETECT
 
@@ -56,21 +57,24 @@
 #define ENABLE_UDS
 //#define ENABLE_KWP
 //#define ENABLE_XCP
+#define RTR_DEMO_ID 0x700
 #endif
 
 #if defined(TARGET_ECUB)
 //#define ENABLE_SCREEN
 #define EXPANSION_CHASSIS
 
+
 //#define CHASSIS_LINEAR_POTENTIOMETER
 #if !defined(CHASSIS_LOGARITHMIC_POTENTIOMETER) && !defined(CHASSIS_LINEAR_POTENTIOMETER)
-#define CHASSIS_LOGARITHMIC_POTENTIOMETER
+//#define CHASSIS_LOGARITHMIC_POTENTIOMETER
 #endif
 
 #define ENABLE_REPROGRAMMING
 #define ENABLE_UDS
 #define ENABLE_KWP
 #define ENABLE_XCP
+#define RTR_DEMO_ID 0x701
 #endif
 
 #if defined(TARGET_ECUC)
@@ -80,6 +84,7 @@
 #define ENABLE_UDS
 #define ENABLE_KWP
 #define ENABLE_XCP
+#define RTR_DEMO_ID 0x702
 #endif
 
 #if defined(TARGET_ECUD)
@@ -88,6 +93,7 @@
 #define ENABLE_UDS
 #define ENABLE_KWP
 #define ENABLE_XCP
+#define RTR_DEMO_ID 0x703
 #endif
 
 #if defined(ENABLE_UDS) || defined(ENABLE_KWP) || defined(ENABLE_XCP)
