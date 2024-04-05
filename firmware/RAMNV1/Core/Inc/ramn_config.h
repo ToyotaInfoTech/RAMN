@@ -50,7 +50,12 @@
 
 //#define GENERATE_RUNTIME_STATS //requires to add "volatile" keyword to static uint32_t ulTotalRunTime = 0UL;
 //If CAN_ECHO is enabled, ECU A will repeat whatever message it accepts over USB
+// CAN_ECHO does not cover CAN messages not sent from USB (i.e., answer to UDS commands)
 //#define CAN_ECHO
+
+//Define this to let ECU A process slcan message that it receives as regular messages (and update their value on screen, for example)
+//This is useful to demonstrate the impact of CAN fuzzing on ECU A's screen
+#define PROCESS_SLCAN_BY_DBC
 
 //UDS programming do not work on microcontrollers with 256 kb memory
 #define ENABLE_REPROGRAMMING

@@ -1409,6 +1409,11 @@ void RAMN_ReceiveUSBFunc(void *argument)
 				RAMN_USB_SendFromTask(USBRxBuffer,commandLength);
 #endif
 
+#if defined(PROCESS_SLCAN_BY_DBC)
+				RAMN_DBC_ProcessCANMessage(CANTxHeader.Identifier,dlc,(RAMN_CANFrameData_t*)CANTxData);
+#endif
+
+
 			}
 			else if ( (USBRxBuffer[0U+offset] == 'R') || (USBRxBuffer[0U+offset] == 'T') )
 			{
@@ -1435,11 +1440,14 @@ void RAMN_ReceiveUSBFunc(void *argument)
 					offset += 2U;
 				}
 
-				//TODO: prevent blocking
 				while (RAMN_FDCAN_SendMessage(&CANTxHeader,CANTxData) == RAMN_TRY_LATER) osDelay(20U);
 
 #if defined(CAN_ECHO)
 				RAMN_USB_SendFromTask(USBRxBuffer,commandLength);
+#endif
+
+#if defined(PROCESS_SLCAN_BY_DBC)
+				RAMN_DBC_ProcessCANMessage(CANTxHeader.Identifier,dlc,(RAMN_CANFrameData_t*)CANTxData);
 #endif
 			}
 			else
