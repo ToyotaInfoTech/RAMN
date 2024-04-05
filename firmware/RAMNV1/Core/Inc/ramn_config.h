@@ -29,6 +29,9 @@
 //Loop time for the "simulator" that is executed periodically
 #define SIM_LOOP_CLOCK_MS 10
 
+//Use big endian for CAN brake/steering/accelerator sensors instead of ARM Little Endian
+#define USE_BIG_ENDIAN_CAN
+
 //Enable watchdogs - Application needs to kick it every 1s
 //#define WATCHDOG_ENABLE
 

@@ -56,7 +56,7 @@ extern volatile uint8_t RAMN_DBC_RequestSilence;
 void 	RAMN_DBC_Init(void);
 
 //Function to update the DBC when a CAN messages has been received
-void 	RAMN_DBC_ProcessCANMessage(uint32_t canid, uint32_t dlc, const RAMN_CANFrameData_t* dataframe);
+void 	RAMN_DBC_ProcessCANMessage(uint32_t canid, uint32_t dlc, RAMN_CANFrameData_t* dataframe);
 
 //Function to request the sending of CAN messages maintained by the DBC handler
 void 	RAMN_DBC_Send(uint32_t tick);

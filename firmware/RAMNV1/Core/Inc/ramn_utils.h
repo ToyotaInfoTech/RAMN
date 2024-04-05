@@ -57,4 +57,7 @@ uint32_t UINT8toDLC(uint8_t dlc);
 //Regular memcpy operation
 void RAMN_memcpy(uint8_t* dst, const uint8_t* src, uint32_t size);
 
+//Apply required endian
+uint16_t switchEndian16(uint16_t val);
+
 #endif /* INC_RAMN_UTILS_H_ */

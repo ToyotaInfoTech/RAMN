@@ -39,7 +39,7 @@ static RAMN_PeriodicFDCANTx_t* periodicTxCANMsgs[] = {
 static void RAMN_DBC_FormatDefaultPeriodicMessage(RAMN_PeriodicFDCANTx_t* msg)
 {
 	uint32_t random = RAMN_RNG_Pop32();
-	msg->data->ramn_data.counter = msg->counter;
+	msg->data->ramn_data.counter = switchEndian16(msg->counter);
 	msg->data->ramn_data.random = random;
 	msg->header.ErrorStateIndicator = RAMN_FDCAN_Status.ErrorStateIndicator;
 }
@@ -55,15 +55,15 @@ void RAMN_DBC_Init(void)
 }
 
 uint8_t prev_horn;
-void RAMN_DBC_ProcessCANMessage(uint32_t canid, uint32_t dlc, const RAMN_CANFrameData_t* dataframe)
+void RAMN_DBC_ProcessCANMessage(uint32_t canid, uint32_t dlc, RAMN_CANFrameData_t* dataframe)
 {
+	//ignore fields other than useful data
+	dataframe->ramn_data.payload = dataframe->ramn_data.payload&0xFFFF;
+	if (dlc <= 1) dataframe->ramn_data.payload = dataframe->ramn_data.payload&0xFF;
+
 	//To avoid overloading the ECU with processing of incoming messages, only expected messages are included in the switch/case
-	dataframe->ramn_data.payload&0xFFFF;
-	if (dlc <= 1) dataframe->ramn_data.payload&0xFF;
 	if (dlc != 0)
 	{
-
-
 		switch(canid)
 		{
 #ifdef RECEIVE_CONTROL_BRAKE

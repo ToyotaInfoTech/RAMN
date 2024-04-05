@@ -161,3 +161,11 @@ void RAMN_memcpy(uint8_t* dst, const uint8_t* src, uint32_t size)
 	for(uint32_t i = 0; i < size; i++) dst[i] = src[i];
 }
 
+uint16_t switchEndian16(uint16_t val)
+{
+#ifdef USE_BIG_ENDIAN_CAN
+	return ((val&0xFF) << 8) | ((val >> 8)&0xFF);
+#else
+	return val;
+#endif
+}

@@ -21,7 +21,6 @@
 static uint8_t LEDState;
 #endif
 
-
 void RAMN_ACTUATORS_Init(void)
 {
 #ifdef EXPANSION_BODY
@@ -41,13 +40,12 @@ void RAMN_ACTUATORS_ApplyControls(uint32_t tick)
 {
 
 #if defined(EXPANSION_CHASSIS) //CHASSIS
-	msg_control_steering.data->ramn_data.payload = RAMN_DBC_Handle.control_steer;
+	msg_control_steering.data->ramn_data.payload = switchEndian16((uint16_t)RAMN_DBC_Handle.control_steer);
 	msg_control_sidebrake.data->ramn_data.payload = RAMN_DBC_Handle.control_sidebrake;
 	msg_command_lights.data->ramn_data.payload = RAMN_DBC_Handle.command_lights;
-
 #elif defined(EXPANSION_POWERTRAIN) //POWERTRAIN
-	msg_control_brake.data->ramn_data.payload = RAMN_DBC_Handle.control_brake;
-	msg_control_accel.data->ramn_data.payload = RAMN_DBC_Handle.control_accel;
+	msg_control_brake.data->ramn_data.payload = switchEndian16((uint16_t)RAMN_DBC_Handle.control_brake);
+	msg_control_accel.data->ramn_data.payload = switchEndian16((uint16_t)RAMN_DBC_Handle.control_accel);
 	msg_control_shift.data->ramn_data.payload = RAMN_DBC_Handle.control_shift | (RAMN_SENSORS_POWERTRAIN.shift_lever << 8);
 	msg_command_horn.data->ramn_data.payload = RAMN_DBC_Handle.command_horn;
 	msg_command_turnindicator.data->ramn_data.payload = RAMN_DBC_Handle.command_turnindicator;
