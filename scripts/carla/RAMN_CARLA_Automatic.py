@@ -693,9 +693,11 @@ def game_loop(args):
         controller = KeyboardControl(world)
         if args.use_can:
             ramn = RAMN_Controller_CAN()
+            
         else:
             ramn = RAMN_Controller_Serial()
-            print(ramn)
+
+        ramn.enable_autopilot()
 
         if args.agent == "Roaming":
             agent = RoamingAgent(world.player)

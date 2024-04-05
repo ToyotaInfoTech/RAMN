@@ -16,6 +16,12 @@ class RAMN_Controller_Serial(object):
         self.ser.write(b'c1\r')
         self.inputs = RAMN_Inputs()
         self.lastSent = time.perf_counter()
+       
+    def enable_autopilot(self):
+        #Use UDS Routine Control 0207 to enable auto pilot features
+        self.ser.write(b't7e150431010207\r') 
+        self.ser.write(b't7e250431010207\r')
+        self.ser.write(b't7e350431010207\r')
         
     def update(self):
         line = None
@@ -62,5 +68,11 @@ class RAMN_Controller_Serial(object):
             self.lastSent = time.perf_counter()
 
     def close(self):
+    
+        #Use UDS Routine Control 0207 to disable auto pilot features
+        self.ser.write(b't7e150431020207\r') 
+        self.ser.write(b't7e250431020207\r')
+        self.ser.write(b't7e350431020207\r')
+        time.sleep(0.1)
         self.ser.close()
         
