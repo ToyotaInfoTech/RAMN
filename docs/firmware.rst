@@ -1,3 +1,5 @@
+.. _firmware:
+
 Firmware
 ========
 

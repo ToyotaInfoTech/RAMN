@@ -1,6 +1,6 @@
 .. _expansions:
 
-Expansion socket
+Expansion Socket
 =================
 
 The expansion port of each ECU is a 26-pin socket.

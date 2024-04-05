@@ -1,3 +1,5 @@
+.. _quickstart_guide:
+
 Quick Start Guide
 =================
 
@@ -48,14 +50,14 @@ By default, the CAN bus is always active when the power is on, so you may leave 
 - LED D2 is the right turn indicator. It should start blinking if you right-press the joystick of ECU C.
 - LED D3, D4, and D5 represent the clearance light, the lo-beam, and the hi-beam, respectively. They should light up in order when you turn the lighting control switch on ECU B.
 - LED D6 is the "battery" indicator. By default, it is ON when the engine key is either on "ACC" or "IGN".
-- LED D7 is the "check engine" indicator. By default, it is ON when the steering wheel potentiometer is not centered. It is used to indicate that the self-driving algorithm commands are currently ignored, and the current position of the steering wheel potentiometer is applied instead.
+- LED D7 is the "check engine" indicator. By default, it is ON when the self-driving algorithm is used and the steering wheel potentiometer is not centered. It is used to indicate that the self-driving algorithm commands are currently ignored, and the current position of the steering wheel potentiometer is applied instead.
 - LED D8 is the "parking brake" LED. It is ON when the parking brake is active. Contrary to a real vehicle, this LED is also ON when the brake pedal is pressed.
 
 .. note::
     Although the "battery" and "check engine" are scary in a real vehicle, they do not indicate a problem of failure with your RAMN board.
 
 .. warning::
-    If the "check engine" LED does not turn off when you center the steering wheel, it means that you have installed a logarithmic firmware for a board with linear potentiometers, of vice-versa.
+    If the screen does not say "STEER 0%" when you center the steering wheel, it means that you have installed a logarithmic firmware for a board with linear potentiometers, of vice-versa.
     The board is still usable as is, but you will probably need to update the firmware of ECU B if you want the drive a vehicle in the simulator.
 
 Before going any further, you should verify that you board works correctly. Connect your board to the USB port of your computer, or to a USB power supply that can provide more than 300mA. The status of each control should be displayed at the bottom of the screen of ECU A.
@@ -73,7 +75,7 @@ To interact with RAMN's CAN bus, you have two options:
 
 If you want to use your own tools, you only need to connect the "CANH" and "CANL" wires of your tool to the terminal block of the CAN bus of RAMN, located at the top right of the board (RAMN itself acts as an "slcan" adapter over USB, so if your software is compatible with slcan you do not need to connect any hardware).
 Each pin of the terminal block consists of a large round hole, and a smaller rectangular hole. You should insert the wire that you want to connect in the round hole, and an internal spring will lock it in place.
-To remove a wire, insert something in the rectangular hole (e.g., a precision scewdriver) and pull the wire.
+To remove a wire, insert something in the rectangular hole (e.g., a precision scew driver) and pull the wire.
 The terminal block has three pins, and the corresponding signals are labeled on the silkscreen next to it:
 
 - Top pin is GND (Ground).
@@ -88,10 +90,13 @@ The rest of this documentation focuses on built-in tools.
 Using Built-in Tools
 --------------------
 
-Preparing an Analysis Environment
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
 To get started with CAN bus analysis on RAMN, we recommended that you prepare a Linux environment (virtual or native) with can-utils.
+
+.. _install_linux:
+
+Preparing a Linux Machine with can-utils
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 
 Windows
 """""""
@@ -110,12 +115,14 @@ Linux
 """""
 
 - Open a terminal window (e.g., right-click the desktop and click "Open Terminal here").
-- Type the following commands to install can-utils
+- Type the following commands to install can-utils:
 
 .. code-block:: bash
 
     $ sudo apt-get update
     $ sudo apt-get install can-utils
+
+.. _end_install_linux:
 
 USB Connection
 ^^^^^^^^^^^^^^
@@ -136,7 +143,7 @@ By default, RAMN acts as an slcan adapter. You can use the slcand command to sta
 
 .. code-block:: bash
 
-    $ sudo slcand -o /dev/ttyACM0 && sudo ip link set up can0
+    $ sudo slcand -o -c /dev/ttyACM0 && sudo ip link set up can0
 
 Replace /dev/ttyACM0 by the device file that was attributed by your computer.
 
