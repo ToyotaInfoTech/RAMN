@@ -28,6 +28,9 @@
 #include "ramn_usb.h"
 #endif
 
+//Variable that must be set to 1 by UDS first to enable autopilot controls (otherwise ECU will ignore command messages)
+extern uint8_t autopilot_enabled;
+
 //Initializes the module
 void 	RAMN_SIM_Init(void);
 

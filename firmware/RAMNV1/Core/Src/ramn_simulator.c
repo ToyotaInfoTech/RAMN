@@ -16,9 +16,11 @@
 
 #include "ramn_simulator.h"
 
+uint8_t autopilot_enabled;
 
 void RAMN_SIM_Init(void)
 {
+	autopilot_enabled = False;
 }
 
 void RAMN_SIM_UpdatePeriodic(uint32_t tick)
@@ -42,7 +44,7 @@ void RAMN_SIM_UpdatePeriodic(uint32_t tick)
 
 #if defined(EXPANSION_POWERTRAIN)
 	//Powertrain ECU sends back data from the Self-Driving agent, except if sensors are above a certain threshold
-	if ((RAMN_SENSORS_POWERTRAIN.brake_pedal >= 0x20) || (RAMN_SENSORS_POWERTRAIN.accel_pedal >= 0x20))
+	if ((!autopilot_enabled) || ((RAMN_SENSORS_POWERTRAIN.brake_pedal >= 0x20) || (RAMN_SENSORS_POWERTRAIN.accel_pedal >= 0x20)))
 	{
 		RAMN_DBC_Handle.control_brake = RAMN_SENSORS_POWERTRAIN.brake_pedal;
 		RAMN_DBC_Handle.control_accel = RAMN_SENSORS_POWERTRAIN.accel_pedal;
@@ -53,13 +55,13 @@ void RAMN_SIM_UpdatePeriodic(uint32_t tick)
 		RAMN_DBC_Handle.control_accel = RAMN_DBC_Handle.command_accel;
 	}
 
-	if (RAMN_SENSORS_POWERTRAIN.gear == 0U) //If no gear is specified by user, return the one asked by simulator
+	if ((!autopilot_enabled) || (RAMN_SENSORS_POWERTRAIN.gear != 0U)) //If no gear is specified by user, return the one asked by simulator
 	{
-		RAMN_DBC_Handle.control_shift 			= RAMN_DBC_Handle.command_shift;
+		RAMN_DBC_Handle.control_shift 			= RAMN_SENSORS_POWERTRAIN.gear;
 	}
 	else
 	{
-		RAMN_DBC_Handle.control_shift 			= RAMN_SENSORS_POWERTRAIN.gear;
+		RAMN_DBC_Handle.control_shift 			= RAMN_DBC_Handle.command_shift;
 	}
 
 	RAMN_DBC_Handle.command_horn 			= RAMN_SENSORS_POWERTRAIN.hornRequest;
@@ -68,19 +70,33 @@ void RAMN_SIM_UpdatePeriodic(uint32_t tick)
 
 #if defined(EXPANSION_CHASSIS)
 	//Chassis ECU sends back data from the Self-Driving agent, except if steering wheel is not centered
-	if( (RAMN_SENSORS_CHASSIS.steering_wheel <= 0x7E0) || (RAMN_SENSORS_CHASSIS.steering_wheel >= 0x820))
+	if (autopilot_enabled)
 	{
-		RAMN_DBC_Handle.control_steer = RAMN_SENSORS_CHASSIS.steering_wheel;
-		RAMN_DBC_Handle.command_lights = 0xFF00; //Engine Warning LED
+		if((RAMN_SENSORS_CHASSIS.steering_wheel <= 0x7E0) || (RAMN_SENSORS_CHASSIS.steering_wheel >= 0x820))
+		{
+			RAMN_DBC_Handle.control_steer = RAMN_SENSORS_CHASSIS.steering_wheel;
+			RAMN_DBC_Handle.command_lights = 0xFF00; //Engine Warning LED ON
+		}
+		else
+		{
+			RAMN_DBC_Handle.control_steer  = RAMN_DBC_Handle.command_steer;
+			RAMN_DBC_Handle.command_lights = 0x0000; //Engine Warning LED OFF
+		}
 	}
 	else
 	{
-		RAMN_DBC_Handle.control_steer  = RAMN_DBC_Handle.command_steer;
-		RAMN_DBC_Handle.command_lights = 0x0000; //Engine Warning LED
+		RAMN_DBC_Handle.control_steer = RAMN_SENSORS_CHASSIS.steering_wheel;
+		RAMN_DBC_Handle.command_lights = 0x0000; //Engine Warning LED OFF
 	}
-	if (RAMN_SENSORS_CHASSIS.sidebrake_switch != 0U) RAMN_DBC_Handle.control_sidebrake  = RAMN_SENSORS_CHASSIS.sidebrake_switch;
-	else RAMN_DBC_Handle.control_sidebrake = RAMN_DBC_Handle.command_sidebrake;
-	RAMN_DBC_Handle.command_lights  |= ((RAMN_SENSORS_CHASSIS.lights_switch)&0xFF);
+	if ((!autopilot_enabled) || (RAMN_SENSORS_CHASSIS.sidebrake_switch != 0U))
+	{
+		RAMN_DBC_Handle.control_sidebrake  = RAMN_SENSORS_CHASSIS.sidebrake_switch;
+	}
+	else
+	{
+		RAMN_DBC_Handle.control_sidebrake = RAMN_DBC_Handle.command_sidebrake;
+	}
+	RAMN_DBC_Handle.command_lights  |= ((RAMN_SENSORS_CHASSIS.lights_switch)&0xFF); //We use command here and not control because we consider we command the simulator's lights
 #endif
 
 #if defined(EXPANSION_BODY)

@@ -30,6 +30,9 @@
 #include "ramn_trng.h"
 #include "ramn_crc.h"
 #include "ramn_screen.h"
+#if defined(TARGET_ECUB) || defined(TARGET_ECUC) || defined(TARGET_ECUD)
+#include "ramn_simulator.h"
+#endif
 #if defined(ENABLE_EEPROM_EMULATION)
 #include "ramn_dtc.h"
 #endif

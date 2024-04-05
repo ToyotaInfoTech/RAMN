@@ -841,6 +841,35 @@ static void RAMN_UDS_RoutineControlComputeCRC(const uint8_t* data, uint16_t size
 	}
 }
 
+
+//Routine Control to enable or disable autopilot features
+#if defined(TARGET_ECUB) || defined(TARGET_ECUC) || defined(TARGET_ECUD)
+
+static void RAMN_UDS_RoutineControlAutopilot(const uint8_t* data, uint16_t size)
+{
+	if( size != 4U )
+	{
+		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
+	}
+	else{
+		switch (data[1]){
+		case 0x01://Start
+			autopilot_enabled = True;
+			RAMN_UDS_FormatPositiveResponseEcho(data, size);
+			break;
+		case 0x02://Stop
+			autopilot_enabled = False;
+			RAMN_UDS_FormatPositiveResponseEcho(data, size);
+			break;
+		case 0x03://Read Results
+		default: //Invalid
+			RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SFNS);
+			break;
+		}
+	}
+}
+#endif
+
 #ifdef ENABLE_SCREEN
 static void loadChip8Game(const uint8_t* data, uint16_t size)
 {
@@ -984,6 +1013,11 @@ static void RAMN_UDS_RoutineControl(const uint8_t* data, uint16_t size)
 		case 0x0206: //Compute CRC
 			RAMN_UDS_RoutineControlComputeCRC(data,size);
 			break;
+#if defined(TARGET_ECUB) || defined(TARGET_ECUC) || defined(TARGET_ECUD)
+		case 0x0207: //Enable/Disable Autopilot features:
+			RAMN_UDS_RoutineControlAutopilot(data,size);
+			break;
+#endif
 		case 0x0210: //Reset Option Bytes:
 			RAMN_UDS_RoutineControlResetBootOptionBytes(data,size);
 			break;
