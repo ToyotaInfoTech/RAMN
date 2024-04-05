@@ -217,14 +217,14 @@ RAMN_Result_t RAMN_FDCAN_SendMessage(const FDCAN_TxHeaderTypeDef* header, const 
 	RAMN_Result_t result = RAMN_OK;
 
 	dlc    = DLCtoUINT8(header->DataLength);
+	if (header->TxFrameType == FDCAN_REMOTE_FRAME) dlc = 0U;
 	messageSize = sizeof(FDCAN_TxHeaderTypeDef) + dlc;
 
-	if (header->TxFrameType == FDCAN_REMOTE_FRAME) dlc = 0U;
 	while (xSemaphoreTake(CAN_TX_SEMAPHORE, portMAX_DELAY ) != pdTRUE);
 	if (xStreamBufferSpacesAvailable(CANTxDataStreamBufferHandle) < messageSize)
 	{
 		RAMN_FDCAN_Status.slcan_flags |= SLCAN_FLAG_TX_QUEUE_FULL;
-		result = RAMN_ERROR;
+		result = RAMN_TRY_LATER;
 	}
 	else
 	{

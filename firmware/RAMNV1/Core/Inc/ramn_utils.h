@@ -30,8 +30,9 @@ typedef enum
 
 typedef enum
 {
-	RAMN_OK       = 0x00,
-	RAMN_ERROR    = 0x01,
+	RAMN_OK        = 0x00,
+	RAMN_ERROR     = 0x01,
+	RAMN_TRY_LATER = 0x02,
 } RAMN_Result_t;
 
 //Functions to convert from to uint ASCII. Returns number of bytes written
