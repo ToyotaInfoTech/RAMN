@@ -68,37 +68,37 @@ void RAMN_DBC_ProcessCANMessage(uint32_t canid, uint32_t dlc, RAMN_CANFrameData_
 		{
 #ifdef RECEIVE_CONTROL_BRAKE
 		case CAN_SIM_CONTROL_BRAKE_CANID:
-			RAMN_DBC_Handle.control_brake 				= dataframe->ramn_data.payload&0xFFF0;
+			RAMN_DBC_Handle.control_brake 				= switchEndian16(dataframe->ramn_data.payload);
 			break;
 #endif
 #ifdef RECEIVE_COMMAND_BRAKE
 		case CAN_SIM_COMMAND_BRAKE_CANID:
-			RAMN_DBC_Handle.command_brake 				= dataframe->ramn_data.payload;
+			RAMN_DBC_Handle.command_brake 				= switchEndian16(dataframe->ramn_data.payload);
 			break;
 #endif
 #ifdef RECEIVE_CONTROL_ACCEL
 		case CAN_SIM_CONTROL_ACCEL_CANID:
-			RAMN_DBC_Handle.control_accel 				= dataframe->ramn_data.payload&0xFFF0;
+			RAMN_DBC_Handle.control_accel 				= switchEndian16(dataframe->ramn_data.payload);
 			break;
 #endif
 #ifdef RECEIVE_COMMAND_ACCEL
 		case CAN_SIM_COMMAND_ACCEL_CANID:
-			RAMN_DBC_Handle.command_accel 				= dataframe->ramn_data.payload;
+			RAMN_DBC_Handle.command_accel 				= switchEndian16(dataframe->ramn_data.payload);
 			break;
 #endif
 #ifdef RECEIVE_STATUS_RPM
 		case CAN_SIM_STATUS_RPM_CANID:
-			RAMN_DBC_Handle.status_rpm  				= dataframe->ramn_data.payload;
+			RAMN_DBC_Handle.status_rpm  				= switchEndian16(dataframe->ramn_data.payload);
 			break;
 #endif
 #ifdef RECEIVE_CONTROL_STEERING
 		case CAN_SIM_CONTROL_STEERING_CANID:
-			RAMN_DBC_Handle.control_steer 				= dataframe->ramn_data.payload&0xFFF0;
+			RAMN_DBC_Handle.control_steer 				= switchEndian16(dataframe->ramn_data.payload);
 			break;
 #endif
 #ifdef RECEIVE_COMMAND_STEERING
 		case CAN_SIM_COMMAND_STEERING_CANID:
-			RAMN_DBC_Handle.command_steer 				= dataframe->ramn_data.payload;
+			RAMN_DBC_Handle.command_steer 				= switchEndian16(dataframe->ramn_data.payload);
 			break;
 #endif
 #ifdef RECEIVE_CONTROL_SHIFT
@@ -181,10 +181,10 @@ void RAMN_DBC_Send(uint32_t tick)
 void RAMN_DBC_ProcessUSBBuffer(const uint8_t* buf)
 {
 #if defined(TARGET_ECUA)
-	msg_command_brake.data->ramn_data.payload 			= ASCIItoUint12(&buf[1]);
-	msg_command_accel.data->ramn_data.payload 			= ASCIItoUint12(&buf[4]);
-	msg_status_RPM.data->ramn_data.payload 				= ASCIItoUint12(&buf[7]);
-	msg_command_steering.data->ramn_data.payload 		= ASCIItoUint12(&buf[10]);
+	msg_command_brake.data->ramn_data.payload 			= switchEndian16(ASCIItoUint12(&buf[1]));
+	msg_command_accel.data->ramn_data.payload 			= switchEndian16(ASCIItoUint12(&buf[4]));
+	msg_status_RPM.data->ramn_data.payload 				= switchEndian16(ASCIItoUint12(&buf[7]));
+	msg_command_steering.data->ramn_data.payload 		= switchEndian16(ASCIItoUint12(&buf[10]));
 	msg_command_shift.data->ramn_data.payload 			= ASCIItoUint8(&buf[13]);
 	msg_control_horn.data->ramn_data.payload 			= ASCIItoUint8(&buf[15]);
 	msg_command_parkingbrake.data->ramn_data.payload 	= ASCIItoUint8(&buf[17]);
