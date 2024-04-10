@@ -1,3 +1,5 @@
+.. _interacting_with_CAN:
+
 Interacting with CAN
 ====================
 
@@ -617,6 +619,7 @@ However, it could use other pairs, e.g., TSEG1 = 69 and TSEG = 10, and it would 
 
 For the SJW value, start with the lowest value and increase it if you encounter CAN errors.
 
+.. _can_fd:
 
 CAN FD
 ^^^^^^

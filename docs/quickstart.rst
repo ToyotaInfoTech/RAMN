@@ -221,7 +221,7 @@ Open another terminal, and type the following command:
 
 .. code-block:: bash
 
-    $ isotpdump -s 7e9 -d 7e1 -c -u -a can0
+    $ isotpdump -s 7e1 -d 7e9 -c -u -a can0
 
 This command will dump and parse UDS commands for ECU B, which accepts commands at ID 0x7e1 and answers at ID 0x7e9.
 This command should also show nothing for now.
@@ -230,7 +230,7 @@ Open yet another terminal, and type the following command:
 
 .. code-block:: bash
 
-    $ isotprecv -s 7e9 -d 7e1 -l can0
+    $ isotprecv -s 7e1 -d 7e9 -l can0
 
 This command will receive and display the answers to the UDS commands that you send to ECU B.
 
@@ -244,7 +244,7 @@ Notice that the source and destination arguments have been swapped from the prev
 This command sends the 2-byte command "3E 00" to ECU B, which corresponds to the "Tester Present" command.
 This is an optional command to let the ECU now that you are currently diagnosing it and that it should wait for your commands.
 You should see on your "isotprecv" terminal that ECU B has answered "7E 00", which means the command was accepted.
-You can look at your "isotpdump" terminal and observe the corresponding interaction in color (blue is the request, red is the answer).
+You can look at your "isotpdump" terminal and observe the corresponding interaction in color (red is the request, blue is the answer).
 If you look at your "candump" terminal, you will observe the corresponding CAN messages. Notice that they are actually 3-bytes long: this is because the first byte is used to specify the length of the UDS payload, which is 2 bytes.
 
 You can use UDS to send and receive large payloads. For example, use the "Read Data By Identifier" service (0x22) to ask the ECU its compile time (argument 0xF184):

@@ -8,7 +8,6 @@ Work In Progress.
 
    userguide/ramn_introduction
    userguide/can_tutorial
+   userguide/isotp_tutorial
    userguide/usb
-   userguide/understanding_isotp
-   userguide/understanding_uds
 
