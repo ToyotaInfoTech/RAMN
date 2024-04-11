@@ -161,7 +161,7 @@ Connect
 
 Launch STM32CubeProgrammer, select "ST-LINK" in the top-right menu, then click "Connect".
 You may be prompted about a debugger firmware update first.
-If connecting fails, try using the same settings as those in the screenshot below.
+If connecting fails, try using the same settings as those in the screenshot below. Also try setting 'Shared: Enabled' and _then_ clicking the refresh (🔁) button next to the serial drop-down box.
 
 .. image:: img/stm32cubeprogrammer_connect.png
    :align: center
