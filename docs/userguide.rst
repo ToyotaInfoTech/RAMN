@@ -9,5 +9,6 @@ Work In Progress.
    userguide/ramn_introduction
    userguide/can_tutorial
    userguide/isotp_tutorial
+   userguide/diag_tutorial
    userguide/usb
 
