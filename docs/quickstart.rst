@@ -65,15 +65,20 @@ Move each control and verify that its status is updated on the screen (and LEDs,
 If that is not the case, you may need to reflash you board (See :ref:`flashing`).
 
 
-Choosing Your CAN Tools
+Choosing Your CAN Adapter & Tools
 -----------------------
 
-To interact with RAMN's CAN bus, you have two options:
+To interact with RAMN's CAN bus, you have two options for adapters:
 
-- Use your own tools, e.g., publicly available CAN adapters such as CANtact, and software such as savvyCAN.
-- Use RAMN built-in tools.
+1. Use your own adapter, e.g., publicly available CAN adapters such as CANtact, and software such as savvyCAN.
+2. Use RAMN built-in adapter (RAMN itself acts as an "slcan" adapter over USB, so if your software is compatible with slcan you do not need to connect any hardware).
 
-If you want to use your own tools, you only need to connect the "CANH" and "CANL" wires of your tool to the terminal block of the CAN bus of RAMN, located at the top right of the board (RAMN itself acts as an "slcan" adapter over USB, so if your software is compatible with slcan you do not need to connect any hardware).
+And also two options for (software) tools:
+
+1. Use your own tools, e.g., SavvyCAN, BUSMaster, scapy-automotive, your own python-can scripts.
+2. Use the Linux built-in tools (i.e. can-utils).
+
+If you want to use your own adapter, you only need to connect the "CANH" and "CANL" wires of your adapter to the terminal block of the CAN bus of RAMN, located at the top right of the board.
 Each pin of the terminal block consists of a large round hole, and a smaller rectangular hole. You should insert the wire that you want to connect in the round hole, and an internal spring will lock it in place.
 To remove a wire, insert something in the rectangular hole (e.g., a precision scew driver) and pull the wire.
 The terminal block has three pins, and the corresponding signals are labeled on the silkscreen next to it:
@@ -85,7 +90,7 @@ The terminal block has three pins, and the corresponding signals are labeled on 
 You only need to connect the CANH and CANL pins of RAMN to the CANH and CANL pins of your CAN adapter.
 After that, you should be ready to use your favorite set of tools. The CAN bus is always active as long as the RAMN board is powered.
 
-The rest of this documentation focuses on built-in tools.
+The rest of this documentation focuses on built-in RAMN adapter and built-in Linux tools.
 
 Using Built-in Tools
 --------------------
@@ -101,7 +106,9 @@ Preparing a Linux Machine with can-utils
 Windows
 """""""
 
-On Windows, we recommend that you install VirtualBox and use a Linux distribution image. A common choice by car enthusiasts is Kali Linux.
+On Windows, we recommend that you install VirtualBox and use a Linux distribution image. A common choice by car enthusiasts is Kali Linux [#f1]_. 
+
+.. [#f1] If you cannot (or will not) run Linux in a VM for can-utils, we reccomend learning and using the platform-independent python-can which will work on all (python) platforms.
 
 - `Download and install VirtualBox <https://www.virtualbox.org/wiki/Downloads>`_.
 - `Download a Kali Linux VirtualBox Image <https://www.kali.org/get-kali/#kali-installer-images>`_.
