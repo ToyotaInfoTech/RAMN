@@ -25,13 +25,8 @@
 
 #include "ramn_eeprom.h"
 
-//Data format of DTC, as specified by ISO-14429
-#define DTC_FORMAT_IDENTIFIER 0x02
-//0x00 SAE J2012
-//0x01 ISO 14429
-//0x02 SAE J1939
-//0x03 ISO 11992
-//0x04 SAE J2012
+//Data format of DTC
+#define DTC_FORMAT_IDENTIFIER 0x00
 
 //Inits the module
 RAMN_Result_t 	RAMN_DTC_Init();
