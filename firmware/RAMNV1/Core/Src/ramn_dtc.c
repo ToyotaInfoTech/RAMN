@@ -64,7 +64,7 @@ RAMN_Result_t RAMN_DTC_GetIndex(uint32_t dtc_index, uint32_t* pval)
 	{
 		if(dtc_index < dtcNum)
 		{
-			if (RAMN_EEPROM_Read32(DTC_NUMBER_INDEX,pval) == EE_OK)
+			if (RAMN_EEPROM_Read32(DTC_NUMBER_INDEX+dtc_index+1,pval) == EE_OK)
 			{
 				result = RAMN_OK;
 			}
