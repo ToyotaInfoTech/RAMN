@@ -1,3 +1,5 @@
+.. _quickstart_guide:
+
 Quick Start Guide
 =================
 
@@ -41,6 +43,9 @@ You can look at the silkscreen to identify the role of each control:
 Trying Out Controls
 -------------------
 
+Before going any further, you should verify that you board works correctly. Connect your board to the USB port of your computer, or to a USB power supply that can provide more than 300mA. The status of each control should be displayed at the bottom of the screen of ECU A.
+Move each control and verify that its status is updated on the screen (and LEDs, when applicable).
+If that is not the case, you may need to reflash you board (See :ref:`flashing`).
 The LEDs on ECU D's expansion simulate a simple dashboard. They can help you verify that each control is working correctly.
 By default, the CAN bus is always active when the power is on, so you may leave the controls in whatever state you prefer (e.g., engine key OFF).
 
@@ -48,32 +53,33 @@ By default, the CAN bus is always active when the power is on, so you may leave 
 - LED D2 is the right turn indicator. It should start blinking if you right-press the joystick of ECU C.
 - LED D3, D4, and D5 represent the clearance light, the lo-beam, and the hi-beam, respectively. They should light up in order when you turn the lighting control switch on ECU B.
 - LED D6 is the "battery" indicator. By default, it is ON when the engine key is either on "ACC" or "IGN".
-- LED D7 is the "check engine" indicator. By default, it is ON when the steering wheel potentiometer is not centered. It is used to indicate that the self-driving algorithm commands are currently ignored, and the current position of the steering wheel potentiometer is applied instead.
+- LED D7 is the "check engine" indicator. By default, it is ON when the self-driving algorithm is used and the steering wheel potentiometer is not centered. It is used to indicate that the self-driving algorithm commands are currently ignored, and the current position of the steering wheel potentiometer is applied instead.
 - LED D8 is the "parking brake" LED. It is ON when the parking brake is active. Contrary to a real vehicle, this LED is also ON when the brake pedal is pressed.
 
 .. note::
     Although the "battery" and "check engine" are scary in a real vehicle, they do not indicate a problem of failure with your RAMN board.
 
 .. warning::
-    If the "check engine" LED does not turn off when you center the steering wheel, it means that you have installed a logarithmic firmware for a board with linear potentiometers, of vice-versa.
+    If the screen does not say "STEER 0%" when you center the steering wheel, it means that you have installed a logarithmic firmware for a board with linear potentiometers, of vice-versa.
     The board is still usable as is, but you will probably need to update the firmware of ECU B if you want the drive a vehicle in the simulator.
 
-Before going any further, you should verify that you board works correctly. Connect your board to the USB port of your computer, or to a USB power supply that can provide more than 300mA. The status of each control should be displayed at the bottom of the screen of ECU A.
-Move each control and verify that its status is updated on the screen (and LEDs, when applicable).
-If that is not the case, you may need to reflash you board (See :ref:`flashing`).
 
+Choosing Your CAN Adapter & Tools
+---------------------------------
 
-Choosing Your CAN Tools
------------------------
+To interact with RAMN's CAN bus, you have two options for adapters:
 
-To interact with RAMN's CAN bus, you have two options:
+1. Use your own adapter, e.g., publicly available CAN adapters such as CANtact, and software such as savvyCAN.
+2. Use RAMN built-in adapter (RAMN itself acts as an "slcan" adapter over USB, so if your software is compatible with slcan you do not need to connect any hardware).
 
-- Use your own tools, e.g., publicly available CAN adapters such as CANtact, and software such as savvyCAN.
-- Use RAMN built-in tools.
+And also two options for (software) tools:
 
-If you want to use your own tools, you only need to connect the "CANH" and "CANL" wires of your tool to the terminal block of the CAN bus of RAMN, located at the top right of the board (RAMN itself acts as an "slcan" adapter over USB, so if your software is compatible with slcan you do not need to connect any hardware).
+1. Use your own tools, e.g., SavvyCAN, BUSMaster, scapy-automotive, your own python-can scripts.
+2. Use the Linux command line tools (i.e. can-utils).
+
+If you want to use your own adapter, you only need to connect the "CANH" and "CANL" wires of your adapter to the terminal block of the CAN bus of RAMN, located at the top right of the board.
 Each pin of the terminal block consists of a large round hole, and a smaller rectangular hole. You should insert the wire that you want to connect in the round hole, and an internal spring will lock it in place.
-To remove a wire, insert something in the rectangular hole (e.g., a precision scewdriver) and pull the wire.
+To remove a wire, insert something in the rectangular hole (e.g., a precision scew driver) and pull the wire.
 The terminal block has three pins, and the corresponding signals are labeled on the silkscreen next to it:
 
 - Top pin is GND (Ground).
@@ -83,20 +89,24 @@ The terminal block has three pins, and the corresponding signals are labeled on 
 You only need to connect the CANH and CANL pins of RAMN to the CANH and CANL pins of your CAN adapter.
 After that, you should be ready to use your favorite set of tools. The CAN bus is always active as long as the RAMN board is powered.
 
-The rest of this documentation focuses on built-in tools.
+The rest of this documentation focuses on built-in RAMN adapter and built-in Linux tools.
 
 Using Built-in Tools
 --------------------
 
-Preparing an Analysis Environment
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
 To get started with CAN bus analysis on RAMN, we recommended that you prepare a Linux environment (virtual or native) with can-utils.
+
+.. _install_linux:
+
+Preparing a Linux Machine with can-utils
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 
 Windows
 """""""
 
-On Windows, we recommend that you install VirtualBox and use a Linux distribution image. A common choice by car enthusiasts is Kali Linux.
+On Windows, we recommend that you install VirtualBox and use a Linux distribution image.
+A common choice by car enthusiasts is Kali Linux\ [#f1]_.
 
 - `Download and install VirtualBox <https://www.virtualbox.org/wiki/Downloads>`_.
 - `Download a Kali Linux VirtualBox Image <https://www.kali.org/get-kali/#kali-installer-images>`_.
@@ -106,16 +116,22 @@ On Windows, we recommend that you install VirtualBox and use a Linux distributio
 
 From here, you should be able to follow the Linux instructions below.
 
+.. [#f1] If you cannot (or will not) run Linux in a VM for can-utils, we recommend learning and using the platform-independent python-can which will work on all (python) platforms, including Windows.
+
+
+
 Linux
 """""
 
 - Open a terminal window (e.g., right-click the desktop and click "Open Terminal here").
-- Type the following commands to install can-utils
+- Type the following commands to install can-utils:
 
 .. code-block:: bash
 
     $ sudo apt-get update
     $ sudo apt-get install can-utils
+
+.. _end_install_linux:
 
 USB Connection
 ^^^^^^^^^^^^^^
@@ -136,7 +152,7 @@ By default, RAMN acts as an slcan adapter. You can use the slcand command to sta
 
 .. code-block:: bash
 
-    $ sudo slcand -o /dev/ttyACM0 && sudo ip link set up can0
+    $ sudo slcand -o -c /dev/ttyACM0 && sudo ip link set up can0
 
 Replace /dev/ttyACM0 by the device file that was attributed by your computer.
 
@@ -214,7 +230,7 @@ Open another terminal, and type the following command:
 
 .. code-block:: bash
 
-    $ isotpdump -s 7e9 -d 7e1 -c -u -a can0
+    $ isotpdump -s 7e1 -d 7e9 -c -u -a can0
 
 This command will dump and parse UDS commands for ECU B, which accepts commands at ID 0x7e1 and answers at ID 0x7e9.
 This command should also show nothing for now.
@@ -223,7 +239,7 @@ Open yet another terminal, and type the following command:
 
 .. code-block:: bash
 
-    $ isotprecv -s 7e9 -d 7e1 -l can0
+    $ isotprecv -s 7e1 -d 7e9 -l can0
 
 This command will receive and display the answers to the UDS commands that you send to ECU B.
 
@@ -237,7 +253,7 @@ Notice that the source and destination arguments have been swapped from the prev
 This command sends the 2-byte command "3E 00" to ECU B, which corresponds to the "Tester Present" command.
 This is an optional command to let the ECU now that you are currently diagnosing it and that it should wait for your commands.
 You should see on your "isotprecv" terminal that ECU B has answered "7E 00", which means the command was accepted.
-You can look at your "isotpdump" terminal and observe the corresponding interaction in color (blue is the request, red is the answer).
+You can look at your "isotpdump" terminal and observe the corresponding interaction in color (red is the request, blue is the answer).
 If you look at your "candump" terminal, you will observe the corresponding CAN messages. Notice that they are actually 3-bytes long: this is because the first byte is used to specify the length of the UDS payload, which is 2 bytes.
 
 You can use UDS to send and receive large payloads. For example, use the "Read Data By Identifier" service (0x22) to ask the ECU its compile time (argument 0xF184):
@@ -265,5 +281,5 @@ You can now control the lighting switch with the following commands, without ECU
     $ cansend can0 150#03
     $ cansend can0 150#04
 
-
 Congratulations, you are now a CAN bus expert. Follow the full user guide to learn more.
+

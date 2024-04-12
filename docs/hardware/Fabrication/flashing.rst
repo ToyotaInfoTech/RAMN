@@ -65,7 +65,7 @@ Windows Environment
 """""""""""""""""""
 
 1. `Install STM32CubeProgrammer <https://www.st.com/en/development-tools/stm32cubeprog.html>`_. This requires that you create a free account with STMicroelectronics. If you encounter issues later, try installing the drivers located at "Program Files/STMicroelectronics/STM32Cube/STM32CubeProgrammer/Drivers" (`instructions here <https://www.st.com/resource/en/user_manual/um2237-stm32cubeprogrammer-software-description-stmicroelectronics.pdf>`_).
-2. `Install the latest python release for Windows <https://www.python.org/downloads/windows/>`_. Make sure that you add python to your PATH.
+2. `Install the latest python release for Windows <https://www.python.org/downloads/windows/>`_. Make sure that you check "Add Python to environment variables".
 3. Download the `RAMN repository <https://github.com/ToyotaInfoTech/RAMN>`_ on your computer (select Code > Download Zip).
 4. Open a command prompt in the RAMN/scripts folder (you can do this by opening the RAMN/scripts folder with File Explorer and typing "cmd" in the address bar at the top) and enter:
 
@@ -161,7 +161,7 @@ Connect
 
 Launch STM32CubeProgrammer, select "ST-LINK" in the top-right menu, then click "Connect".
 You may be prompted about a debugger firmware update first.
-If connecting fails, try using the same settings as those in the screenshot below.
+If connecting fails, try using the same settings as those in the screenshot below. Also try setting 'Shared: Enabled' and _then_ clicking the refresh (🔁) button next to the serial drop-down box.
 
 .. image:: img/stm32cubeprogrammer_connect.png
    :align: center
