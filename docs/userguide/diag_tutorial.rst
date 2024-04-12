@@ -1,3 +1,5 @@
+.. _diag_tutorial:
+
 Interacting with Diagnostic Services
 ====================================
 
@@ -8,6 +10,7 @@ UDS Basics
 ----------
 
 Unified Diagnostic Services (UDS) is a protocol used for ECU diagnostics and programming.
+There are many `tutorials <https://www.csselectronics.com/pages/uds-protocol-tutorial-unified-diagnostic-services>`_ available online, and you can find `posters <https://automotive.softing.com/fileadmin/sof-files/pdf/de/ae/poster/UDS_Faltposter_softing2016.pdf>`_ that summarizes how it works.
 
 UDS follows a simple request-answer mechanism: you send a payload to the ECU, and you get a payload as an answer.
 
@@ -16,10 +19,10 @@ The second byte often (but not always) represents a **Sub-Function** of a servic
 
 The first byte of an answer represents the answer to a request: either a positive response (Service ID + 0x40) or a negative response (0x7f); the rest of the payload represents parameters.
 
-UDS Services on RAMN
-^^^^^^^^^^^^^^^^^^^^
+RAMN Standard UDS Services
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-RAMN's ECUs support many UDS services. They use the following ISO-TP CAN IDs for them:
+RAMN ECUs support many UDS services. They use the following ISO-TP CAN IDs for them:
 
 - ECU A uses **0x7e0** to receive commands and **0x7e8** to transmit answers.
 - ECU B uses **0x7e1** to receive commands and **0x7e9** to transmit answers.
@@ -43,7 +46,6 @@ You can check what standard services are supported by ECUs by looking at the `ra
 - Service 0x35 (REQUEST UPLOAD)
 - Service 0x36 (TRANSFER DATA)
 - Service 0x37 (REQUEST TRANSFER EXIT)
-- Service 0x38 (REQUEST FILE TRANSFER)
 - Service 0x3D (WRITE MEMORY BY ADDRESS)
 - Service 0x3E (TESTER PRESENT)
 - Service 0x85 (CONTROL DTC SETTINGS)
@@ -55,6 +57,7 @@ In addition to standard services, there are two **custom** services added to ECU
 - Service 0x42 (Load and start provided Chip-8 game)
 
 These services are described later in this guide.
+The UDS implementation of RAMN ECUs is slightly simplified in order to tolerate more errors and be more beginner friendly.
 
 Positive responses
 ^^^^^^^^^^^^^^^^^^
@@ -63,7 +66,7 @@ If the ECU accepted your request, it will answer to it with a payload that start
 For example, if you requested the service ID 0x3E and the ECU accepted it, its answer will start with 0x7E (0x3E + 0x40).
 If you requested the service ID 0x10 and the ECU accepted it, its answer will start with 0x50 (0x10 + 0x40).
 
-Services often allow you to disable positive responses by setting the very first bit of the service parameters as "1".
+Services often allow you to disable positive responses by setting the very first bit of the service parameters as "1" (Positive response suppression).
 
 Negative responses
 ^^^^^^^^^^^^^^^^^^
@@ -82,11 +85,13 @@ The error codes that you are the most likely to encounter are:
 
 These error codes are an extremely valuable source of information to learn how to correctly use UDS services.
 
-Examples with Linux
-^^^^^^^^^^^^^^^^^^^
+Examples with Linux and Tester Present (0x3E)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 You can use **isotpsend** and **isotprecv** to send UDS commands and receive their answers, respectively.
 Additionally, you can use **isotpdump** to display UDS traffic with UDS mnemonics to facilitate their interpretation.
+
+If you have not done it yet, make sure you set up your RAMN as a CAN Linux interface (see :ref:`use_slcand`).
 
 For example, to interact with ECU B (which uses CAN IDs 0x7e1/0x7e9) on interface can0, open a terminal and type:
 
@@ -109,7 +114,9 @@ For example, you can send a UDS request with the following command:
 
     $ echo "3E 00" | isotpsend -s 7e1 -d 7e9 can0
 
-The "3E 00" means that you want to use the service "Tester Preset" with parameter "0x00".
+The "3E 00" means that you want to use the service "Tester Present" with parameter "0x00".
+Tester Present is a simple service to let the ECU know that you are currently working on it and prevent it from timing out.
+
 You should observe on your isotprecv terminal that you received the answer "7E 00":
 
 .. image:: img/isotprecv_test.png
@@ -136,14 +143,8 @@ The ECU answers with "7F 3E 13". "7F" means that the request for service ID "3E"
    If you want to communicate with another ECU than ECU B, you will need to change the -s and -d option for all commands.
    You can use ``$ candump can0,7e0:7f0`` instead of isotpdump to display any UDS traffic, but it will not interpret UDS commands for you.
 
-RAMN UDS Services
------------------
-
-Tester Present (0x3E)
-^^^^^^^^^^^^^^^^^^^^^
-
-This is a simple service to let the ECU know that you are currently working on it and prevent it from timing out.
-There is only one argument, which can be 0x00 to ask the ECU to answer, or 0x80 to ask the ECU to not answer.
+For many services, the first parameter is only 7-bit long, and the first bit is used to indicate positive response suppression.
+If you use the parameter "0x80", you are actually sending the parameter "0x00" and asking the ECU to not answer if there is no error.
 
 For example, if you type the following command:
 
@@ -152,6 +153,10 @@ For example, if you type the following command:
     $ echo "3E 80" | isotpsend -s 7e1 -d 7e9 can0
 
 you will not receive any answer from the ECU, unless an error occurred.
+
+
+RAMN UDS Services
+-----------------
 
 .. _diag_sess_control:
 
@@ -276,7 +281,6 @@ and vice versa:
 .. code-block:: bash
 
     $ echo "56 49 4e 30 31 32 33 34 35 36 37 38 39 41 42 43 44" | xxd -r -p #hexadecimal to ASCII
-
 
 
 Read DTC Information (0x19)
@@ -439,7 +443,7 @@ In Linux, you can compute the "key" to send to the ECU with the following comman
 
 .. code-block:: bash
 
-    $ printf "%08X " $((0x7D709F4D  ^ 0x12345678)) | sed 's/../& /g'
+    $ printf "%08X " $((0x7D709F4D ^ 0x12345678)) | sed 's/../& /g'
 
 You can send your answer (in this case, 6F 44 C9 35) to the ECU by using the same command as the request, but adding 1 to the security level:
 
@@ -452,10 +456,300 @@ If the ECU accepts your UDS request (first byte is 0x67), it means that you prov
 .. image:: img/uds_securityaccess2.png
    :align: center
 
-When experimenting with Security Access, you may notably encounter the following error codes, which you should remember:
+When experimenting with Security Access, you may notably encounter the following error codes:
 
 - 0x24 (Request sequence error): you tried a key without asking for a seed first.
 - 0x35 (invalid Key): you provided the wrong key.
 - 0x36 (Exceeded number of attempts): you had too many failed attempts.
 - 0x37 (Required time delay not expired): you need to wait longer before attempting to unlock the ECU (typically after a reset, to prevent bruteforcing).
 
+Routine Control (0x31)
+^^^^^^^^^^^^^^^^^^^^^^
+
+The Routine Control service can be used to implement features not covered by standard services.
+Routines are identified by a two-byte identifier.
+Similarly to DIDs, there are many standard routine identifiers defined by the UDS standard, but identifiers 0x0200 to 0xDFFF are ECU specific.
+
+The Routine Control service can be used with three sub-functions:
+
+- 0x01 to start a routine.
+- 0x02 to stop a routine.
+- 0x03 to request the results of a routine.
+
+This service is used with the following parameters: <sub-function> <routine identifier> <optional routine parameter(s)>.
+The following routines are available with RAMN ECUs:
+
+- Routine 0x0200 can be used to ask the ECU to stop transmitting periodic CAN messages.
+- Routine 0x0201 can be used to erase the EEPROM (where DTCs and VIN are saved).
+- Routine 0x0202 can be used to copy the EEPROM to the alternative memory bank (when reflashing an ECU over UDS).
+- Routine 0x0203 can be used to ask the ECU to echo what you transmitted (for load test).
+- Routine 0x0204 can be used to ask the ECU to echo the first 4-bytes of a request (for PC -> ECU link test).
+- Routine 0x0205 can be used to ask the ECU to transmit a UDS payload of a specified size (for ECU -> PC link test).
+- Routine 0x0206 can be used to compute the CRC of the ECU's flash.
+- Routine 0x0207 can be used to enable autopilot (to use with CARLA).
+- Routine 0x0210 can be used to reset BOOT Option bytes (to salvage an ECU with a bad firmware).
+- Routine 0x0211 can be used to force an ECU to swap memory banks (also to salvage an ECU).
+- Routine 0xFF00 can be used to erase the alternative firmware.
+- Routine 0xFF01 can be used to validate memory and swap memory banks.
+
+**Because these routines may modify the ECU flash, do not tinker with them unless you know what you are doing.**
+
+For example, you can ask ECU B to stop transmitting periodic messages with:
+
+.. code-block:: bash
+
+    $ echo "31 01 02 00" | isotpsend can0 -s 7e1 -d 7e9
+
+And you can ask ECU B to resume transmitting periodic messages with:
+
+.. code-block:: bash
+
+    $ echo "31 02 02 00" | isotpsend can0 -s 7e1 -d 7e9
+
+.. _read_memory_by_address:
+
+Read Memory by Address (0x23)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The Read Memory by Address service can be used to read an arbitrary ECU address.
+There are two arguments that you naturally need to provide: the address and the number of bytes that you want to read.
+
+Contrary to the DIDs used by the Read Data by Identifier service, real ECU addresses may have different sizes depending on microcontroller architectures.
+Therefore, you must provide a third argument that specifies the size of the address and memory fields (*address length format identifier*).
+This argument is a byte, which highest 4 bits indicate the size of the "size" parameter, and the lowest 4 bits indicate the size of the "address" parameter.
+
+The format of a Read Memory by Address parameters is <format identifier> <address> <size>.
+
+For example, let us assume that you want to read 4 bytes from address 0x08000000 (start of RAMN ECU program flash).
+"4" fits into a single byte, so you could use one byte to provide the size that you want to read.
+The addresses used by STM32 microcontrollers are 32-bit long (4 bytes).
+Therefore, you can use format identifier 0x41 (4-byte for the address, 1 byte for the size)
+
+You could ask a memory read using:
+
+.. code-block:: bash
+
+    $ echo "23 14 08 00 00 00 04" | isotpsend can0 -s 7e1 -d 7e9
+
+The format identifier refers to the **size of the size parameter** (It is NOT the number of bytes that you want to read), which can be confusing to some.
+If you wanted, you could provide the size parameter (4) as a 2-byte or a 4-byte parameter.
+Therefore, the commands below are strictly equivalent to the command above:
+
+.. code-block:: bash
+
+    $ echo "23 24 08 00 00 00 00 04" | isotpsend can0 -s 7e1 -d 7e9
+    $ echo "23 44 08 00 00 00 00 00 00 04" | isotpsend can0 -s 7e1 -d 7e9
+
+At the time this documentation is written, RAMN only supports format 0x24 (2-byte size, 4-byte address).
+The service immediately returns the data that was read.
+For example, you can read the first 256 bytes of the program flash of ECU B (address 0x08000000) with:
+
+.. code-block:: bash
+
+    $ echo "23 24 08 00 00 00 01 00" | isotpsend can0 -s 7e1 -d 7e9
+
+.. image:: img/uds_readmemorybyaddress.png
+   :align: center
+
+Note that in this case, both the request and the answer are fragmented ISO-TP frames, so you must have isotprecv active in another terminal.
+
+Similarly, you can read the RAM of the microcontroller (starting at address 0x20000000):
+
+.. code-block:: bash
+
+    $ echo "23 24 20 00 00 00 01 00" | isotpsend can0 -s 7e1 -d 7e9
+
+.. image:: img/uds_readmemorybyaddress2.png
+   :align: center
+
+If you want to know at what addresses RAMN ECUs store their variables, you must compile the firmware and look at the ".map" file that the build process generates.
+
+.. _write_memory_by_address:
+
+Write Memory by Address (0x3D)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Write Memory by Address works the same as Read Memory by Address, except that it takes an additional argument to specify the data that you want to write at a specified address.
+**Because this allows overwriting the RAM (and only the RAM), it may crash the ECU if you do not know what you are doing.**
+
+For example, you can write "01 02 03 04" to memory address 0x20000000 using the following command:
+
+.. code-block:: bash
+
+    echo "3D 24 20 00 00 00 00 04 01 02 03 04" | isotpsend can0 -s 7e1 -d 7e9
+
+.. image:: img/uds_writememorybyaddress.png
+   :align: center
+
+This command will only be accepted if you first ask for a programming session and unlock the ECU with :ref:`security_access`.
+You can check that the memory was correctly written by using Read Memory by Address before and after.
+Variable addresses depend on the exact version of the firmware that you use.
+In the version used in this example, 0x20000000 corresponds to the "error status" variable of the CAN adapter, which can be overwritten without impacting stability.
+**If you do not know what variable(s) you overwrote with your command, you should reset the ECU.**
+
+
+Link Control (0x87)
+^^^^^^^^^^^^^^^^^^^
+
+This service can be used to change the baudrate of the CAN bus, which can be useful for example to reflash ECUs over UDS faster.
+It requires two steps:
+
+- One command to verify that ECUs will accept the baudrate change.
+- One command to transition to the new baudrate.
+
+Note that while real ECUs would automatically revert to the original baudrate after a diagnostic session is over, RAMN ECUs keep the same baudrate until the next reset.
+Similarly, standard implementations would use functional addressing and positive response suppression to send the transition command to all ECU simultaneously.
+RAMN ECUs will however wait one second (with their CAN controller OFF) before changing baudrate to tolerate more timing issues, so you can talk to each ECU individually.
+
+You can use this service with one of three sub-functions:
+
+- 0x01 to verify a baudrate change using a one-byte baudrate identifier (e.g., 0x12 for 500000 bps).
+- 0x02 to verify a baudrate change using a three-byte specific baudrate value (e.g., 0x7A120 for 500000 bps).
+- 0x03 to transition to the new baudrate.
+
+RAMN ECUs support sub-functions 0x01 and 0x03.
+The parameter that you must provide to sub-function 0x01 is a one-byte identifier:
+
+- 0x10 means 125000 bps.
+- 0x11 means 250000 bps.
+- 0x12 means 500000 bps.
+- 0x13 means 1000000 bps.
+
+To transition to the new baudrate, use sub-function 0x03 without any argument.
+If you want to ask the ECU to not answer if there is no error, use 0x83 instead.
+
+When changing the baudrate of ECUs, you will need to also update the baudrate of your CAN adapter.
+If you are using an slcan adapter, you will need to restart slcand and use the -s option (see :ref:`slcan_baudrate`).
+
+Use -s4 for 125000 bps, -s5 for 250000 bps, -s6 for 500000 bps, and -s\ **8** for 100000 bps.
+
+For example, the following commands can be used to update RAMN's baudrate to 1000000 bps for all ECUs, **one by one** (assuming your interface is /dev/ttyACM0):
+
+.. code-block:: bash
+
+    echo "87 01 13" | isotpsend can0 -s 7e1 -d 7e9 -b
+    echo "87 01 13" | isotpsend can0 -s 7e2 -d 7ea -b
+    echo "87 01 13" | isotpsend can0 -s 7e3 -d 7eb -b
+
+    echo "87 03" | isotpsend can0 -s 7e1 -d 7e9 -b
+    echo "87 03" | isotpsend can0 -s 7e2 -d 7ea -b
+    echo "87 03" | isotpsend can0 -s 7e3 -d 7eb -b
+
+    sleep 0.5
+
+    sudo killall -w slcand #turn off slcan interface
+    sudo slcand -o -c -s8  /dev/ttyACM0 && sudo ip link set up can0
+
+This should also restart your CAN interface, so you will need to restart all your CAN commands.
+
+.. image:: img/uds_linkcontrol.png
+   :align: center
+
+.. _request_upload:
+
+Request Upload (0x35)
+^^^^^^^^^^^^^^^^^^^^^
+
+This service can be use to request a data "upload" to an ECU. Note that in embedded systems, "upload" typically refers to ECU -> computer transfers (which means that you are "downloading" data to your computer).
+This can be used to dump RAMN ECU's flash.
+The same result can be achieved with the :ref:`read_memory_by_address` service, but this service supports compression and encryption when available.
+
+It is used as follows:
+
+- Call this service to request a data upload.
+- Call the :ref:`transfer_data` service as many times as needed to receive the data.
+- Call the :ref:`transfer_exit` service to finish the transfer.
+
+This service has several arguments:
+
+- One byte to specify compression and encryption methods. RAMN only supports 0x00, which means neither is used.
+- One byte to specify the length of the address and size fields (similar to :ref:`read_memory_by_address`). RAMN ECUs support 0x44 (4-byte size, 4-byte address).
+- Several bytes to specify the address of the data.
+- Several bytes to specify the length of the (uncompressed) data.
+
+For example, you can request a transfer of 256 (0x100) bytes from address 0x08000000 with:
+
+.. code-block:: bash
+
+    $ echo "35 00 44 08 00 00 00 00 00 01 00" | isotpsend can0 -s 7e1 -d 7e9 -b
+
+The ECU should answer with:
+
+- The length of its address and size fields. Because there is no address, the address size is always 0 here, and only the 4 highest bits matter.
+- The maximum size that it will use for the transfer (including service identifier and data parameter).
+
+.. image:: img/uds_requestupload.png
+   :align: center
+
+For example, in this case, ECU B answered with "75 20 0F F0".
+75 means that it accepts the upload, 20 means that it provides the size of the "size" parameter (the next parameter) as 2 bytes, and the next two bytes indicates that it will transfer data with blocks of size 0xFF0 (4080 bytes).
+The ECU is now waiting for you to initiate the transfer.
+
+
+.. _transfer_data:
+
+Transfer Data (0x36)
+^^^^^^^^^^^^^^^^^^^^
+
+Transfer Data is used to implement the transfer started by another service (e.g., :ref:`request_upload` or :ref:`request_download`).
+Each call to the Transfer Data service corresponds to the transfer of a data block.
+You must provide a "block counter", which starts at 0x01 for the first block.
+It overflows after 0xFF and starts again from 0x00.
+
+For example, you can execute the following command after the :ref:`request_upload` example:
+
+.. code-block:: bash
+
+    $ echo "36 01" | isotpsend can0 -s 7e1 -d 7e9 -b
+
+The ECU will answer with an echo of the block counter, followed by the data to read.
+
+If you are trying to read or write data beyond the specified data size, you will get the error code 0x24, for "\ *request sequence error*\ ".
+
+.. image:: img/uds_transferdata.png
+   :align: center
+
+If you are writing data, you must provide the data bytes after the block counter, and the ECU will only answer with an echo of the block counter.
+
+.. _transfer_exit:
+
+Request Transfer Exit (0x37)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The Request Transfer Exit service is used to terminate a transfer.
+It must be called if you want to confirm a download or initiate another transfer.
+This service may have optional arguments, but RAMN ECUs require none, so it is used simply by sending "37":
+
+.. code-block:: bash
+
+    $ echo "37" | isotpsend can0 -s 7e1 -d 7e9 -b
+
+which should be answered with "77" by the ECU.
+
+.. image:: img/uds_transferexit.png
+   :align: center
+
+
+.. _request_download:
+
+Request Download (0x34)
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Request Download works the same as :ref:`request_upload`, but the data is on the client's side request instead of the ECU's side answer.
+It is supported by RAMN ECUs only if they have a dual memory bank (microcontroller reference ending with CET6).
+Contrary to :ref:`write_memory_by_address`, this service can write data to the ECU's flash, e.g., for a firmware update.
+
+For example, you can use the following command to initiate a download of 0x100 bytes at address 0x08000000:
+
+.. code-block:: bash
+
+    $ echo "34 00 44 08 00 00 00 00 00 01 00" | isotpsend can0 -s 7e1 -d 7e9 -b
+
+The ECU will specify the size of the data that must be included in the following "Transfer Data" calls, so you must adapt to whatever value the ECU sends back.
+
+Finishing a "Request Download" transfer of a firmware file does not immediately make the ECU use the new firmware that you uploaded.
+You need to use routine controls as well to validate the new firmware.
+With RAMN, this can be done with:
+
+- Routine control 0x0202 to ask the ECU to copy its current EEPROM to the alternative memory bank.
+- Routine control 0xFF01 to ask the ECU to swap banks (and use the new firmware).

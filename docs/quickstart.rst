@@ -65,7 +65,7 @@ By default, the CAN bus is always active when the power is on, so you may leave 
 
 
 Choosing Your CAN Adapter & Tools
------------------------
+---------------------------------
 
 To interact with RAMN's CAN bus, you have two options for adapters:
 
@@ -75,7 +75,7 @@ To interact with RAMN's CAN bus, you have two options for adapters:
 And also two options for (software) tools:
 
 1. Use your own tools, e.g., SavvyCAN, BUSMaster, scapy-automotive, your own python-can scripts.
-2. Use the Linux built-in tools (i.e. can-utils).
+2. Use the Linux command line tools (i.e. can-utils).
 
 If you want to use your own adapter, you only need to connect the "CANH" and "CANL" wires of your adapter to the terminal block of the CAN bus of RAMN, located at the top right of the board.
 Each pin of the terminal block consists of a large round hole, and a smaller rectangular hole. You should insert the wire that you want to connect in the round hole, and an internal spring will lock it in place.
@@ -105,9 +105,8 @@ Preparing a Linux Machine with can-utils
 Windows
 """""""
 
-On Windows, we recommend that you install VirtualBox and use a Linux distribution image. A common choice by car enthusiasts is Kali Linux [#f1]_. 
-
-.. [#f1] If you cannot (or will not) run Linux in a VM for can-utils, we reccomend learning and using the platform-independent python-can which will work on all (python) platforms.
+On Windows, we recommend that you install VirtualBox and use a Linux distribution image.
+A common choice by car enthusiasts is Kali Linux\ [#f1]_.
 
 - `Download and install VirtualBox <https://www.virtualbox.org/wiki/Downloads>`_.
 - `Download a Kali Linux VirtualBox Image <https://www.kali.org/get-kali/#kali-installer-images>`_.
@@ -116,6 +115,10 @@ On Windows, we recommend that you install VirtualBox and use a Linux distributio
 - Login with username kali (password kali).
 
 From here, you should be able to follow the Linux instructions below.
+
+.. [#f1] If you cannot (or will not) run Linux in a VM for can-utils, we recommend learning and using the platform-independent python-can which will work on all (python) platforms, including Windows.
+
+
 
 Linux
 """""
@@ -278,5 +281,5 @@ You can now control the lighting switch with the following commands, without ECU
     $ cansend can0 150#03
     $ cansend can0 150#04
 
-
 Congratulations, you are now a CAN bus expert. Follow the full user guide to learn more.
+

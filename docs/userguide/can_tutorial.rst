@@ -83,7 +83,7 @@ Simple Examples
 Python-CAN (Windows, Linux)
 """""""""""""""""""""""""""
 
-Make sure that you have installed python on your computer (See :ref:`analysis_environment`).
+Make sure that you have installed python on your computer (see :ref:`analysis_environment`).
 Connect your board to your computer, open Windows's Device Manager, and find what new device appears in "Ports (COM & LPT)".
 RAMN should typically be assigned a COM port number, such as "COM1".
 
@@ -132,6 +132,8 @@ Interfacing with Linux
 For the rest of this guide, we will focus on Linux and the `can-utils package <https://github.com/linux-can/can-utils>`_, often used by car enthusiasts.
 Linux supports CAN as a standard interface, which means you can use it like any other linux interface.
 
+.. _use_slcand:
+
 Converting slcan to socketCAN
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -162,6 +164,27 @@ In general, if a tool supports both socketCAN and slcan, you should use socketCA
     .. code-block:: bash
 
         $ sudo killall -w slcand
+
+.. _slcan_baudrate:
+
+CAN Baudrate
+^^^^^^^^^^^^
+
+You can change the CAN baudrate of your slcan adapter using the -s option, with an integer that corresponds to the following baudrates:
+
+- 0 - 10000 bps
+- 1	- 2000 bps
+- 2	- 5000 bps
+- 3	- 100000 bps
+- 4	- 125000 bps
+- 5	- 250000 bps
+- 6	- 500000 bps (RAMN's default)
+- 7	- 800000 bps
+- 8	- 1000000 bps
+
+For example, ``sudo slcand -o -c -s8 /dev/ttyACM0`` will open RAMN with a 1000000 bps CAN baudrate.
+**Note that this only applies to the adapter (ECU A) and not other ECUs, so by default this should only display CAN errors.**
+If you want to use another baudrate than the default 500000 bps, you must either reflash all ECUs, or use the UDS Link Control service (see :ref:`diag_tutorial`).
 
 RAMN's vcand scripts
 ^^^^^^^^^^^^^^^^^^^^
@@ -335,7 +358,7 @@ Or if you want to flood the CAN bus with the same message for 2 seconds:
 
 .. warning::
     If you send CAN messages normally transmitted by another ECU, and that other ECU is still actively transmitting, you may generate CAN errors.
-    If you cause too many errors, you may force ECUs to disconnect from the CAN bus (See :ref:`can_errors`).
+    If you cause too many errors, you may force ECUs to disconnect from the CAN bus (see :ref:`can_errors`).
     By default, only a power reset will let ECUs reconnect, but you can configure RAMN's ECUs to auto-reconnect.
 
 
@@ -644,7 +667,7 @@ CAN FD introduces "bit rate switching": CAN controllers can increase the baudrat
 Bit rate switching happens when the Bit Rate Switch (BRS) flag is set.
 Therefore, CAN FD controllers will ask for two different sets of bit timings: "Nominal" and "Data".
 
-CAN FD adds an "Error State Indicator" bit flag in CAN FD frames, which is used to specify whether the transmitter of the frame is currently in active or passive error mode (See :ref:`can_errors`).
+CAN FD adds an "Error State Indicator" bit flag in CAN FD frames, which is used to specify whether the transmitter of the frame is currently in active or passive error mode (see :ref:`can_errors`).
 
 There is no RTR flag in CAN FD.
 
