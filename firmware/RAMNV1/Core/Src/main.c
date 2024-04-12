@@ -430,6 +430,32 @@ int main(void)
 	//Fill Random numbers pool
 	if (HAL_RNG_GenerateRandomNumber_IT(&hrng) != HAL_OK) Error_Handler();
 
+	//Automatically add a DTC if none is stored in memory
+	uint32_t dtc_number = 0;
+	if (RAMN_DTC_GetNumberOfDTC(&dtc_number) == RAMN_OK)
+	{
+		if (dtc_number == 0)
+		{
+			//no DTC, add one per ECU
+#ifdef TARGET_ECUA
+			uint32_t dtc_val = 0b11 << 30; //"11" for network ("U")
+			dtc_val |= 0x0029 << 16; //Bus A Performance, FTB 0
+#elif defined(TARGET_ECUB)
+			uint32_t dtc_val = 0b01 << 30;//"01" for chassis ("C")
+			dtc_val |= 0x0563 << 16; //Calibration ROM Checksum Error, FTB 0
+#elif defined(TARGET_ECUC)
+			uint32_t dtc_val = 0b00 << 30;//"00" for powertrain ("P")
+			dtc_val |= 0x0172 << 16; //System too Rich, FTB 0
+#elif defined(TARGET_ECUD)
+			uint32_t dtc_val = 0b10 << 30;//"10" for body ("B")
+			dtc_val |= 0x0091 << 16; //Active switch wrong state, FTB 0
+#endif
+
+			dtc_val |= 1 << 2; //mark DTC as pending.
+			RAMN_DTC_AddNew(dtc_val);
+
+		}
+	}
 	/* USER CODE END 2 */
 
 	/* Init scheduler */
