@@ -133,10 +133,12 @@ static FDCAN_TxHeaderTypeDef udsFCMsgHeader =
 
 static void RAMN_UDS_FormatAnswer(const uint8_t* data, uint16_t size)
 {
-	//TODO: faster, optimized copy ?
-	for(uint16_t i = 0; i < size; i++)
+	if (size > 0)
 	{
-		uds_answerData[i] = data[i];
+		for(uint16_t i = 0; i < size; i++)
+		{
+			uds_answerData[i] = data[i];
+		}
 	}
 	*uds_answerSize = size;
 }
@@ -206,7 +208,7 @@ static void resetSession(uint32_t tick)
 
 static void RAMN_UDS_DiagnosticSessionControl(const uint8_t* data, uint16_t size)
 {
-	uint8_t answer[6] = {0x50, 0x00, 0x00, 0x00, 0x00, 0x00};
+	uint8_t answer[2] = {0x50, 0x00};
 
 	if( size != 2U )
 	{
@@ -214,12 +216,12 @@ static void RAMN_UDS_DiagnosticSessionControl(const uint8_t* data, uint16_t size
 	}
 	else
 	{
-		switch(data[1])
+		switch(data[1]&0x7F)
 		{
 		case UDS_SESSION_DS:
 			resetSession(udsSessionHandler.lastMessageTimestamp);
 			answer[1] = data[1];
-			RAMN_UDS_FormatAnswer(answer, 6);
+			if ((data[1]&0x80) == 0) RAMN_UDS_FormatAnswer(answer, 2);
 			break;
 		case UDS_SESSION_EXTDS:
 			//Check vehicle speed and only accept if stopped
@@ -229,7 +231,7 @@ static void RAMN_UDS_DiagnosticSessionControl(const uint8_t* data, uint16_t size
 				resetSession(udsSessionHandler.lastMessageTimestamp);
 				udsSessionHandler.currentSession = UDS_SESSION_EXTDS;
 				answer[1] = data[1];
-				RAMN_UDS_FormatAnswer(answer, 6);
+				if ((data[1]&0x80) == 0) RAMN_UDS_FormatAnswer(answer, 2);
 			}
 			break;
 		case UDS_SESSION_PRGS:
@@ -240,7 +242,7 @@ static void RAMN_UDS_DiagnosticSessionControl(const uint8_t* data, uint16_t size
 				resetSession(udsSessionHandler.lastMessageTimestamp);
 				udsSessionHandler.currentSession = UDS_SESSION_PRGS;
 				answer[1] = data[1];
-				RAMN_UDS_FormatAnswer(answer, 6);
+				if ((data[1]&0x80) == 0) RAMN_UDS_FormatAnswer(answer, 2);
 			}
 			break;
 		case UDS_SESSION_SSDS:
@@ -263,11 +265,12 @@ static void RAMN_UDS_ECUReset(const uint8_t* data, uint16_t size)
 	}
 	else
 	{
-		switch(data[1])
+		switch(data[1]&0x7F)
 		{
 		case RESET_HARD_RESET:
 			RAMN_UDS_FormatPositiveResponseEcho(data, size);
-			//Note that actual reset is performed after sending the answer
+			//Note that actual reset is performed after sending the answer, if necessary
+			if ((data[1]&0x80) != 0U) HAL_NVIC_SystemReset(); //no need to answer, reset immediately
 			break;
 		default:
 			RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SFNS);
@@ -312,7 +315,7 @@ static void RAMN_UDS_ReadDTC(const uint8_t* data, uint16_t size)
 	else
 	{
 		answer[1] = data[1];
-		answer[2] = data[2];
+		answer[2] = 0x04;
 		switch(data[1])
 		{
 		case 0x01: //reportNumberOfDTCByStatusMask
@@ -353,10 +356,10 @@ static void RAMN_UDS_ReadDTC(const uint8_t* data, uint16_t size)
 						}
 						else
 						{
-							answer[4+(4*i)] = (tmp >> 24)&0xFF;
-							answer[5+(4*i)] = (tmp >> 16)&0xFF;
-							answer[6+(4*i)] = (tmp >>  8)&0xFF;
-							answer[7+(4*i)] = (tmp      )&0xFF;
+							answer[3+(4*i)] = (tmp >> 24)&0xFF;
+							answer[4+(4*i)] = (tmp >> 16)&0xFF;
+							answer[5+(4*i)] = (tmp >>  8)&0xFF;
+							answer[6+(4*i)] = (tmp      )&0xFF;
 						}
 					}
 					if (error == False)
@@ -470,8 +473,8 @@ static void RAMN_UDS_ReadDataByIdentifier(const uint8_t* data, uint16_t size)
 				result |= RAMN_EEPROM_Read32(VIN_BYTES9_12_INDEX,&(val[2]));
 				result |= RAMN_EEPROM_Read32(VIN_BYTES13_16_INDEX,&(val[3]));
 				result |= RAMN_EEPROM_Read32(VIN_BYTES17_20_INDEX,&(val[4]));
-				RAMN_memcpy((uint8_t*)&(answer[3]),(uint8_t*)val,20);
-				answer_size = 20+3;
+				RAMN_memcpy((uint8_t*)&(answer[3]),(uint8_t*)val,17);
+				answer_size = 17+3;
 				break;
 			default:
 				result = EE_INVALID_VIRTUALADDRESS; //not a positive response
@@ -596,10 +599,9 @@ static void RAMN_UDS_WriteDataByIdentifier(const uint8_t* data, uint16_t size)
 	EE_Status result = EE_OK;
 	uint8_t errCode;
 
-	errCode = checkProgrammingOK(False);
-	if (errCode != 0U)
+	if (udsSessionHandler.currentSession != UDS_SESSION_PRGS )
 	{
-		RAMN_UDS_FormatNegativeResponse(data, errCode);
+		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SNSIAS);
 	}
 	else
 	{
@@ -607,7 +609,7 @@ static void RAMN_UDS_WriteDataByIdentifier(const uint8_t* data, uint16_t size)
 		{
 			RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_ROOR);
 		}
-		else if (((index != 0xF190) && (size != 7U)) || ((index == 0xF190) && (size != 23)))
+		else if (((index != 0xF190) && (size != 7U)) || ((index == 0xF190) && (size != 20)))
 		{
 			RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
 		}
@@ -624,7 +626,7 @@ static void RAMN_UDS_WriteDataByIdentifier(const uint8_t* data, uint16_t size)
 				result |= RAMN_EEPROM_Write32(VIN_BYTES5_8_INDEX,(data[10] << 24) + (data[9] << 16) + (data[8] << 8) + (data[7]));
 				result |= RAMN_EEPROM_Write32(VIN_BYTES9_12_INDEX,(data[14] << 24) + (data[13] << 16) + (data[12] << 8) + (data[11]));
 				result |= RAMN_EEPROM_Write32(VIN_BYTES13_16_INDEX,(data[18] << 24) + (data[17] << 16) + (data[16] << 8) + (data[15]));
-				result |= RAMN_EEPROM_Write32(VIN_BYTES17_20_INDEX,(data[22] << 24) + (data[21] << 16) + (data[20] << 8) + (data[19]));
+				result |= RAMN_EEPROM_Write32(VIN_BYTES17_20_INDEX,(data[19]));
 			}
 
 			if (result != EE_OK)
@@ -1244,7 +1246,7 @@ static void RAMN_UDS_WriteMemoryByAddress(const uint8_t* data, uint16_t size)
 	{
 		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
 	}
-	else if (data[1] != 0x42)
+	else if (data[1] != 0x24)
 	{
 		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_ROOR);
 	}
@@ -1339,15 +1341,15 @@ static void RAMN_UDS_ControlDTCSettings(const uint8_t* data, uint16_t size)
 	}
 	else
 	{
-		if (data[1] == 0x1U)
+		if (data[1]&0x7F == 0x1U)
 		{
 			RAMN_DTC_SetRecordingStatus(1U);
-			RAMN_UDS_FormatPositiveResponseEcho(data, size);
+			if ((data[1]&0x80) == 0) RAMN_UDS_FormatPositiveResponseEcho(data, size);
 		}
-		else if (data[1] == 0x02U)
+		else if (data[1]&0x7F == 0x02U)
 		{
 			RAMN_DTC_SetRecordingStatus(0U);
-			RAMN_UDS_FormatPositiveResponseEcho(data, size);
+			if ((data[1]&0x80) == 0) RAMN_UDS_FormatPositiveResponseEcho(data, size);
 		}
 		else
 		{
