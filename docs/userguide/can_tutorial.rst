@@ -576,6 +576,8 @@ This filter indicates that you want to display can IDs ranging from 0x7e0 to 0x7
     ---------------------
     ID:    1111110???? (any byte from 11111100000 to 11111101111, i.e., 0x7e0 to 0x7ef)
 
+.. _bit_timings:
+
 Bit Timings
 ^^^^^^^^^^^
 
@@ -671,6 +673,7 @@ CAN FD adds an "Error State Indicator" bit flag in CAN FD frames, which is used 
 
 There is no RTR flag in CAN FD.
 
+There are actually `two versions of CAN FD <https://can-newsletter.org/engineering/standardization/141209_iso-can-fd-or-non-iso-can-fd>`_: "ISO CAN FD" and "non-ISO CAN FD", non compatible to each other due to small protocol differences.
 
 
 

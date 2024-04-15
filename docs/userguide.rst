@@ -10,5 +10,5 @@ Work In Progress.
    userguide/can_tutorial
    userguide/isotp_tutorial
    userguide/diag_tutorial
-   userguide/usb
+   userguide/usb_tutorial
 

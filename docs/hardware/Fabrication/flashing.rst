@@ -26,6 +26,8 @@ Important Knowledge
 - You can follow instructions at :ref:`try_out_controls` to verify that your board is fully functional.
 - If you encounter issues, always verify option bytes (:ref:`common_issues`).
 
+.. _embedded_bootloader:
+
 STM32 Embedded Bootloader Interface
 -----------------------------------
 
@@ -55,6 +57,8 @@ The flashing sequence is as follows:
 1. Reset ECU A option bytes to force ECU A into bootloader mode (This can be skipped on a fresh board).
 2. Write ECU A's firmware over USB using a DFU tool.
 3. Use ECU A to write ECU B, C, and D's firmware with the "canboot.py" python tool. This tool translates USB commands to CAN-FD commands.
+
+.. _flashing_scripts:
 
 Flashing Scripts
 ^^^^^^^^^^^^^^^^
