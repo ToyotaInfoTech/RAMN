@@ -285,7 +285,7 @@ void RAMN_SendUSBFunc(void *argument);
 
 /* USER CODE BEGIN PFP */
 #ifdef ENABLE_USB
-static void reportFIFOStatus_USB();
+static uint16_t reportFIFOStatus_USB(uint8_t* usbSendBuffer);
 #endif
 /* USER CODE END PFP */
 
@@ -293,10 +293,9 @@ static void reportFIFOStatus_USB();
 /* USER CODE BEGIN 0 */
 #ifdef ENABLE_USB
 //Reports the status of each Stream Buffer over USB
-static void reportFIFOStatus_USB()
+static uint16_t reportFIFOStatus_USB(uint8_t* usbSendBuffer)
 {
-	uint8_t usbSendBuffer[20U];
-	uint32_t index = 0U;
+	uint16_t index = 0U;
 
 	usbSendBuffer[index++] = 'q';
 
@@ -315,7 +314,7 @@ static void reportFIFOStatus_USB()
 	index += uint32toASCII(xStreamBufferBytesAvailable(CANTxDataStreamBufferHandle),&usbSendBuffer[index]);
 
 	usbSendBuffer[index++] = '\r';
-	RAMN_USB_SendFromTask(usbSendBuffer,index);
+	return index;
 }
 #endif
 
@@ -1023,7 +1022,7 @@ void RAMN_ReceiveUSBFunc(void *argument)
 		size_t xBytesReceived;
 		uint8_t dlc;
 		uint8_t offset = 0U; //TODO: remove use of offset by using pointers and dedicated functions
-		uint8_t smallResponseBuffer[10U]; //buffer for small responses
+		uint8_t smallResponseBuffer[50U]; //buffer for small responses
 
 		xBytesReceived = xStreamBufferReceive(USBD_RxStreamBufferHandle, (void *)&commandLength, 2U, portMAX_DELAY );
 		if (xBytesReceived != 2U) Error_Handler();
@@ -1492,15 +1491,24 @@ void RAMN_ReceiveUSBFunc(void *argument)
 				case 'L': //Open in listening mode
 					RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
 					hfdcan1.Init.Mode = FDCAN_MODE_BUS_MONITORING;
-					RAMN_USB_Config.slcanOpened = False;
+					RAMN_USB_Config.slcanOpened = True;
 					RAMN_FDCAN_ResetPeripheral();
 					break;
-				case '?':
-				case 'V': //Return hw/sw version
-					RAMN_USB_SendFromTask((uint8_t*)"RAMN V1 SLCAN\r",14U);
+				case 'V': //Return sw version
+					RAMN_USB_SendFromTask((uint8_t*)"V1 SLCAN RAMN (",15U);
+					RAMN_USB_SendFromTask((uint8_t*)__DATE__,sizeof(__DATE__));
+					RAMN_USB_SendFromTask((uint8_t*)" ",1U);
+					RAMN_USB_SendFromTask((uint8_t*)__TIME__,sizeof(__TIME__));
+					RAMN_USB_SendFromTask((uint8_t*)")\r",2U);
 					break;
 				case 'N': //Return serial number
-					RAMN_USB_SendFromTask((uint8_t*)"0123456789ABCDEF\r",17U);
+					smallResponseBuffer[0] = 'N';
+					for(uint8_t k = 0; k <12U; k++)
+					{
+						uint8toASCII(*((uint8_t*)(DEVICE_HARDWARE_ID_ADDRESS+k)),&smallResponseBuffer[1U+2*k]);
+					}
+					RAMN_USB_SendFromTask(smallResponseBuffer, 25U);
+					RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
 					break;
 				case 'S': //Set baudrate
 					RAMN_FDCAN_UpdateBaudrate(USBRxBuffer[1U]);
@@ -1521,8 +1529,18 @@ void RAMN_ReceiveUSBFunc(void *argument)
 				case 'W': //Set filter mode
 					if (USBRxBuffer[1] == '0')
 					{
-						RAMN_FDCAN_Status.sFilterStdConfig.FilterType = FDCAN_FILTER_DUAL; //Dual filter mask
-						RAMN_FDCAN_Status.sFilterExtConfig.FilterType = FDCAN_FILTER_DUAL; //Dual filter mask
+						RAMN_FDCAN_Status.sFilterStdConfig.FilterType = FDCAN_FILTER_RANGE;
+						RAMN_FDCAN_Status.sFilterExtConfig.FilterType = FDCAN_FILTER_RANGE;
+					}
+					else if (USBRxBuffer[1] == '1')
+					{
+						RAMN_FDCAN_Status.sFilterStdConfig.FilterType = FDCAN_FILTER_DUAL;
+						RAMN_FDCAN_Status.sFilterExtConfig.FilterType = FDCAN_FILTER_DUAL;
+					}
+					else if (USBRxBuffer[1] == '3')
+					{
+						RAMN_FDCAN_Status.sFilterStdConfig.FilterType = FDCAN_FILTER_RANGE_NO_EIDM;
+						RAMN_FDCAN_Status.sFilterExtConfig.FilterType = FDCAN_FILTER_RANGE_NO_EIDM;
 					}
 					else
 					{
@@ -1532,19 +1550,40 @@ void RAMN_ReceiveUSBFunc(void *argument)
 					RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
 					break;
 				case 'M': //Set "Acceptance Code" Register (filter)
-					RAMN_FDCAN_Status.sFilterStdConfig.FilterID1 = ASCIItoUint32(&USBRxBuffer[1])&0x7FF;
-					RAMN_FDCAN_Status.sFilterExtConfig.FilterID1 = ASCIItoUint32(&USBRxBuffer[1]);
-					RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
+					if (commandLength == 4U)
+					{
+						RAMN_FDCAN_Status.sFilterStdConfig.FilterID1 = ASCIItoUint12(&USBRxBuffer[1])&0x7FF;
+						RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
+					}
+					else if (commandLength == 9U)
+					{
+						RAMN_FDCAN_Status.sFilterExtConfig.FilterID1 = ASCIItoUint32(&USBRxBuffer[1])&0x7FFFFFFF;
+						RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
+					}
+					else
+					{
+						RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
+					}
 					break;
 				case 'm': //Set "Acceptance Mask" Register (mask)
-					RAMN_FDCAN_Status.sFilterStdConfig.FilterID2 = ASCIItoUint32(&USBRxBuffer[1])&0x7FF;
-					RAMN_FDCAN_Status.sFilterExtConfig.FilterID2 = ASCIItoUint32(&USBRxBuffer[1])&0x7FF;
-					RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
+					if (commandLength == 4U)
+					{
+						RAMN_FDCAN_Status.sFilterStdConfig.FilterID2 = ASCIItoUint12(&USBRxBuffer[1])&0x7FF;
+						RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
+					}
+					else if (commandLength == 9U)
+					{
+						RAMN_FDCAN_Status.sFilterExtConfig.FilterID2 = ASCIItoUint32(&USBRxBuffer[1])&0x7FFFFFFF;
+						RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
+					}
+					else
+					{
+						RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
+					}
 					break;
-					//return BELL for unsupported commands
 				case 'Z': //Enable time stamp
 					if (USBRxBuffer[1U] == '0') RAMN_USB_Config.slcan_enableTimestamp = False;
-					else RAMN_USB_Config.slcan_enableTimestamp = True; //TODO: Enable timers and call HAL FDCAN API
+					else RAMN_USB_Config.slcan_enableTimestamp = True;
 					RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
 					break;
 
@@ -1558,14 +1597,22 @@ void RAMN_ReceiveUSBFunc(void *argument)
 					else HAL_FDCAN_EnableISOMode(&hfdcan1);
 					RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
 					break;
-				case 'e': //Enable/Disable edge filtering
-					if (USBRxBuffer[1U] == '0') HAL_FDCAN_DisableEdgeFiltering(&hfdcan1);
-					else HAL_FDCAN_EnableEdgeFiltering(&hfdcan1);
-					RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
-					break;
-				case 'g': //Enable/Disable TX Compensation
-					if (USBRxBuffer[1U] == '0') HAL_FDCAN_DisableTxDelayCompensation(&hfdcan1);
-					else HAL_FDCAN_EnableTxDelayCompensation(&hfdcan1);
+//				case 'e': //Enable/Disable edge filtering
+//					if (USBRxBuffer[1U] == '0') HAL_FDCAN_DisableEdgeFiltering(&hfdcan1);
+//					else HAL_FDCAN_EnableEdgeFiltering(&hfdcan1);
+//					RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
+//					break;
+//				case 'g': //Enable/Disable TX Compensation
+//					if (USBRxBuffer[1U] == '0') HAL_FDCAN_DisableTxDelayCompensation(&hfdcan1);
+//					else HAL_FDCAN_EnableTxDelayCompensation(&hfdcan1);
+//					RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
+//					break;
+				case 'G': // Sets Nominal and Data SJW
+					hfdcan1.Init.NominalSyncJumpWidth = ASCIItoUint8(&USBRxBuffer[1]);
+					if(commandLength > 3)
+					{
+						hfdcan1.Init.DataSyncJumpWidth = ASCIItoUint8(&USBRxBuffer[3]);
+					}
 					RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
 					break;
 				case 'a': //Enable/Disable TX auto retransmission
@@ -1584,14 +1631,13 @@ void RAMN_ReceiveUSBFunc(void *argument)
 					else RAMN_USB_Config.addESIFlag = True;
 					RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
 					break;
-				case '!': //Select auto report of errors
+				case '@': //Select auto report of errors
 					if (USBRxBuffer[1U] == '0') RAMN_USB_Config.autoreportErrors = False;
 					else if (USBRxBuffer[1U] == '1') RAMN_USB_Config.autoreportErrors = True;
-
 					break;
 				case '#': //Enable CLI
 					USB_CLI_ENABLE = 1U;
-					RAMN_USB_SendStringFromTask("Welcome to RAMN CLI. Tyoe 'help' for help.\r>");
+					RAMN_USB_SendStringFromTask("Welcome to RAMN CLI. Type 'help' for help.\r>");
 					break;
 				case 'd': //Enable/Disable debug reports
 					if (USBRxBuffer[1U] == '0') RAMN_DEBUG_SetStatus(False);
@@ -1622,6 +1668,7 @@ void RAMN_ReceiveUSBFunc(void *argument)
 					smallResponseBuffer[9U] = '\r';
 					RAMN_USB_SendFromTask(smallResponseBuffer,10U);
 					break;
+				case '?':
 				case 'h':
 				case 'H':
 					RAMN_USB_SendFromTask((uint8_t*)"https://ramn.rtfd.io/\r",22U);
@@ -1629,7 +1676,7 @@ void RAMN_ReceiveUSBFunc(void *argument)
 				case 'l': //Open in restricted mode
 					RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
 					hfdcan1.Init.Mode = FDCAN_MODE_RESTRICTED_OPERATION;
-					RAMN_USB_Config.slcanOpened = False;
+					RAMN_USB_Config.slcanOpened = True;
 					RAMN_FDCAN_ResetPeripheral();
 					break;
 				case 'E'://Full Error and protocol flags
@@ -1638,7 +1685,8 @@ void RAMN_ReceiveUSBFunc(void *argument)
 					RAMN_DEBUG_DumpCANErrorRegisters(&errorCount, &protocolStatus);
 					break;
 				case 'q': // get status of FIFOs
-					reportFIFOStatus_USB();
+					offset = reportFIFOStatus_USB(smallResponseBuffer);
+					RAMN_USB_SendFromTask(smallResponseBuffer,offset);
 					break;
 				case 'I'://Send GW Stats information
 					RAMN_DEBUG_ReportCANStats(&RAMN_FDCAN_Status);
@@ -1729,12 +1777,12 @@ void RAMN_ReceiveUSBFunc(void *argument)
 						RAMN_DBC_RequestSilence = False;
 					}
 					break;
-				case 'x': //Get Microcontroller Unique ID Address
-					smallResponseBuffer[0U] = USBRxBuffer[0U];
-					uint32toASCII((uint32_t)*(HARDWARE_UNIQUE_ID_ADDRESS),&smallResponseBuffer[1]);
-					smallResponseBuffer[9U] = '\r';
-					RAMN_USB_SendFromTask(smallResponseBuffer,10U);
-					break;
+//				case 'x': //Get Microcontroller Unique ID Address
+//					smallResponseBuffer[0U] = USBRxBuffer[0U];
+//					uint32toASCII((uint32_t)*(HARDWARE_UNIQUE_ID_ADDRESS),&smallResponseBuffer[1]);
+//					smallResponseBuffer[9U] = '\r';
+//					RAMN_USB_SendFromTask(smallResponseBuffer,10U);
+//					break;
 #ifdef ENABLE_UDS
 				case '%': //Diagnostic Message
 					if (commandLength >= 4)
@@ -1890,7 +1938,7 @@ void RAMN_ReceiveCANFunc(void *argument)
 
 				if (RAMN_USB_Config.slcan_enableTimestamp != 0U)
 				{
-					index += uint16toASCII(CANRxHeader.RxTimestamp,&slCAN_USBTxBuffer[index]);
+					index += uint16toASCII(xTaskGetTickCount() % 0xEA60,&slCAN_USBTxBuffer[index]);
 				}
 
 				if ((RAMN_USB_Config.addESIFlag != 0U) && (CANRxHeader.FDFormat == FDCAN_FD_CAN) && (CANRxHeader.ErrorStateIndicator == FDCAN_ESI_PASSIVE))
