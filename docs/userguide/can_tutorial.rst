@@ -196,8 +196,9 @@ The slcand command has two disadvantages:
 
 You can use `RAMN's vcand scripts <https://github.com/ToyotaInfoTech/RAMN/tree/main/scripts/vcand>`_ to create virtual additional serial interfaces and to convert a serial interface to a **CAN FD** socketCAN interface.
 
-Refer to the README.md file for usage.
-Note that as of 2024, these scripts seem to be very taxing on CPUs, and it is recommended that you do not use them unless you have a specific use case that requires them.
+Refer to :ref:`vcand` for usage.
+
+Note that as of 2024, these scripts are implemented in python and are not optimized for low CPU usage.
 
 Experimenting with CAN on Linux
 -------------------------------

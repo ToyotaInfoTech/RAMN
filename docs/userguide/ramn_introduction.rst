@@ -70,7 +70,7 @@ If you do not have any, you can follow this guide, which uses RAMN's built-in sl
 To follow this guide entirely, you will need to install the following tools:
 
 - A terminal emulator program such as `TeraTerm <https://teratermproject.github.io/index-en.html>`_ or `Putty <https://www.putty.org/>`_. We recommend that you `download and install TeraTerm <https://github.com/TeraTermProject/teraterm/releases>`_. This will allow you to send serial commands to ECU A directly over USB.
-- A Python environment for Windows, which can be `downloaded here <https://www.python.org/downloads/windows/>`_. Make sure that you check "Add Python to environment variables" (or PATH). This will allow you to execute RAMN's python scripts directly on Windows.
+- A Python environment for Windows, which can be `downloaded here <https://www.python.org/downloads/windows/>`_. Make sure that you check "Add Python to environment variables" (or PATH). This will allow you to execute RAMN's python scripts directly on Windows. If you plan to use CARLA, make sure you use a supported version (see :ref:`install_carla`).
 - `STM32CubeProgrammer <https://www.st.com/en/development-tools/stm32cubeprog.html>`_ and `STM32CubeIDE <https://www.st.com/en/development-tools/stm32cubeide.html>`_, only if you want to modify the source code and/or reflash the ECUs.
 - A Linux virtual machine (or native). This will allow you to use open source tools such as can-utils to interact with RAMN's CAN bus, and to execute RAMN's scripts. Follow the guide below for that purpose.
 

@@ -1,60 +1,117 @@
 CARLA
 =====
 
-This page explains how to install CARLA in order to use it with RAMN.
+`CARLA <https://carla.org/>`_ is an autonomous driving simulator based on Unreal Engine 4.
+This page explains how to install CARLA and use it with RAMN.
+Although we only tested the scripts on Windows, they should be usable on Linux with minor adjustments.
+Note that the simulator requires that you have a sufficiently powerful GPU.
 
-About CARLA
------------
-
-`CARLA <https://carla.org/>`_ is an autonomous driving simulator based on Unreal Engine 4. Users can interact with the simulator using a python API.
+.. _install_carla:
 
 Installing CARLA
 ----------------
 
 Follow these steps to install CARLA on Windows:
 
-* Download and unzip the latest release of CARLA, from their `Github repository <https://github.com/carla-simulator/carla/releases>`_. As of April 2021, the latest version for Windows can be downloaded `here <https://carla-releases.s3.eu-west-3.amazonaws.com/Windows/CARLA_0.9.11.zip>`_.
-* Check that the simulator works by launching WindowsNoEditor/CarlaUE4.exe. If a 3D view opens then it means the Unreal Engine part of the simulator is working. If you get an error message, you should download and install the `latest version of Windows DirectX <https://www.microsoft.com/en-us/download/details.aspx?id=35>`_. Make sure you do not let it automatically add a "BING bar" if you do not want it.
-* Install Python 3.7 (x64 version) from Python Software foundation's webpage. Make sure you install python 3.7 (i.e. not 3.8 or 3.9) for x86-64 (i.e. not x86). As of April 2021, the latest version can be found `on python's website <https://www.python.org/downloads/release/python-379/>`_.
-* Install Python module requirements.
-	:code:`$ cd WindowsNoEditor\PythonAPI\examples`
-	
-	:code:`$ python -m pip install -r requirements.txt`
-* Make sure the scripts work by trying some of them.
-	:code:`$ python manual_control.py`
-	
-	:code:`$ python automatic_control.py`
-	
-	(automatic_control may require networkx: :code:`$python -m pip install networkx`)
-	
-* Add CARLA to your python libraries.
-	:code:`$ cd WindowsNoEditor\PythonAPI\carla\dist`
-	
-	:code:`$ python -m easy_install carla-0.9.11-py3.7-win-amd64.egg`
-	
-* (Optional) You may also download the `Additional maps <https://github.com/carla-simulator/carla/releases>`_. Extract the content of the zip file (e.g. AdditionalMaps_0.9.11.zip) to :code:`<YOUR_CARLA_FOLDER>\WindowsNoEditor` . It should overwrite some files.
-* (Optional) `Configure the simulation <https://carla.readthedocs.io/en/stable/configuring_the_simulation/>`_.
-	
+- Download and unzip the latest release of CARLA, from their `Github repository <https://github.com/carla-simulator/carla/releases>`_. The latest version that we tested is Release 0.9.15.
+- Check that the simulator works by launching *WindowsNoEditor/CarlaUE4.exe*. This will likely require that you approve the app with Microsoft's SmartScreen. If a 3D view opens, you can close the simulator and move on to the next step. If you get an error message, install the `latest version of Windows DirectX <https://www.microsoft.com/en-us/download/details.aspx?id=35>`_.
+- Install the latest Python **3.8 version (not a later version such as 3.12)** from Python Software foundation's `webpage <https://www.python.org/downloads/windows/>`_. **Check the "add python.exe to PATH" option**. The latest version that we tested is `3.8.10 <https://www.python.org/downloads/release/python-3810/>`_. If you do not know which file you should use, try "Windows installer (64-bit)".
+- Install CARLA's pythonAPI by opening a command prompt (press Windows+R and type "cmd") and executing:
+
+    .. code-block:: bash
+
+            $ pip3 install carla numpy pygame
+
+    If you also want to execute self-driving examples, execute the following command:
+
+    .. code-block:: bash
+
+            $ pip3 install shapely networkx
+
+- Try CARLA's *manual_control.py* and *automatic_control.py* examples. First, execute *WindowsNoEditor/CarlaUE4.exe* and leave the window open (that is your CARLA server). Then, open a command prompt in *WindowsNoEditor/PythonAPI/examples* (open the folder in Windows Explorer and type "cmd" in the address bar) and try the first example:
+
+        .. code-block:: bash
+
+            $ python manual_control.py
+
+    You should be able to control the car manually with the WASD keys of your keyboard.
+    Then, try the second example:
+
+    .. code-block:: bash
+
+            $ python automatic_control.py
+
+    You should be able to see the self-driving algorithm in action.
+
 From there, you should have a functional environment to experiment with CARLA.
+If you encounter problems up to this point, there is a problem with your CARLA installation, not RAMN.
+Check CARLA's `Quickstart guide <https://carla.readthedocs.io/en/latest/start_quickstart/>`_ for support.
+
+If you want, you can download additional assets (maps, etc.) by following the `instructions here <https://carla.readthedocs.io/en/latest/start_quickstart/#import-additional-assets>`_.
+You can also edit CARLA's default settings (weather, etc.) by following `this page <https://carla.readthedocs.io/en/stable/configuring_the_simulation/>`_.
+
+If you have not already, you also need to install RAMN's scripts.
+
+.. include:: install.rst
+   :start-after: .. _install_ramn_scripts:
+   :end-before: .. _configure_ramn_scripts:
 
 
-Installing RAMN scripts
------------------------
+.. _ramn_carla_scripts:
 
-Follow these steps to connect RAMN to CARLA.
+Configuring your environment
+----------------------------
 
-* Clone the latest repository of RAMN, or download a zipped version from `RAMN's github repository <https://github.com/ToyotaInfoTech/RAMN>`_.
-	:code:`$ git clone https://github.com/ToyotaInfoTech/RAMN`
-	
-* Install the requirements
-	:code:`$ python -m pip install -r RAMN/scripts/requirements.txt`
-	
-Configuring CARLA
------------------
+- Open *RAMN/script/settings/CARLA_PATH.txt* and replace its content with the path to the folder where *CARLAUE4.exe* is located.
+- (Optional) Modify *0_CARLA_SERVER_start.bat* with your preferred settings (resolution, etc.). Read `CARLA's documentation <https://carla.readthedocs.io/en/latest/adv_rendering_options/>`_ for more information about CARLA's options. Specify the quality of graphics using :code:`-quality-level=Epic` (best graphics) or :code:`-quality-level=Low` (best performances). Specify the resolution of the server using :code:`-windowed -ResX=N -ResY=N`.
 
-Please read `CARLA's documentation <https://carla.readthedocs.io/en/latest/adv_rendering_options/>`_ for more information about CARLA's options. The following options are among the most important.
+- (Optional) Modify *CarlaSettings.ini* to edit default settings (weather, etc.)
+- (Optional) Modify *1_CARLA_SERVER_config.bat* to provide a shortcut to execute CARLA's *config.py* as you want (e.g., to `load another map <https://carla.readthedocs.io/en/0.9.15/tuto_first_steps/#loading-a-map>`_).
 
-* Specify the quality of graphics using :code:`-quality-level=Epic` (best graphics) or :code:`-quality-level=Low` (best performances).
-* Specify the resolution of the server using :code:`-windowed -ResX=N -ResY=N`.
-* Specify more settings using an INI file. Refer to `CARLA's page <https://carla.readthedocs.io/en/stable/carla_settings/>`_ for more details. Load a file using the option :code:`-carla-settings="Path/To/CarlaSettings.ini"`.
-* If not needed, you may also `disable rendering <https://carla.readthedocs.io/en/latest/adv_rendering_options/>`_.
+Executing RAMN's scripts for CARLA
+----------------------------------
+
+First, start a CARLA server:
+
+- Execute *0_CARLA_SERVER_start.bat*.
+- (Optional) Execute *1_CARLA_SERVER_config.bat* to update the server's configuration.
+
+You only need to start one server per session. You will be able to execute the following scripts as long as the window stays active.
+You can for example execute the basic RAMN examples:
+
+- Execute *2_CARLA_RAMN_manual_serial.bat* to connect RAMN to CARLA and drive the vehicle manually using RAMN's controls.
+- Execute *3_CARLA_RAMN_auto_serial.bat* to connect RAMN to CARLA's self-driving algorithm.
+
+If you get an error, verify that your RAMN's serial port is not being used by another application.
+
+When you use the self-driving algorithm, the controls will be decided by RAMN.
+If the physical controls are at their neutral position (e.g., bottom position for brake and accelerator potentiometers), the instructions from CARLA's self-driving algorithm will be applied. Otherwise, the instructions from the physical controls will be applied.
+
+When using the self-driving algorithm, if the steering wheel is not centered, the "Check Engine" LED will light up to let you know that RAMN is currently ignoring CARLA's instructions for the steering wheel and is applying the analog controls instead.
+If the LED does not turn off when you center the steering wheel, it may be because you need to reflash the board with a different firmware (see :ref:`flashing`).
+
+You can also connect CARLA to RAMN using a CAN adapter (internal or external) instead of the USB serial connection. To do this:
+
+- Modify the scripts' settings to specify your CAN interface (see :ref:`configure_ramn_scripts`)
+- Execute *4_CARLA_RAMN_manual_CAN.bat* to connect RAMN to CARLA and drive the vehicle manually.
+- Execute *5_CARLA_RAMN_auto_CAN.bat* to connect RAMN to CARLA with the self-driving algorithm.
+
+.. warning::
+    When using the CARLA scripts, the serial port of RAMN will not be available for other applications. If you want to interact with the CAN bus, it is recommended that you connect an external CAN adapter. On Linux, you can use the :ref:`vcand` script to multiplex the serial port and observe the CAN bus even when the CARLA scripts are in use.
+
+How the self-driving algorithm works
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+RAMN's CAN messages are classified as either "command" or "control":
+
+- "Command" CAN messages correspond to "control requests" or "targets" from a self-driving algorithm.
+- "Control" CAN messages correspond to "actually applied controls" by ECUs.
+
+If the self-driving algorithm is OFF, many command messages won't be seen, and you will therefore observe fewer CAN messages.
+
+By default, ECUs listen to command CAN messages, and immediately apply them as control CAN messages, except if the associated controls are not in their neutral position (brake and accelerator at 0%, steering wheel at its middle position).
+For example, if a command CAN messages says "Brake 50%" and the physical potentiometer is at 0%, then the control CAN message will say "Brake 50%".
+However, if a command CAN message says "Brake 0%" but the physical potentiometer says "Brake 100%", then the control CAN message will say "Brake 100%".
+
+ECUs can also be reprogram to implement a control loop, such as a proportional–integral–derivative controller (PID).
+RAMN's GitHub repository features `an example of PID control <https://github.com/ToyotaInfoTech/RAMN/blob/main/examples/PID_example.pdf>`_.
