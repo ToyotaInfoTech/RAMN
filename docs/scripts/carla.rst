@@ -8,6 +8,10 @@ This page explains how to install CARLA and use it with RAMN.
 Although we only tested the scripts on Windows, they should be usable on Linux with minor adjustments.
 Note that the simulator requires that you have a sufficiently powerful GPU.
 
+.. image:: ../gif/carla.gif
+   :align: center
+
+
 .. _install_carla:
 
 Installing CARLA
