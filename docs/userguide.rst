@@ -9,4 +9,5 @@ User Guide
    userguide/isotp_tutorial
    userguide/diag_tutorial
    userguide/usb_tutorial
+   userguide/going_further
 

@@ -1,3 +1,5 @@
+.. _carla_tutorial:
+
 CARLA
 =====
 
@@ -113,5 +115,5 @@ By default, ECUs listen to command CAN messages, and immediately apply them as c
 For example, if a command CAN messages says "Brake 50%" and the physical potentiometer is at 0%, then the control CAN message will say "Brake 50%".
 However, if a command CAN message says "Brake 0%" but the physical potentiometer says "Brake 100%", then the control CAN message will say "Brake 100%".
 
-ECUs can also be reprogram to implement a control loop, such as a proportional–integral–derivative controller (PID).
-RAMN's GitHub repository features `an example of PID control <https://github.com/ToyotaInfoTech/RAMN/blob/main/examples/PID_example.pdf>`_.
+ECUs can also be reprogrammed to implement a control loop, such as a proportional–integral–derivative controller (PID).
+RAMN's GitHub repository features `an example of PID control <https://github.com/ToyotaInfoTech/RAMN/blob/main/misc/PID_example.pdf>`_.
