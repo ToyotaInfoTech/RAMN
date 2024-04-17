@@ -22,6 +22,7 @@
 #include "main.h"
 #include "ramn_trng.h"
 #include "ramn_canfd.h"
+#include "ramn_crc.h"
 
 typedef volatile struct
 {

@@ -24,8 +24,15 @@
 //Initializes the module
 void RAMN_CRC_Init(CRC_HandleTypeDef* h);
 
-// Computers the CRC of specified buffer
+// Computes the CRC of specified buffer (Hardware implementation, not compatible with EEPROM emulation)
 uint32_t RAMN_CRC_Calculate(const uint8_t* src, uint32_t size);
+
+//Accumulates the CRC with specified buffer  (Hardware implementation, not compatible with EEPROM emulation)
+uint32_t RAMN_CRC_Accumulate(const uint8_t* src, uint32_t size);
+
+// Computes the CRC of specified buffer (Software implementation)
+uint32_t RAMN_CRC_SoftCalculate(const uint8_t* buf, uint32_t size);
+
 
 #endif /* INC_RAMN_CRC_H_ */
 

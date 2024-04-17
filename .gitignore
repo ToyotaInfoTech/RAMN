@@ -17,3 +17,7 @@ firmware/RAMNV1/.mxproject
 /docs/.idea
 /hardware/V1_revC/0_ramn/ramn-backups
 hardware/V1_revC/0_ramn/fp-info-cache
+/scripts/carla/__pycache__
+/scripts/carla/agents/__pycache__
+/scripts/carla/agents/navigation/__pycache__
+/scripts/carla/agents/tools/__pycache__

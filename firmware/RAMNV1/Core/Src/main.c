@@ -338,6 +338,7 @@ unsigned long getRunTimeCounterValue(void) {
  */
 int main(void)
 {
+
 	/* USER CODE BEGIN 1 */
 
 	// Ensure proper configuration of VTOR or program does not work correctly after live booting from DFU bootloader
@@ -373,7 +374,6 @@ int main(void)
 	/* Initialize all configured peripherals */
 	MX_GPIO_Init();
 	MX_DMA_Init();
-	MX_USB_Device_Init();
 	MX_ICACHE_Init();
 	MX_RNG_Init();
 	MX_FDCAN1_Init();
@@ -513,6 +513,7 @@ int main(void)
 	osKernelStart();
 
 	/* We should never get here as control is now taken by the scheduler */
+
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
 	while (1)
@@ -1007,6 +1008,8 @@ static int countElements(char* buffer, int length) {
 /* USER CODE END Header_RAMN_ReceiveUSBFunc */
 void RAMN_ReceiveUSBFunc(void *argument)
 {
+	/* init code for USB_Device */
+	MX_USB_Device_Init();
 	/* USER CODE BEGIN 5 */
 #if !defined(ENABLE_USB)
 	vTaskDelete(NULL);
@@ -1597,16 +1600,16 @@ void RAMN_ReceiveUSBFunc(void *argument)
 					else HAL_FDCAN_EnableISOMode(&hfdcan1);
 					RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
 					break;
-//				case 'e': //Enable/Disable edge filtering
-//					if (USBRxBuffer[1U] == '0') HAL_FDCAN_DisableEdgeFiltering(&hfdcan1);
-//					else HAL_FDCAN_EnableEdgeFiltering(&hfdcan1);
-//					RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
-//					break;
-//				case 'g': //Enable/Disable TX Compensation
-//					if (USBRxBuffer[1U] == '0') HAL_FDCAN_DisableTxDelayCompensation(&hfdcan1);
-//					else HAL_FDCAN_EnableTxDelayCompensation(&hfdcan1);
-//					RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
-//					break;
+					//				case 'e': //Enable/Disable edge filtering
+					//					if (USBRxBuffer[1U] == '0') HAL_FDCAN_DisableEdgeFiltering(&hfdcan1);
+					//					else HAL_FDCAN_EnableEdgeFiltering(&hfdcan1);
+					//					RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
+					//					break;
+					//				case 'g': //Enable/Disable TX Compensation
+					//					if (USBRxBuffer[1U] == '0') HAL_FDCAN_DisableTxDelayCompensation(&hfdcan1);
+					//					else HAL_FDCAN_EnableTxDelayCompensation(&hfdcan1);
+					//					RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
+					//					break;
 				case 'G': // Sets Nominal and Data SJW
 					hfdcan1.Init.NominalSyncJumpWidth = ASCIItoUint8(&USBRxBuffer[1]);
 					if(commandLength > 3)
@@ -1777,12 +1780,12 @@ void RAMN_ReceiveUSBFunc(void *argument)
 						RAMN_DBC_RequestSilence = False;
 					}
 					break;
-//				case 'x': //Get Microcontroller Unique ID Address
-//					smallResponseBuffer[0U] = USBRxBuffer[0U];
-//					uint32toASCII((uint32_t)*(HARDWARE_UNIQUE_ID_ADDRESS),&smallResponseBuffer[1]);
-//					smallResponseBuffer[9U] = '\r';
-//					RAMN_USB_SendFromTask(smallResponseBuffer,10U);
-//					break;
+					//				case 'x': //Get Microcontroller Unique ID Address
+					//					smallResponseBuffer[0U] = USBRxBuffer[0U];
+					//					uint32toASCII((uint32_t)*(HARDWARE_UNIQUE_ID_ADDRESS),&smallResponseBuffer[1]);
+					//					smallResponseBuffer[9U] = '\r';
+					//					RAMN_USB_SendFromTask(smallResponseBuffer,10U);
+					//					break;
 #ifdef ENABLE_UDS
 				case '%': //Diagnostic Message
 					if (commandLength >= 4)

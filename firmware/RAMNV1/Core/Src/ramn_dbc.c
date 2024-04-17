@@ -38,9 +38,9 @@ static RAMN_PeriodicFDCANTx_t* periodicTxCANMsgs[] = {
 //Function that formats messages with counter/checksum/random/etc.
 static void RAMN_DBC_FormatDefaultPeriodicMessage(RAMN_PeriodicFDCANTx_t* msg)
 {
-	uint32_t random = RAMN_RNG_Pop32();
+	//uint32_t random = RAMN_RNG_Pop32();
 	msg->data->ramn_data.counter = switchEndian16(msg->counter);
-	msg->data->ramn_data.random = random;
+	msg->data->ramn_data.random = RAMN_CRC_SoftCalculate(msg->data->raw_data,4U);
 	msg->header.ErrorStateIndicator = RAMN_FDCAN_Status.ErrorStateIndicator;
 }
 
