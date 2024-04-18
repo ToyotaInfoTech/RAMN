@@ -18,7 +18,7 @@
 
 #if defined(ENABLE_UDS) || defined(ENABLE_KWP)
 
-#define J1979_DEFAULT_ERROR_CODE 0x31
+#define J1979_DEFAULT_ERROR_CODE 0x11
 
 RAMN_Result_t RAMN_J1979_ProcessMessage(const uint8_t* data, uint16_t size, uint8_t* answerData, uint16_t* answerSize)
 {
@@ -38,7 +38,7 @@ RAMN_Result_t RAMN_J1979_ProcessMessage(const uint8_t* data, uint16_t size, uint
 		answerData[0] = 0x7F;
 		answerData[1] = data[0];
 		answerData[2] = J1979_DEFAULT_ERROR_CODE;
-		*answerSize = 3;
+		*answerSize = 3; //TODO: implement padding with 0xAA
 		break;
 	}
 	return RAMN_OK;

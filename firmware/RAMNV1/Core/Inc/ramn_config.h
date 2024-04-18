@@ -35,6 +35,8 @@
 //Enable watchdogs - Application needs to kick it every 1s
 //#define WATCHDOG_ENABLE
 
+#define UDS_ACCEPT_FUNCTIONAL_ADDRESSING //Value must be defined in ramn_vehicle_specific.h
+
 #if defined(TARGET_ECUA)
 #define ENABLE_USB
 #define ENABLE_SCREEN
@@ -57,7 +59,7 @@
 //This is useful to demonstrate the impact of CAN fuzzing on ECU A's screen
 #define PROCESS_SLCAN_BY_DBC
 
-//UDS programming do not work on microcontrollers with 256 kb memory
+//UDS programming does not work on microcontrollers with only 256 kb memory
 #define ENABLE_REPROGRAMMING
 #define ENABLE_UDS
 //#define ENABLE_KWP

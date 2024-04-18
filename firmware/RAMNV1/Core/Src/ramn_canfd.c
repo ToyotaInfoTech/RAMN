@@ -211,7 +211,7 @@ RAMN_Bool_t RAMN_FDCAN_IsTXBufferSpaceAvailable(uint8_t payloadSize)
 	return (xStreamBufferSpacesAvailable(CANTxDataStreamBufferHandle) >= sizeof(FDCAN_TxHeaderTypeDef) + payloadSize);
 }
 
-//TODO: Make this Function thread safe ?
+//TODO: Verify this Function thread safe
 RAMN_Result_t RAMN_FDCAN_SendMessage(const FDCAN_TxHeaderTypeDef* header, const uint8_t* data)
 {
 	size_t xBytesSent;

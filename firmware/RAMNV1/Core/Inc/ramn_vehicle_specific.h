@@ -38,10 +38,11 @@ typedef volatile /* __attribute__((packed, scalar_storage_order("big-endian"))) 
 	uint32_t random  /* :32 */;
 		} RAMN_DefaultCANFrameFormat_t;
 
-		// Definition of Diagnostic IDs
-		//Note that ISO-TP standard recommends that 0x7e0/0x7e8 pair be assigned to ECM (Engine Control Module)
-		//And that 0x7e1/0x7e9 be assigned to TCM (Transmission Control Module)
+// Definition of Diagnostic IDs
+//Note that ISO-TP standard recommends that 0x7e0/0x7e8 pair be assigned to ECM (Engine Control Module)
+//And that 0x7e1/0x7e9 be assigned to TCM (Transmission Control Module)
 #if defined(ENABLE_DIAG)
+#define UDS_FUNCTIONAL_RX_CANID 0x7df
 #if defined(TARGET_ECUA)
 #if defined(ENABLE_UDS)
 #define UDS_RX_CANID 0x7e0

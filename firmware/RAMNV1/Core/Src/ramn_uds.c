@@ -18,31 +18,6 @@
 
 #if defined(ENABLE_UDS)
 
-//UDS Error Codes
-#define UDS_NRC_GR   	0x10  	//General Reject
-#define UDS_NRC_SNS  	0x11 	//Service not supported
-#define UDS_NRC_SFNS 	0x12 	//Sub-Function not supported
-#define UDS_NRC_IMLOIF 	0x13	//Incorrect message length or invalid format
-#define UDS_NRC_RTL 	0x14 	//Response too long
-#define UDS_NRC_BRR 	0x21	//Busy repeat request
-#define UDS_NRC_CNC 	0x22	//Conditions not correct
-#define UDS_NRC_RSE 	0x24	//Request sequence error
-#define UDS_NRC_NRFSC 	0x25	//No response from sub-net component
-#define UDS_NRC_FPEORA 	0x26	//Failure prevents execution of requested action
-#define UDS_NRC_ROOR 	0x31	//Request out of range
-#define UDS_NRC_SAD 	0x33	//Security access denied
-#define UDS_NRC_IK 		0x35	//Invalid key
-#define UDS_NRC_ENOA 	0x36	//Exceeded number of attempts
-#define UDS_NRC_RTDNE 	0x37	//Required time delay not expired
-#define UDS_NRC_RBEDLSD 0x38	//Reserved by Extended Data Link Security Document
-#define UDS_NRC_UDNA 	0x70	//Upload/Download not accepted
-#define UDS_NRC_TDS 	0x71	//Transfer data suspended
-#define UDS_NRC_GPF 	0x72	//General programming failure
-#define UDS_NRC_WBSC 	0x73	//Wrong Block Sequence Counter
-#define UDS_NRC_RCRRP 	0x78	//Request correctly received, but response is pending
-#define UDS_NRC_SFNSIAS 0x7E	//Sub-Function not supported in active session
-#define UDS_NRC_SNSIAS 	0x7F	//Service not supported in active session
-#define UDS_NRC_VSTH    0x88    //Vehicle Speed too High
 
 //UDS Session Definitions
 #define UDS_SESSION_DS	  0x01 //Default Session
@@ -1555,7 +1530,9 @@ RAMN_Bool_t RAMN_UDS_Continue_TX(uint32_t tick)
 RAMN_Bool_t RAMN_UDS_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, const uint8_t* data, uint32_t tick, StreamBufferHandle_t* strbuf)
 {
 	size_t xBytesSent;
+	uint8_t functionalAddressing = 0U;
 	RAMN_Bool_t result = False;
+	uint16_t requestSize = 0;
 	if (pHeader->Identifier == UDS_RX_CANID)
 	{
 		RAMN_ISOTP_ProcessRxMsg(&RAMN_UDS_ISOTPHandler,DLCtoUINT8(pHeader->DataLength),data, tick);
@@ -1563,13 +1540,38 @@ RAMN_Bool_t RAMN_UDS_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, c
 		//If a ISO-TP has been received, copy it to buffer
 		if (RAMN_UDS_ISOTPHandler.rxStatus == ISOTP_RX_FINISHED)
 		{
-			xBytesSent = xStreamBufferSend(*strbuf, (void *) &(RAMN_UDS_ISOTPHandler.rxCount), sizeof(RAMN_UDS_ISOTPHandler.rxCount), portMAX_DELAY );
+			functionalAddressing = 0U;
+			xBytesSent = xStreamBufferSend(*strbuf, (void *) &(functionalAddressing), sizeof(functionalAddressing), portMAX_DELAY );
+			xBytesSent += xStreamBufferSend(*strbuf, (void *) &(RAMN_UDS_ISOTPHandler.rxCount), sizeof(RAMN_UDS_ISOTPHandler.rxCount), portMAX_DELAY );
 			xBytesSent += xStreamBufferSend(*strbuf, (void *) RAMN_UDS_ISOTPHandler.rxData, RAMN_UDS_ISOTPHandler.rxCount, portMAX_DELAY );
-			if( xBytesSent != (RAMN_UDS_ISOTPHandler.rxCount + sizeof(RAMN_UDS_ISOTPHandler.rxCount) )) Error_Handler();
+			if( xBytesSent != (sizeof(functionalAddressing) + RAMN_UDS_ISOTPHandler.rxCount + sizeof(RAMN_UDS_ISOTPHandler.rxCount))) Error_Handler();
 			RAMN_UDS_ISOTPHandler.rxStatus = ISOTP_RX_IDLE;
 			result = True;
 		}
 	}
+#ifdef UDS_ACCEPT_FUNCTIONAL_ADDRESSING
+	else if(pHeader->Identifier == UDS_FUNCTIONAL_RX_CANID)
+	{
+		if (DLCtoUINT8(pHeader->DataLength) > 0)
+		{
+			if(((data[0]&0xF0) >> 4) == 0x0U) // SingleFrame
+			{
+				if (((data[0]&0xF) > 0) && ((data[0]&0xF) <= 7U) && ((data[0]&0xF) <= (DLCtoUINT8(pHeader->DataLength)-1U)))
+				{
+					//Valid frame
+					functionalAddressing = 1U;
+					requestSize = DLCtoUINT8(pHeader->DataLength)-1U;
+					xBytesSent = xStreamBufferSend(*strbuf, (void *) &(functionalAddressing), sizeof(functionalAddressing), portMAX_DELAY );
+					xBytesSent += xStreamBufferSend(*strbuf, (void *) &(requestSize), sizeof(requestSize), portMAX_DELAY );
+					xBytesSent += xStreamBufferSend(*strbuf, (void *) &data[1], requestSize, portMAX_DELAY );
+					if( xBytesSent != (sizeof(functionalAddressing) + requestSize + sizeof(RAMN_UDS_ISOTPHandler.rxCount))) Error_Handler();
+					result = True;
+				}
+			}
+		}
+	}
+#endif
+
 	return result;
 }
 
@@ -1681,7 +1683,54 @@ void RAMN_UDS_ProcessDiagPayload(uint32_t tick, const uint8_t* data, uint16_t si
 				RAMN_UDS_LinkControl(data, size);
 				break;
 			default:  // UNSUPPORTED SERVICES
-				//TODO: support Response suppression flag
+				RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SNS);
+				break;
+			}
+		}
+	}
+}
+
+
+void RAMN_UDS_ProcessDiagPayloadFunctional(uint32_t tick, const uint8_t* data, uint16_t size, uint8_t* answerData, uint16_t* answerSize)
+{
+	uds_answerData = answerData;
+	uds_answerSize = answerSize;
+
+	*uds_answerSize = 0U; //Empty Response by default
+
+	udsSessionHandler.lastMessageTimestamp = tick;
+	if (size > 0U)
+	{
+		if (data[0] < 0x10)
+		{
+			//J1979 command
+			//RAMN_J1979_ProcessMessage(data, size, answerData, answerSize);
+		}
+		else //ISO14229 command
+		{
+			switch (data[0]) {
+			case 0x10: //DIAGNOSTIC SESSION CONTROL:
+				RAMN_UDS_DiagnosticSessionControl(data, size);
+				break;
+			case 0x11: //ECU RESET
+				RAMN_UDS_ECUReset(data, size);
+				break;
+			case 0x14: //CLEAR DIAGNOSTIC INFORMATION
+				RAMN_UDS_ClearDTC(data, size);
+				break;
+			case 0x27: //SECURITY ACCESS
+				RAMN_UDS_SecurityAccess(data, size);
+				break;
+			case 0x3E: //TESTER PRESENT
+				RAMN_UDS_TesterPresent(data, size);
+				break;
+			case 0x85: //CONTROL DTC SETTINGS
+				RAMN_UDS_ControlDTCSettings(data, size);
+				break;
+			case 0x87: //LINK CONTROL
+				RAMN_UDS_LinkControl(data, size);
+				break;
+			default:  // UNSUPPORTED SERVICES
 				RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SNS);
 				break;
 			}

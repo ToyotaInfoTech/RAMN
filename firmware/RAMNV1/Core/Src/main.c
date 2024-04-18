@@ -1437,7 +1437,7 @@ void RAMN_ReceiveUSBFunc(void *argument)
 #endif
 
 #if defined(PROCESS_SLCAN_BY_DBC)
-						RAMN_DBC_ProcessCANMessage(CANTxHeader.Identifier,dlc,(RAMN_CANFrameData_t*)CANTxData);
+						RAMN_DBC_ProcessCANMessage(CANTxHeader.Identifier,DLCtoUINT8(dlc),(RAMN_CANFrameData_t*)CANTxData);
 #endif
 					}
 					else
@@ -1487,7 +1487,7 @@ void RAMN_ReceiveUSBFunc(void *argument)
 #endif
 
 #if defined(PROCESS_SLCAN_BY_DBC)
-						RAMN_DBC_ProcessCANMessage(CANTxHeader.Identifier,dlc,(RAMN_CANFrameData_t*)CANTxData);
+						RAMN_DBC_ProcessCANMessage(CANTxHeader.Identifier,DLCtoUINT8(dlc),(RAMN_CANFrameData_t*)CANTxData);
 #endif
 					}
 					else
@@ -2293,6 +2293,7 @@ void RAMN_DiagRXFunc(void *argument)
 	vTaskDelete(NULL);
 #else
 	uint16_t diagRxSize;
+	uint8_t addressing = 0;
 	uint16_t index;
 	uint16_t diagTxSize;
 	size_t xBytesSent;
@@ -2301,28 +2302,63 @@ void RAMN_DiagRXFunc(void *argument)
 	{
 #ifdef ENABLE_UDS
 		//Check UDS
-		if (xStreamBufferBytesAvailable(UdsRxDataStreamBufferHandle) >= sizeof(diagRxSize))
+		if (xStreamBufferBytesAvailable(UdsRxDataStreamBufferHandle) >= sizeof(addressing))
 		{
-			if (xStreamBufferReceive(UdsRxDataStreamBufferHandle, (void *)&diagRxSize,sizeof(diagRxSize), portMAX_DELAY) == sizeof(diagRxSize))
+			if (xStreamBufferReceive(UdsRxDataStreamBufferHandle, (void *)&addressing,sizeof(addressing), portMAX_DELAY) == sizeof(addressing))
 			{
-				if (diagRxSize <= 0xFFF)
+				if (xStreamBufferBytesAvailable(UdsRxDataStreamBufferHandle) >= sizeof(diagRxSize))
 				{
-					index = 0;
-					while (index != diagRxSize)
+					if (xStreamBufferReceive(UdsRxDataStreamBufferHandle, (void *)&diagRxSize,sizeof(diagRxSize), portMAX_DELAY) == sizeof(diagRxSize))
 					{
-						index += xStreamBufferReceive(UdsRxDataStreamBufferHandle, (void *)diagRxbuf+index,diagRxSize-index, portMAX_DELAY);
-					}
+						if (diagRxSize <= 0xFFF)
+						{
+							index = 0;
+							while (index != diagRxSize)
+							{
+								index += xStreamBufferReceive(UdsRxDataStreamBufferHandle, (void *)diagRxbuf+index,diagRxSize-index, portMAX_DELAY);
+							}
+
+							if (addressing == 0U)
+							{
+								RAMN_UDS_ProcessDiagPayload(xTaskGetTickCount(), diagRxbuf, diagRxSize, diagTxbuf, &diagTxSize);
+								if (diagTxSize > 0U)
+								{
+									xBytesSent = xStreamBufferSend(UdsTxDataStreamBufferHandle, (void *) &diagTxSize, sizeof(diagTxSize), portMAX_DELAY );
+									xBytesSent += xStreamBufferSend(UdsTxDataStreamBufferHandle, (void *) diagTxbuf, diagTxSize, portMAX_DELAY );
+									if( xBytesSent != (diagTxSize + sizeof(diagTxSize) )) Error_Handler();
+									xTaskNotifyGive(RAMN_DiagTXHandle);
+								}
+								RAMN_UDS_PerformPostAnswerActions(xTaskGetTickCount(), diagRxbuf, diagRxSize, diagTxbuf, &diagTxSize);
+							}
+							else
+							{
+								RAMN_UDS_ProcessDiagPayloadFunctional(xTaskGetTickCount(), diagRxbuf, diagRxSize, diagTxbuf, &diagTxSize);
+								if (diagTxSize > 0U)
+								{
+									uint8_t shouldSendAnswer = False;
+									if (diagTxbuf[0] != 0x7F)
+									{
+										shouldSendAnswer = True;
+									}
+									else if ((diagTxSize > 2U) && (diagTxbuf[2] != UDS_NRC_SNS) && (diagTxbuf[2] != UDS_NRC_SFNS) && (diagTxbuf[2] != UDS_NRC_ROOR))
+									{
+										shouldSendAnswer = True;
+									}
+									else if (diagTxbuf[0] <= 0xA) shouldSendAnswer = True; //TODO: remove this line once OBD-II PIDs are all implemented - temporarily kept as a fix to make sure ECUs are discoverable with OBD-II functional addressing.
 
 
-					RAMN_UDS_ProcessDiagPayload(xTaskGetTickCount(), diagRxbuf, diagRxSize, diagTxbuf, &diagTxSize);
-					if (diagTxSize > 0U)
-					{
-						xBytesSent = xStreamBufferSend(UdsTxDataStreamBufferHandle, (void *) &diagTxSize, sizeof(diagTxSize), portMAX_DELAY );
-						xBytesSent += xStreamBufferSend(UdsTxDataStreamBufferHandle, (void *) diagTxbuf, diagTxSize, portMAX_DELAY );
-						if( xBytesSent != (diagTxSize + sizeof(diagTxSize) )) Error_Handler();
-						xTaskNotifyGive(RAMN_DiagTXHandle);
+									if (shouldSendAnswer != False)
+									{
+										xBytesSent = xStreamBufferSend(UdsTxDataStreamBufferHandle, (void *) &diagTxSize, sizeof(diagTxSize), portMAX_DELAY );
+										xBytesSent += xStreamBufferSend(UdsTxDataStreamBufferHandle, (void *) diagTxbuf, diagTxSize, portMAX_DELAY );
+										if( xBytesSent != (diagTxSize + sizeof(diagTxSize) )) Error_Handler();
+										xTaskNotifyGive(RAMN_DiagTXHandle);
+									}
+								}
+								RAMN_UDS_PerformPostAnswerActions(xTaskGetTickCount(), diagRxbuf, diagRxSize, diagTxbuf, &diagTxSize);
+							}
+						}
 					}
-					RAMN_UDS_PerformPostAnswerActions(xTaskGetTickCount(), diagRxbuf, diagRxSize, diagTxbuf, &diagTxSize);
 				}
 			}
 		}

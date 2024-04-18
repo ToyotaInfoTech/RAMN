@@ -37,6 +37,33 @@
 #include "ramn_dtc.h"
 #endif
 
+//UDS Error Codes
+#define UDS_NRC_GR   	0x10  	//General Reject
+#define UDS_NRC_SNS  	0x11 	//Service not supported
+#define UDS_NRC_SFNS 	0x12 	//Sub-Function not supported
+#define UDS_NRC_IMLOIF 	0x13	//Incorrect message length or invalid format
+#define UDS_NRC_RTL 	0x14 	//Response too long
+#define UDS_NRC_BRR 	0x21	//Busy repeat request
+#define UDS_NRC_CNC 	0x22	//Conditions not correct
+#define UDS_NRC_RSE 	0x24	//Request sequence error
+#define UDS_NRC_NRFSC 	0x25	//No response from sub-net component
+#define UDS_NRC_FPEORA 	0x26	//Failure prevents execution of requested action
+#define UDS_NRC_ROOR 	0x31	//Request out of range
+#define UDS_NRC_SAD 	0x33	//Security access denied
+#define UDS_NRC_IK 		0x35	//Invalid key
+#define UDS_NRC_ENOA 	0x36	//Exceeded number of attempts
+#define UDS_NRC_RTDNE 	0x37	//Required time delay not expired
+#define UDS_NRC_RBEDLSD 0x38	//Reserved by Extended Data Link Security Document
+#define UDS_NRC_UDNA 	0x70	//Upload/Download not accepted
+#define UDS_NRC_TDS 	0x71	//Transfer data suspended
+#define UDS_NRC_GPF 	0x72	//General programming failure
+#define UDS_NRC_WBSC 	0x73	//Wrong Block Sequence Counter
+#define UDS_NRC_RCRRP 	0x78	//Request correctly received, but response is pending
+#define UDS_NRC_SFNSIAS 0x7E	//Sub-Function not supported in active session
+#define UDS_NRC_SNSIAS 	0x7F	//Service not supported in active session
+#define UDS_NRC_VSTH    0x88    //Vehicle Speed too High
+
+
 //Timeout of diagnostic session
 #define UDS_SESSION_TIMEOUT_MS 				5000
 
