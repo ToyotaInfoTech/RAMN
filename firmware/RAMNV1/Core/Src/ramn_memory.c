@@ -256,12 +256,22 @@ RAMN_Bool_t RAMN_RAM_CheckAreaWritable(uint32_t start, uint32_t end)
 	return result;
 }
 
+// "end" address excluded
 RAMN_Bool_t RAMN_MEMORY_CheckAreaReadable(uint32_t start, uint32_t end)
 {
 	RAMN_Bool_t result = False;
 	if ((start >= FLASH_START_ADDRESS) && (end <= FLASH_END_ADDRESS))
 	{
+		uint16_t memsize = *(const uint16_t*)FLASHSIZE_BASE;
+		if (memsize == 512)
+		{
 		result = True;
+		}
+		else
+		{
+			uint32_t flash_end = FLASH_START_ADDRESS + ((FLASH_END_ADDRESS-FLASH_START_ADDRESS)/2);
+			if (end <= flash_end) result = True;
+		}
 	}
 	else if ((start >= SRAM1_START_ADDRESS) && (end <= SRAM1_END_ADDRESS))
 	{
@@ -275,7 +285,6 @@ RAMN_Bool_t RAMN_MEMORY_CheckAreaReadable(uint32_t start, uint32_t end)
 	{
 		result = True;
 	}
-	/*
 	else if ((start >= SYSTEMFLASH_START_ADDRESS) && (end < SYSTEMFLASH_STOP_ADDRESS))
 	{
 		result = True;
@@ -283,7 +292,7 @@ RAMN_Bool_t RAMN_MEMORY_CheckAreaReadable(uint32_t start, uint32_t end)
 	else if ((start >= OPTIONBYTES_START_ADDRESS) && (end < OPTIONBYTES_STOP_ADDRESS))
 	{
 		result = True;
-	}*/
+	}
 
 	return result;
 }
