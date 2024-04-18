@@ -1,0 +1,70 @@
+VERSION ""
+
+
+BS_:
+
+BU_:
+
+
+BO_ 36 Brake: 8 Vector__XXX
+ SG_ Checksum : 39|32@0+ (1,0) [0|4.29497e+009] "" Vector__XXX
+ SG_ Counter : 23|16@0+ (1,0) [0|65535] "" Vector__XXX
+ SG_ Value : 3|12@0+ (0.02442,0) [0|99.9999] "%" Vector__XXX
+
+BO_ 57 Accelerator: 8 Vector__XXX
+ SG_ Checksum : 39|32@0+ (1,0) [0|4.29497e+009] "" Vector__XXX
+ SG_ Counter : 23|16@0+ (1,0) [0|65535] "" Vector__XXX
+ SG_ Value : 3|12@0+ (0.02442,0) [0|99.9999] "%" Vector__XXX
+
+BO_ 98 Steering: 8 Vector__XXX
+ SG_ Checksum : 39|32@0+ (1,0) [0|4.29497e+009] "" Vector__XXX
+ SG_ Counter : 23|16@0+ (1,0) [0|65535] "" Vector__XXX
+ SG_ Value : 3|12@0+ (0.02442,0) [0|99.9999] "%" Vector__XXX
+
+BO_ 119 Shift: 8 Vector__XXX
+ SG_ Checksum : 39|32@0+ (1,0) [0|4.29497e+009] "" Vector__XXX
+ SG_ Counter : 23|16@0+ (1,0) [0|65535] "" Vector__XXX
+ SG_ JoystickPosition : 15|8@0+ (1,0) [0|255] "" Vector__XXX
+ SG_ CurrentGear : 7|8@0- (1,0) [-128|127] "" Vector__XXX
+
+BO_ 152 Horn: 8 Vector__XXX
+ SG_ Checksum : 39|32@0+ (1,0) [0|4.29497e+009] "" Vector__XXX
+ SG_ Counter : 23|16@0+ (1,0) [0|65535] "" Vector__XXX
+ SG_ Status : 0|1@0- (1,0) [0|1] "" Vector__XXX
+
+BO_ 336 LightSwitch: 8 Vector__XXX
+ SG_ Checksum : 39|32@0+ (1,0) [0|4.29497e+009] "" Vector__XXX
+ SG_ Counter : 23|16@0+ (1,0) [0|65535] "" Vector__XXX
+ SG_ Value : 2|3@0+ (1,0) [0|7] "" Vector__XXX
+
+BO_ 423 TurnIndicators: 8 Vector__XXX
+ SG_ Checksum : 39|32@0+ (1,0) [0|4.29497e+009] "" Vector__XXX
+ SG_ Counter : 23|16@0+ (1,0) [0|65535] "" Vector__XXX
+ SG_ Left : 8|1@0- (1,0) [0|1] "" Vector__XXX
+ SG_ Right : 0|1@0- (1,0) [0|1] "" Vector__XXX
+
+BO_ 440 EngineKey: 8 Vector__XXX
+ SG_ Checksum : 39|32@0+ (1,0) [0|4.29497e+009] "" Vector__XXX
+ SG_ Counter : 23|16@0+ (1,0) [0|65535] "" Vector__XXX
+ SG_ Status : 1|2@0+ (1,0) [0|3] "" Vector__XXX
+
+BO_ 443 LEDStatus: 8 Vector__XXX
+ SG_ Checksum : 39|32@0+ (1,0) [0|4.29497e+009] "" Vector__XXX
+ SG_ Counter : 23|16@0+ (1,0) [0|65535] "" Vector__XXX
+ SG_ RightTurn : 7|1@0- (1,0) [0|1] "" Vector__XXX
+ SG_ LeftTurn : 6|1@0- (1,0) [0|1] "" Vector__XXX
+ SG_ HighBeam : 5|1@1- (1,0) [0|1] "" Vector__XXX
+ SG_ LowBeam : 4|1@1- (1,0) [0|1] "" Vector__XXX
+ SG_ Clearance : 3|1@0- (1,0) [0|1] "" Vector__XXX
+ SG_ BrakeStop : 2|1@1- (1,0) [0|1] "" Vector__XXX
+ SG_ CheckEngine : 1|1@0- (1,0) [0|1] "" Vector__XXX
+ SG_ Battery : 0|1@0- (1,0) [0|1] "" Vector__XXX
+
+BO_ 467 ParkingBrake: 8 Vector__XXX
+ SG_ Checksum : 39|32@0+ (1,0) [0|4.29497e+009] "" Vector__XXX
+ SG_ Counter : 23|16@0+ (1,0) [0|65535] "" Vector__XXX
+ SG_ Status : 0|1@0- (1,0) [0|1] "" Vector__XXX
+
+
+
+

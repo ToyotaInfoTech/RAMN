@@ -1,8 +1,6 @@
 User Guide
 ==========
 
-Work In Progress.
-
 .. toctree::
    :maxdepth: 3
 
@@ -11,4 +9,5 @@ Work In Progress.
    userguide/isotp_tutorial
    userguide/diag_tutorial
    userguide/usb_tutorial
+   userguide/going_further
 
