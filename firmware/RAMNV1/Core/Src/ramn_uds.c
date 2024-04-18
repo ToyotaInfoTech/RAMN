@@ -829,7 +829,7 @@ static void RAMN_UDS_RoutineControlComputeCRC(const uint8_t* data, uint16_t size
 		}
 		else
 		{
-			uint32_t result = RAMN_CRC_Calculate((uint8_t*)startaddr,memsize);
+			uint32_t result = RAMN_CRC_SoftCalculate((uint8_t*)startaddr,memsize);
 			uds_answerData[0] = data[0] + 0x40; //positive response
 			uds_answerData[1] = data[1];
 			uds_answerData[2] = data[2];
