@@ -277,6 +277,9 @@ class slRAMN():
                 log("Received NACK from target",LOG_WARNING)
                 return False
             elif len(line) > 0:
+                if line[0] == '\a':
+                    #return line only
+                    log("ECU A rejected an slcan command", LOG_ERROR)
                 if not retry:
                     log("Expected ACK but found something else: " + line, LOG_ERROR)
                     return False

@@ -1393,97 +1393,111 @@ void RAMN_ReceiveUSBFunc(void *argument)
 				//eg "u{:03x}{:03x}{:03x}{:03x}{:02x}{:02x}{:02x}\r"
 				if (commandLength == 19U) RAMN_DBC_ProcessUSBBuffer(USBRxBuffer);
 			}
-			else if ( ((USBRxBuffer[0U+offset] == 't') || (USBRxBuffer[0U+offset] == 'r')) && ((commandLength - offset) >= 5))
+			else if ( ((USBRxBuffer[0U+offset] == 't') || (USBRxBuffer[0U+offset] == 'r')))
 			{
 				//'t' : Transmit Standard ID DATA
 				//'r' : Transmit Standard ID RTR
-				CANTxHeader.IdType = FDCAN_STANDARD_ID;
-				CANTxHeader.TxFrameType = FDCAN_DATA_FRAME;
-				//CANTxHeader.Identifier = (ascii_hashmap[commandBuffer[1+offset]] << 8) + (ascii_hashmap[commandBuffer[2+offset]] << 4) + (ascii_hashmap[commandBuffer[3+offset]]);
-				CANTxHeader.Identifier = ASCIItoUint12(&USBRxBuffer[1U+offset]);
-
-				dlc = ASCIItoUint4(&USBRxBuffer[4U+offset]);
-				CANTxHeader.DataLength = ((dlc));
-
-				if (USBRxBuffer[0+offset] == 'r')
+				if (((commandLength - offset) >= 5))
 				{
-					CANTxHeader.TxFrameType = FDCAN_REMOTE_FRAME;
-					//for remote frames, no need to copy CANTxData.
-					dlc = 0U;
-				}
+					CANTxHeader.IdType = FDCAN_STANDARD_ID;
+					CANTxHeader.TxFrameType = FDCAN_DATA_FRAME;
+					//CANTxHeader.Identifier = (ascii_hashmap[commandBuffer[1+offset]] << 8) + (ascii_hashmap[commandBuffer[2+offset]] << 4) + (ascii_hashmap[commandBuffer[3+offset]]);
+					CANTxHeader.Identifier = ASCIItoUint12(&USBRxBuffer[1U+offset]);
 
-				if ((commandLength - offset) == (5 + 2*dlc))
-				{
-					offset += 5U;
-					uint8_t i = 0U;
+					dlc = ASCIItoUint4(&USBRxBuffer[4U+offset]);
+					CANTxHeader.DataLength = (dlc);
 
-					while (offset < (commandLength-1) )
+					if (USBRxBuffer[0+offset] == 'r')
 					{
-						CANTxData[i++] = ASCIItoUint8(&USBRxBuffer[offset]);
-						offset += 2U;
+						CANTxHeader.TxFrameType = FDCAN_REMOTE_FRAME;
+						//for remote frames, no need to copy CANTxData.
+						dlc = 0U;
 					}
 
-					while (RAMN_FDCAN_SendMessage(&CANTxHeader,CANTxData) == RAMN_TRY_LATER)
+					if ((commandLength - offset) == (5 + 2*DLCtoUINT8(dlc)))
 					{
-						//Buffer is Full, Try later
-						osDelay(10U);
-					}
-					RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
+						offset += 5U;
+						uint8_t i = 0U;
+
+						while (offset < (commandLength-1) )
+						{
+							CANTxData[i++] = ASCIItoUint8(&USBRxBuffer[offset]);
+							offset += 2U;
+						}
+
+						while (RAMN_FDCAN_SendMessage(&CANTxHeader,CANTxData) == RAMN_TRY_LATER)
+						{
+							//Buffer is Full, Try later
+							osDelay(10U);
+						}
+						RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
 
 #if defined(CAN_ECHO)
-					RAMN_USB_SendFromTask(USBRxBuffer,commandLength);
+						RAMN_USB_SendFromTask(USBRxBuffer,commandLength);
 #endif
 
 #if defined(PROCESS_SLCAN_BY_DBC)
-					RAMN_DBC_ProcessCANMessage(CANTxHeader.Identifier,dlc,(RAMN_CANFrameData_t*)CANTxData);
+						RAMN_DBC_ProcessCANMessage(CANTxHeader.Identifier,dlc,(RAMN_CANFrameData_t*)CANTxData);
 #endif
+					}
+					else
+					{
+						RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
+					}
 				}
 				else
 				{
 					RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
 				}
 			}
-			else if (((USBRxBuffer[0U+offset] == 'R') || (USBRxBuffer[0U+offset] == 'T')) && ((commandLength - offset) >= 10) )
+			else if (((USBRxBuffer[0U+offset] == 'R') || (USBRxBuffer[0U+offset] == 'T')))
 			{
 				//'T' : Transmit Extended ID DATA
 				//'R' : Transmit Extended ID RTR
-				CANTxHeader.IdType = FDCAN_EXTENDED_ID;
-				CANTxHeader.TxFrameType = FDCAN_DATA_FRAME;
-				CANTxHeader.Identifier =  ASCIItoUint32(&USBRxBuffer[1U+offset]);
-				dlc = ASCIItoUint4(&USBRxBuffer[9U+offset]);
-				CANTxHeader.DataLength = ((dlc));
-
-				if (USBRxBuffer[0+offset] == 'R')
+				if ( (commandLength - offset) >= 10)
 				{
-					CANTxHeader.TxFrameType = FDCAN_REMOTE_FRAME;
-					//for remote frames, no need to copy payload
-					dlc = 0;
-				}
+					CANTxHeader.IdType = FDCAN_EXTENDED_ID;
+					CANTxHeader.TxFrameType = FDCAN_DATA_FRAME;
+					CANTxHeader.Identifier =  ASCIItoUint32(&USBRxBuffer[1U+offset]);
+					dlc = ASCIItoUint4(&USBRxBuffer[9U+offset]);
+					CANTxHeader.DataLength = ((dlc));
 
-				if ((commandLength - offset) == (10 + 2*dlc))
-				{
-
-					offset += 10U;
-					uint8_t i = 0U;
-					while (offset < (commandLength-1) )
+					if (USBRxBuffer[0+offset] == 'R')
 					{
-						CANTxData[i++] = ASCIItoUint8(&USBRxBuffer[offset]);
-						offset += 2U;
+						CANTxHeader.TxFrameType = FDCAN_REMOTE_FRAME;
+						//for remote frames, no need to copy payload
+						dlc = 0;
 					}
 
-					while (RAMN_FDCAN_SendMessage(&CANTxHeader,CANTxData) == RAMN_TRY_LATER) osDelay(10U);
-					RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
+					if ((commandLength - offset) == (10 + 2*DLCtoUINT8(dlc)))
+					{
+
+						offset += 10U;
+						uint8_t i = 0U;
+						while (offset < (commandLength-1) )
+						{
+							CANTxData[i++] = ASCIItoUint8(&USBRxBuffer[offset]);
+							offset += 2U;
+						}
+
+						while (RAMN_FDCAN_SendMessage(&CANTxHeader,CANTxData) == RAMN_TRY_LATER) osDelay(10U);
+						RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
 #if defined(CAN_ECHO)
-					RAMN_USB_SendFromTask(USBRxBuffer,commandLength);
+						RAMN_USB_SendFromTask(USBRxBuffer,commandLength);
 #endif
 
 #if defined(PROCESS_SLCAN_BY_DBC)
-					RAMN_DBC_ProcessCANMessage(CANTxHeader.Identifier,dlc,(RAMN_CANFrameData_t*)CANTxData);
+						RAMN_DBC_ProcessCANMessage(CANTxHeader.Identifier,dlc,(RAMN_CANFrameData_t*)CANTxData);
 #endif
+					}
+					else
+					{
+						RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
+					}
 				}
 				else
 				{
-					RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
+					RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
 				}
 			}
 			else
