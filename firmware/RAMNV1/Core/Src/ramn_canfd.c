@@ -135,8 +135,9 @@ void RAMN_FDCAN_Disable(void)
 	HAL_FDCAN_DeInit(hfdcan);
 }
 
-void RAMN_FDCAN_UpdateBaudrate(uint8_t newSelection)
+RAMN_Result_t RAMN_FDCAN_UpdateBaudrate(uint8_t newSelection)
 {
+	RAMN_Result_t result = RAMN_OK;
 	switch(newSelection)
 	{
 	case '0': //10K
@@ -188,8 +189,10 @@ void RAMN_FDCAN_UpdateBaudrate(uint8_t newSelection)
 		hfdcan->Init.NominalPrescaler = 1;
 		hfdcan->Init.NominalTimeSeg1 = 63;
 		hfdcan->Init.NominalTimeSeg2 = 16;
+		result = RAMN_ERROR;
 		break;
 	}
+	return result;
 }
 
 void RAMN_FDCAN_ResetStatistics(void)
