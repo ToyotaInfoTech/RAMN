@@ -307,6 +307,7 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 		{
 			//no room in buffer, reset
 			currentIndex = 0;
+			if (USBD_errorCallback_ptr != NULL) (*USBD_errorCallback_ptr)(&hUsbDeviceFS);
 		}
 		else if(Buf[i] != '\r') //End of Line, should be treated as command
 		{

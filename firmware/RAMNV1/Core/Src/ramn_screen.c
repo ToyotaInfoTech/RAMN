@@ -414,6 +414,13 @@ void RAMN_SCREEN_Update(uint32_t tick)
 			memcpy(ascii_string,"ERR",4);
 			RAMN_SPI_DrawStringColor(5, 5+(1*16), SPI_COLOR_THEME.BACKGROUND, SPI_COLOR_THEME.LIGHT, ascii_string);
 		}
+
+		if (RAMN_USB_Config.USBErrCnt > 0U)
+		{
+			memcpy(ascii_string,"USB",4);
+			RAMN_SPI_DrawStringColor(5, 5+(2*16), SPI_COLOR_THEME.BACKGROUND, SPI_COLOR_THEME.LIGHT, ascii_string);
+		}
+
 		RAMN_SCREEN_DrawSubconsoleUpdate();
 	}
 

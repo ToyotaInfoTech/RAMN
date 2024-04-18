@@ -23,6 +23,7 @@
 #include "ramn_spi.h"
 #include "ramn_dbc.h"
 #include "ramn_chip8.h"
+#include "ramn_usb.h"
 
 #define CONTOUR_WIDTH 2
 #define CONTROL_WINDOW_Y LCD_HEIGHT-34
