@@ -52,13 +52,17 @@ XCP_ECUD_RX = 0x556
 XCP_ECUD_TX = 0x557 
 
 #returns handlers to interact with ECUs over ISO-TP
-def getRAMNHandlers(port,filterID=b'M000007e0', filterMask=b'm000007F0'):
+def getRAMNHandlers(port,filterID=b'M7e0', filterMask=b'm7F0',filterIDextended=b'M00000000', filterMaskExtended=b'm7FFFFFFF'):
     ramn = RAMN_USB_Handler(port)    
     ramn.open(autoOpen=False)
     
     #Set CAN filter to only receive Diagnostic messages
+    ramn.sendCommand(b'W2')   #filter value/mask type
+
     ramn.sendCommand(filterID)#Filter ID
     ramn.sendCommand(filterMask)#Filter mask  
+    ramn.sendCommand(filterIDextended)#Filter ID
+    ramn.sendCommand(filterMaskExtended)#Filter mask  
     
     #Open port and empty current buffer
     ramn.sendCommand(b'O') 

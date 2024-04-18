@@ -188,7 +188,7 @@ UDSAnalyzer.UDS_SID_STRINGS[r[1]] + ")",LOG_ERROR)
         return None
         
     def writeVIN(self,vin):
-        return self.writeDataByIdentifier(0xF190, [ord(i) for i in vin.ljust(20, '\x00')]) 
+        return self.writeDataByIdentifier(0xF190, [ord(i) for i in vin]) 
         
     def readCompileTime(self):
         return ''.join(chr(i) for i in self.readDataByIdentifier(0xF184))
