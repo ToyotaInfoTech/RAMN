@@ -22,3 +22,4 @@ hardware/V1_revC/0_ramn/fp-info-cache
 /scripts/carla/agents/navigation/__pycache__
 /scripts/carla/agents/tools/__pycache__
 /scripts/diagnostics/DUMP
+/hardware/V1_revB/0_ramn/ramn-backups
