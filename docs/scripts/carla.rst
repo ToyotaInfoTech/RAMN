@@ -102,6 +102,8 @@ You can also connect CARLA to RAMN using a CAN adapter (internal or external) in
 - Execute *4_CARLA_RAMN_manual_CAN.bat* to connect RAMN to CARLA and drive the vehicle manually.
 - Execute *5_CARLA_RAMN_auto_CAN.bat* to connect RAMN to CARLA with the self-driving algorithm.
 
+The CAN scripts have less features and typically worse performances than the serial one, so avoid using them unless you have a specific use case for them.
+
 .. warning::
     When using the CARLA scripts, the serial port of RAMN will not be available for other applications. If you want to interact with the CAN bus, it is recommended that you connect an external CAN adapter. On Linux, you can use the :ref:`vcand` script to multiplex the serial port and observe the CAN bus even when the CARLA scripts are in use.
 

@@ -1,10 +1,10 @@
 Going Further
 =============
 
-Using External tools
---------------------
+Using External Adapters
+-----------------------
 
-Although you can use ECU A as a USB to CAN adapter, you may prefer to use an external CAN tool and its analysis tool suite.
+Although you can use ECU A as a USB to CAN adapter, you may prefer to use an external CAN adapter and an analysis tools suite that goes with it.
 For example, you could use `BUSMASTER <https://rbei-etas.github.io/busmaster/>`_ with a `PCAN-USB <https://www.peak-system.com/PCAN-USB.199.0.html?&L=1>`_.
 These tools typically allow you to load a database file ("DBC file"), which specifies what each bit in CAN frames represents.
 
