@@ -190,7 +190,7 @@ Reflash
 
 - Click the "Erasing & Programming icon" in the left pane (second icon from the top).
 - (Optional) Click "Full Chip Erase" (top right of the window) to fully erase the memory (including internal EEPROM, which contains VIN and DTCs).
-- Click "Browse", select the firmware file (.hex file for your ECU), check "Verify programming" and "Run after programming", then click "Start Programming".
+- Click "Browse", select the firmware file (.hex file for your ECU), check "Verify programming" and **"Run after programming"**, then click "Start Programming".
 - Wait for the flashing process to finish.
 
 Repeat these steps for each ECU that you want to reprogram.
