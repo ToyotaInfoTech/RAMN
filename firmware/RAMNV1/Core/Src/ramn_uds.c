@@ -487,6 +487,14 @@ static void RAMN_UDS_ReadDataByIdentifier(const uint8_t* data, uint16_t size)
 				RAMN_memcpy(&(answer[3+1+sizeof(__DATE__)]),(uint8_t*)__TIME__,sizeof(__TIME__));
 				answer_size = 3 + 1 + sizeof(__DATE__) + sizeof(__TIME__);
 				break;
+			case 0xF186: //active Session
+				answer[3] = udsSessionHandler.currentSession;
+				answer_size = 1+3;
+				break;
+			case 0xF187: //Spare part
+				RAMN_memcpy(&(answer[3]),"RAMN",4U);
+				answer_size = 4+3;
+				break;
 			case 0xF18C: //ECU Serial Hardware
 				RAMN_memcpy((uint8_t*)&(answer[3]),(uint8_t*)DEVICE_HARDWARE_ID_ADDRESS,12);
 				answer_size = 12+3;
@@ -621,7 +629,6 @@ static void RAMN_UDS_WriteDataByIdentifier(const uint8_t* data, uint16_t size)
 #if defined(ENABLE_EEPROM_EMULATION)
 	uint16_t index = (data[1] << 8) + data[2];
 	EE_Status result = EE_OK;
-	uint8_t errCode;
 
 	if (udsSessionHandler.currentSession != UDS_SESSION_PRGS )
 	{
