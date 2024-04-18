@@ -66,7 +66,7 @@ CAD Software
 ------------
 
 PCBs are designed using `KiCAD <https://kicad.org/>`_, which is an open-source tool for PCB design.
-Design files can be found on the `github repository <https://github.com/ToyotaInfoTech/RAMN/tree/main/hardware/V1>`_.
+Design files can be found on the `github repository <https://github.com/ToyotaInfoTech/RAMN/tree/main/hardware/>`_.
 
 .. figure:: img/kicad1.png
 

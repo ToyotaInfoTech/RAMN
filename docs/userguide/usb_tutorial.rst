@@ -447,7 +447,7 @@ You can also use the same prefix for the ``r``, ``t``, and ``T`` command.
 Include ESI bit - v
 ^^^^^^^^^^^^^^^^^^^
 
-Use ``v0`` to enable and ``v1`` to disable the addition of an "i" at the end of CAN FD frames that have the "ESI" bit set (which should be expected when there is no error).
+Use ``v0`` and ``v1`` to enable or disable the addition of an "i" at the end of CAN FD frames that have the "ESI" flag set as "PASSIVE".
 
 
 Custom ECU control commands
