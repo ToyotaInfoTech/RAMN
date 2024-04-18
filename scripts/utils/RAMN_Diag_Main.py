@@ -52,7 +52,7 @@ XCP_ECUD_RX = 0x556
 XCP_ECUD_TX = 0x557 
 
 #returns handlers to interact with ECUs over ISO-TP
-def getRAMNHandlers(port,filterID=b'M7e0', filterMask=b'm7F0',filterIDextended=b'M00000000', filterMaskExtended=b'm7FFFFFFF'):
+def getRAMNHandlers(port,filterID=b'M7e0', filterMask=b'm7F0',filterIDExtended=b'M00000000', filterMaskExtended=b'm7FFFFFFF'):
     ramn = RAMN_USB_Handler(port)    
     ramn.open(autoOpen=False)
     
@@ -61,7 +61,7 @@ def getRAMNHandlers(port,filterID=b'M7e0', filterMask=b'm7F0',filterIDextended=b
 
     ramn.sendCommand(filterID)#Filter ID
     ramn.sendCommand(filterMask)#Filter mask  
-    ramn.sendCommand(filterIDextended)#Filter ID
+    ramn.sendCommand(filterIDExtended)#Filter ID
     ramn.sendCommand(filterMaskExtended)#Filter mask  
     
     #Open port and empty current buffer
