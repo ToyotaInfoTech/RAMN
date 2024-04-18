@@ -782,20 +782,29 @@ static void RAMN_UDS_RoutineControlResetBootOptionBytes(const uint8_t* data, uin
 		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
 	}
 	else{
-		switch (data[1]){
-		case 0x01://Start
-			if (RAMN_FLASH_ConfigureOptionBytesBootloaderMode() != RAMN_OK)
-			{
-				RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_GPF);
+
+		uint8_t errCode = checkProgrammingOK(False);
+		if (errCode != 0U)
+		{
+			RAMN_UDS_FormatNegativeResponse(data, errCode);
+		}
+		else
+		{
+			switch (data[1]){
+			case 0x01://Start
+				if (RAMN_FLASH_ConfigureOptionBytesBootloaderMode() != RAMN_OK)
+				{
+					RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_GPF);
+				}
+				else
+				{
+					RAMN_UDS_FormatPositiveResponseEcho(data, size);
+				}
+				break;
+			default: //Invalid
+				RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SFNS);
+				break;
 			}
-			else
-			{
-				RAMN_UDS_FormatPositiveResponseEcho(data, size);
-			}
-			break;
-		default: //Invalid
-			RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SFNS);
-			break;
 		}
 	}
 }
@@ -810,20 +819,28 @@ static void RAMN_UDS_RoutineControlForceMemorySwap(const uint8_t* data, uint16_t
 		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
 	}
 	else{
-		switch (data[1]){
-		case 0x01://Start
-			if (RAMN_FLASH_SwitchActiveBank() != RAMN_OK)
-			{
-				RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_GPF);
+		uint8_t errCode = checkProgrammingOK(False);
+		if (errCode != 0U)
+		{
+			RAMN_UDS_FormatNegativeResponse(data, errCode);
+		}
+		else
+		{
+			switch (data[1]){
+			case 0x01://Start
+				if (RAMN_FLASH_SwitchActiveBank() != RAMN_OK)
+				{
+					RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_GPF);
+				}
+				else
+				{
+					RAMN_UDS_FormatPositiveResponseEcho(data, size);
+				}
+				break;
+			default: //Invalid
+				RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SFNS);
+				break;
 			}
-			else
-			{
-				RAMN_UDS_FormatPositiveResponseEcho(data, size);
-			}
-			break;
-		default: //Invalid
-			RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SFNS);
-			break;
 		}
 	}
 }
