@@ -13,6 +13,8 @@ ECUreadableRange = {
     #"OTP":                (0x0BFA0000,0x0BFA0200), #Commented out as precaution, is actually readable
     "SRAM1":               (0x20000000,0x20030000),
     "SRAM2":               (0x20030000,0x20040000),
+    "SYSTEM":              (0x0BF90000,0x0BF98000),
+    "OPTION_BYTES":        (0x40022040,0x40022140),
 }
 
 #Simplified address change for memory areas
