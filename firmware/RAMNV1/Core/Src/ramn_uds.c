@@ -386,11 +386,15 @@ static void RAMN_UDS_ReadDTC(const uint8_t* data, uint16_t size)
 //Note that bank alias are NOT accounted for (if bank swap is activated, the virtual addresses will be read)
 static void RAMN_UDS_ReadMemoryByAddress(const uint8_t* data, uint16_t size)
 {
-	if( size != 8U ) //Only accept 2 byte size, 32-bit addressing
+	if( size < 2 )
 	{
 		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
 	}
-	else if (data[1] != 0x24) //Only accept 1 byte size, 32-bit addressing
+	else if ((data[1]&0x0F) != 0x04) //only accept 32-bit addressing
+	{
+		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SFNS);
+	}
+	else if ((data[1]&0xF0) > 0x40) //only accept sizes below 32 bits
 	{
 		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SFNS);
 	}
@@ -399,25 +403,40 @@ static void RAMN_UDS_ReadMemoryByAddress(const uint8_t* data, uint16_t size)
 		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SNSIAS);
 	}
 	else {
-		uint32_t addr = (data[2] << 24) + (data[3] << 16) + (data[4] << 8) + (data[5]);
-		uint16_t memsize = (data[6] << 8) + data[7];
-		if (memsize > 0xFFE)
+
+		uint32_t memsize = 0;
+		uint8_t memsize_len = ((data[1]&0xF0)>> 4);
+
+		if (size != 6 + memsize_len)
 		{
-			RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_ROOR);
-		}
-		else if ((RAMN_MEMORY_CheckAreaReadable(addr, (addr + (uint32_t)size)) != 0U) && (size < 0xFFF))
-		{
-			//use rx buffer to copy
-			uds_answerData[0] = data[0] + 0x40; //positive response
-			for(uint32_t i = 0; i < memsize; i++ )
-			{
-				uds_answerData[i+1] = (volatile uint8_t)*((volatile uint8_t*)(addr+i));
-			}
-			*uds_answerSize = (uint16_t)memsize+1;
+			RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
 		}
 		else
 		{
-			RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_ROOR);
+			uint32_t addr = (data[2] << 24) + (data[3] << 16) + (data[4] << 8) + (data[5]);
+
+			for(uint8_t i = 0; i < memsize_len; i++)
+			{
+				memsize |= data[6+i] << ((memsize_len - (i+1))*8);
+			}
+			if (memsize > 0xFFE)
+			{
+				RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_ROOR);
+			}
+			else if ((RAMN_MEMORY_CheckAreaReadable(addr, (addr + (uint32_t)size)) != 0U) && (size < 0xFFF))
+			{
+				//use rx buffer to copy
+				uds_answerData[0] = data[0] + 0x40; //positive response
+				for(uint32_t i = 0; i < memsize; i++ )
+				{
+					uds_answerData[i+1] = (volatile uint8_t)*((volatile uint8_t*)(addr+i));
+				}
+				*uds_answerSize = (uint16_t)memsize+1;
+			}
+			else
+			{
+				RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_ROOR);
+			}
 		}
 	}
 }
@@ -1246,55 +1265,73 @@ static void RAMN_UDS_WriteMemoryByAddress(const uint8_t* data, uint16_t size)
 	{
 		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
 	}
-	else if (data[1] != 0x24)
+	else if ((data[1]&0x0F) != 0x04) //only accept 32-bit addressing
 	{
-		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_ROOR);
+		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SFNS);
 	}
-	else if (size < 8U)
+	else if ((data[1]&0xF0) > 0x40) //only accept sizes below 32 bits
 	{
-		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
+		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SFNS);
 	}
 	else
 	{
-		uint32_t startaddr = (data[2] << 24) + (data[3] << 16) + (data[4] << 8) + (data[5]);
-		uint16_t writeSize = (data[6] << 8) + (data[7]);
-		uint8_t errCode;
+		uint16_t writeSize = 0;
+		uint8_t memsize_len = ((data[1]&0xF0)>> 4);
 
-		errCode = checkProgrammingOK(False);
-		if (errCode != 0U)
+		if (size < 6 + memsize_len)
 		{
-			RAMN_UDS_FormatNegativeResponse(data, errCode);
+			RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
 		}
+
 		else
 		{
-			if (size != (writeSize + 8U))
+			for(uint8_t i = 0; i < memsize_len; i++)
+			{
+				writeSize |= data[6+i] << ((memsize_len - (i+1))*8);
+			}
+
+			if (size != (6 + memsize_len + writeSize))
 			{
 				RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
 			}
-			else if (checkAuthenticated() == 0U)
+			else
 			{
-				RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SAD);
-			}
-			else if (RAMN_RAM_CheckAreaWritable(startaddr,startaddr+(uint32_t)size) == False)
-			{
-				RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_ROOR);
-			}
-			else if (writeSize == 2U) //Write short all at once
-			{
-				*(volatile uint16_t*)(startaddr) = (uint16_t)(((uint16_t)data[8]<<8) + (uint16_t)data[9]);
-			}
-			else if (writeSize == 4U) //Write integer all at once
-			{
-				*(volatile uint32_t*)(startaddr) = (uint32_t)(((uint32_t)data[8] << 24) + ((uint32_t)data[9] << 16) + ((uint32_t)data[10] << 8) + ((uint32_t)data[11]));
-			}
-			else if (writeSize == 8U) //Write long all at once
-			{
-				*(volatile uint64_t*)(startaddr) = (uint64_t)(((uint64_t)data[8] << 56) + ((uint64_t)data[9] << 48) + ((uint64_t)data[10] << 40) + ((uint64_t)data[11] << 32) + ((uint64_t)data[12] << 24) + ((uint64_t)data[13] << 16) + ((uint64_t)data[14] << 8) + ((uint64_t)data[15]));
-			}
-			else //Write byte by byte
-			{
-				for (uint32_t i = 0U; i < (uint32_t)writeSize; i++)
-					*(volatile uint8_t*)(startaddr) = (uint8_t)data[8+i];
+				uint32_t startaddr = (data[2] << 24) + (data[3] << 16) + (data[4] << 8) + (data[5]);
+				uint8_t errCode;
+
+				errCode = checkProgrammingOK(False);
+				if (errCode != 0U)
+				{
+					RAMN_UDS_FormatNegativeResponse(data, errCode);
+				}
+				else
+				{
+					if (RAMN_RAM_CheckAreaWritable(startaddr,startaddr+(uint32_t)writeSize) == False)
+					{
+						RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_ROOR);
+					}
+					else
+					{
+						if (writeSize == 2U) //Write short all at once
+						{
+							*(volatile uint16_t*)(startaddr) = (uint16_t)(((uint16_t)data[8]<<8) + (uint16_t)data[9]);
+						}
+						else if (writeSize == 4U) //Write integer all at once
+						{
+							*(volatile uint32_t*)(startaddr) = (uint32_t)(((uint32_t)data[8] << 24) + ((uint32_t)data[9] << 16) + ((uint32_t)data[10] << 8) + ((uint32_t)data[11]));
+						}
+						else if (writeSize == 8U) //Write long all at once
+						{
+							*(volatile uint64_t*)(startaddr) = (uint64_t)(((uint64_t)data[8] << 56) + ((uint64_t)data[9] << 48) + ((uint64_t)data[10] << 40) + ((uint64_t)data[11] << 32) + ((uint64_t)data[12] << 24) + ((uint64_t)data[13] << 16) + ((uint64_t)data[14] << 8) + ((uint64_t)data[15]));
+						}
+						else //Write byte by byte
+						{
+							for (uint32_t i = 0U; i < (uint32_t)writeSize; i++)
+								*(volatile uint8_t*)(startaddr) = (uint8_t)data[8+i];
+						}
+						RAMN_UDS_FormatPositiveResponseEcho(data,6+memsize_len);
+					}
+				}
 			}
 		}
 	}
