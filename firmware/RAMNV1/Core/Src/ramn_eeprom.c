@@ -29,7 +29,11 @@ EE_Status RAMN_EEPROM_Init()
 	HAL_FLASH_Unlock();
 	ee_status = EE_Init(EE_FORCED_ERASE);
 
-	//if(ee_status != EE_OK) Error_Handler();
+	if(ee_status != EE_OK)
+	{
+	//Could not read memory, try reformatting
+		EE_Format(EE_FORCED_ERASE);
+	}
 
 	HAL_FLASH_Lock();
 	return ee_status;

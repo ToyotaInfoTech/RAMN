@@ -14,7 +14,7 @@ if __name__ == '__main__':
     RAMN_Utils.setVerboseLevel(RAMN_Utils.DEFAULT_VERBOSE)
     
     #Create a RAMN USB Handler object
-    ramn, _ = getRAMNHandlers(RAMN_Utils.RAMN_DEFAULT_PORT,filterID=b'M00000550', filterMask=b'm000007F0')
+    ramn, _ = getRAMNHandlers(RAMN_Utils.RAMN_DEFAULT_PORT,filterID=b'M550', filterMask=b'm7F0',filterIDExtended=b'M00000550', filterMaskExtended=b'm000007F0')
     
     #Create ECU objects
     _, ECUB,ECUC,ECUD = getECUHandlersXCP(ramn)
