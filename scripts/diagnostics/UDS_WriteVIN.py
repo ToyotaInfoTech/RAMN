@@ -53,6 +53,7 @@ if __name__ == '__main__':
   
     #Write VINs
     log("Writing VIN to ECUs",LOG_OUTPUT)
+    log("Verify that DBANK Option Byte is set if programming fails",LOG_WARNING)
     writeVIN(ECUA,VIN_ECUA)
     writeVIN(ECUB,VIN_ECUB)
     writeVIN(ECUC,VIN_ECUC)  

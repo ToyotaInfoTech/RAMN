@@ -33,7 +33,7 @@ def dumpECUMemory(ecu,hexfilename,binprefix):
                             f.write(bytes(d))
                 else:
                     print(d)
-                    log("Dump of {} Failed, Insuffient data received".format(area),LOG_ERROR)
+                    log("Dump of {} Failed, Insuffient data received (ECU may have only 256 kB Flash)".format(area),LOG_ERROR)
             else:
                 log("Dump of {} Failed, no data received".format(area),LOG_ERROR)
         ih.tofile(hexfilename, format='hex')

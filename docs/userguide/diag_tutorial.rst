@@ -538,9 +538,9 @@ Therefore, the commands below are strictly equivalent to the command above:
 .. code-block:: bash
 
     $ echo "23 24 08 00 00 00 00 04" | isotpsend can0 -s 7e1 -d 7e9
+    $ echo "23 34 08 00 00 00 00 00 04" | isotpsend can0 -s 7e1 -d 7e9
     $ echo "23 44 08 00 00 00 00 00 00 04" | isotpsend can0 -s 7e1 -d 7e9
 
-At the time this documentation is written, RAMN only supports format 0x24 (2-byte size, 4-byte address).
 The service immediately returns the data that was read.
 For example, you can read the first 256 bytes of the program flash of ECU B (address 0x08000000) with:
 
@@ -586,7 +586,6 @@ You can check that the memory was correctly written by using Read Memory by Addr
 Variable addresses depend on the exact version of the firmware that you use.
 In the version used in this example, 0x20000000 corresponds to the "error status" variable of the CAN adapter, which can be overwritten without impacting stability.
 **If you do not know what variable(s) you overwrote with your command, you should reset the ECU.**
-
 
 Link Control (0x87)
 ^^^^^^^^^^^^^^^^^^^
