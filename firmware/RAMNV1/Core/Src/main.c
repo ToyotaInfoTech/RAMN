@@ -1432,6 +1432,7 @@ void RAMN_ReceiveUSBFunc(void *argument)
 					//Buffer is Full, Try later
 					osDelay(10U);
 				}
+				RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
 
 #if defined(CAN_ECHO)
 				RAMN_USB_SendFromTask(USBRxBuffer,commandLength);
@@ -1468,8 +1469,8 @@ void RAMN_ReceiveUSBFunc(void *argument)
 					offset += 2U;
 				}
 
-				while (RAMN_FDCAN_SendMessage(&CANTxHeader,CANTxData) == RAMN_TRY_LATER) osDelay(20U);
-
+				while (RAMN_FDCAN_SendMessage(&CANTxHeader,CANTxData) == RAMN_TRY_LATER) osDelay(10U);
+				RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
 #if defined(CAN_ECHO)
 				RAMN_USB_SendFromTask(USBRxBuffer,commandLength);
 #endif
@@ -2005,7 +2006,10 @@ void RAMN_SendCANFunc(void *argument)
 			ulTaskNotifyTake( pdTRUE, portMAX_DELAY );
 		}
 
-		if (HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan1, &CANTxHeader, CANTxData) != HAL_OK) Error_Handler();
+		if (HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan1, &CANTxHeader, CANTxData) != HAL_OK)
+		{
+			Error_Handler();
+		}
 		RAMN_FDCAN_Status.CANTXRequestCnt++;
 
 	}

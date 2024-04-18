@@ -35,6 +35,9 @@ class RAMN_USB_Handler():
         self.ser = serial.Serial(self.port)
         #Turn off simulator, if on
         self.sendCommand(b'c0')
+        self.sendCommand(b'W2')   #filter value/mask type
+        self.sendCommand(b'M7E0') #filter value 0x7E0
+        self.sendCommand(b'm7F0') #filter mask 0x7F0
         self.ser.reset_input_buffer()
         if autoOpen:
             self.sendCommand(b'O')
@@ -88,6 +91,8 @@ class RAMN_USB_Handler():
         #reset Filter
         self.sendCommand(b'M00000000') #Reset CAN filter
         self.sendCommand(b'm00000000') 
+        self.sendCommand(b'M000') #Reset CAN filter
+        self.sendCommand(b'm000')
         self.sendCommand(b'w') #Apply CAN changes
 
         
