@@ -1115,9 +1115,11 @@ def game_loop(args):
         hud = HUD(args.width, args.height)
         world = World(client.get_world(), hud, args)
         if args.use_can:
-            controller = KeyboardControl(world, args.autopilot,RAMN_Controller_CAN())
+            ramn = RAMN_Controller_CAN()
+            controller = KeyboardControl(world, args.autopilot, ramn)
         else:
-            controller = KeyboardControl(world, args.autopilot,RAMN_Controller_Serial())
+            ramn = RAMN_Controller_Serial()
+            controller = KeyboardControl(world, args.autopilot,ramn)
             
         clock = pygame.time.Clock()
         while True:

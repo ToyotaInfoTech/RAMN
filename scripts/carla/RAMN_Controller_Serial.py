@@ -31,13 +31,13 @@ class RAMN_Controller_Serial(object):
                 continue
             else:
                 #got an error, flush the port
-                print("got corrupted serial frame:")
+                #print("got corrupted serial frame:")
                 #Read data until next \r
                 while True:
                     c = self.ser.read(1)
                     line += c
                     if c == b'\r': 
-                        print(str(line))
+                        #print(str(line))
                         break
                 
         if line != None and len(line) > 1 and line[0] == ord('u'):
@@ -73,6 +73,8 @@ class RAMN_Controller_Serial(object):
         self.ser.write(b't7e150431020207\r') 
         self.ser.write(b't7e250431020207\r')
         self.ser.write(b't7e350431020207\r')
+        #Disable CARLA update
+        self.ser.write(b'c0\r')
         time.sleep(0.1)
         self.ser.close()
         
