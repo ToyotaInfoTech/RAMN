@@ -316,7 +316,7 @@ static void RAMN_UDS_ReadDTC(const uint8_t* data, uint16_t size)
 	{
 		answer[1] = data[1];
 		answer[2] = 0x04;
-		switch(data[1])
+		switch(data[1]&0x7F)
 		{
 		case 0x01: //reportNumberOfDTCByStatusMask
 			if (size != 3) RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
@@ -377,6 +377,11 @@ static void RAMN_UDS_ReadDTC(const uint8_t* data, uint16_t size)
 			RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SFNS);
 			break;
 		}
+		if ((data[1]&0x80) != 0)
+		{
+			if (uds_answerData[0] != 0x7F) *uds_answerSize = 0U;
+		}
+
 	}
 #else
 	RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SNS);
@@ -524,7 +529,7 @@ static void RAMN_UDS_ReadScalingDataByIdentifier(const uint8_t* data, uint16_t s
 
 static void RAMN_UDS_RequestSeed(const uint8_t* data, uint16_t size)
 {
-	uint8_t answer[6] = {0x67, 0x01, 0x00, 0x00, 0x00, 0x00};
+	uint8_t answer[6] = {0x67, data[1]&0x7F, 0x00, 0x00, 0x00, 0x00};
 	udsSessionHandler.defaultSAhandler.currentSeed = RAMN_RNG_Pop32();
 	udsSessionHandler.defaultSAhandler.currentKey  = udsSessionHandler.defaultSAhandler.currentSeed ^ 0x12345678;
 	answer[2] = (uint8_t)(udsSessionHandler.defaultSAhandler.currentSeed >> 24)&0xFF;
@@ -532,12 +537,12 @@ static void RAMN_UDS_RequestSeed(const uint8_t* data, uint16_t size)
 	answer[4] = (uint8_t)(udsSessionHandler.defaultSAhandler.currentSeed >> 8 )&0xFF;
 	answer[5] = (uint8_t)(udsSessionHandler.defaultSAhandler.currentSeed      )&0xFF;
 	udsSessionHandler.defaultSAhandler.status = SECURITY_ACCESS_SEED_REQUESTED;
-	RAMN_UDS_FormatAnswer(answer, 6);
+	if ((data[1]&0x80) == 0U) RAMN_UDS_FormatAnswer(answer, 6);
 }
 
 static void RAMN_UDS_TryKey(const uint8_t* data, uint16_t size)
 {
-	uint8_t answer[2] = {0x67, 0x02};
+	uint8_t answer[2] = {0x67, data[1]&0x7F};
 	uint32_t try = (data[2] << 24) + (data[3] << 16) + (data[4] << 8) + (data[5]);
 
 	if(udsSessionHandler.defaultSAhandler.attemptNumber >= SECURITY_ACCESS_MAX_ATTEMPTS)
@@ -556,7 +561,7 @@ static void RAMN_UDS_TryKey(const uint8_t* data, uint16_t size)
 	else if (try == udsSessionHandler.defaultSAhandler.currentKey)
 	{
 		udsSessionHandler.defaultSAhandler.status = SECURITY_ACCESS_SUCCESS;
-		RAMN_UDS_FormatAnswer(answer, 2);
+		if ((data[1]&0x80) == 0U) RAMN_UDS_FormatAnswer(answer, 2);
 	}
 	else
 	{
@@ -575,7 +580,7 @@ static void RAMN_UDS_SecurityAccess(const uint8_t* data, uint16_t size)
 	}
 	else
 	{
-		switch(data[1])
+		switch(data[1]&0x7F)
 		{
 		case 0x01:
 			RAMN_UDS_RequestSeed(data, size);
@@ -994,7 +999,7 @@ static void displayPixels(const uint8_t* data, uint16_t size)
 //0200 To Disable Periodic Sending of messages
 //0201 To Erase the EEPROM
 //0202 To Copy current values in EEPROM to alternative EEPROM
-static void RAMN_UDS_RoutineControl(const uint8_t* data, uint16_t size)
+static void RAMN_UDS_RoutineControl(uint8_t* data, uint16_t size)
 {
 	if( size < 4U )
 	{
@@ -1002,6 +1007,12 @@ static void RAMN_UDS_RoutineControl(const uint8_t* data, uint16_t size)
 	}
 	else
 	{
+		uint8_t supprPositiveResponse = 0U;
+		if ((data[1]&0x80) != 0)
+		{
+			supprPositiveResponse = 1U;
+			data[1] = data[1]&0x7F;
+		}
 		switch( ((data[2] << 8 ) | data[3])){ //subroutine (2 bytes)
 		case 0xFF00: //Erase Memory
 			RAMN_UDS_RoutineControlEraseAlternativeFirmware(data, size);
@@ -1065,6 +1076,10 @@ static void RAMN_UDS_RoutineControl(const uint8_t* data, uint16_t size)
 		default:
 			RAMN_UDS_FormatNegativeResponse(data,UDS_NRC_ROOR);
 			break;
+		}
+		if ((*uds_answerSize > 0) && (supprPositiveResponse != 0U))
+		{
+			if (uds_answerData[0] != 0x7F) *uds_answerSize = 0U;
 		}
 	}
 }
@@ -1398,12 +1413,12 @@ static void RAMN_UDS_ControlDTCSettings(const uint8_t* data, uint16_t size)
 		if (data[1]&0x7F == 0x1U)
 		{
 			RAMN_DTC_SetRecordingStatus(1U);
-			if ((data[1]&0x80) == 0) RAMN_UDS_FormatPositiveResponseEcho(data, size);
+			if ((data[1]&0x80) == 0U) RAMN_UDS_FormatPositiveResponseEcho(data, size);
 		}
 		else if (data[1]&0x7F == 0x02U)
 		{
 			RAMN_DTC_SetRecordingStatus(0U);
-			if ((data[1]&0x80) == 0) RAMN_UDS_FormatPositiveResponseEcho(data, size);
+			if ((data[1]&0x80) == 0U) RAMN_UDS_FormatPositiveResponseEcho(data, size);
 		}
 		else
 		{
