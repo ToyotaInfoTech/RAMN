@@ -364,6 +364,7 @@ void RAMN_SCREEN_Update(uint32_t tick)
 	if (theme_change_requested != 0U)
 	{
 		RAMN_SCREEN_DrawBase(current_theme);
+		if (RAMN_CHIP8_IsGameActive()) RAMN_Chip8_RedrawScreen();
 		theme_change_requested = 0U;
 	}
 

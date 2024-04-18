@@ -107,7 +107,7 @@ const uint16_t octopeg_size = sizeof(octopeg);
 
 
 //TODO: optimize
-static void redrawScreen()
+void RAMN_Chip8_RedrawScreen()
 {
 
 	uint16_t color;
@@ -348,12 +348,12 @@ uint8_t RAMN_CHIP8_Update(uint32_t xLastWakeTime)
 			break;
 		case 0x00FB:
 			scrollRightBy4Pixels();
-			redrawScreen();
+			RAMN_Chip8_RedrawScreen();
 			PC += 2;
 			break;
 		case 0x00FC:
 			scrollLeftBy4Pixels();
-			redrawScreen();
+			RAMN_Chip8_RedrawScreen();
 			PC += 2;
 			break;
 		case 0x00FD:
@@ -384,12 +384,12 @@ uint8_t RAMN_CHIP8_Update(uint32_t xLastWakeTime)
 			{
 			case 0x00D0:
 				scrollUpByNPixels(opcode&0xF);
-				redrawScreen();
+				RAMN_Chip8_RedrawScreen();
 				PC += 2;
 				break;
 			case 0x00C0:
 				scrollDownByNPixels(opcode&0xF);
-				redrawScreen();
+				RAMN_Chip8_RedrawScreen();
 				PC += 2;
 				break;
 			default:

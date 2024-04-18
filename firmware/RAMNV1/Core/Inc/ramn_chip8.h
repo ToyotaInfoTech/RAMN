@@ -61,4 +61,7 @@ void RAMN_CHIP8_StopGame();
 //Update the interpreter (main loop to update periodically)
 uint8_t RAMN_CHIP8_Update(uint32_t xLastWakeTime);
 
+//Redraw current game on screen (all pixels)
+void RAMN_Chip8_RedrawScreen();
+
 #endif /* INC_RAMN_CHIP8_H_ */
