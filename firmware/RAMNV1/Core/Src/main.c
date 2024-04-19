@@ -2344,7 +2344,7 @@ void RAMN_DiagRXFunc(void *argument)
 									{
 										shouldSendAnswer = True;
 									}
-									else if (diagTxbuf[0] <= 0xA) shouldSendAnswer = True; //TODO: remove this line once OBD-II PIDs are all implemented - temporarily kept as a fix to make sure ECUs are discoverable with OBD-II functional addressing.
+									else if ((diagTxSize == 3) && (diagTxbuf[0] == 0x7F) && (diagTxbuf[1] <= 0xA)) shouldSendAnswer = True; //TODO: remove this line once OBD-II PIDs are all implemented - temporarily kept as a fix to make sure ECUs are discoverable with OBD-II functional addressing.
 
 
 									if (shouldSendAnswer != False)
