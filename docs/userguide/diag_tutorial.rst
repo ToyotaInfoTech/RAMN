@@ -28,6 +28,7 @@ RAMN ECUs support many UDS services. They use the following ISO-TP CAN IDs for t
 - ECU B uses **0x7e1** to receive commands and **0x7e9** to transmit answers.
 - ECU C uses **0x7e2** to receive commands and **0x7ea** to transmit answers.
 - ECU D uses **0x7e3** to receive commands and **0x7eb** to transmit answers.
+- All ECUs use **0x7df** to receive commands with functional addressing (command broadcast).
 
 ECU A will not answer your UDS requests over CAN if you are using it as a USB to CAN adapter; you should use the USB serial interface instead.
 
@@ -58,6 +59,10 @@ In addition to standard services, there are two **custom** services added to ECU
 
 These services are described later in this guide.
 The UDS implementation of RAMN ECUs is slightly simplified in order to tolerate more errors and be more beginner friendly.
+
+When you use functional addressing, you can only use Single Frame commands (payloads smaller than 7 bytes).
+When an ECU cannot process a command received with functional addressing, it will typically not answer at all.
+
 
 Positive responses
 ^^^^^^^^^^^^^^^^^^
@@ -154,6 +159,45 @@ For example, if you type the following command:
 
 you will not receive any answer from the ECU, unless an error occurred.
 
+You may want to use aliases to shorten the commands above. You can create useful aliases with the following script:
+
+.. code-block:: bash
+
+    CAN_INTERFACE_NAME=can0
+
+    ECUB_ISOTP_SEND_CANID=7e1
+    ECUB_ISOTP_RECV_CANID=7e9
+    ECUC_ISOTP_SEND_CANID=7e2
+    ECUC_ISOTP_RECV_CANID=7ea
+    ECUD_ISOTP_SEND_CANID=7e3
+    ECUD_ISOTP_RECV_CANID=7eb
+
+    alias sendECUB="isotpsend -s $ECUB_ISOTP_SEND_CANID -d $ECUB_ISOTP_RECV_CANID $CAN_INTERFACE_NAME"
+    alias sendECUC="isotpsend -s $ECUC_ISOTP_SEND_CANID -d $ECUC_ISOTP_RECV_CANID $CAN_INTERFACE_NAME"
+    alias sendECUD="isotpsend -s $ECUD_ISOTP_SEND_CANID -d $ECUD_ISOTP_RECV_CANID $CAN_INTERFACE_NAME"
+
+    alias recvECUB="isotprecv -s $ECUB_ISOTP_SEND_CANID -d $ECUB_ISOTP_RECV_CANID $CAN_INTERFACE_NAME -l"
+    alias recvECUC="isotprecv -s $ECUC_ISOTP_SEND_CANID -d $ECUC_ISOTP_RECV_CANID $CAN_INTERFACE_NAME -l"
+    alias recvECUD="isotprecv -s $ECUD_ISOTP_SEND_CANID -d $ECUD_ISOTP_RECV_CANID $CAN_INTERFACE_NAME -l"
+
+    alias dumpECUB="isotpdump -s $ECUB_ISOTP_SEND_CANID -d $ECUB_ISOTP_RECV_CANID -c $CAN_INTERFACE_NAME -a -u"
+    alias dumpECUC="isotpdump -s $ECUC_ISOTP_SEND_CANID -d $ECUC_ISOTP_RECV_CANID -c $CAN_INTERFACE_NAME -a -u"
+    alias dumpECUD="isotpdump -s $ECUD_ISOTP_SEND_CANID -d $ECUD_ISOTP_RECV_CANID -c $CAN_INTERFACE_NAME -a -u"
+
+You will need to execute this script for each terminal that you open (you can simply copy-paste the content in your terminal and execute it).
+After that, you will be able to receive data from ECU B with:
+
+.. code-block:: bash
+
+    $ recvECUB
+
+and send data to ECU B simply with:
+
+.. code-block:: bash
+
+    $ echo "3E 00" | sendECUB
+
+You can similarly use the command alias ``dumpECUB`` to dump the traffic above.
 
 RAMN UDS Services
 -----------------
@@ -201,6 +245,18 @@ Or, if you do not want the ECU to answer if it accepts the request:
 
 .. warning::
     ECUs will not accept reset requests if they are in the default session; you must first use :ref:`diag_sess_control` to use this service.
+
+This command supports functional addressing. If you want to reset all ECUs simultaneously, you can send these commands to ID 0x7df:
+
+.. code-block:: bash
+
+    $ echo "10 02" | isotpsend -s 7df -d 7e9 can0
+    $ echo "11 01" | isotpsend -s 7df -d 7e9 can0
+
+Note that the ``-d 7e9`` here is not important; the command is received and processed by **all ECUs**.
+
+.. image:: img/functional_addressing.png
+   :align: center
 
 Read Data by Identifier (0x22)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -597,7 +653,7 @@ It requires two steps:
 - One command to transition to the new baudrate.
 
 Note that while real ECUs would automatically revert to the original baudrate after a diagnostic session is over, RAMN ECUs keep the same baudrate until the next reset.
-Similarly, standard implementations would use functional addressing and positive response suppression to send the transition command to all ECU simultaneously.
+Standard implementations use functional addressing and positive response suppression to send the transition command to all ECU simultaneously.
 RAMN ECUs will however wait one second (with their CAN controller OFF) before changing baudrate to tolerate more timing issues, so you can talk to each ECU individually.
 
 You can use this service with one of three sub-functions:
@@ -642,6 +698,23 @@ For example, the following commands can be used to update RAMN's baudrate to 100
 This should also restart your CAN interface, so you will need to restart all your CAN commands.
 
 .. image:: img/uds_linkcontrol.png
+   :align: center
+
+You can simplify the traffic by using functional adressing to send the command simultaneously to all ECUs, and use positive response suppression to ask them to not answer unless an error occurs.
+
+.. code-block:: bash
+
+    echo "87 81 13" | isotpsend can0 -s 7df -d 7e9 -b
+    echo "87 83" | isotpsend can0 -s 7df -d 7e9 -b
+
+    sleep 0.5
+
+    sudo killall -w slcand #turn off slcan interface
+    sudo slcand -o -c -s8  /dev/ttyACM0 && sudo ip link set up can0
+
+This achieves the same baudrate change with only two CAN messages.
+
+.. image:: img/functional_addressing2.png
    :align: center
 
 .. _request_upload:

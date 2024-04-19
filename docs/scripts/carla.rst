@@ -49,6 +49,19 @@ Follow these steps to install CARLA on Windows:
 
     You should be able to see the self-driving algorithm in action.
 
+If you have issues with the latest CARLA release, try executing it with the following options:
+
+.. code-block:: bash
+
+    $ CarlaUE4.exe -dx11 -windowed -quality-level=Low
+
+If this does not resolve your issues, try downloading an earlier version of CARLA. RAMN scripts should be compatible with release 0.9.12.
+If you do so, you will also need to install CARLA's API with the corresponding version, e.g.:
+
+.. code-block:: bash
+
+    $ pip3 install carla==0.9.12
+
 From there, you should have a functional environment to experiment with CARLA.
 If you encounter problems up to this point, there is a problem with your CARLA installation, not RAMN.
 Check CARLA's `Quickstart guide <https://carla.readthedocs.io/en/latest/start_quickstart/>`_ for support.
