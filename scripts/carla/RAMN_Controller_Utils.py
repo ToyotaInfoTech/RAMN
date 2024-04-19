@@ -12,6 +12,15 @@ sys.path.append("..")
 from utils.RAMN_Utils import *
 
 class RAMN_Inputs(object):
+    LED_BATTERY = 0x1
+    LED_CHECK_ENGINE = 0x2
+    LED_BRAKE_STOP = 0x04
+    LED_CLEARANCE = 0x08
+    LED_LOW_BEAM = 0x10
+    LED_HIGH_BEAM = 0x20
+    LED_LEFT_TURN = 0x40
+    LED_RIGHT_TURN = 0x80
+    
     def __init__(self):
     
         #Controls

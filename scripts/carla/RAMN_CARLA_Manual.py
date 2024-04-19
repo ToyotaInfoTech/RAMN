@@ -2,7 +2,7 @@
 
 # Copyright (c) 2019 Computer Vision Center (CVC) at the Universitat Autonoma de
 # Barcelona (UAB).
-# Copyright (c) 2021 TOYOTA MOTOR CORPORATION. ALL RIGHTS RESERVED.
+# Copyright (c) 2024 TOYOTA MOTOR CORPORATION. ALL RIGHTS RESERVED.
 #
 # This work is licensed under the terms of the MIT license.
 # For a copy, see <https://opensource.org/licenses/MIT>.
@@ -514,6 +514,60 @@ vel.z**2),self.ramn.inputs.horn_command)
 
             
             world.player.apply_control(self._control)
+
+            current_lights = world.player.get_light_state()
+
+            if self.ramn.inputs.lights & self.ramn.inputs.LED_BRAKE_STOP:
+                current_lights |= carla.VehicleLightState.Brake
+            else:
+                current_lights &= ~carla.VehicleLightState.Brake
+
+            if self.ramn.inputs.lights & self.ramn.inputs.LED_CLEARANCE:
+                current_lights |= carla.VehicleLightState.Position
+            else:
+                current_lights &= ~carla.VehicleLightState.Position
+
+            if self.ramn.inputs.lights & self.ramn.inputs.LED_LOW_BEAM:
+                current_lights |= carla.VehicleLightState.LowBeam
+            else:
+                current_lights &= ~carla.VehicleLightState.LowBeam
+
+            if self.ramn.inputs.lights & self.ramn.inputs.LED_HIGH_BEAM:
+                current_lights |= carla.VehicleLightState.HighBeam
+            else:
+                current_lights &= ~carla.VehicleLightState.HighBeam
+
+            if self.ramn.inputs.lights & self.ramn.inputs.LED_LEFT_TURN:
+                current_lights |= carla.VehicleLightState.LeftBlinker
+            else:
+                current_lights &= ~carla.VehicleLightState.LeftBlinker
+
+            if self.ramn.inputs.lights & self.ramn.inputs.LED_RIGHT_TURN:
+                current_lights |= carla.VehicleLightState.RightBlinker
+            else:
+                current_lights &= ~carla.VehicleLightState.RightBlinker
+
+            if self.ramn.inputs.reverse:
+                current_lights |= carla.VehicleLightState.Reverse
+            else:
+                current_lights &= ~carla.VehicleLightState.Reverse
+                
+
+            if self.ramn.inputs.lights & self.ramn.inputs.LED_BATTERY: # Comment this out if preferable
+                current_lights |= carla.VehicleLightState.Interior
+                current_lights |= carla.VehicleLightState.Special1
+                current_lights |= carla.VehicleLightState.Special2
+            else:
+                current_lights &= ~carla.VehicleLightState.Interior
+                current_lights &= ~carla.VehicleLightState.Special1
+                current_lights &= ~carla.VehicleLightState.Special2
+
+
+            world.player.set_light_state(carla.VehicleLightState(current_lights))
+
+
+
+            
 
     def _parse_vehicle_keys(self, keys, milliseconds):
         if keys[K_UP] or keys[K_w]:
