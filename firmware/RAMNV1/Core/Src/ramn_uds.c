@@ -1392,12 +1392,12 @@ static void RAMN_UDS_ControlDTCSettings(const uint8_t* data, uint16_t size)
 	}
 	else
 	{
-		if (data[1]&0x7F == 0x1U)
+		if ((data[1]&0x7F) == 0x1U)
 		{
 			RAMN_DTC_SetRecordingStatus(1U);
 			if ((data[1]&0x80) == 0U) RAMN_UDS_FormatPositiveResponseEcho(data, size);
 		}
-		else if (data[1]&0x7F == 0x02U)
+		else if ((data[1]&0x7F) == 0x02U)
 		{
 			RAMN_DTC_SetRecordingStatus(0U);
 			if ((data[1]&0x80) == 0U) RAMN_UDS_FormatPositiveResponseEcho(data, size);
@@ -1435,7 +1435,7 @@ static void RAMN_UDS_LinkControl(const uint8_t* data, uint16_t size)
 		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
 		return;
 	}
-	switch (data[1]) {
+	switch (data[1]&0x7F) {
 	case 0x01:
 		if (size < 3U) {
 			RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
@@ -1465,7 +1465,10 @@ static void RAMN_UDS_LinkControl(const uint8_t* data, uint16_t size)
 			break;
 		}
 		if (linkControlManager.newSettings != 0U) {
-			RAMN_UDS_FormatPositiveResponseEcho(data, 2U);
+			if ((data[1] & 0x80) == 0U) {
+				//Send response if required
+				RAMN_UDS_FormatPositiveResponseEcho(data, 2U);
+			}
 		} else {
 			RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_ROOR);
 		}
@@ -1704,7 +1707,7 @@ void RAMN_UDS_ProcessDiagPayloadFunctional(uint32_t tick, const uint8_t* data, u
 		if (data[0] < 0x10)
 		{
 			//J1979 command
-			//RAMN_J1979_ProcessMessage(data, size, answerData, answerSize);
+			RAMN_J1979_ProcessMessage(data, size, answerData, answerSize);
 		}
 		else //ISO14229 command
 		{
