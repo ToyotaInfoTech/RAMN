@@ -14,3 +14,4 @@ Documentation of RAMN: Resistant Automotive Miniature Network
    scripts
    quickstart
    userguide
+   minictf

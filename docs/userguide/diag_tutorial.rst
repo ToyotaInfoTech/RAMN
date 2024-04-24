@@ -10,7 +10,7 @@ UDS Basics
 ----------
 
 Unified Diagnostic Services (UDS) is a protocol used for ECU diagnostics and programming.
-There are many `tutorials <https://www.csselectronics.com/pages/uds-protocol-tutorial-unified-diagnostic-services>`_ available online, and you can find `posters <https://automotive.softing.com/fileadmin/sof-files/pdf/de/ae/poster/UDS_Faltposter_softing2016.pdf>`_ that summarizes how it works.
+There are many `tutorials <https://www.csselectronics.com/pages/uds-protocol-tutorial-unified-diagnostic-services>`_ available online, and you can find `posters <https://automotive.softing.com/fileadmin/sof-files/pdf/de/ae/poster/UDS_Faltposter_softing2016.pdf>`_ that summarize how it works.
 
 UDS follows a simple request-answer mechanism: you send a payload to the ECU, and you get a payload as an answer.
 
