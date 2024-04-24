@@ -107,8 +107,8 @@ RAMN_FDCAN_Status_t RAMN_FDCAN_Status = {
 				.FilterIndex = 0,
 				.FilterType = FDCAN_FILTER_MASK,
 				.FilterConfig = FDCAN_FILTER_TO_RXFIFO0,
-				.FilterID1 = 0xFFFFFFFF,
-				.FilterID2 = 0xFFFFFFFF,
+				.FilterID1 = 0x0,
+				.FilterID2 = 0x0,
 		}
 };
 

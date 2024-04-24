@@ -26,6 +26,8 @@
 //#define TARGET_ECUD
 #endif
 
+#define ENABLE_MINICTF
+
 //Loop time for the "simulator" that is executed periodically
 #define SIM_LOOP_CLOCK_MS 10
 

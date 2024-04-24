@@ -8,7 +8,7 @@
  *
  * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
  * All rights reserved.</center></h2>
- * <h2><center>&copy; Copyright (c) 2022 TOYOTA MOTOR CORPORATION.
+ * <h2><center>&copy; Copyright (c) 2024 TOYOTA MOTOR CORPORATION.
  * ALL RIGHTS RESERVED.</center></h2>
  *
  *
@@ -45,6 +45,9 @@
 #endif
 #if defined(ENABLE_SCREEN)
 #include "ramn_screen.h"
+#endif
+#if defined(ENABLE_MINICTF)
+#include "ramn_ctf.h"
 #endif
 /* USER CODE END Includes */
 
@@ -1069,7 +1072,7 @@ void RAMN_ReceiveUSBFunc(void *argument)
 				commandLength = processedLength;
 				USBCommandBuffer[commandLength] = '\0';
 
-				uint32_t elementCount = countElements(USBCommandBuffer, commandLength);
+				uint32_t elementCount = countElements((char*)USBCommandBuffer, commandLength);
 
 				if (elementCount == 0U && commandLength == 0U)
 				{
@@ -1079,7 +1082,7 @@ void RAMN_ReceiveUSBFunc(void *argument)
 				{
 					char *token;
 
-					token = strtok(USBCommandBuffer, " ");
+					token = strtok((char*)USBCommandBuffer, " ");
 
 					if (token == NULL) {
 						RAMN_USB_SendStringFromTask("No command found. Type \"help\" for help.\r");
@@ -1960,6 +1963,28 @@ void RAMN_ReceiveUSBFunc(void *argument)
 					USB_CLI_ENABLE = 0U;
 					RAMN_USB_SendFromTask((uint8_t*)"\r",1);
 					break;
+#ifdef ENABLE_MINICTF
+				case '^':
+					RAMN_USB_SendStringFromTask(FLAG_USB_1);
+					RAMN_USB_SendFromTask((uint8_t*)"\r",1);
+					break;
+				case '&':
+					if (commandLength == 6)
+					{
+						if (memcmp(&USBRxBuffer[1],"27762",5) == 0)
+						{
+							RAMN_USB_SendStringFromTask(FLAG_USB_2);
+							RAMN_USB_SendFromTask((uint8_t*)"\r",1);
+						}
+						else
+						{
+							RAMN_USB_SendStringFromTask("Wrong Password\r");
+						}
+					}
+					else RAMN_USB_SendFromTask((uint8_t*)"\a",1);
+					break;
+
+#endif
 				case 'P':
 				case 'A':
 				case 'X':
@@ -2009,7 +2034,6 @@ void RAMN_ReceiveCANFunc(void *argument)
 				RAMN_DIAG_ProcessRxCANMessage(&CANRxHeader, CANRxData, xTaskGetTickCount());
 #endif
 			}
-
 #ifdef RTR_DEMO_ID
 			else if (CANRxHeader.RxFrameType == FDCAN_REMOTE_FRAME)
 			{
@@ -2027,6 +2051,10 @@ void RAMN_ReceiveCANFunc(void *argument)
 					RAMN_FDCAN_SendMessage(&RTRTxHeader,RTRTxData);
 				}
 			}
+#endif
+
+#if defined(ENABLE_MINICTF)
+				RAMN_CTF_ProcessRxCANMessage(&CANRxHeader, CANRxData, xTaskGetTickCount());
 #endif
 
 #if defined(ENABLE_USB)
@@ -2185,6 +2213,9 @@ void RAMN_PeriodicTaskFunc(void *argument)
 #endif
 	RAMN_ACTUATORS_Init();
 	RAMN_SIM_Init();
+#ifdef ENABLE_MINICTF
+	RAMN_CTF_Init(xTaskGetTickCount());
+#endif
 
 #if defined(ENABLE_SCREEN)
 	RAMN_SCREEN_Init(&hspi2, &RAMN_PeriodicHandle);
@@ -2204,6 +2235,9 @@ void RAMN_PeriodicTaskFunc(void *argument)
 			RAMN_SIM_UpdatePeriodic(xLastWakeTime);
 			RAMN_ACTUATORS_ApplyControls(xLastWakeTime);
 			RAMN_DBC_Send(xLastWakeTime);
+#ifdef ENABLE_MINICTF
+			RAMN_CTF_Update(xLastWakeTime);
+#endif
 		}
 #ifdef ENABLE_SCREEN
 		RAMN_SCREEN_Update(xLastWakeTime);

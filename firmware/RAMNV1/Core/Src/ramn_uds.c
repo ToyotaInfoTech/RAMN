@@ -403,7 +403,7 @@ static void RAMN_UDS_ReadMemoryByAddress(const uint8_t* data, uint16_t size)
 			{
 				RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_ROOR);
 			}
-			else if ((RAMN_MEMORY_CheckAreaReadable(addr, (addr + (uint32_t)size)) != 0U) && (size < 0xFFF))
+			else if ((RAMN_MEMORY_CheckAreaReadable(addr, (addr + (uint32_t)memsize)) != 0U) && (memsize < 0xFFF))
 			{
 				//use rx buffer to copy
 				uds_answerData[0] = data[0] + 0x40; //positive response
@@ -413,6 +413,17 @@ static void RAMN_UDS_ReadMemoryByAddress(const uint8_t* data, uint16_t size)
 				}
 				*uds_answerSize = (uint16_t)memsize+1;
 			}
+#if defined(ENABLE_MINICTF) && defined(TARGET_ECUD)
+			else if ((addr == 0x01234567) && memsize <= (sizeof(FLAG_UDS_4)-1))
+			{
+				uds_answerData[0] = data[0] + 0x40; //positive response
+				for(uint32_t i = 0; i < memsize; i++ )
+				{
+					uds_answerData[i+1] = (volatile uint8_t)*((volatile uint8_t*)(FLAG_UDS_4+i));
+				}
+				*uds_answerSize = (uint16_t)memsize+1;
+			}
+#endif
 			else
 			{
 				RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_ROOR);
@@ -421,7 +432,7 @@ static void RAMN_UDS_ReadMemoryByAddress(const uint8_t* data, uint16_t size)
 	}
 }
 
-static void RAMN_UDS_ReadDataByIdentifier(const uint8_t* data, uint16_t size)
+static void RAMN_UDS_ReadDataByIdentifier(uint8_t* data, uint16_t size)
 {
 #if defined(ENABLE_EEPROM_EMULATION)
 	if( size != 3U )
@@ -435,7 +446,7 @@ static void RAMN_UDS_ReadDataByIdentifier(const uint8_t* data, uint16_t size)
 		uint8_t answer[32+4];
 		uint8_t answer_size = 0;
 		EE_Status result = EE_OK;
-		if ( (index != 0xF184) && (index != 0xF18C) && (index != 0xF190))
+		if ((index >= 0x200) && (index < 0x400))
 		{
 			//This range can be read/written with arbitrary 32-bit values
 			result = RAMN_EEPROM_Read32(index,val);
@@ -456,6 +467,30 @@ static void RAMN_UDS_ReadDataByIdentifier(const uint8_t* data, uint16_t size)
 		{
 			switch (index)
 			{
+#if defined(ENABLE_MINICTF) && defined(TARGET_ECUD)
+			case 0x0001:
+				RAMN_memcpy(&(answer[3]),FLAG_UDS_1,sizeof(FLAG_UDS_1)-1);
+				answer_size = 3+(sizeof(FLAG_UDS_1)-1);
+				break;
+			case 0x0002:
+				if (checkAuthenticated() == True)
+				{
+					RAMN_memcpy(&(answer[3]),FLAG_UDS_5,sizeof(FLAG_UDS_5)-1);
+					answer_size = 3+(sizeof(FLAG_UDS_5)-1);
+				}
+				else
+				{
+					data[0] = 0x3F; //will become 0x7F
+					data[1] = 0x22;
+					data[2] = UDS_NRC_SAD;
+					answer_size = 3;
+				}
+				break;
+			case 0x7742:
+				RAMN_memcpy(&(answer[3]),FLAG_UDS_2,sizeof(FLAG_UDS_2)-1);
+				answer_size = 3+(sizeof(FLAG_UDS_2)-1);
+				break;
+#endif
 			case 0xF184: //compile Date and Time
 				RAMN_memcpy(&(answer[3]),(uint8_t*)__DATE__,sizeof(__DATE__));
 				answer[3+sizeof(__DATE__)] = ' ';
@@ -1502,6 +1537,34 @@ static void RAMN_UDS_LinkControl(const uint8_t* data, uint16_t size)
 	}
 }
 
+#if defined(ENABLE_MINICTF) && defined(TARGET_ECUD)
+static void processCustomServiceFlag(const uint8_t* data, uint16_t size)
+{
+	if (size!= 4U)
+	{
+		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
+	}
+	else if (data[1] != 0x77)
+	{
+		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SFNS);
+	}
+	else if (udsSessionHandler.currentSession == UDS_SESSION_DS)
+	{
+		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SNSIAS);
+	}
+	else if ((data[2] == 0x13) && data[3] == 0x37)
+	{
+		uds_answerData[0] = data[0] + 0x40;
+		memcpy(&uds_answerData[1], FLAG_UDS_3, sizeof(FLAG_UDS_3)-1);
+		*uds_answerSize = sizeof(FLAG_UDS_3);
+	}
+	else
+	{
+		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_ROOR);
+	}
+}
+
+#endif
 /* END OF UDS IMPLEMENTATION */
 
 // Exported Components ---------------------------------------
@@ -1668,6 +1731,11 @@ void RAMN_UDS_ProcessDiagPayload(uint32_t tick, const uint8_t* data, uint16_t si
 				break;
 			case 0x42: //custom service to load chip-8 games
 				loadChip8Game(data, size);
+				break;
+#endif
+#if defined(ENABLE_MINICTF) && defined(TARGET_ECUD)
+			case 0x40:
+				processCustomServiceFlag(data,size);
 				break;
 #endif
 			case 0x83: //ACCESS TIMING PARAMETERS
