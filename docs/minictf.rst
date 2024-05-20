@@ -103,7 +103,7 @@ Transmission
 Reception
 """""""""
 
-Send a message with ID 0x458 to enable the periodic transmission of the following flags.
+Send a message with ID 0x458 and an empty payload to enable the periodic transmission of the following flags.
 
 - **Easy**: There is a flag broadcast one bit at a time with CAN ID 0x6F0.
 - **Intermediate**: There is a flag broadcast one bit at a time with CAN ID 0x6F1.
