@@ -147,6 +147,12 @@ For these tools, you can execute the following command to convert an slcan inter
 
 After executing this command, you should be able to see a new "can0" interface with the :code:`ifconfig` command.
 This should allow you to use tools from the can-utils package, which are detailed in the following section.
+In some environments, you may encounter issues with the command above.
+If that is the case, try attributing a different name to the CAN interface, e.g., use "slcan0" instead of "can0" for all following commands.
+
+.. code-block:: bash
+
+    $ sudo slcand -o -c /dev/ttyACM0 && sudo ip link set up slcan0
 
 On Linux, only one program can open a serial device at once, but several programs can open a CAN interface.
 This means that if you use slcan directly, you will only be able to execute one CAN command at a time, but if you use socketCAN, you will be able to execute several commands in parallel.
@@ -281,7 +287,7 @@ To record a CAN traffic to a file, you can use the -l option:
 
     $ candump -l can0
 
-This will record the CAN traffic to a file, with an auto-generated name. If you want to specify the file name, use -f <filename> instead.
+This will record the CAN traffic to a file, with an auto-generated name. If you want to specify the file name, use -f <filename> instead (this may only work on recent versions).
 
 On a real network, you will probably observe so many frames that the output of candump will be too much to process.
 Typically, you will want to identify interesting identifiers using cansniffer, then analyze them further with candump using filters.
@@ -531,7 +537,7 @@ For example, filter "1BB:7FF" used with candump will only display CAN messages w
 .. code-block:: text
 
     value: 00110111011 (0x1BB)
-    mask:  11111111111 (0x000)
+    mask:  11111111111 (0xFFF)
     ---------------------
     ID:    00110111011 (0x1BB only)
 

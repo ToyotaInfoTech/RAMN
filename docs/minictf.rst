@@ -119,4 +119,4 @@ UDS
 - **Easy**: ECU D holds a flag readable at ID 0x0002, but you will need to authenticate first.
 - **Easy** (requires scripting): ECU D holds another flag readable with the Read Data By Identifier Service.
 - **Easy**: ECU D holds a flag that is accessible with Read Memory By Address at address 0x01234567 and size 17 (0x11).
-- **Intermediate** (requires scripting): ECU has a custom UDS service with ID 0x40, can you create a valid request?
+- **Intermediate** (requires scripting): ECU D has a custom UDS service with ID 0x40, can you create a valid request?

@@ -395,7 +395,7 @@ For example, if you want to request the number of pending DTCs, you can use sub-
 
 .. code-block:: bash
 
-    $ echo "19 01 08" | isotpsend -s 7e1 -d 7e9 can0
+    $ echo "19 01 04" | isotpsend -s 7e1 -d 7e9 can0
 
 The ECU answers with five bytes:
 
@@ -574,7 +574,7 @@ Contrary to the DIDs used by the Read Data by Identifier service, real ECU addre
 Therefore, you must provide a third argument that specifies the size of the address and memory fields (*address length format identifier*).
 This argument is a byte, which highest 4 bits indicate the size of the "size" parameter, and the lowest 4 bits indicate the size of the "address" parameter.
 
-The format of a Read Memory by Address parameters is <format identifier> <address> <size>.
+The format of Read Memory by Address parameters is <format identifier> <address> <size>.
 
 For example, let us assume that you want to read 4 bytes from address 0x08000000 (start of RAMN ECU program flash).
 "4" fits into a single byte, so you could use one byte to provide the size that you want to read.
