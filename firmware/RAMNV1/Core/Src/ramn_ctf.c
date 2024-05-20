@@ -64,7 +64,7 @@ static uint8_t checkIfShouldSendFlag4(const FDCAN_RxHeaderTypeDef* pHeader, cons
 	{
 		if (pHeader->Identifier == 0x77cafe)
 		{
-			if (memcmp(data,"P4$$W0RD",8) == 0) return 1U;
+			if ((data[0] == 'P') && (data[1] == '4') && (data[2] == '$') && (data[3] == '$') && (data[4] == 'W') && (data[5] == '0') && (data[6] == 'R') && (data[7] == 'D')) return 1U;
 		}
 	}
 	return 0U;
@@ -102,8 +102,11 @@ void	RAMN_CTF_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, const ui
 	{
 		if (pHeader->Identifier == 0x458)
 		{
-			periodic_flag_enabled = True;
-			ctf_loop_counter = 0U;
+			if (pHeader->DataLength == 0)
+			{
+				periodic_flag_enabled = True;
+				ctf_loop_counter = 0U;
+			}
 		}
 	}
 

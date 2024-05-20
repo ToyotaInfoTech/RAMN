@@ -20,13 +20,13 @@
 #define INC_RAMN_CONFIG_H_
 
 #if !defined(TARGET_ECUA) && !defined(TARGET_ECUB) && !defined(TARGET_ECUC) && !defined(TARGET_ECUD)
-#define TARGET_ECUA
+//#define TARGET_ECUA
 //#define TARGET_ECUB
 //#define TARGET_ECUC
-//#define TARGET_ECUD
+#define TARGET_ECUD
 #endif
 
-#define ENABLE_MINICTF
+
 
 //Loop time for the "simulator" that is executed periodically
 #define SIM_LOOP_CLOCK_MS 10
@@ -81,7 +81,7 @@
 
 #define ENABLE_REPROGRAMMING
 #define ENABLE_UDS
-#define ENABLE_KWP
+//#define ENABLE_KWP
 #define ENABLE_XCP
 #define RTR_DEMO_ID 0x701
 #endif
@@ -91,16 +91,17 @@
 #define EXPANSION_POWERTRAIN
 #define ENABLE_REPROGRAMMING
 #define ENABLE_UDS
-#define ENABLE_KWP
+//#define ENABLE_KWP
 #define ENABLE_XCP
 #define RTR_DEMO_ID 0x702
 #endif
 
 #if defined(TARGET_ECUD)
+#define ENABLE_MINICTF
 #define EXPANSION_BODY
 #define ENABLE_REPROGRAMMING
 #define ENABLE_UDS
-#define ENABLE_KWP
+//#define ENABLE_KWP
 #define ENABLE_XCP
 #define RTR_DEMO_ID 0x703
 #endif
