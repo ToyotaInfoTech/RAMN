@@ -109,7 +109,7 @@ On Windows, we recommend that you install VirtualBox and use a Linux distributio
 A common choice by car enthusiasts is Kali Linux\ [#f1]_.
 
 - `Download and install VirtualBox <https://www.virtualbox.org/wiki/Downloads>`_.
-- `Download a Kali Linux VirtualBox Image <https://www.kali.org/get-kali/#kali-virtual-machines>`_.
+- `Download a Kali Linux Pre-built Virtual Machine <https://www.kali.org/get-kali/#kali-virtual-machines>`_.
 - Unzip the 7z image using `7zip <https://www.7-zip.org/>`_.
 - Double-click the vbox file to open it with VirtualBox. If you encounter USB issues, open Settings > USB and try USB 2.0 or USB 3.0 (virtual machine must be powered off).
 - Login with username kali (password kali).
