@@ -403,6 +403,8 @@ Typically, you will want to use the same:
 
     $ canplayer -I <file> can0=can0
 
+If you get errors, try executing ``$ sudo ifconfig can0 txqueuelen 10000``.
+
 Here, we specify can0=can0 because we want to read messages on interface can0 (in the file) and replay them on can0 (actual hardware).
 
 Canplayer is useful when you want to repeat a specific sequence of CAN messages, for example to repeat a UDS command that is fragmented in many CAN messages.
