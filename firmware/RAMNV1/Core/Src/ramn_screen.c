@@ -120,6 +120,7 @@ void RAMN_SCREEN_DrawSubconsoleStatic()
 	prev_shift = 0xFF;
 }
 
+#define NUMBER_OF_THEMES 7
 void RAMN_SCREEN_UpdateTheme(uint8_t new_theme)
 {
 	if (new_theme != current_theme)
@@ -308,6 +309,9 @@ void RAMN_SCREEN_Init(SPI_HandleTypeDef* handler, osThreadId_t* pTask)
 
 	RAMN_SCREEN_DrawBase(current_theme);
 
+	//Init joystick for screen controls
+	RAMN_Joystick_Init();
+
 }
 
 #ifdef ENABLE_UDS
@@ -362,6 +366,21 @@ uint8_t RAMN_SCREEN_IsUDSScreenUpdatePending()
 
 void RAMN_SCREEN_Update(uint32_t tick)
 {
+
+	JoystickEventType joystick_action = RAMN_Joystick_Pop();
+
+	while (joystick_action != JOYSTICK_EVENT_NONE)
+
+	{
+		// As an example, change color theme if center button is pressed
+		if (joystick_action == JOYSTICK_EVENT_CENTER_PRESSED)
+		{
+				RAMN_SCREEN_UpdateTheme((current_theme%(NUMBER_OF_THEMES-1))+1);
+		};
+
+		joystick_action = RAMN_Joystick_Pop(); //get next
+	}
+
 
 	if (theme_change_requested != 0U)
 	{

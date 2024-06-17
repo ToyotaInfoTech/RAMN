@@ -104,6 +104,9 @@ void RAMN_DBC_ProcessCANMessage(uint32_t canid, uint32_t dlc, RAMN_CANFrameData_
 #ifdef RECEIVE_CONTROL_SHIFT
 		case CAN_SIM_CONTROL_SHIFT_CANID:
 			RAMN_DBC_Handle.control_shift				= dataframe->ramn_data.payload;
+#ifdef ENABLE_SCREEN
+			RAMN_Joystick_Update(RAMN_DBC_Handle.control_shift >> 8);
+#endif
 			break;
 #endif
 #ifdef RECEIVE_COMMAND_SHIFT

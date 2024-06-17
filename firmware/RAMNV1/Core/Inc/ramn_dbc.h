@@ -23,6 +23,7 @@
 #include "ramn_trng.h"
 #include "ramn_canfd.h"
 #include "ramn_crc.h"
+#include "ramn_joystick.h"
 
 typedef volatile struct
 {

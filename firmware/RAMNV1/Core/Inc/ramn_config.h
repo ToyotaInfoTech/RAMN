@@ -124,7 +124,10 @@
 #define ISOTP_CONSECUTIVE_ST 			0
 #define ISOTP_RX_TIMEOUT_MS 			200000
 #define ISOTP_TX_TIMEOUT_MS 			2000
+
 #define TRNG_POOL_SIZE 	   				256
+#define JOYSTICK_POOL_SIZE				10
+
 
 #ifdef TARGET_ECUA
 #define USB_RX_BUFFER_SIZE 				20000
