@@ -183,7 +183,7 @@ void RAMN_SPI_DrawImage(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const ui
 	//Can only write with 16-bit blocks
 	while (index < byteLen)
 	{
-		writeData_DMA(image,(byteLen <= 0xFFFF) ? (uint16_t) byteLen : 0xFFFF);
+		writeData_DMA(image+index,((byteLen-index) <= 0xFFFF) ? (uint16_t) (byteLen-index) : 0xFFFF);
 		index+= 0xFFFF;
 	}
 }
