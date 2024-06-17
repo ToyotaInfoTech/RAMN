@@ -45,13 +45,15 @@ static uint32_t spi_refresh_counter = 0U;
 char ascii_string[16] = {0};
 char random_char_line[19] = {0};
 
-#ifdef ENABLE_UDS
+
 volatile uint8_t uds_draw_request = 0U;
+uint8_t uds_draw_need_refresh= 0U;
+
+#ifdef ENABLE_UDS
 uint8_t uds_draw_x = 0;
 uint8_t uds_draw_y = 0;
 uint8_t uds_draw_w = 0;
 uint8_t uds_draw_h = 0;
-uint8_t uds_draw_need_refresh= 0U;
 volatile uint8_t uds_draw_buffer[UDS_DRAW_BUFFER_SIZE];
 #endif
 

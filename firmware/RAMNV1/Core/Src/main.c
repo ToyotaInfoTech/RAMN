@@ -197,6 +197,14 @@ uint8_t slCAN_USBTxBuffer[0x200];
 uint8_t USBIntermediateTxBuffer[APP_TX_DATA_SIZE];
 #endif
 
+#ifdef START_IN_CLI_MODE
+uint8_t USB_CLI_ENABLE = 1U;
+#else
+uint8_t USB_CLI_ENABLE = 0U;
+#endif
+#define LOCAL_USB_COMMAND_BUFFER_SIZE  0x200
+uint8_t USBCommandBuffer[LOCAL_USB_COMMAND_BUFFER_SIZE];
+
 #if defined(ENABLE_DIAG)
 //Holds currently processed Diag Command from CAN
 uint8_t diagRxbuf[0xFFF+2];
@@ -208,17 +216,6 @@ uint8_t diagTxbuf[0xFFF];
 uint8_t diagRxUSBbuf[0xFFF+2];
 //Holds currently processed Diag Command Answer from USB
 uint8_t diagTxUSBbuf[0xFFF+2];
-
-
-#ifdef START_IN_CLI_MODE
-uint8_t USB_CLI_ENABLE = 1U;
-#else
-uint8_t USB_CLI_ENABLE = 0U;
-#endif
-#define LOCAL_USB_COMMAND_BUFFER_SIZE  0x200
-uint8_t USBCommandBuffer[LOCAL_USB_COMMAND_BUFFER_SIZE];
-
-
 #endif
 
 #endif
@@ -433,6 +430,7 @@ int main(void)
 	if (HAL_RNG_GenerateRandomNumber_IT(&hrng) != HAL_OK) Error_Handler();
 
 	//Automatically add a DTC if none is stored in memory
+#ifdef ENABLE_EEPROM_EMULATION
 	uint32_t dtc_number = 0;
 	if (RAMN_DTC_GetNumberOfDTC(&dtc_number) == RAMN_OK)
 	{
@@ -457,6 +455,7 @@ int main(void)
 			RAMN_DTC_AddNew(dtc_val);
 		}
 	}
+#endif
 	/* USER CODE END 2 */
 
 	/* Init scheduler */
@@ -1010,12 +1009,13 @@ static int countElements(char* buffer, int length) {
 /* USER CODE END Header_RAMN_ReceiveUSBFunc */
 void RAMN_ReceiveUSBFunc(void *argument)
 {
-	/* init code for USB_Device */
-	MX_USB_Device_Init();
 	/* USER CODE BEGIN 5 */
 #if !defined(ENABLE_USB)
 	vTaskDelete(NULL);
 #else
+	/* init code for USB_Device */
+	MX_USB_Device_Init();
+
 	FDCAN_TxHeaderTypeDef CANTxHeader;
 	uint8_t CANTxData[64];
 	FDCAN_ProtocolStatusTypeDef protocolStatus;
@@ -1533,7 +1533,7 @@ void RAMN_ReceiveUSBFunc(void *argument)
 					smallResponseBuffer[0] = 'N';
 					for(uint8_t k = 0; k <12U; k++)
 					{
-						uint8toASCII(*((uint8_t*)(DEVICE_HARDWARE_ID_ADDRESS+k)),&smallResponseBuffer[1U+2*k]);
+						uint8toASCII(*((uint8_t*)(HARDWARE_UNIQUE_ID_ADDRESS+k)),&smallResponseBuffer[1U+2*k]);
 					}
 					RAMN_USB_SendFromTask(smallResponseBuffer, 25U);
 					RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
@@ -2047,7 +2047,7 @@ void RAMN_ReceiveCANFunc(void *argument)
 					RTRTxHeader.Identifier = CANRxHeader.Identifier;
 					RTRTxHeader.DataLength = CANRxHeader.DataLength;
 					if (RTRTxHeader.DataLength > 8U) RTRTxHeader.DataLength = 8U;
-					RAMN_memcpy((uint8_t*)RTRTxData,(uint8_t*)DEVICE_HARDWARE_ID_ADDRESS,8); // Copy 8 last bytes of ECU hardware ID
+					RAMN_memcpy((uint8_t*)RTRTxData,(uint8_t*)HARDWARE_UNIQUE_ID_ADDRESS,8); // Copy 8 last bytes of ECU hardware ID
 					RAMN_FDCAN_SendMessage(&RTRTxHeader,RTRTxData);
 				}
 			}
