@@ -40,11 +40,17 @@
 #define ST7789_NORON 0x13
 #define ST7789_DISPON 0x29
 #define ST7789_RAMCTRL 0xB0
-#define ST7789 SPI2EN 0xE7
+#define ST7789_SPI2EN 0xE7
+#define ST7789_VSCRDEF 0x33
+#define ST7789_VSCSAD 0x37
 
 #define LCD_WIDTH 240
 #define LCD_HEIGHT 240
+#define SCROLL_WINDOW_HEIGHT 320 //even 240x240 screens have a scrolling window of 320 pixels in RAM
 //#define LCD_HEIGHT 320
+#define SCREEN_HEADER_SIZE 16 //Size of header displayed when scrolling
+
+
 
 //Colors must be in RGB565 format
 #define COLOR_BLACK 0x0000
@@ -74,7 +80,7 @@ void 	RAMN_SPI_DrawPixel(uint16_t x, uint16_t y, uint16_t pixel16);
 void 	RAMN_SPI_DrawRectangle(uint16_t startx, uint16_t starty, uint16_t w, uint16_t h,uint16_t color);
 
 //Draws a contour (empty rectangle)
-void RAMN_SPI_DrawContour(uint8_t startx, uint8_t starty, uint8_t endx, uint8_t endy, uint8_t width, uint16_t color);
+void RAMN_SPI_DrawContour(uint16_t startx, uint16_t starty, uint16_t endx, uint16_t endy, uint16_t width, uint16_t color);
 
 //Draws a 565 color image from specified array (Little Endian)
 void 	RAMN_SPI_DrawImage(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const uint8_t* image);
@@ -93,6 +99,9 @@ void 	RAMN_SPI_DrawString(uint16_t x, uint16_t y, char* src);
 
 //Function that updates a string by only drawing characters that changed
 void RAMN_SPI_RefreshStringColor(uint16_t x, uint16_t y, uint16_t fg_color, uint16_t bg_color, const char* src, char* prev);
+
+//Function to set the current screen scroll
+void RAMN_SPI_SetScroll(uint16_t val);
 
 #endif
 

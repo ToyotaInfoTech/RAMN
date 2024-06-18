@@ -364,6 +364,7 @@ uint8_t RAMN_SCREEN_IsUDSScreenUpdatePending()
 	return uds_draw_need_refresh;
 }
 
+
 void RAMN_SCREEN_Update(uint32_t tick)
 {
 
@@ -380,6 +381,9 @@ void RAMN_SCREEN_Update(uint32_t tick)
 
 		joystick_action = RAMN_Joystick_Pop(); //get next
 	}
+
+	//Example to scroll screen
+	//RAMN_SPI_SetScroll(SCREEN_HEADER_SIZE + ((tick/10)%(SCROLL_WINDOW_HEIGHT-SCREEN_HEADER_SIZE)));
 
 
 	if (theme_change_requested != 0U)

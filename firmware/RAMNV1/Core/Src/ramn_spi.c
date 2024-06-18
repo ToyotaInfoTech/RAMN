@@ -87,18 +87,31 @@ void HAL_SPI_TxCpltCallback (SPI_HandleTypeDef * hspi)
 }
 
 
+void RAMN_SPI_SetScroll(uint16_t val)
+{
+	writeCommand_DMA(ST7789_VSCSAD);
+	uint8_t v[2];
+	v[0] = (val>>8)&0xFF;
+	v[1] =val&0xFF;
+	writeData_DMA(v,sizeof(v));
+}
 
 void RAMN_SPI_InitScreen(void)
 {
 	const uint8_t LCD_INIT_INVERSE = 1U;
 	//const uint8_t LCD_INIT_MADCTL[] = {0x00};  //For RAMN 2layers
-	const uint8_t LCD_INIT_MADCTL[] = {0x00}; //For RAMN 4 layers
+	const uint8_t LCD_INIT_MADCTL[] = {0x00};
 	const uint8_t LCD_INIT_COLMOD[] = {0x55};
 //	const uint8_t LCD_INIT_CASET[] = {0x00, 0x00, (LCD_WIDTH)>>8, LCD_WIDTH&0xFF};
 //	const uint8_t LCD_INIT_RASET[] = {0x00, 0x00, (LCD_HEIGHT)>>8, LCD_HEIGHT&0xFF };
 	const uint8_t LCD_INIT_CASET[] = {(LCD_WIDTH)>>8, LCD_WIDTH&0xFF, 0, 0};
 	const uint8_t LCD_INIT_RASET[] = {(LCD_HEIGHT)>>8, LCD_HEIGHT&0xFF, 0,0};
 	const uint8_t LCD_INIT_RAMCTRL[] = {0x00,0xF8};
+
+	//const uint8_t LCD_INIT_VSCRDEF[] = {0x00,0x4, 0x00, 0xE8, 0x00, 0x4};
+	const uint8_t LCD_INIT_VSCRDEF[] = {0x00, SCREEN_HEADER_SIZE, 0x00, LCD_HEIGHT-SCREEN_HEADER_SIZE, 0x00,0x00};
+	const uint8_t LCD_INIT_VSCSAD[] = {0x00, SCREEN_HEADER_SIZE};
+
 
 	//Wait for SPI communications to be ready
 	osDelay(500); //TODO: optimize this
@@ -141,6 +154,12 @@ void RAMN_SPI_InitScreen(void)
 	writeCommand_DMA(ST7789_RAMCTRL);
 	writeData_DMA(LCD_INIT_RAMCTRL,sizeof(LCD_INIT_RAMCTRL));
 
+	writeCommand_DMA(ST7789_VSCRDEF);
+	writeData_DMA(LCD_INIT_VSCRDEF, sizeof(LCD_INIT_VSCRDEF));
+
+	writeCommand_DMA(ST7789_VSCSAD);
+	writeData_DMA(LCD_INIT_VSCSAD, sizeof(LCD_INIT_VSCSAD));
+
 	//Start writing data
 	writeCommand_DMA(ST7789_RAMWR);
 
@@ -166,7 +185,7 @@ void RAMN_SPI_DrawRectangle(uint16_t startx, uint16_t starty, uint16_t w, uint16
 	}
 }
 
-void RAMN_SPI_DrawContour(uint8_t startx, uint8_t starty, uint8_t endx, uint8_t endy, uint8_t width, uint16_t color)
+void RAMN_SPI_DrawContour(uint16_t startx, uint16_t starty, uint16_t endx, uint16_t endy, uint16_t width, uint16_t color)
 {
 	RAMN_SPI_DrawRectangle(startx,starty,endx-startx,width,color);
 	RAMN_SPI_DrawRectangle(startx,starty,width,endy-starty,color);
