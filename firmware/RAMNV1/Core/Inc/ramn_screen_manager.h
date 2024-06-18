@@ -1,5 +1,5 @@
 /*
- * ramn_screen.h
+ * ramn_screen_manager.h
   ******************************************************************************
   * @attention
   *
@@ -16,51 +16,39 @@
 
 // This module handles whatever is displayed on the screen
 
-#ifndef INC_RAMN_SCREEN_H_
-#define INC_RAMN_SCREEN_H_
+#ifndef INC_RAMN_SCREEN_MANAGER_H_
+#define INC_RAMN_SCREEN_MANAGER_H_
 
 #include "main.h"
 #include "ramn_spi.h"
-#include "ramn_dbc.h"
 #include "ramn_chip8.h"
 #include "ramn_usb.h"
-#include "ramn_joystick.h"
-
-#define CONTOUR_WIDTH 2
-#define CONTROL_WINDOW_Y LCD_HEIGHT-34
-
-typedef struct COLOR_THEME_STRUCT {
-    uint16_t BACKGROUND;
-    uint16_t DARK;
-    uint16_t MEDIUM;
-    uint16_t LIGHT;
-    uint16_t WHITE;
-} ColorTheme_t ;
+#include "ramn_screen_utils.h"
+#include "ramn_screen_saver.h"
+#include "ramn_screen_chip8.h"
+#include "ramn_screen_uds.h"
 
 //Inits the Screen
-void RAMN_SCREEN_Init(SPI_HandleTypeDef* handler, osThreadId_t* pTask);
+void RAMN_ScreenManager_Init(SPI_HandleTypeDef* handler, osThreadId_t* pTask);
 
 #ifdef ENABLE_UDS
 //Request to draw a picture on screen (Used by UDS services)
-void RAMN_SCREEN_RequestDrawImage(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const uint8_t* image);
+//void RAMN_SCREEN_RequestDrawImage(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const uint8_t* image);
 
 //Request to start a game on screen
-void RAMN_SCREEN_RequestGame(const uint8_t* game_to_load, uint16_t game_size);
+void RAMN_ScreenManager_RequestGame(const uint8_t* game_to_load, uint16_t game_size);
 
 //Request to stop any ongoing game
 void RAMN_SCREEN_RequestGameStop();
 
 //Load a game stored in ECU memory
-void RAMN_SCREEN_StartGameFromIndex(uint8_t index);
+void RAMN_ScreenManager_StartGameFromIndex(uint8_t index);
 
 //Returns 1U if a previous UDS draw command is not completed
-uint8_t RAMN_SCREEN_IsUDSScreenUpdatePending();
+uint8_t RAMN_ScreenManager_IsUDSScreenUpdatePending();
 #endif
 
 //Updates the Screen. Must be called periodically
 void RAMN_SCREEN_Update(uint32_t tick);
 
-//Update the color theme
-void RAMN_SCREEN_UpdateTheme(uint8_t new_theme);
-
-#endif /* INC_RAMN_SCREEN_H_ */
+#endif /* INC_RAMN_SCREEN_MANAGER_H_ */

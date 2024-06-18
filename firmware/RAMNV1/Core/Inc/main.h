@@ -41,7 +41,28 @@ extern "C" {
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
+// Enum for joystick events
+typedef enum {
+    JOYSTICK_EVENT_LEFT_PRESSED,
+    JOYSTICK_EVENT_RIGHT_PRESSED,
+    JOYSTICK_EVENT_LEFT_RELEASED,
+    JOYSTICK_EVENT_RIGHT_RELEASED,
+    JOYSTICK_EVENT_UP_PRESSED,
+    JOYSTICK_EVENT_DOWN_PRESSED,
+    JOYSTICK_EVENT_CENTER_PRESSED,
+    JOYSTICK_EVENT_UP_RELEASED,
+    JOYSTICK_EVENT_DOWN_RELEASED,
+    JOYSTICK_EVENT_CENTER_RELEASED,
+    JOYSTICK_EVENT_NONE,
+	JOYSTICK_EVENT_INVALID,
+} JoystickEventType;
 
+typedef struct RAMNScreen {
+    void (*Init)();
+    void (*Update)();
+    void (*Deinit)();
+    void (*UpdateInput)(JoystickEventType event);
+} RAMNScreen;
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/

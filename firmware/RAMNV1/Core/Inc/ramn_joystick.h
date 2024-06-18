@@ -25,21 +25,7 @@
 #include "stream_buffer.h"
 #include "semphr.h"
 
-// Enum for joystick events
-typedef enum {
-    JOYSTICK_EVENT_UP_PRESSED,
-    JOYSTICK_EVENT_DOWN_PRESSED,
-    JOYSTICK_EVENT_LEFT_PRESSED,
-    JOYSTICK_EVENT_RIGHT_PRESSED,
-    JOYSTICK_EVENT_CENTER_PRESSED,
-    JOYSTICK_EVENT_UP_RELEASED,
-    JOYSTICK_EVENT_DOWN_RELEASED,
-    JOYSTICK_EVENT_LEFT_RELEASED,
-    JOYSTICK_EVENT_RIGHT_RELEASED,
-    JOYSTICK_EVENT_CENTER_RELEASED,
-    JOYSTICK_EVENT_NONE,
-	JOYSTICK_EVENT_INVALID,
-} JoystickEventType;
+
 
 void RAMN_Joystick_Init();
 void RAMN_Joystick_Update(uint8_t joystick_data);

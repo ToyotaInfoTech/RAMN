@@ -951,9 +951,9 @@ static void loadChip8Game(const uint8_t* data, uint16_t size)
 		}
 		else
 		{
-			RAMN_SCREEN_RequestGameStop();
+			RAMN_CHIP8_StopGame();
 			osDelay(200); //leave some time to quit the game (TODO optimize this)
-			RAMN_SCREEN_RequestGame(&data[3], game_size);
+			RAMN_ScreenManager_RequestGame(&data[3], game_size);
 			uds_answerData[0] = data[0] + 0x40; //positive response
 			*uds_answerSize = 1;
 		}
@@ -985,9 +985,9 @@ static void displayPixels(const uint8_t* data, uint16_t size)
 		}
 		else
 		{
-			if (RAMN_SCREEN_IsUDSScreenUpdatePending() == 0U)
+			if (RAMN_ScreenManager_IsUDSScreenUpdatePending() == 0U)
 			{
-				RAMN_SCREEN_RequestDrawImage(x,y,w,h,&data[5]);
+				RAMN_ScreenManager_RequestDrawImage(x,y,w,h,&data[5]);
 				uds_answerData[0] = data[0] + 0x40; //positive response
 				*uds_answerSize = 1;
 			}

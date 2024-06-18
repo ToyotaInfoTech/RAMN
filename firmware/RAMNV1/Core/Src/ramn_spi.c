@@ -231,29 +231,26 @@ void RAMN_SPI_DrawChar(uint16_t x, uint16_t y, uint8_t chr)
 void RAMN_SPI_DrawStringColor(uint16_t x, uint16_t y, uint16_t fg_color, uint16_t bg_color, const char* src)
 {
 	uint16_t index = 0;
+	uint16_t origin_x;
+	origin_x = x;
 	while (src[index] != 0)
 	{
 		if ((src[index] == '\r') || (src[index] == '\n'))
 		{
-			x = 0;
+			x = origin_x;
 			y += Font16.Height;
 		}
 		else
 		{
-			RAMN_SPI_DrawCharColor(x,y,fg_color,bg_color,src[index]);
-			x += Font16.Width;
 			if (x > (LCD_WIDTH-16))
 			{
-				x = 0;
+				x = origin_x;
 				y += Font16.Height;
 			}
+			RAMN_SPI_DrawCharColor(x,y,fg_color,bg_color,src[index]);
+			x += Font16.Width;
 		}
 
-		if (y > (LCD_HEIGHT - 16))
-		{
-			x = 0;
-			y = 0;
-		}
 		index++;
 	}
 

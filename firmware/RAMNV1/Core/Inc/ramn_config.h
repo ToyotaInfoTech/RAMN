@@ -130,8 +130,8 @@
 
 
 #ifdef TARGET_ECUA
-#define USB_RX_BUFFER_SIZE 				20000
-#define USB_TX_BUFFER_SIZE 				20000
+#define USB_RX_BUFFER_SIZE 				15000
+#define USB_TX_BUFFER_SIZE 				15000
 #define CAN_RX_BUFFER_SIZE 				20000
 #define CAN_TX_BUFFER_SIZE 				20000
 #define UDS_ISOTP_RX_BUFFER_SIZE 		0xFFF+2 //Add +2 for buffer-size
