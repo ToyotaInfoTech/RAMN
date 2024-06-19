@@ -24,6 +24,7 @@
 #include "ramn_dbc.h"
 #include "ramn_joystick.h"
 
+
 #define NUMBER_OF_THEMES 7
 
 #define CONTOUR_WIDTH 2

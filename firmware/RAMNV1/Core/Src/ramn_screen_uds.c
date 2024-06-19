@@ -16,6 +16,8 @@
 
 #include "ramn_screen_uds.h"
 
+#ifdef ENABLE_SCREEN
+
 #ifdef ENABLE_UDS
 static uint8_t menu_drawn = 0U;
 uint8_t uds_draw_need_refresh = 0U;
@@ -77,3 +79,5 @@ RAMNScreen ScreenUDS = {
 		.Deinit = ScreenUDS_Deinit,
 		.UpdateInput = ScreenUDS_UpdateInput
 };
+
+#endif

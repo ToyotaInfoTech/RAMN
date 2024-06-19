@@ -15,6 +15,9 @@
 
 #include "ramn_screen_canmonitor.h"
 
+#ifdef ENABLE_SCREEN
+
+
 ////Semaphore to enable access  from different threads
 static SemaphoreHandle_t CANMONITOR_SEMAPHORE = 0U;
 static StaticSemaphore_t CANMONITOR_SEMAPHORE_STRUCT;
@@ -284,3 +287,5 @@ RAMNScreen ScreenCANMonitor = {
 		.Deinit = ScreenCANMonitor_Deinit,
 		.UpdateInput = ScreenCANMonitor_UpdateInput
 };
+
+#endif

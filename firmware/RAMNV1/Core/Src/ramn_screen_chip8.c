@@ -16,6 +16,9 @@
 
 #include "ramn_screen_chip8.h"
 
+#ifdef ENABLE_SCREEN
+
+
 static uint8_t menu_is_drawn = 0U;
 
 static void ScreenChip8_Init() {
@@ -138,3 +141,5 @@ RAMNScreen ScreenChip8 = {
 		.Deinit = ScreenChip8_Deinit,
 		.UpdateInput = ScreenChip8_UpdateInput
 };
+
+#endif

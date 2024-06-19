@@ -14,7 +14,11 @@
  ******************************************************************************
  */
 
+
 #include "ramn_screen_stats.h"
+
+#ifdef ENABLE_SCREEN
+
 
 static void ScreenStats_Init() {
 	RAMN_ScreenUtils_DrawBase(current_theme);
@@ -118,3 +122,5 @@ RAMNScreen ScreenStats = {
 		.Deinit = ScreenStats_Deinit,
 		.UpdateInput = ScreenStats_UpdateInput
 };
+
+#endif
