@@ -102,8 +102,8 @@ void RAMN_SPI_InitScreen(void)
 	//const uint8_t LCD_INIT_MADCTL[] = {0x00};  //For RAMN 2layers
 	const uint8_t LCD_INIT_MADCTL[] = {0x00};
 	const uint8_t LCD_INIT_COLMOD[] = {0x55};
-//	const uint8_t LCD_INIT_CASET[] = {0x00, 0x00, (LCD_WIDTH)>>8, LCD_WIDTH&0xFF};
-//	const uint8_t LCD_INIT_RASET[] = {0x00, 0x00, (LCD_HEIGHT)>>8, LCD_HEIGHT&0xFF };
+	//	const uint8_t LCD_INIT_CASET[] = {0x00, 0x00, (LCD_WIDTH)>>8, LCD_WIDTH&0xFF};
+	//	const uint8_t LCD_INIT_RASET[] = {0x00, 0x00, (LCD_HEIGHT)>>8, LCD_HEIGHT&0xFF };
 	const uint8_t LCD_INIT_CASET[] = {(LCD_WIDTH)>>8, LCD_WIDTH&0xFF, 0, 0};
 	const uint8_t LCD_INIT_RASET[] = {(LCD_HEIGHT)>>8, LCD_HEIGHT&0xFF, 0,0};
 	const uint8_t LCD_INIT_RAMCTRL[] = {0x00,0xF8};
@@ -221,6 +221,29 @@ void RAMN_SPI_DrawCharColor(uint16_t x, uint16_t y, uint16_t fg_color, uint16_t 
 		}
 	}
 	writeData_DMA((uint8_t*)&spiTxBuffer,2*16*16);
+}
+
+void RAMN_SPI_DrawCharColor2(uint16_t x, uint16_t y, uint16_t fg_color, uint16_t bg_color, uint8_t chr)
+{
+	uint8_t* array = (uint8_t*)&Font16.table[(chr - 0x20)*16*2];
+	setAddrWindow(x,y,11,14);
+	for (uint16_t i = 0; i < 14; i++)
+	{
+		uint16_t val = (uint16_t)(array[2*i]<<8) + (uint16_t)array[2*i+1];
+		for (uint16_t j = 0; j < 11; j++)
+		{
+			if (val&(1 << (15-j)))
+			{
+				spiTxBuffer[(i*11)+j] = fg_color;
+			}
+			else
+			{
+				spiTxBuffer[(i*11)+j] = bg_color;
+			}
+		}
+	}
+	writeData_DMA((uint8_t*)&spiTxBuffer,2*11*14);
+
 }
 
 void RAMN_SPI_DrawChar(uint16_t x, uint16_t y, uint8_t chr)

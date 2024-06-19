@@ -59,6 +59,10 @@ static void ScreenUDS_Update(uint32_t tick) {
 	}
 #endif
 
+	if (spi_refresh_counter % 5 == 0)
+	{
+		RAMN_ScreenUtils_DrawSubconsoleUpdate();
+	}
 }
 
 static void ScreenUDS_Deinit() {

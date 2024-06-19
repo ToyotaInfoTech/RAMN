@@ -88,6 +88,9 @@ void 	RAMN_SPI_DrawImage(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const u
 //Draws ONE character with specified background/foreground color
 void 	RAMN_SPI_DrawCharColor(uint16_t x, uint16_t y, uint16_t fg_color, uint16_t bg_color, uint8_t chr);
 
+//Draws a character without spacing (for overwriting another character)
+void RAMN_SPI_DrawCharColor2(uint16_t x, uint16_t y, uint16_t fg_color, uint16_t bg_color, uint8_t chr);
+
 //Draws ONE character with default background/foreground color
 void 	RAMN_SPI_DrawChar(uint16_t x, uint16_t y, uint8_t chr);
 

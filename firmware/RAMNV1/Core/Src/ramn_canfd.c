@@ -44,7 +44,7 @@ static StaticSemaphore_t CAN_TX_SEMAPHORE_STRUCT;
 
 static void RAMN_FDCAN_Error_Handler()
 {
-//TODO: hang or resume
+	//while(1);
 }
 
 static void FDCAN_Config(void)

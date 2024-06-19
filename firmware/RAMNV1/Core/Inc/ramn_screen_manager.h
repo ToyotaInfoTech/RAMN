@@ -27,6 +27,7 @@
 #include "ramn_screen_saver.h"
 #include "ramn_screen_chip8.h"
 #include "ramn_screen_uds.h"
+#include "ramn_screen_canmonitor.h"
 
 //Inits the Screen
 void RAMN_ScreenManager_Init(SPI_HandleTypeDef* handler, osThreadId_t* pTask);
@@ -50,5 +51,10 @@ uint8_t RAMN_ScreenManager_IsUDSScreenUpdatePending();
 
 //Updates the Screen. Must be called periodically
 void RAMN_SCREEN_Update(uint32_t tick);
+
+//Function to process a CAN message to potentially display on screen
+void RAMN_ScreenManager_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, const uint8_t* data, uint32_t tick);
+
+
 
 #endif /* INC_RAMN_SCREEN_MANAGER_H_ */

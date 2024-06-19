@@ -2035,6 +2035,9 @@ void RAMN_ReceiveCANFunc(void *argument)
 #if defined(ENABLE_DIAG)
 				RAMN_DIAG_ProcessRxCANMessage(&CANRxHeader, CANRxData, xTaskGetTickCount());
 #endif
+#if defined(ENABLE_SCREEN)
+				RAMN_ScreenManager_ProcessRxCANMessage(&CANRxHeader, CANRxData, xTaskGetTickCount());
+#endif
 			}
 #ifdef RTR_DEMO_ID
 			else if (CANRxHeader.RxFrameType == FDCAN_REMOTE_FRAME)

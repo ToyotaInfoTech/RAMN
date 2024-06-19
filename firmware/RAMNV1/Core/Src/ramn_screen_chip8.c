@@ -77,7 +77,7 @@ static void ScreenChip8_Update(uint32_t tick) {
 		{
 			ScreenChip8_Init();
 			menu_is_drawn = 0U;
-			RAMN_SPI_DrawStringColor(5,160-16, SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.BACKGROUND, "Move Key to quit.");
+			RAMN_SPI_DrawStringColor(5,160-16, SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.BACKGROUND, "Turn Key to quit.");
 			RAMN_SPI_DrawStringColor(5,160, SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.BACKGROUND, "Use BRAKE to control\rgame speed.");
 
 		}
