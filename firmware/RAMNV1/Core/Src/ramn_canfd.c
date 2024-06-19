@@ -204,6 +204,7 @@ void RAMN_FDCAN_ResetStatistics(void)
 	RAMN_FDCAN_Status.CANRxOverrunCnt = 0U;
 	RAMN_FDCAN_Status.prevCANError = HAL_FDCAN_ERROR_NONE;
 	RAMN_FDCAN_Status.CANErrCnt = 0U;
+	RAMN_FDCAN_Status.busOff = False;
 }
 
 RAMN_Bool_t RAMN_FDCAN_IsTXBufferSpaceAvailable(uint8_t payloadSize)
@@ -330,6 +331,7 @@ void HAL_FDCAN_ErrorCallback(FDCAN_HandleTypeDef *hfdcan)
 	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 	RAMN_FDCAN_Status.CANErrCnt++;
 	vTaskNotifyGiveFromISR(*errTask,&xHigherPriorityTaskWoken);
+	//hfdcan->ErrorCode &= ~(FDCAN_IR_ELO | FDCAN_IR_WDI | FDCAN_IR_PEA | FDCAN_IR_PED | FDCAN_IR_ARA);
 	portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
 }
 

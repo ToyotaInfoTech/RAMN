@@ -31,6 +31,10 @@ static void changeScreenRight()
 	}
 	else if (currentScreen == &ScreenCANMonitor)
 	{
+		RAMN_ScreenManager_SwitchScreen(&ScreenStats);
+	}
+	else if (currentScreen == &ScreenStats)
+	{
 		RAMN_ScreenManager_SwitchScreen(&ScreenChip8);
 	}
 	else if (currentScreen == &ScreenChip8)
@@ -53,9 +57,13 @@ static void changeScreenLeft()
 	{
 		RAMN_ScreenManager_SwitchScreen(&ScreenSaver);
 	}
-	else if (currentScreen == &ScreenChip8)
+	else if (currentScreen == &ScreenStats)
 	{
 		RAMN_ScreenManager_SwitchScreen(&ScreenCANMonitor);
+	}
+	else if (currentScreen == &ScreenChip8)
+	{
+		RAMN_ScreenManager_SwitchScreen(&ScreenStats);
 	}
 	else if (currentScreen == &ScreenUDS)
 	{

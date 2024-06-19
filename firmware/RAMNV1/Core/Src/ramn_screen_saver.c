@@ -39,24 +39,6 @@ static void ScreenSaver_Update(uint32_t tick) {
 	//Code to display a message if problems happened happened
 	if (spi_refresh_counter % 5 == 0)
 	{
-		if ((RAMN_FDCAN_Status.slcan_flags & (SLCAN_FLAG_RX_QUEUE_FULL | SLCAN_FLAG_TX_QUEUE_FULL | SLCAN_FLAG_DATA_OVERRUN)) != 0)
-		{
-			memcpy(ascii_string,"OVF",4);
-			RAMN_SPI_DrawStringColor(5, 5+(0*16), SPI_COLOR_THEME.BACKGROUND, SPI_COLOR_THEME.LIGHT, ascii_string);
-		}
-
-		if (RAMN_FDCAN_Status.CANErrCnt > 0U)
-		{
-			memcpy(ascii_string,"ERR",4);
-			RAMN_SPI_DrawStringColor(5, 5+(1*16), SPI_COLOR_THEME.BACKGROUND, SPI_COLOR_THEME.LIGHT, ascii_string);
-		}
-
-		if (RAMN_USB_Config.USBErrCnt > 0U)
-		{
-			memcpy(ascii_string,"USB",4);
-			RAMN_SPI_DrawStringColor(5, 5+(2*16), SPI_COLOR_THEME.BACKGROUND, SPI_COLOR_THEME.LIGHT, ascii_string);
-		}
-
 		RAMN_ScreenUtils_DrawSubconsoleUpdate();
 	}
 

@@ -28,6 +28,7 @@
 #include "ramn_screen_chip8.h"
 #include "ramn_screen_uds.h"
 #include "ramn_screen_canmonitor.h"
+#include "ramn_screen_stats.h"
 
 //Inits the Screen
 void RAMN_ScreenManager_Init(SPI_HandleTypeDef* handler, osThreadId_t* pTask);
