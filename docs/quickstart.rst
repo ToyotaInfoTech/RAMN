@@ -49,6 +49,9 @@ If that is not the case, you may need to reflash you board (See :ref:`flashing`)
 The LEDs on ECU D's expansion simulate a simple dashboard. They can help you verify that each control is working correctly.
 By default, the CAN bus is always active when the power is on, so you may leave the controls in whatever state you prefer (e.g., engine key OFF).
 
+You can switch between ECU A's screens by pressing LEFT or RIGHT on ECU C's "SHIFT" joystick.
+On some screens, you can further interact by pressing UP, DOWN, or CENTER.
+
 - LED D1 is the left turn indicator. It should start blinking if you left-press the joystick of ECU C.
 - LED D2 is the right turn indicator. It should start blinking if you right-press the joystick of ECU C.
 - LED D3, D4, and D5 represent the clearance light, the lo-beam, and the hi-beam, respectively. They should light up in order when you turn the lighting control switch on ECU B.
