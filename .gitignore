@@ -23,3 +23,5 @@ hardware/V1_revC/0_ramn/fp-info-cache
 /scripts/carla/agents/tools/__pycache__
 /scripts/diagnostics/DUMP
 /hardware/V1_revB/0_ramn/ramn-backups
+firmware/RAMNV1/Core/Inc/ramn_screen_template.h
+firmware/RAMNV1/Core/Src/ramn_screen_template.c
