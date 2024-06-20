@@ -48,8 +48,9 @@
 #define LCD_HEIGHT 240
 #define SCROLL_WINDOW_HEIGHT 320 //even 240x240 screens have a scrolling window of 320 pixels in RAM
 //#define LCD_HEIGHT 320
-#define SCREEN_HEADER_SIZE 16 //Size of header displayed when scrolling
-
+#define SCREEN_HEADER_SIZE 32 //Size of header displayed when scrolling
+#define SCREEN_FOOTER_SIZE 0 //Size of footer displayed when scrolling
+#define SCROLL_AREA_SIZE (SCROLL_WINDOW_HEIGHT-(SCREEN_HEADER_SIZE+SCREEN_FOOTER_SIZE))
 
 
 //Colors must be in RGB565 format
@@ -103,8 +104,9 @@ void 	RAMN_SPI_DrawString(uint16_t x, uint16_t y, char* src);
 //Function that updates a string by only drawing characters that changed
 void RAMN_SPI_RefreshStringColor(uint16_t x, uint16_t y, uint16_t fg_color, uint16_t bg_color, const char* src, char* prev);
 
-//Function to set the current screen scroll
+//Functions to set the current screen scroll
 void RAMN_SPI_SetScroll(uint16_t val);
+void RAMN_SPI_ScrollUp(uint16_t scroll_val);
 
 #endif
 

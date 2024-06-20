@@ -55,4 +55,7 @@ void RAMN_ScreenUtils_UpdateTheme(uint8_t new_theme);
 
 void RAMN_ScreenUtils_Init(SPI_HandleTypeDef* handler, osThreadId_t* pTask);
 
+//Prepare a screen that can be scrolled
+void RAMN_ScreenUtils_PrepareScrollScreen();
+
 #endif

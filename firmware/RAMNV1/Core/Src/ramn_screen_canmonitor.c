@@ -36,7 +36,7 @@ volatile uint8_t newIdentifierAdded = 0U;
 volatile uint8_t identifierOverflowed = 0U;
 
 
-static void FreeCANMessageList() {
+static void freeCANMessageList() {
 	CANMessageNode* current = head;
 	CANMessageNode* next;
 
@@ -115,7 +115,7 @@ static CANMessageNode* findOrCreateCANMessageNode(uint32_t identifier) {
 }
 
 //Function to remove messages with old timestamps
-uint8_t RemoveOldNodes(uint32_t thresholdTick) {
+uint8_t removeOldNodes(uint32_t thresholdTick) {
 	CANMessageNode* current = head;
 	CANMessageNode* previous = NULL;
 	uint8_t node_deleted = 0U;
@@ -149,7 +149,7 @@ void RAMN_ScreenCANMonitor_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHea
 	if ((pHeader->IdType == FDCAN_STANDARD_ID) && (pHeader->FDFormat == FDCAN_CLASSIC_CAN) && (pHeader->RxFrameType == FDCAN_DATA_FRAME) && (pHeader->DataLength <= 8))
 	{
 
-		if (CANMONITOR_SEMAPHORE == 0U) osDelay(50);
+		while (CANMONITOR_SEMAPHORE == 0U) osDelay(50);
 		while (xSemaphoreTake(CANMONITOR_SEMAPHORE, portMAX_DELAY ) != pdTRUE);
 
 		//Process Message here
@@ -186,7 +186,7 @@ void RAMN_ScreenCANMonitor_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHea
 }
 
 static void ScreenCANMonitor_Init() {
-	CANMONITOR_SEMAPHORE   = xSemaphoreCreateMutexStatic(&CANMONITOR_SEMAPHORE_STRUCT);
+	if (CANMONITOR_SEMAPHORE == 0U) CANMONITOR_SEMAPHORE   = xSemaphoreCreateMutexStatic(&CANMONITOR_SEMAPHORE_STRUCT);
 	RAMN_ScreenUtils_DrawBase(current_theme);
 	newIdentifierAdded = 1U; // make sure the IDs get drawn
 	RAMN_SPI_DrawStringColor(42,5, SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.BACKGROUND, "CAN RX MONITOR");
@@ -197,77 +197,79 @@ static void ScreenCANMonitor_Update(uint32_t tick) {
 
 	uint8_t msg_cnt = 0;
 	uint8_t tmp[21];
-	if ((new_messages > 0) || (tick - last_update > 500))
+
+	if (spi_refresh_counter % 5 == 0)
 	{
-
-		while (xSemaphoreTake(CANMONITOR_SEMAPHORE, portMAX_DELAY ) != pdTRUE);
-
-		if (tick > 2000)
+		if ((new_messages > 0) || (tick - last_update > 500))
 		{
-			if (RemoveOldNodes(tick - 2000) != 0U)
-			{
-				//screen redraw needed pretend there is a new ID
-				RAMN_SPI_DrawRectangle(5,25+((identifierCount)*16),LCD_WIDTH-10,(MAX_CANMONITOR_IDS-identifierCount)*16,SPI_COLOR_THEME.BACKGROUND);
-			}
-		}
 
-		CANMessageNode* current = head;
-		if (newIdentifierAdded != 0)
-		{
-			newIdentifierAdded = 0U;
+			while (xSemaphoreTake(CANMONITOR_SEMAPHORE, portMAX_DELAY ) != pdTRUE);
 
-			if (identifierOverflowed != 0U)
+			if (tick > 2000)
 			{
-				RAMN_SPI_DrawStringColor(200,5, SPI_COLOR_THEME.WHITE, SPI_COLOR_THEME.BACKGROUND, "OVF");
-				identifierOverflowed = 0;
+				if (removeOldNodes(tick - 2000) != 0U)
+				{
+					//screen redraw needed pretend there is a new ID
+					RAMN_SPI_DrawRectangle(5,25+((identifierCount)*16),LCD_WIDTH-10,(MAX_CANMONITOR_IDS-identifierCount)*16,SPI_COLOR_THEME.BACKGROUND);
+				}
 			}
 
-			//Update IDs
+			CANMessageNode* current = head;
+			if (newIdentifierAdded != 0)
+			{
+				newIdentifierAdded = 0U;
 
+				if (identifierOverflowed != 0U)
+				{
+					RAMN_SPI_DrawStringColor(200,5, SPI_COLOR_THEME.WHITE, SPI_COLOR_THEME.BACKGROUND, "OVF");
+					identifierOverflowed = 0;
+				}
+
+				//Update IDs
+
+				while (current != NULL) {
+
+					uint12toASCII(current->identifier, tmp);
+					tmp[3] = 0;
+					RAMN_SPI_DrawStringColor(7,25+(msg_cnt*16), SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.BACKGROUND, tmp);
+
+					current = current->next;
+					msg_cnt += 1;
+				}
+
+
+			}
+
+			current = head; //reset head location
+			msg_cnt = 0;
 			while (current != NULL) {
 
-				uint12toASCII(current->identifier, tmp);
-				tmp[3] = 0;
-				RAMN_SPI_DrawStringColor(7,25+(msg_cnt*16), SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.BACKGROUND, tmp);
+				for(uint8_t i=0;i<current->messages[0].header.DataLength*2;i++)
+				{
+					uint4toASCII((current->messages[0].data[i/2] >> (4*((i+1)%2)))&0xF,&tmp[i]);
 
+					if (tick - current->lastNibbleChange[i] >= 500)
+					{
+						RAMN_SPI_DrawCharColor2(7+(4*11)+i*11,25+(msg_cnt*16), SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.BACKGROUND, tmp[i]);
+					}
+					else
+					{
+						RAMN_SPI_DrawCharColor2(7+(4*11)+i*11,25+(msg_cnt*16), SPI_COLOR_THEME.WHITE, SPI_COLOR_THEME.BACKGROUND, tmp[i]);
+					}
+				}
+				if (8 - current->messages[0].header.DataLength > 0)
+				{
+					RAMN_SPI_DrawRectangle(7+(4*11)+current->messages[0].header.DataLength*22,25+(msg_cnt*16),22*(8 - current->messages[0].header.DataLength),14,SPI_COLOR_THEME.BACKGROUND);
+				}
 				current = current->next;
 				msg_cnt += 1;
 			}
+			new_messages = 0U;
 
-
+			last_update = tick;
+			xSemaphoreGive(CANMONITOR_SEMAPHORE);
 		}
 
-		current = head; //reset head location
-		msg_cnt = 0;
-		while (current != NULL) {
-
-			for(uint8_t i=0;i<current->messages[0].header.DataLength*2;i++)
-			{
-				uint4toASCII((current->messages[0].data[i/2] >> (4*((i+1)%2)))&0xF,&tmp[i]);
-
-				if (tick - current->lastNibbleChange[i] >= 500)
-				{
-					RAMN_SPI_DrawCharColor2(7+(4*11)+i*11,25+(msg_cnt*16), SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.BACKGROUND, tmp[i]);
-				}
-				else
-				{
-					RAMN_SPI_DrawCharColor2(7+(4*11)+i*11,25+(msg_cnt*16), SPI_COLOR_THEME.WHITE, SPI_COLOR_THEME.BACKGROUND, tmp[i]);
-				}
-			}
-			if (8 - current->messages[0].header.DataLength > 0)
-			{
-				RAMN_SPI_DrawRectangle(7+(4*11)+current->messages[0].header.DataLength*22,25+(msg_cnt*16),22*(8 - current->messages[0].header.DataLength),14,SPI_COLOR_THEME.BACKGROUND);
-			}
-			current = current->next;
-			msg_cnt += 1;
-		}
-		new_messages = 0U;
-
-		last_update = tick;
-		xSemaphoreGive(CANMONITOR_SEMAPHORE);
-	}
-	if (spi_refresh_counter % 5 == 0)
-	{
 		RAMN_ScreenUtils_DrawSubconsoleUpdate();
 	}
 
@@ -275,7 +277,7 @@ static void ScreenCANMonitor_Update(uint32_t tick) {
 }
 
 static void ScreenCANMonitor_Deinit() {
-	FreeCANMessageList();
+	freeCANMessageList();
 }
 
 static void ScreenCANMonitor_UpdateInput(JoystickEventType event) {

@@ -57,7 +57,7 @@ static void ScreenStats_Update(uint32_t tick) {
 		{
 			RAMN_SPI_DrawStringColor2(7+12*11,5+48, SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.BACKGROUND, tmp);
 		}
-		if ((RAMN_FDCAN_Status.slcan_flags & (SLCAN_FLAG_RX_QUEUE_FULL | SLCAN_FLAG_TX_QUEUE_FULL | SLCAN_FLAG_DATA_OVERRUN)) != 0)
+		if (RAMN_FDCAN_Status.CANRxOverrunCnt > 0)
 		{
 			RAMN_SPI_DrawStringColor2(7+10*11,5+64, SPI_COLOR_THEME.WHITE, SPI_COLOR_THEME.BACKGROUND, "YES");
 		}

@@ -34,6 +34,9 @@ void RAMN_SPI_Init(SPI_HandleTypeDef* handler, osThreadId_t* pTask)
 #endif
 
 #if defined(ENABLE_SCREEN)
+
+static uint16_t current_scroll = SCREEN_HEADER_SIZE;
+
 static void writeData_DMA(const uint8_t *data, uint16_t nbytes)
 {
 	HAL_GPIO_WritePin(LCD_DC_GPIO_Port, LCD_DC_Pin , GPIO_PIN_SET);  // 1 for data, 0 for control
@@ -91,10 +94,20 @@ void RAMN_SPI_SetScroll(uint16_t val)
 {
 	writeCommand_DMA(ST7789_VSCSAD);
 	uint8_t v[2];
-	v[0] = (val>>8)&0xFF;
-	v[1] =val&0xFF;
+	current_scroll = val;
+	v[0] = (current_scroll>>8)&0xFF;
+	v[1] =current_scroll&0xFF;
 	writeData_DMA(v,sizeof(v));
 }
+
+void RAMN_SPI_ScrollUp(uint16_t scroll_val)
+{
+	current_scroll = (current_scroll+scroll_val)%SCROLL_WINDOW_HEIGHT;
+	if (current_scroll < SCREEN_HEADER_SIZE) current_scroll = SCREEN_HEADER_SIZE;
+	RAMN_SPI_SetScroll(current_scroll);
+}
+
+
 
 void RAMN_SPI_InitScreen(void)
 {
@@ -108,8 +121,7 @@ void RAMN_SPI_InitScreen(void)
 	const uint8_t LCD_INIT_RASET[] = {(LCD_HEIGHT)>>8, LCD_HEIGHT&0xFF, 0,0};
 	const uint8_t LCD_INIT_RAMCTRL[] = {0x00,0xF8};
 
-	//const uint8_t LCD_INIT_VSCRDEF[] = {0x00,0x4, 0x00, 0xE8, 0x00, 0x4};
-	const uint8_t LCD_INIT_VSCRDEF[] = {0x00, SCREEN_HEADER_SIZE, 0x00, LCD_HEIGHT-SCREEN_HEADER_SIZE, 0x00,0x00};
+	const uint8_t LCD_INIT_VSCRDEF[] = {0x00, SCREEN_HEADER_SIZE, (SCROLL_AREA_SIZE >> 8)&0xFF, SCROLL_AREA_SIZE&0xFF, 0x00, SCREEN_FOOTER_SIZE};
 	const uint8_t LCD_INIT_VSCSAD[] = {0x00, SCREEN_HEADER_SIZE};
 
 
