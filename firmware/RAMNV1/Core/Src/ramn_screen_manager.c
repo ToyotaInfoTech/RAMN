@@ -31,6 +31,10 @@ static void changeScreenRight()
 	}
 	else if (currentScreen == &ScreenCANMonitor)
 	{
+		RAMN_ScreenManager_SwitchScreen(&ScreenCANLog);
+	}
+	else if (currentScreen == &ScreenCANLog)
+	{
 		RAMN_ScreenManager_SwitchScreen(&ScreenStats);
 	}
 	else if (currentScreen == &ScreenStats)
@@ -57,9 +61,13 @@ static void changeScreenLeft()
 	{
 		RAMN_ScreenManager_SwitchScreen(&ScreenSaver);
 	}
-	else if (currentScreen == &ScreenStats)
+	else if (currentScreen == &ScreenCANLog)
 	{
 		RAMN_ScreenManager_SwitchScreen(&ScreenCANMonitor);
+	}
+	else if (currentScreen == &ScreenStats)
+	{
+		RAMN_ScreenManager_SwitchScreen(&ScreenCANLog);
 	}
 	else if (currentScreen == &ScreenChip8)
 	{
@@ -196,6 +204,10 @@ void RAMN_ScreenManager_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader
 	if (currentScreen == &ScreenCANMonitor)
 	{
 		RAMN_ScreenCANMonitor_ProcessRxCANMessage(pHeader, data, tick);
+	}
+	else if (currentScreen == &ScreenCANLog)
+	{
+		RAMN_ScreenCANLog_ProcessRxCANMessage(pHeader, data, tick);
 	}
 }
 
