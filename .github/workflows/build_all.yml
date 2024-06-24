@@ -9,7 +9,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        spice: [RAMNV1, RAMNV1_CTF]
+        spice: [RAMNV1]
         conf: [Release, Debug]
     
     runs-on: ubuntu-latest
