@@ -43,13 +43,13 @@ static void ScreenSaver_Update(uint32_t tick) {
 	uint8_t random_char = (random_val % 75) + '0';
 
 	RAMN_SPI_DrawCharColor(5+(random_X_line*12), 5+(random_Y_line*16), color, SPI_COLOR_THEME.BACKGROUND, random_char);
-
+	}
 	//Code to display a message if problems happened happened
 	if (spi_refresh_counter % 5 == 0)
 	{
 		RAMN_ScreenUtils_DrawSubconsoleUpdate();
 	}
-	}
+
 
 }
 
