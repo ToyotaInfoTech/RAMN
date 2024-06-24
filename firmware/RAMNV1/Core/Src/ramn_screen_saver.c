@@ -19,13 +19,21 @@
 
 char ascii_string[16] = {0};
 char random_char_line[19] = {0};
+uint8_t menu_drawn = 0U;
 
 static void ScreenSaver_Init() {
 	RAMN_ScreenUtils_DrawBase(current_theme);
 }
 
 static void ScreenSaver_Update(uint32_t tick) {
+	if (menu_drawn == 0U)
+	{
+		menu_drawn = 1U;
+		RAMN_SPI_DrawStringColor(5+22,5+64, SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.BACKGROUND, " Use ECU C Shift \rto control screen");
 
+	}
+	if (tick > 5000) // don't erase display for the first 5 seconds
+	{
 	//random value for the "digital rain" effect on screen
 	uint16_t random_colors[] = {SPI_COLOR_THEME.DARK, SPI_COLOR_THEME.DARK, SPI_COLOR_THEME.MEDIUM, SPI_COLOR_THEME.MEDIUM, SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.WHITE};
 	uint8_t random_X_line = RAMN_RNG_Pop8() % sizeof(random_char_line);
@@ -40,6 +48,7 @@ static void ScreenSaver_Update(uint32_t tick) {
 	if (spi_refresh_counter % 5 == 0)
 	{
 		RAMN_ScreenUtils_DrawSubconsoleUpdate();
+	}
 	}
 
 }
