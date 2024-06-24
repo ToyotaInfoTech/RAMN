@@ -96,11 +96,29 @@ void HAL_MspInit(void)
 void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
+  RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
   if(hadc->Instance==ADC1)
   {
   /* USER CODE BEGIN ADC1_MspInit 0 */
 
   /* USER CODE END ADC1_MspInit 0 */
+
+  /** Initializes the peripherals clock
+  */
+    PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_ADC;
+    PeriphClkInit.AdcClockSelection = RCC_ADCCLKSOURCE_PLLSAI1;
+    PeriphClkInit.PLLSAI1.PLLSAI1Source = RCC_PLLSAI1SOURCE_HSE;
+    PeriphClkInit.PLLSAI1.PLLSAI1M = 3;
+    PeriphClkInit.PLLSAI1.PLLSAI1N = 24;
+    PeriphClkInit.PLLSAI1.PLLSAI1P = RCC_PLLP_DIV17;
+    PeriphClkInit.PLLSAI1.PLLSAI1Q = RCC_PLLQ_DIV2;
+    PeriphClkInit.PLLSAI1.PLLSAI1R = RCC_PLLR_DIV8;
+    PeriphClkInit.PLLSAI1.PLLSAI1ClockOut = RCC_PLLSAI1_ADC1CLK;
+    if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
+    {
+      Error_Handler();
+    }
+
     /* Peripheral clock enable */
     __HAL_RCC_ADC_CLK_ENABLE();
 
@@ -230,11 +248,22 @@ void HAL_CRC_MspDeInit(CRC_HandleTypeDef* hcrc)
 void HAL_FDCAN_MspInit(FDCAN_HandleTypeDef* hfdcan)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
+  RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
   if(hfdcan->Instance==FDCAN1)
   {
   /* USER CODE BEGIN FDCAN1_MspInit 0 */
 
   /* USER CODE END FDCAN1_MspInit 0 */
+
+  /** Initializes the peripherals clock
+  */
+    PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_FDCAN;
+    PeriphClkInit.FdcanClockSelection = RCC_FDCANCLKSOURCE_PLL;
+    if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
+    {
+      Error_Handler();
+    }
+
     /* Peripheral clock enable */
     __HAL_RCC_FDCAN1_CLK_ENABLE();
 

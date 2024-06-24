@@ -264,7 +264,6 @@ StreamBufferHandle_t XcpTxDataStreamBufferHandle;
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
-void PeriphCommonClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
 static void MX_ICACHE_Init(void);
@@ -363,9 +362,6 @@ int main(void)
 
   /* Configure the system clock */
   SystemClock_Config();
-
-/* Configure the peripherals common clocks */
-  PeriphCommonClock_Config();
 
   /* USER CODE BEGIN SysInit */
 
@@ -557,7 +553,7 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLM = 1;
   RCC_OscInitStruct.PLL.PLLN = 16;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV7;
-  RCC_OscInitStruct.PLL.PLLQ = RCC_PLLQ_DIV8;
+  RCC_OscInitStruct.PLL.PLLQ = RCC_PLLQ_DIV4;
   RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV2;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
@@ -592,32 +588,6 @@ void SystemClock_Config(void)
   RCC_CRSInitStruct.HSI48CalibrationValue = 32;
 
   HAL_RCCEx_CRSConfig(&RCC_CRSInitStruct);
-}
-
-/**
-  * @brief Peripherals Common Clock Configuration
-  * @retval None
-  */
-void PeriphCommonClock_Config(void)
-{
-  RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
-
-  /** Initializes the common periph clock
-  */
-  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_ADC|RCC_PERIPHCLK_FDCAN;
-  PeriphClkInit.FdcanClockSelection = RCC_FDCANCLKSOURCE_PLLSAI1;
-  PeriphClkInit.AdcClockSelection = RCC_ADCCLKSOURCE_PLLSAI1;
-  PeriphClkInit.PLLSAI1.PLLSAI1Source = RCC_PLLSAI1SOURCE_HSE;
-  PeriphClkInit.PLLSAI1.PLLSAI1M = 2;
-  PeriphClkInit.PLLSAI1.PLLSAI1N = 56;
-  PeriphClkInit.PLLSAI1.PLLSAI1P = RCC_PLLP_DIV7;
-  PeriphClkInit.PLLSAI1.PLLSAI1Q = RCC_PLLQ_DIV2;
-  PeriphClkInit.PLLSAI1.PLLSAI1R = RCC_PLLR_DIV8;
-  PeriphClkInit.PLLSAI1.PLLSAI1ClockOut = RCC_PLLSAI1_SAI1CLK|RCC_PLLSAI1_ADC1CLK;
-  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
-  {
-    Error_Handler();
-  }
 }
 
 /**
