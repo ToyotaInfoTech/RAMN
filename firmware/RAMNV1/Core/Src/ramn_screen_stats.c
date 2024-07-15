@@ -42,7 +42,7 @@ static void ScreenStats_Update(uint32_t tick) {
 	if (spi_refresh_counter % 5 == 0)
 	{
 		uint32toASCII(RAMN_FDCAN_Status.CANRXCnt, tmp);
-		RAMN_SPI_DrawStringColor2(5+12*11,5+16, SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.BACKGROUND, tmp);
+		RAMN_SPI_DrawStringColor2(7+12*11,5+16, SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.BACKGROUND, tmp);
 
 
 		uint32toASCII(RAMN_FDCAN_Status.CANTXSentCnt, tmp);
