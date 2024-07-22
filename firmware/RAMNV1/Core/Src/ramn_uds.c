@@ -637,50 +637,57 @@ static void RAMN_UDS_DynamicallyDefineDataIdentifier(const uint8_t* data, uint16
 static void RAMN_UDS_WriteDataByIdentifier(const uint8_t* data, uint16_t size)
 {
 #if defined(ENABLE_EEPROM_EMULATION)
-	uint16_t index = (data[1] << 8) + data[2];
-	EE_Status result = EE_OK;
-
-	if (udsSessionHandler.currentSession != UDS_SESSION_PRGS )
+	if( size < 3U )
 	{
-		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SNSIAS);
+		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
 	}
 	else
 	{
-		if ( (index == 0xF184) || (index == 0xF18C))
+		uint16_t index = (data[1] << 8) + data[2];
+		EE_Status result = EE_OK;
+	
+		if (udsSessionHandler.currentSession != UDS_SESSION_PRGS )
 		{
-			RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_ROOR);
-		}
-		else if (((index != 0xF190) && (size != 7U)) || ((index == 0xF190) && (size != 20)))
-		{
-			RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
+			RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SNSIAS);
 		}
 		else
 		{
-			if (index != 0xF190) //NOT VIN
+			if ( (index == 0xF184) || (index == 0xF18C))
 			{
-				uint32_t val = (data[3] << 24) + (data[4] << 16) + (data[5] << 8) + (data[6]);
-				result = RAMN_EEPROM_Write32(index,val);
+				RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_ROOR);
 			}
-			else //VIN
+			else if (((index != 0xF190) && (size != 7U)) || ((index == 0xF190) && (size != 20)))
 			{
-				result |= RAMN_EEPROM_Write32(VIN_BYTES1_4_INDEX,(data[6] << 24) + (data[5] << 16) + (data[4] << 8) + (data[3]));
-				result |= RAMN_EEPROM_Write32(VIN_BYTES5_8_INDEX,(data[10] << 24) + (data[9] << 16) + (data[8] << 8) + (data[7]));
-				result |= RAMN_EEPROM_Write32(VIN_BYTES9_12_INDEX,(data[14] << 24) + (data[13] << 16) + (data[12] << 8) + (data[11]));
-				result |= RAMN_EEPROM_Write32(VIN_BYTES13_16_INDEX,(data[18] << 24) + (data[17] << 16) + (data[16] << 8) + (data[15]));
-				result |= RAMN_EEPROM_Write32(VIN_BYTES17_20_INDEX,(data[19]));
-			}
-
-			if (result != EE_OK)
-			{
-				RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_GPF);
+				RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
 			}
 			else
 			{
-				uint8_t answer[3];
-				answer[0] = data[0]+0x40;
-				answer[1] = data[1];
-				answer[2] = data[2];
-				RAMN_UDS_FormatAnswer(answer, 3);
+				if (index != 0xF190) //NOT VIN
+				{
+					uint32_t val = (data[3] << 24) + (data[4] << 16) + (data[5] << 8) + (data[6]);
+					result = RAMN_EEPROM_Write32(index,val);
+				}
+				else //VIN
+				{
+					result |= RAMN_EEPROM_Write32(VIN_BYTES1_4_INDEX,(data[6] << 24) + (data[5] << 16) + (data[4] << 8) + (data[3]));
+					result |= RAMN_EEPROM_Write32(VIN_BYTES5_8_INDEX,(data[10] << 24) + (data[9] << 16) + (data[8] << 8) + (data[7]));
+					result |= RAMN_EEPROM_Write32(VIN_BYTES9_12_INDEX,(data[14] << 24) + (data[13] << 16) + (data[12] << 8) + (data[11]));
+					result |= RAMN_EEPROM_Write32(VIN_BYTES13_16_INDEX,(data[18] << 24) + (data[17] << 16) + (data[16] << 8) + (data[15]));
+					result |= RAMN_EEPROM_Write32(VIN_BYTES17_20_INDEX,(data[19]));
+				}
+
+				if (result != EE_OK)
+				{
+					RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_GPF);
+				}
+				else
+				{
+					uint8_t answer[3];
+					answer[0] = data[0]+0x40;
+					answer[1] = data[1];
+					answer[2] = data[2];
+					RAMN_UDS_FormatAnswer(answer, 3);
+				}
 			}
 		}
 	}
