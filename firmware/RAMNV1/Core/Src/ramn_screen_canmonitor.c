@@ -211,6 +211,7 @@ static void ScreenCANMonitor_Update(uint32_t tick) {
 				{
 					//screen redraw needed pretend there is a new ID
 					RAMN_SPI_DrawRectangle(5,25+((identifierCount)*16),LCD_WIDTH-10,(MAX_CANMONITOR_IDS-identifierCount)*16,SPI_COLOR_THEME.BACKGROUND);
+					newIdentifierAdded = 1U;
 				}
 			}
 
