@@ -341,7 +341,7 @@ uint8_t RAMN_CHIP8_Update(uint32_t xLastWakeTime)
 			break;
 		case 0x00EE:
 			SP -= 1;
-			if (SP >= sizeof(stack)) //if an underflow happened, quit
+			if (SP >= (sizeof(stack)/sizeof(uint16_t))) //if an underflow happened, quit
 			{
 				game_started = 0U;
 			}
@@ -406,7 +406,7 @@ uint8_t RAMN_CHIP8_Update(uint32_t xLastWakeTime)
 		case 0x2000:
 			stack[SP] = PC;
 			SP++;  // incrementing the SP
-			if (SP >= sizeof(stack))
+			if (SP >= (sizeof(stack)/sizeof(uint16_t)))
 			{
 				game_started = 0U;
 			}

@@ -1003,6 +1003,7 @@ void RAMN_ReceiveUSBFunc(void *argument)
 
 		xBytesReceived = xStreamBufferReceive(USBD_RxStreamBufferHandle, (void *)&commandLength, 2U, portMAX_DELAY );
 		if (xBytesReceived != 2U) Error_Handler();
+		if (commandLength > USB_COMMAND_BUFFER_SIZE) ErrorHandler();
 
 		xBytesReceived = xStreamBufferReceive(USBD_RxStreamBufferHandle, (void*)USBRxBuffer, commandLength,portMAX_DELAY);
 		if (xBytesReceived != commandLength) Error_Handler();
