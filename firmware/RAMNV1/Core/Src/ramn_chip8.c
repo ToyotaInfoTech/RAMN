@@ -318,7 +318,7 @@ uint8_t RAMN_CHIP8_Update(uint32_t xLastWakeTime)
 		lastTimerUpdate = xLastWakeTime;
 	}
 
-	if (PC >= sizeof(memory) || (I >= sizeof(memory))) // PC or I overflow
+	if (PC >= (sizeof(memory)-1) || (I >= sizeof(memory))) // PC or I overflow
 	{
 		game_started = 0U;
 		return;
