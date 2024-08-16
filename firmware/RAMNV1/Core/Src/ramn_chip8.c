@@ -25,7 +25,7 @@
 0x200-0xFFF - Actual game memory
  */
 static uint16_t opcode; //Current opcode
-static uint8_t memory[0x1000+0x210]; //Interpreter memory
+static uint8_t memory[0x1000]; //Interpreter memory
 static uint8_t V[16]; //Sixteen working registers
 static uint8_t RPL[8]; //RPL registers (for super chip)
 static uint16_t I; //Memory pointer
@@ -688,12 +688,26 @@ uint8_t RAMN_CHIP8_Update(uint32_t xLastWakeTime)
 						PC += 2;
 						break;
 					case 0x0033:
+						// ensure we aren't reading outside of valid memory
+						if (I + 2 >= sizeof(memory))
+						{
+							game_started = 0U;
+							break;
+						}
+
 						memory[I] = V[(opcode & 0x0F00) >> 8] / 100;
 						memory[I + 1] = (V[(opcode & 0x0F00) >> 8] / 10) % 10;
 						memory[I + 2] = (V[(opcode & 0x0F00) >> 8] % 100) % 10;
 						PC += 2;
 						break;
 					case 0x0055:
+						// ensure we aren't reading outside of valid memory
+						if (I + ((opcode & 0x0F00) >> 8) >= sizeof(memory))
+						{
+							game_started = 0U;
+							break;
+						}
+
 						for (uint8_t i = 0; i <= ((opcode & 0x0F00) >> 8); i++)
 							memory[I + i] = V[i];
 						I += (1 + ((opcode & 0x0F00) >> 8));
@@ -701,6 +715,13 @@ uint8_t RAMN_CHIP8_Update(uint32_t xLastWakeTime)
 						break;
 
 					case 0x0065:
+						// ensure we aren't reading outside of valid memory
+						if (I + ((opcode & 0x0F00) >> 8) >= sizeof(memory))
+						{
+							game_started = 0U;
+							break;
+						}
+						
 						for (uint8_t i = 0; i <= ((opcode & 0x0F00) >> 8); i++)
 							V[i] = memory[I + i];
 						I += (1 + ((opcode & 0x0F00) >> 8));
