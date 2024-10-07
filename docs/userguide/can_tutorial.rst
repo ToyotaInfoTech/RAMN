@@ -539,7 +539,7 @@ For example, filter "1BB:7FF" used with candump will only display CAN messages w
 .. code-block:: text
 
     value: 00110111011 (0x1BB)
-    mask:  11111111111 (0xFFF)
+    mask:  11111111111 (0x7FF)
     ---------------------
     ID:    00110111011 (0x1BB only)
 

@@ -1,7 +1,7 @@
 .. _diag_tutorial:
 
-Interacting with Diagnostic Services
-====================================
+Interacting with UDS
+====================
 
 The ISO-TP layer presented in the :ref:`interacting_isotp` section allows sending and receiving arbitrary payloads with a size up to 4095 bytes.
 ECUs in modern vehicles will most likely interpret ISO-TP data as UDS commands, described in this section.
@@ -579,7 +579,7 @@ The format of Read Memory by Address parameters is <format identifier> <address>
 For example, let us assume that you want to read 4 bytes from address 0x08000000 (start of RAMN ECU program flash).
 "4" fits into a single byte, so you could use one byte to provide the size that you want to read.
 The addresses used by STM32 microcontrollers are 32-bit long (4 bytes).
-Therefore, you can use format identifier 0x41 (4-byte for the address, 1 byte for the size)
+Therefore, you can use format identifier 0x14 (4-byte for the address, 1 byte for the size)
 
 You could ask a memory read using:
 
