@@ -574,7 +574,7 @@ static void RAMN_UDS_TryKey(const uint8_t* data, uint16_t size)
 
 	else if (udsSessionHandler.defaultSAhandler.status != SECURITY_ACCESS_SEED_REQUESTED)
 	{
-		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SAD);
+		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_RSE);
 	}
 	else if (try == udsSessionHandler.defaultSAhandler.currentKey)
 	{

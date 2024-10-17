@@ -42,6 +42,7 @@
 #if defined(TARGET_ECUA)
 #define ENABLE_USB
 #define ENABLE_SCREEN
+#define ENABLE_MINICTF
 
 
 //Automatically stops transceiving when serial port close is detected. May not work well with some OS/Applications

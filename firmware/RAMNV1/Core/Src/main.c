@@ -1936,7 +1936,7 @@ void RAMN_ReceiveUSBFunc(void *argument)
 					USB_CLI_ENABLE = 0U;
 					RAMN_USB_SendFromTask((uint8_t*)"\r",1);
 					break;
-#ifdef ENABLE_MINICTF
+#ifdef ENABLE_MINICTF && defined(TARGET_ECUA)
 				case '^':
 					RAMN_USB_SendStringFromTask(FLAG_USB_1);
 					RAMN_USB_SendFromTask((uint8_t*)"\r",1);
@@ -2029,7 +2029,7 @@ void RAMN_ReceiveCANFunc(void *argument)
 			}
 #endif
 
-#if defined(ENABLE_MINICTF)
+#if defined(ENABLE_MINICTF) && defined(TARGET_ECUD)
 			RAMN_CTF_ProcessRxCANMessage(&CANRxHeader, CANRxData, xTaskGetTickCount());
 #endif
 

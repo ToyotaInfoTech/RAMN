@@ -72,6 +72,7 @@ static uint8_t checkIfShouldSendFlag4(const FDCAN_RxHeaderTypeDef* pHeader, cons
 
 void	RAMN_CTF_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, const uint8_t* data, uint32_t tick)
 {
+#ifdef TARGET_ECUD
 	if (pHeader->RxFrameType == FDCAN_DATA_FRAME)
 	{
 		if (pHeader->Identifier == 0x456)
@@ -82,9 +83,9 @@ void	RAMN_CTF_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, const ui
 
 	if (pHeader->RxFrameType == FDCAN_REMOTE_FRAME)
 	{
-		if (pHeader->Identifier == 0x771)
+		if (pHeader->Identifier == 0x772)
 		{
-			sendFlagOverCAN(0x771, FLAG_CAN_2);
+			sendFlagOverCAN(0x772, FLAG_CAN_2);
 		}
 	}
 
@@ -109,8 +110,7 @@ void	RAMN_CTF_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, const ui
 			}
 		}
 	}
-
-
+#endif
 }
 
 static uint16_t offset_flag5 = 0;
@@ -210,9 +210,9 @@ static void SendNextDataFlag7()
 }
 
 
-void 	RAMN_CTF_Update(uint32_t tick)
+void RAMN_CTF_Update(uint32_t tick)
 {
-
+#ifdef TARGET_ECUD
 	if (periodic_flag_enabled)
 	{
 		if ((ctf_loop_counter % 10) == 0)
@@ -229,6 +229,6 @@ void 	RAMN_CTF_Update(uint32_t tick)
 
 		ctf_loop_counter += 1;
 	}
+#endif
 }
-
 #endif
