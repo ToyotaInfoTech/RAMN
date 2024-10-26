@@ -15,3 +15,4 @@ Documentation of RAMN: Resistant Automotive Miniature Network
    quickstart
    userguide
    minictf
+   ctf_writeups
