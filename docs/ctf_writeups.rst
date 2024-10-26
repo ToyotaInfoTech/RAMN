@@ -475,10 +475,25 @@ Based on the address map of the `reference manual <https://www.st.com/resource/e
 The trick is to identify that this value is in system memory and is therefore common to all STM32L552 microcontrollers (at least from the same batch), so it can be read from another ECU. Therefore, the password could be read:
 
 - By using the ReadMemoryByAddress UDS Service of ECU C (which is not disabled, contrary to ECU D).
-- By using one of the many memory dump methods (UDS, FDCAN Bootloader, JTAG, etc.) of an unlocked RAMN with standard firmware (which was made available to participants).
+- Or, by using one of the many memory dump methods (UDS, FDCAN Bootloader, JTAG, etc.) of an unlocked RAMN with standard firmware (which was made available to participants).
+
+With ECU C UDS:
+
+.. code-block:: bash   
+   
+	echo "23 14 0B F9 74 C0 10" | isotpsend can0 -s 7e2 -d 7ea
+
+
+.. image:: img/writeups/security_access_1_5.png
+   :align: center	
+
+With JTAG on ECU D of a reference RAMN:
 
 .. image:: img/writeups/security_access_1_3.png
    :align: center	
+   
+
+Flag can be obtained by sending that password and reading DID 0x0001.   
    
 .. code-block:: bash   
    
