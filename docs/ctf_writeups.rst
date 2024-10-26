@@ -25,7 +25,7 @@ Automotive CTF Japan 2024
 
 Participant Write-ups:
 
-- https://laysakura.github.io/2024/09/09/automotive-ctf-2024-qual/ (JP)
+- https://laysakura.github.io/2024/09/14/automotive-ctf-2024-japan-final/ (JP)
 - https://qiita.com/kusano_k/items/140d08521b9667cd6ab9 (JP)
 - https://blog.hamayanhamayan.com/entry/2024/09/14/112907 (JP)
 - https://emeth.jp/diary/2024/09/automotive-ctf-japan-writeup/ (JP)
