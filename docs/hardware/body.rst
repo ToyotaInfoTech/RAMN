@@ -1,3 +1,5 @@
+.. _body_expansion:
+
 Body
 ====
 

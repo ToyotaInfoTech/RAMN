@@ -9,8 +9,6 @@ Feel free to contact us to add or remove your own write-ups, request more detail
 DEFCON Embedded Systems Village 2024
 ------------------------------------
 
-To be Added.
-
 Participant Write-ups:
 
 -  https://justinapplegate.me/2024/esvctf-playagame/
@@ -18,7 +16,261 @@ Participant Write-ups:
 DEFCON Car Hacking Village 2024
 -------------------------------
 
-To be Added.
+Flag format is flag{xxxx}. Ten RAMN boards were made available on a table at the CHV.
+It was specified that each ECU had a different diagnostics interface (either USB, UDS, KWP2000, or XCP).
+It was reminded that the Flash address range is 0x08000000-0x08040000 and that the RAM address range is 0x20000000-0x20040000.
+
+This page contains simple write-ups. A jupyter notebook with very detailed solutions is available `in the misc folder <https://github.com/ToyotaInfoTech/RAMN/tree/main/misc/jupyter_notebooks>`_. 
+
+[A] Secret Menu
+^^^^^^^^^^^^^^^
+
+.. code-block:: text
+
+	Challenge Description: Look away while I input my password!
+	Attachment: ECUA_REDACTED.elf
+
+It can be immediately identified that ECU A is the one with the USB diagnostics interface because it is the only one with USB.
+By browsing screens, we can identify that there is a debug screen waiting for a secret code.
+
+.. image:: img/writeups/chv_ecua_1.jpg
+   :align: center
+
+
+We can load the provided firmware file in Ghidra. Because it is a .elf file with debug symbols, it is easy to reverse engineer.
+
+Using Window > Defined Strings and looking for the "Awaiting secret code" string, then following references, we can identify that the debug mode is unlocked when the DEBUG_MODE_UNLOCKED variable is set to 1.
+
+Following WRITE references, we can identify that this variable is set to 1 if the verify_secret_input function returns 1.
+
+.. image:: img/writeups/chv_ecua_2.png
+   :align: center
+   
+By analyzing the verify_secret_input function, we can identify which RAMN inputs will unlock the debug mode.
+
+.. image:: img/writeups/chv_ecua_3.png
+   :align: center
+   
+   
+With help from cansniffer (or RAMN's CAN RX MONITOR screen), we can identify which CAN ID corresponds to each control, by physically moving controls and observing which CAN ID has a payload that changes accordingly.
+We can then set RAMN's inputs as specified by the secret_input_function.
+
+.. image:: img/writeups/chv_ecua_4.jpg
+   :align: center
+
+The debug screen now shows that a new USB command interface can be accessed by typing "#", and that the current username has an incorrect CRC.
+
+.. image:: img/writeups/chv_ecua_5.jpg
+   :align: center
+   
+By typing "#" then "help" in the USB interface, we find that there is a "username" command that accepts one argument.  
+
+By entering "default_user" into https://crccalc.com/ and finding the algorithm that yields C862ED4F, we identify that the CRC algorithm used is CRC-32/ISO-HDLC.
+The flag can be retrieved by inputting a username with a CRC of 0xDA5D344D, which can be computed using tools such as `CRC RevEng <https://reveng.sourceforge.io/>`_ or `crchack <https://github.com/resilar/crchack>`_.
+
+.. image:: img/writeups/chv_ecua_6.png
+   :align: center
+   
+
+.. image:: img/writeups/chv_ecua_7.jpg
+   :align: center
+
+
+
+[B] Sit Next To Me
+^^^^^^^^^^^^^^^^^^
+
+.. code-block:: text
+
+	Challenge Description: You wouldn't download a byte. 
+	(Note: Flag will be transmitted once on ID 0x777 when challenge is solved.)
+	
+It can be identified that ECU B has an active XCP interface (at CAN IDs 0x552/0x553) by using scanning tools such as caringcaribou:
+
+.. code-block:: bash
+
+	caringcaribou xcp discovery -autoblacklist 10
+	
+.. image:: img/writeups/chv_ecub_1.png
+   :align: center
+
+Further probing with caringcaribou reveals that CAL/PAG resource is available but requires authentication.
+
+.. code-block:: bash
+
+	caringcaribou xcp info 0x552 0x553
+
+.. image:: img/writeups/chv_ecub_2.png
+   :align: center	
+	
+The command ``caringcaribou xcp commands 0x552 0x553`` can be used to identify that available commands are GET_STATUS, SYNCH, GET_SEED, UNLOCK, SET_MTA, UPLOAD, and DOWNLOAD.
+
+It can be inferred from the prompt and from the information gathered so far that the flag will be transmitted with CAN ID 0x777 if the DOWNLOAD command (0xF0) is used - but this command requires authentication (using GET_SEED and UNLOCK).
+	
+We can use SET_MTA and UPLOAD commands to dump memory from the ECU. It can be observed with ``caringcaribou xcp dump 0x552 0x553 0x08000000 256`` that the flash range is not accessible, but that the RAM range is accessible (e.g., with ``caringcaribou xcp dump 0x552 0x553 0x20000000 256``). Note that some versions of caringcaribou might have bugs that will prevent this command from succeeding.
+
+Caringcaribou does not support XCP authentication, so next steps should be done by directly sending CAN messages, following XCP specifications. A seed can be requested with ``cansend can0 552#f80001``.
+
+.. image:: img/writeups/chv_ecub_3.png
+   :align: center
+
+This reveals that the seed is 6 bytes.
+We can use the dump command to dump the full RAM address range (0x20000000-0x20040000) and search for the seed in it.
+**Caringcaribou shouldn't be used (without modification) because it resets the XCP connection with each command, which resets the seed. The seed may be found at several locations (e.g., in the TRNG buffer), so all locations should be checked.**
+
+To dump the RAM with XCP, we can use SET_MTA (0xF6) and UPLOAD (0xF5). For example, to dump 6 bytes from 0x20000000, we use:
+
+.. code-block:: bash
+
+	cansend can0 552#f6000020000000
+	cansend can0 552#f506
+
+Each successive call to UPLOAD will dump the next addresses (e.g., address 0x20000006 for the example above).
+By dumping the whole RAM for different seeds, we can identify that the seed is consistently located near 0x20033f50.
+It can also be observed that there is another 6-byte variable that changes just next to it. This can be identified as the potential expected answer to the seed. There is no authentication attempt limit, so we are free to try different permutations.
+
+.. image:: img/writeups/chv_ecub_5.png
+   :align: center
+
+Flag can be read by requesting a seed, dumping the RAM to read the expected answer, unlocking the ECU with that answer, and using the DOWNLOAD command to ask the ECU to transmit the flag.
+
+.. image:: img/writeups/chv_ecub_6.png
+   :align: center
+
+	
+[C] Come again?
+^^^^^^^^^^^^^^^
+
+.. code-block:: text
+
+	Challenge Description: The 2000s called; they want their ECU back.
+
+The challenge prompt suggests that ECU C uses KWP2000. We can use caringcaribou to find ECUs using UDS and KWP2000:
+
+.. code-block:: bash
+
+	caringcaribou uds discovery --autoblacklist 10
+	
+.. image:: img/writeups/chv_ecuc_1.png
+   :align: center
+	
+From RAMN's documentation, we can identify that 7e3 corresponds to ECU D's UDS interface and that 7e6 corresponds to ECU C's KWP2000 interface (and this can be confirmed by reading info with ReadDataByIdentifier).
+For this challenge, we focus on 7e6/7ee (ECU C's KWP2000 interface).
+
+Caringcaribou's service discovery reveals that many services are available:
+
+.. code-block:: bash
+
+	caringcaribou uds services 0x7e6 0x7ee
+
+.. image:: img/writeups/chv_ecuc_2.png
+   :align: center
+
+The presence of service 0x1a indicates that this interface is KWP2000 and not UDS. Service 0x29 does not correspond to AUTHENTICATION, because this is not a UDS interface (and we technically shouldn't be using caringcaribou for it).
+
+Trying to read all DIDs with ReadDataByIdentifier reveals that DID 0x0000 returns a "Security Access Denied". It can be inferred that the goal of the challenge is to bypass that security access.
+
+.. image:: img/writeups/chv_ecuc_3.png
+   :align: center
+   
+Trying to request a seed with the default session will return error 0x80, which for KWP2000 means that the service is not supported in current session.
+We can bruteforce all sessions and observe that session 0x92 (KWP2000 extended session) is available.
+We may however get other errors when requesting Security Access seeds: either "Time delay not required" (meaning we have to wait for the bruteforce protection timer to expire) or "Subfunction not supported".
+
+By bruteforcing all security levels, we observe that security level 0x05 exists and returns a 16-bit seed:
+
+.. image:: img/writeups/chv_ecuc_4.png
+   :align: center
+
+We can request as many seeds as we like, and they appear to be random.
+Because the seed is only 16-bit long, bruteforcing appears to be the easiest approach.
+However, the ECU will limit the number of attempts:
+
+.. image:: img/writeups/chv_ecuc_5.png
+   :align: center
+
+Fortunately, it can be observed by poking around that the ECU resets the number of attempts whenever the "Diagnostic Session Control" service is called to request a new session, allowing us to try as many attempts as we want without having to reset the ECU.
+
+We can therefore use the following script, which repetitively asks for a new seed and tries the answer "1234" (and should be stopped once it eventually gets lucky and unlocks the ECU).
+
+.. code-block:: bash
+
+	timeout 1000s bash -c 'while [ $SECONDS -lt 1000 ]; \
+	do \
+	echo "10 92" | isotpsend can0 -s 7e6 -d 7ee; \
+	echo "27 05" | isotpsend can0 -s 7e6 -d 7ee; \
+	echo "27 06 12 34" | isotpsend can0 -s 7e6 -d 7ee; \
+	sleep 0.001
+	done' 
+	
+(Note that this script is very slow but functional; it was expected from participants to write a more efficient script.)
+After a few minutes, the ECU should be unlocked and the flag can be read with ReadDataByIdentifier with DID 0x0000:
+
+.. code-block:: bash
+
+	echo "22 00 00" | isotpsend can0 -s 7e6 -d 7ee
+
+.. image:: img/writeups/chv_ecuc_6.png
+   :align: center
+
+[D] Light the way
+^^^^^^^^^^^^^^^^^
+
+.. code-block:: text
+
+	Challenge Description: These LEDs were made for lighting.
+	(Hint: dumpable firmware size is 0x0c548 bytes, don't spend your time looking for more.)
+	
+From the previous challenges, we know that ECU D has a UDS interface at 7e3/7eb.
+We can use caringcaribou to scan available services:
+	
+.. code-block:: bash
+
+	caringcaribou uds services 0x7e3 0x7eb
+
+.. image:: img/writeups/chv_ecud_1.png
+   :align: center
+
+We can use the dump_dids module to read all DIDs:
+
+.. code-block:: bash
+
+	caringcaribou uds dump_dids 0x7e3 0x7eb
+	
+.. image:: img/writeups/chv_ecud_2.png
+   :align: center
+   
+We can observe that WriteDataByIdentifier is active, and that the only DID that can be written to is DID 0x0207, with what appears to be an address in RAM.
+We can try slightly modifying that value, and we observe that the LEDs on RAMN change as a result.
+Because DID 0x206 says "LED CONTROL POINTER", and because the prompt and title suggest that the LEDs are involved, we can understand that this DID is used to specify the address in memory that is displayed on the LEDs.
+We can also observe that it is possible to make that value point to flash addresses.
+
+.. code-block:: bash
+
+	echo "2E 02 07 20 02 00 00" | isotpsend can0 -s 7e3 -d 7eb 
+	echo "2E 02 07 08 00 00 04" | isotpsend can0 -s 7e3 -d 7eb
+	
+We can therefore expect to be able to display the value of the flag, byte by byte, on the RAMN LEDs.
+However, we still do not know the address of the flag.
+
+We can observe that the REQUEST_UPLOAD and TRANSFER_DATA are active, which allow us to dump the firmware (see :ref:`request_upload`). The size of the firmware is specified in the challenge prompt: 0x0c548 bytes.
+
+After dumping the firmware, we can open it in Ghidra (using the same settings as the one provided for ECUA_REDACTED.elf). Searching for "flag", we can find the string ``Loaded FLAG from private flash at address %p``, where %p is replaced by "0x0803e000".
+We can therefore conclude that the flag is at 0x0803e000, and all we need to do is dump it byte by byte using the Write Data By Identifier service (The documentation can immediately identify which LED represents which bit, see :ref:`body_expansion`).
+
+.. code-block:: bash
+
+	# Point LEDs to first byte of flag
+	echo "2E 02 07 08 03 e0 00" | isotpsend can0 -s 7e3 -d 7eb
+	# Read byte by looking at the 8 LEDs on RAMN
+	
+	# Point LEDs to second byte
+	echo "2E 02 07 08 03 e0 01" | isotpsend can0 -s 7e3 -d 7eb
+	# Read next byte
+	# etc...
+	
+
+Flag: flag{BEST_LIGHT_SHOW_IN_VEGAS}.
 
 Automotive CTF Japan 2024
 -------------------------
