@@ -278,7 +278,6 @@ static void RAMN_UDS_ClearDTC(const uint8_t* data, uint16_t size)
 static void RAMN_UDS_ReadDTC(const uint8_t* data, uint16_t size)
 {
 #ifdef ENABLE_EEPROM_EMULATION
-	uint8_t answer[256] = {0x59, 0}; //TODO: bigger buffer, currently potentially overflowing
 	uint32_t tmp;
 	uint32_t numDTC;
 	RAMN_Bool_t error = False;
@@ -289,8 +288,9 @@ static void RAMN_UDS_ReadDTC(const uint8_t* data, uint16_t size)
 	}
 	else
 	{
-		answer[1] = data[1];
-		answer[2] = 0x04;
+		uds_answerData[0] = 0x59;
+		uds_answerData[1] = data[1];
+		uds_answerData[2] = 0x04;
 		switch(data[1]&0x7F)
 		{
 		case 0x01: //reportNumberOfDTCByStatusMask
@@ -298,16 +298,16 @@ static void RAMN_UDS_ReadDTC(const uint8_t* data, uint16_t size)
 			else
 			{
 				//Masks not supported yet
-				answer[3] = DTC_FORMAT_IDENTIFIER;
-				if (RAMN_DTC_GetNumberOfDTC(&numDTC) != 0U)
+				uds_answerData[3] = DTC_FORMAT_IDENTIFIER;
+				if (RAMN_DTC_GetNumberOfDTC(&numDTC) != RAMN_OK)
 				{
 					RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_GPF);
 				}
 				else
 				{
-					answer[4] = (numDTC >> 8)&0xFF;
-					answer[5] = (numDTC)&0xFF;
-					RAMN_UDS_FormatAnswer(answer, 6);
+					uds_answerData[4] = (numDTC >> 8)&0xFF;
+					uds_answerData[5] = (numDTC)&0xFF;
+					RAMN_UDS_FormatAnswer(uds_answerData, 6);
 				}
 			}
 			break;
@@ -316,8 +316,8 @@ static void RAMN_UDS_ReadDTC(const uint8_t* data, uint16_t size)
 			else
 			{
 				//Masks not supported yet
-				answer[3] = DTC_FORMAT_IDENTIFIER;
-				if (RAMN_DTC_GetNumberOfDTC(&numDTC) != 0U)
+				uds_answerData[3] = DTC_FORMAT_IDENTIFIER;
+				if (RAMN_DTC_GetNumberOfDTC(&numDTC) != RAMN_OK)
 				{
 					RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_GPF);
 				}
@@ -325,21 +325,21 @@ static void RAMN_UDS_ReadDTC(const uint8_t* data, uint16_t size)
 				{
 					for(uint32_t i = 0; i < numDTC; i++)
 					{
-						if (RAMN_DTC_GetIndex(i, &tmp) != 0U)
+						if (RAMN_DTC_GetIndex(i, &tmp) != RAMN_OK)
 						{
 							error = True;
 						}
 						else
 						{
-							answer[3+(4*i)] = (tmp >> 24)&0xFF;
-							answer[4+(4*i)] = (tmp >> 16)&0xFF;
-							answer[5+(4*i)] = (tmp >>  8)&0xFF;
-							answer[6+(4*i)] = (tmp      )&0xFF;
+							uds_answerData[3+(4*i)] = (tmp >> 24)&0xFF;
+							uds_answerData[4+(4*i)] = (tmp >> 16)&0xFF;
+							uds_answerData[5+(4*i)] = (tmp >>  8)&0xFF;
+							uds_answerData[6+(4*i)] = (tmp      )&0xFF;
 						}
 					}
 					if (error == False)
 					{
-						RAMN_UDS_FormatAnswer(answer, 3 + 4*numDTC);
+						RAMN_UDS_FormatAnswer(uds_answerData, 3 + 4*numDTC);
 					}
 					else
 					{
@@ -645,7 +645,7 @@ static void RAMN_UDS_WriteDataByIdentifier(const uint8_t* data, uint16_t size)
 	{
 		uint16_t index = (data[1] << 8) + data[2];
 		EE_Status result = EE_OK;
-	
+
 		if (udsSessionHandler.currentSession != UDS_SESSION_PRGS )
 		{
 			RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SNSIAS);
@@ -937,6 +937,45 @@ static void RAMN_UDS_RoutineControlAutopilot(const uint8_t* data, uint16_t size)
 }
 #endif
 
+#ifdef ENABLE_EEPROM_EMULATION
+//Routine to add an arbitrary DTC entry
+static void RAMN_UDS_RoutineControlAddDTCEntry(const uint8_t* data, uint16_t size)
+{
+	if( size != 8U )
+	{
+		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
+	}
+	else{
+		switch (data[1]){
+		case 0x01://Start
+			if (data[7] != 0x04)
+			{
+				RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_ROOR);
+			}
+			else
+			{
+				uint32_t dtc_val = (data[4] << 24U) | (data[5] << 16U) | (data[6] << 8U) | (data[7]);
+				if (RAMN_DTC_AddNew(dtc_val) == RAMN_OK)
+				{
+					RAMN_UDS_FormatPositiveResponseEcho(data, 4U);
+				}
+				else
+				{
+					RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_GPF);
+				}
+			}
+			break;
+		case 0x02://Stop
+		case 0x03://Read Results
+		default: //Invalid
+			RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SFNS);
+			break;
+		}
+	}
+}
+#endif
+
+
 #ifdef ENABLE_SCREEN
 static void loadChip8Game(const uint8_t* data, uint16_t size)
 {
@@ -1089,6 +1128,11 @@ static void RAMN_UDS_RoutineControl(uint8_t* data, uint16_t size)
 #if defined(TARGET_ECUB) || defined(TARGET_ECUC) || defined(TARGET_ECUD)
 		case 0x0207: //Enable/Disable Autopilot features:
 			RAMN_UDS_RoutineControlAutopilot(data,size);
+			break;
+#endif
+#if defined(ENABLE_EEPROM_EMULATION)
+		case 0x0208: //Enable/Disable Autopilot features:
+			RAMN_UDS_RoutineControlAddDTCEntry(data,size);
 			break;
 #endif
 		case 0x0210: //Reset Option Bytes:
