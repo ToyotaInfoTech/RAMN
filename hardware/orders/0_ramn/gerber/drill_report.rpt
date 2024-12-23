@@ -1,0 +1,29 @@
+Drill report for ramn.kicad_pcb
+Created on Mon Dec 23 13:01:37 2024
+
+Copper Layer Stackup:
+    =============================================================
+    L1 :  F.Cu                      front
+    L2 :  B.Cu                      back
+
+
+Drill file 'ramn-PTH.drl' contains
+    plated through holes:
+    =============================================================
+    T1  0.400mm  0.0157"  (198 holes)
+    T2  0.550mm  0.0217"  (2 holes)  (with 2 slots)
+    T3  0.850mm  0.0335"  (2 holes)  (with 2 slots)
+    T4  1.000mm  0.0394"  (104 holes)
+    T5  1.200mm  0.0472"  (6 holes)
+    T6  1.500mm  0.0591"  (10 holes)
+
+    Total plated holes count 322
+
+
+Drill file 'ramn-NPTH.drl' contains
+    unplated through holes:
+    =============================================================
+    T1  0.800mm  0.0315"  (2 holes)
+    T2  3.200mm  0.1260"  (4 holes)
+
+    Total unplated holes count 6
