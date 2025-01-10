@@ -2,9 +2,9 @@
 
 The design files here are complete enough that you can fabricate and/or assemble your own RAMN and pods. But there are two 're-orders' that can be made from PCBWay to get your own RAMN: 1) the mainboard and 2) the pods (excluding debugger). The mainboard is usable for many applications all by itself, but acquiring the pods is required for changing the simulated vehicle state e.g. driving the car in CARLA.
 
-1. [Mainboard from PCBWay](https://www.pcbway.com/project/shareproject/https_github_com_ToyotaInfoTech_RAMN_mainboard_ONLY_0dae9b72.html)
+1. [![Mainboard from PCBWay Button]][Mainboard]
 
-2. [Pods from PCBWay](https://www.pcbway.com/project/shareproject/https_github_com_ToyotaInfoTech_RAMN_pods_ONLY_3ff2c7a7.html) -- you must order additional parts yourself, see below
+2. [![Pods from PCBWay Button]][PodsPanel] (you must order additional parts yourself, see below)
 
 The bill of materials used in the above orders were tailored to match the components that are available from PCBWay, and some parts are removed (marked DNP) to reduce costs (e.g. test points).
 
@@ -39,3 +39,13 @@ and 'Pods':
 * 3_powertrain
 * 4_body
 * 5_debugger
+
+<!---------------------------------------------------------------------------->
+
+[Mainboard from PCBWay Button]: https://img.shields.io/badge/Mainboard_from_PCBWay-37a779?style=for-the-badge
+
+[Mainboard]: https://www.pcbway.com/project/shareproject/https_github_com_ToyotaInfoTech_RAMN_mainboard_ONLY_0dae9b72.html
+
+[Pods from PCBWay Button]: https://img.shields.io/badge/Pods_from_PCBWay-37a779?style=for-the-badge
+
+[PodsPanel]: https://www.pcbway.com/project/shareproject/https_github_com_ToyotaInfoTech_RAMN_pods_ONLY_3ff2c7a7.html
