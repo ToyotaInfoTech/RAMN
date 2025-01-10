@@ -1,0 +1,33 @@
+Drill report for pods_panel.kicad_pcb
+Created on Mon Dec 23 13:01:39 2024
+
+Copper Layer Stackup:
+    =============================================================
+    L1 :  F.Cu                      front
+    L2 :  B.Cu                      back
+
+
+Drill file 'pods_panel-PTH.drl' contains
+    plated through holes:
+    =============================================================
+    T1  0.400mm  0.0157"  (59 holes)
+    T2  0.800mm  0.0315"  (8 holes)
+    T3  0.900mm  0.0354"  (3 holes)
+    T4  1.000mm  0.0394"  (160 holes)
+    T5  1.500mm  0.0591"  (19 holes)
+    T6  1.800mm  0.0709"  (2 holes)  (with 2 slots)
+
+    Total plated holes count 251
+
+
+Drill file 'pods_panel-NPTH.drl' contains
+    unplated through holes:
+    =============================================================
+    T1  0.500mm  0.0197"  (98 holes)
+    T2  0.750mm  0.0295"  (1 hole)
+    T3  1.050mm  0.0413"  (1 hole)
+    T4  1.500mm  0.0591"  (3 holes)
+    T5  2.000mm  0.0787"  (4 holes)
+    T6  3.200mm  0.1260"  (6 holes)
+
+    Total unplated holes count 113
