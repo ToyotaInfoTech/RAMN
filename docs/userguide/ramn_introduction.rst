@@ -19,6 +19,9 @@ RAMN has four ECUs: ECU A, ECU B, ECU C, and ECU D. Each ECU can be identified o
 
 The hardware design files of RAMN are `available on GitHub <https://github.com/ToyotaInfoTech/RAMN/tree/main/hardware>`_. Details about the hardware can be found in the :ref:`hardware` section.
 
+The caps of the Lighting switch and Steering potentiometer may fall off during rough handling - be sure not to lose them. 
+Be also careful with the screen, which is rather fragile.
+
 RAMN Software
 -------------
 

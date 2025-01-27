@@ -106,6 +106,7 @@ Scripts
 """""""
 
 The STM32 Embedded bootloader interface requires a CAN baudrate change. If present, you must disconnect external CAN tools that may interfere with it.
+**Make sure that you are using a USB data cable, NOT a power-only USB cable.**
 Then, follow the instructions below:
 
 1. Open folder scripts/STbootloader/windows or scripts/STbootloader/linux.
@@ -169,6 +170,8 @@ If connecting fails, try using the same settings as those in the screenshot belo
 
 .. image:: img/stm32cubeprogrammer_connect.png
    :align: center
+   
+.. _verify_option_bytes:
 
 (Optional) Verify Option Bytes
 """"""""""""""""""""""""""""""

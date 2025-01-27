@@ -66,6 +66,8 @@ On some screens, you can further interact by pressing UP, DOWN, or CENTER.
     If the screen does not say "STEER 0%" when you center the steering wheel, it means that you have installed a logarithmic firmware for a board with linear potentiometers, of vice-versa.
     The board is still usable as is, but you will probably need to update the firmware of ECU B if you want the drive a vehicle in the simulator.
 
+The caps of the Lighting switch and Steering potentiometer may fall off during rough handling - be sure not to lose them. 
+Be also careful with the screen, which is rather fragile.
 
 Choosing Your CAN Adapter & Tools
 ---------------------------------
