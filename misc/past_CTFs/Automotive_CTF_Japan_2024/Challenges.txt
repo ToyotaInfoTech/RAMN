@@ -1,0 +1,198 @@
+*** ORGANIZER INSTRUCTIONS *** 
+
+- FLAGS AVAILABLE AT THE END OF THE FILE.
+- Flags are in plaintext in firmware files - those should not be provided to participants.
+- ECUs TEMPORARY memory protection should be activated to prevent flag dumping (be sure not to use PERMANENT protection or it will lock your board).
+
+
+*** PARTICIPANT INSTRUCTIONS *** 
+
+- Flag format is bh{xxx}. Letter in brackets ([X]) indicates in which ECU the flag is stored.
+- All challenges are independent - you can connect 5 CAN adapters on the CAN connector if you want. ECU C and ECU D challenges (except [C] Secret code) are solved without sending any CAN message.
+- Firmware is different from the one on Github, and many features have been disabled. You can still use GitHub source code as a reference to help with reverse engineering.
+- The only active diagnostics interface is UDS on ECU B - You can learn more here: https://ramn.readthedocs.io/en/latest/userguide/diag_tutorial.html.
+- JTAG is only used for the "JTAG" challenge, and memory protections should prevent you from dumping more than the intended flag. DO NOT MODIFY OPTION BYTES - this will erase the flags and may brick the board.
+- The bootloader mode is active (slcan command 'p'), but it is not part of any intended solution and shouldn't be of any help.
+- ECU microcontrollers are STM32L552. For hardware challenges, you should identify hardware interfaces yourself (https://www.st.com/resource/en/datasheet/stm32l552cc.pdf) and connect through the expansion port only (https://ramn.readthedocs.io/en/latest/hardware/expansions.html).
+
+
+*** CHALLENGES *** 
+
+Title: [A] slcan
+Tags: USB
+Difficulty: Easy
+Description:
+
+The slcan version number of your board has the flag.
+Hint: https://ramn.readthedocs.io/en/latest/userguide/usb_tutorial.html
+----------
+
+Title: [A] Takeover
+Tags: CAN
+Difficulty: Easy
+Description:
+
+Flag will be displayed at the bottom of the screen if brake CAN sensor data is 0xF0x (x meaning last 4 bits are ignored), accelerator data is 0xDDx, steering wheel data is 0xF1x, engine key data is 0x02, lighting switch data is 0x01, and side brake data is 0x00.
+Note: CRCs and counters are ignored for this challenge.
+----------
+
+Title: [A] Override
+Tags: CAN
+Difficulty: Medium
+Description:
+
+Flag will be displayed at the bottom of the screen if you can force the accelerator to a value higher than 0xFFF with a valid CAN message.
+Note: You must identify the correct CRC type and endian.
+----------
+
+=============
+
+Title: [B] ReadDataByIdentifier
+Tags: UDS
+Difficulty: Easy
+Description:
+
+The ECU holds the flag at one of its Data Identifiers.
+Hint: Flag is located at Data Identifier 0x4242.
+Hint: Send diagnostic payload "22 42 42" to ECU B (CAN ID 0x7e1/0x7e9).
+----------
+
+Title: [B] SecurityAccess
+Tags: UDS, Reverse
+Difficulty: Medium
+Attached file: ECUB_security_access.txt
+Description:
+
+The ECU holds the flag at Data Identifier 0xFFFF, but you will need to authenticate first.
+----------
+
+Title: [B] RAM peak
+Tags: UDS
+Difficulty: Difficult
+Description:
+
+There is a flag in RAM that can be read with the ReadMemoryByAddress Service. Flag length is 17 characters.
+Hint: STM32L552 RAM area is 0x20000000 to 0x20040000.
+Hint: Flag is located at address 0x200371f0.
+----------
+
+Title: [B] UDS Backdoor
+Tags: UDS
+Difficulty: Difficult
+Description:
+
+There is a hidden UDS service, can you format a valid request for it?
+Hint: Service identifier byte is 0x55. Pay attention to error codes.
+----------
+
+=============
+
+Title: [C] Secret code
+Attached file: ECUC_secret_message.txt
+Tags: CAN, Reverse
+Difficulty: Medium
+Description:
+
+ECU C is waiting for a secret CAN message. 
+Note: Pay attention to endianness.
+----------
+
+Title: [C] Noiseless
+Tags: CAN, Steganography
+Difficulty: Difficult
+Description:
+
+The least significant bit of the brake message is not noise.
+Note: the flag is an ASCII string that starts with "bh{".
+Note: A 1-minute CAN log has all you need to retrieve the flag.
+----------
+
+Title: [C] Where?
+Tags: CAN, Steganography
+Difficulty: Difficult
+Description:
+
+There is a flag hidden in the timing of the message with CAN ID 0x0AB. 
+Note: the flag is an ASCII string that starts with "bh{".
+Note: A 1-minute CAN log has all you need to retrieve the flag.
+Hint: Pay attention to counters and "frame skips".
+Hint: Frame sent means "1", Frame not sent means "0".
+=============
+
+Title: [D] UART
+Tags: Hardware
+Difficulty: Easy
+Description:
+
+This flag is broadcasted on ECU D's LPUART1 interface @115200 bps.
+Hint: ECU's LPUART1 TX pin is located on PA2 pin.
+(Note: UART adapter required)
+----------
+
+
+Title: [D] JTAG
+Tags: Hardware
+Difficulty: Difficult
+Description:
+
+One flag can be read on ECU D's RAM from the JTAG interface.
+Note: You can use openocd to solve this challenge.
+Hint: Flag is located at address 0x2000a000 and can be read with openocd's read_memory command.
+(Note: JTAG adapter required)
+----------
+
+(Flags below)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+*** FLAGS ***
+
+[A] slcan: 				bh{N3BUL0US_M4RBLE}
+[A] Takeover: 				bh{EXC3LLENT_BOOTH}
+[A] Override: 				bh{P4INT_GU1DE}
+[B] ReadDataByIdentifier: 		bh{JUMPY_3RR0R}
+[B] SecurityAccess: 			bh{GU4RDeD_M4ILBoX}
+[B] RAM peak: 				bh{B34R_FoLLoW3R}
+[B] UDS Backdoor: 			bh{P0CK3T_POCKeT}
+[C] Secret code: 			bh{R1TzY_CONDuCT}
+[C] Noiseless: 				bh{J0KE_PIquANT}
+[C] Where?: 				bh{FL3E_Flees_g4TE}
+[D] UART: 				bh{DIGEST_SHOUT}
+[D] JTAG: 				bh{SPOTLESS_SCRAWL}

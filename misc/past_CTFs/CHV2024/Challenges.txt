@@ -1,0 +1,113 @@
+*** ORGANIZER INSTRUCTIONS *** 
+
+- FLAGS AVAILABLE AT THE END OF THE FILE.
+- Flags are in plaintext in firmware files - those should not be provided to participants.
+- ECUs TEMPORARY memory protection should be activated to prevent flag dumping (be sure not to use PERMANENT protection or it will lock your board).
+
+
+*** PARTICIPANT INSTRUCTIONS *** 
+
+Flag format is flag{xxx}. Letter in brackets ([X]) indicates in which ECU the flag is stored.
+
+There are four ECUs and each ECU uses a different diagnostic interface (Custom, KWP2000, UDS, and XCP).
+
+Firmware is different from the GitHub version so RAMN scripts won't work as is (many features are disabled), but the source code (notably [diagnostic scripts](https://github.com/ToyotaInfoTech/RAMN/tree/main/scripts/diagnostics) and the [documentation](https://ramn.readthedocs.io/en/latest/userguide/diag_tutorial.html) can be used as a reference on how to use diagnostic services .
+
+Flash address range is 0x08000000 to 0x08040000, RAM is 0x20000000 to 0x20040000. With Ghidra, use ARM:LE:32:v8:default and entry point 0x08000000.
+
+All challenges are independent and four people can work independently on each ECU. Note that ECU A requires other ECUs to be active to read inputs.
+A maximum-size ISO-TP packet transfer typically takes 7 seconds, and a 256kB XCP dump typically takes 75 seconds. If you want to speed up your scripts, you may want to [disable ECUs you don't need](https://ramn.readthedocs.io/en/latest/userguide/usb_tutorial.html#enable-power-supply-y).
+If there are more teams than devices available, you will probably need two sessions: one to gather intelligence on diagnostic services (e.g. memory dumps), and another one to try your attacks.
+
+You can use the USB port as an [slcan USB to CAN adapter](https://ramn.readthedocs.io/en/latest/userguide/can_tutorial.html#interfacing-with-linux). Feel free to ask for assistance.
+Depending on your environment, you may experience slcan-related issues beyond our control (including dropped frames). 
+You can mitigate these issues by setting the ST or BS parameters of ISO-TP to values different than 0, but overall we recommend that you use an external CAN adapter.
+If you want to use the tool "caringcaribou", be aware that it has several critical bugs, so please contact us first for a patch.
+
+Note that ECU A’s screen can only show received CAN messages, not transmitted. The Bootloader mode of ECUs is not part of intended solves and should be of no help.
+
+
+*** CHALLENGES *** 
+
+Title: [A] Secret Menu
+
+Challenge Description: Look away while I input my password! 
+(Note: flag has been redacted in the attached file; you must recover the actual flag from a device).
+(Note: there are USB commands to enter bootloader mode to reprogram ECUs, but these are for organizers use only. They will automatically erase the flags so do not use them.)
+Attachment: ECUA/ECUA_REDACTED.elf
+Intended difficulty: Medium
+----
+
+Title: [B] Sit Next To Me
+
+Challenge Description: You wouldn't download a byte. 
+
+(Note: Flag will be transmitted once on ID 0x777 when challenge is solved.)
+
+Intended difficulty: Easy/Medium
+----
+
+Title: [C] Come again?
+
+Challenge Description: The 2000s called; they want their ECU back.
+
+Intended difficulty: Medium
+----
+
+Title: [D] Light the way
+
+Challenge Description: These LEDs were made for lighting.
+
+(Hint: dumpable firmware size is 0x0c548 bytes, don't spend your time looking for more.)
+
+Intended difficulty: Medium
+----
+
+
+(Flags below)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+*** FLAGS ***
+
+[A] Secret Menu:	flag{CRC_OF_THE_YEAR_AWARD}
+[B] Sit Next To Me:	flag{ULTRA_RARE_SEED_GET}
+[C] Come again?:	flag{AGAIN_AND_AGAIN_AND_AGAIN_AND_AGAIN}
+[D] Light the way:	flag{BEST_LIGHT_SHOW_IN_VEGAS}

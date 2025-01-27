@@ -1,0 +1,174 @@
+*** ORGANIZER INSTRUCTIONS *** 
+
+- FLAGS AVAILABLE AT THE END OF THE FILE.
+- Flags are in plaintext in firmware files - those should not be provided to participants (only provide files in the challenge_attchments folder).
+- ECUs TEMPORARY memory protection should be activated to prevent flag dumping (be sure not to use PERMANENT protection or it will lock your board).
+
+
+*** PARTICIPANT INSTRUCTIONS *** 
+
+- Flag format is bh{xxx}. Letter in brackets ([X]) indicates in which ECU the flag is stored ("ONLINE" if the flag is in the attachment).
+- There is no specific order in which to solve challenges, feel free to skip some. (Security Access 2 can be solved before Security Access 1, but SWD 2 is easier to solve after SWD 1).
+
+
+*** CHALLENGES *** 
+
+Title: [ONLINE] SWD 1
+Tags: Forensics
+Attachment: swd.csv
+Intended difficulty: Easy
+
+Description: 
+The attached file is a logic analyzer capture of a RAMN ECU programming session using an ST-LINK V2… Can you figure out the flag embedded in plaintext?
+----
+
+Title: [ONLINE] SWD 2
+Tags: Forensics, Reverse
+Intended difficulty: Very Difficult 
+
+Description: 
+The firmware of challenge “SWD 1” broadcasts every second two flags in plaintext over CAN, using the same function. CAN ID 0x12345678 is used to broadcast the flag of SWD 1. The flag of this challenge is the one transmitted with ID 0x7777. (Note: Flash starts at 0x08000000, RAM at 0x20000000. Reset_Handler() is at 0x08001570).
+----
+
+Title: [A] slcan’t
+Tags: USB, CAN
+Intended difficulty: Medium
+
+Description:
+Why does ramn_utils.c need such a large ascii_hashmap? We could use all those unused bytes to store a flag instead…
+
+(Note: This challenge is easier to solve with an external CAN adapter).
+----
+
+Title: [A/C] Ramen Clicker
+Tags: CAN, Hardware
+Intended difficulty: Medium/Difficult
+
+Description:
+My high score is 0x9000.
+(Note: The SHIFT joystick on the powertrain expansion can be center-pressed. You should use an external CAN adapter.)
+----
+
+Title: [B] Rush Hour
+Tags: UDS
+Attachment: ECUB.elf (flag is redacted)
+Intended difficulty: Medium
+
+Description:
+We added a UDS disable feature to ECU B to prevent you from reading the flag.
+----
+
+Title: [C] CVE-2017-14937
+Tags: UDS
+Intended difficulty: Easy
+
+Description:
+Go write something at 0x1111 and read something at 0x0000
+----
+
+Title: [C] DID not done
+Tags: UDS
+Intended difficulty: Medium/Difficult
+
+Description:
+Flag is a 26-byte string at 0x0803e000 but Read Memory By Address won't let me read it :(
+----
+
+Title: [D] Forgotten Field
+Tags: CAN, Hardware
+Intended difficulty: Medium/Difficult
+
+Description:
+Many tools consider a CAN frame consists of arbitration ID, control flags, and data fields. ID 0x607 thinks they should check some more.
+----
+Title: [D] Follow Me
+Tags: Hardware
+Intended difficulty: Easy
+
+Description: 
+The lights are flickering when the engine key is on the “IGN” (rightmost) position. We hope that you brought a logic analyzer to debug that…
+----
+
+Title: [D] I2C
+Tags: Hardware
+Intended difficulty: Medium
+
+Description:
+This flag will be sent on CAN with ID 0x778 if you can send any byte to ECU D on its I2C interface (port I2C2, address 0x63).
+Note: You'll need to find the address yourself. Flag will be broadcasted every second on CAN after any I2C data is received. I2C pins have internal pull-up resistors.
+----
+
+Title: [D] Security Access 1
+Tags: Reverse, UDS, Hardware
+Attachment: ECUD.hex (flags are redacted)
+Intended difficulty: Very Difficult
+
+Description:
+The attached file corresponds to the firmware of ECU D, with all its flags redacted. Try to extract the real value of bh{XXXXXXXXXXXXXXXXXXX} from your RAMN hardware.
+----
+
+Title: [D] Security Access 2
+Tags: Reverse, UDS, Hardware
+Intended difficulty: Very Difficult
+
+Description:
+Same as “Security Access 1”, but you are looking for bh{YYYYYYYYYYYYYYYYYYY}.
+----
+
+
+(Flags below)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+*** FLAGS ***
+
+[ONLINE] SWD 1: 	bh{an4lyst_s3ssION_Ro4d}
+[ONLINE] SWD 2: 	bh{pr0duct_AMB1tion}
+[A] slcan’t		bh{B4RK_B0RK_bOrK}
+[A/C] Ramen Clicker	bh{N1NN1KUM4SHIMA5HI}
+[B] Rush Hour		bh{Sl0W_Down_Every0ne}
+[C] CVE-2017-14937	bh{SUP3RS0NIc}
+[C] DID not done	bh{TAKE_THE_LONG_WAY_HOME}
+[D] Follow Me:		bh{TREE_FORMS_WIND}
+[D] I2C:		bh{INFAMOUS_REMAKE}
+[D] Security Access 1:	bh{We_hAve_HSM_4t_Home}
+[D] Security Access 2:	bh{Thanks_P3riPH3Rals!}
+[D] Forgotten Field	bh{LAGGING_BEHIND}
+
+

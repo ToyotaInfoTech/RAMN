@@ -1,0 +1,197 @@
+*** ORGANIZER INSTRUCTIONS *** 
+
+- FLAGS AVAILABLE AT THE END OF THE FILE.
+- Flags are in plaintext in firmware files - those should not be provided to participants  (only provide files in the challenge_attchments folder).
+- ECUs TEMPORARY memory protection should be activated to prevent flag dumping (be sure not to use PERMANENT protection or it will lock your board).
+
+
+*** PARTICIPANT INSTRUCTIONS *** 
+
+Flag format is flag{xxx}. Letter in brackets ([X]) indicates in which ECU the flag is stored.
+
+There are two flags per ECU.
+You are provided with an excerpt of the source code or the firmware file for each ECU.
+In those files, the flags (and sometimes other critical data) are redacted - you must extract the actual data from a device.
+
+There are five interfaces used by the challenges: USB Serial, SPI, I2C, JTAG and UART.
+You may entirely ignore the CAN bus. Although you may find some usages for it, it is not part of the intended solves.
+Similarly, you may entirely ignore the data on the screen, except for the Chip-8 part.
+
+The source code for RAMN is [available on Github](https://github.com/ToyotaInfoTech/RAMN). 
+However, be aware that it was heavily modified for the CTF (e.g., to add vulnerabilities) and you should therefore prioritize provided binaries and hardware.
+TrustZone is disabled for all ECUs.
+
+All challenges are independent, however ECU C must be active for ECU A to read joystick inputs.
+The power supplies of ECU B, C, and D are controlled by ECU A - all ECUs reset when ECU A resets.
+
+You can connect to hardware interfaces using the expansion port of each ECU.
+You can find their pinout [here](https://ramn.readthedocs.io/en/latest/hardware/expansions.html) (be careful with the orientation).
+You are allowed to move expansion boards as you want, especially if you need a feature present on a board but not another.
+You must identify the interface pins for each challenge yourself, but feel free to ask us to check for potentially destructive connections if you are not confident.
+
+Other warnings:
+
+- The selfdestruct command of ECU A is used to reset the board after the CTF and will erase the flags. Do not use it.
+- The Bootloader mode of ECUs is not part of intended solves and should be of no help.
+- For I2C, you should use a frequency below 10kHz. If you are using the loudshik, use connector A and set SW1 to the 3.3V position. 
+- Only use JTAG for the [C2] challenge - there is no intended vulnerability on other challenges. If you are using the loudshik, you can ask us for the openocd interface file.
+- DO NOT MODIFY THE OPTION BYTES WITH JTAG - you may permanently brick the device. Flags are erased on security option bytes changes.
+- ECUs' default error handler is a while(1) - if an ECU stops being responsive, it does not always mean it crashed, it may just have been unable to keep up.
+- Glitching is not part of intended solves - please do not damage the boards.
+
+
+*** CHALLENGES *** 
+
+Title: [A1] Let's Play a Game
+
+Prompt:
+---
+The first flag is inside the Chip-8 game engine memory. 
+If only you could play a custom game and look for it...
+
+(New to Chip 8? Try https://johnearnest.github.io/Octo/ )
+---
+Attachment: ECUA/ECUA.elf
+Tags: USB, pwn
+Difficulty: Easy
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Title: [A2] Jailbreak
+Prompt: 
+---
+There must be some kind of way out of here.
+---
+Attachment: ECUA/ECUA.elf (same as [A1])
+Tags: USB, pwn
+Difficulty: Hard
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Title: [B1] Flag Giveaway
+Prompt: 
+---
+Sometimes all you need is a suitable vessel. On SPI2.
+(Note: provided log is provided for reference and is not strictly needed for this challenge)
+---
+Attachment: ECUB/source.c + ECUB/flag1_sdcard_log.csv
+Tags: SPI, Hardware
+Difficulty: Easy
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Title: [B2] What's My Name Again?
+Prompt: 
+---
+The old switcheroo.
+(Note: provided log is provided for reference and is not strictly needed for this challenge)
+---
+Attachment: ECUB/source.c (same as [B1]) + ECUB/flag2_sdcard_log.csv
+Tags: SPI, Hardware
+Difficulty: Medium/Hard
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Title: [C1] Passwords, How Do They Work?
+Prompt: 
+---
+ECU C is waiting for a 16-byte password on I2C2. You can write 16 bytes and read up to 25 bytes (trying to read/write more bytes may lock up the device until reset).
+
+The first byte that you can read corresponds to your current security level, the other bytes are used to send you unlocked flags.
+
+(Note: )
+---
+Attachment: ECUC/ECUC.hex
+Tags: I2C, Reverse
+Difficulty: Easy
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Title: [C2] Passwords Again
+Prompt: 
+---
+Let's do it again. Four times. Sometimes with JTAG. You have unlimited tries.
+
+(Note: There is no fuzzing/timing analysis involved: your goal is to recover the four passwords with Ghidra and a JTAG adapter.)
+---
+Attachment: ECUC/ECUC.hex (same as [C1])
+Tags: I2C, JTAG, Reverse
+Difficulty: Very Hard
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Title: [D1] Gonna Leave This Here
+Prompt: 
+---
+The LPUART1 interface of ECU D is active (baudrate of 28800 bits/s, endline character 'CR').
+Go get your flag.
+---
+Attachment: ECUD/ECUD.hex
+Tags: UART, pwn
+Difficulty: Easy
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Title: [D2] Counting Bytes
+Prompt: 
+---
+Now go get the other flag.
+---
+Attachment: ECUD/ECUD.hex (same as [D1])
+Tags: UART, pwn
+Difficulty: Hard
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+(Flags below)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+*** FLAGS ***
+
+[A1] Let's Play a Game:			flag{CL053_T0_F0NTS_}
+[A2] Jailbreak: 			flag{M0DU10_i5_HARD_}
+[B1] Flag Giveaway:			flag{PLZ_H0lD_7Hi1s!}
+[B2] What's My Name Again?:		flag{Gr3EA7_SW4PP1NG}
+[C1] Passwords, How Do They Work?:	flag{I2c2_ScL_SD4_&_GND}
+[C2] Passwords Again:			flag{_R0M_A3S_MD5_&_CRC}
+[D1] Gonna Leave This Here:		flag{STOPWATCH_TIME}
+[D2] Counting Bytes:			flag{N0T_7H1S_AG41N}

@@ -1,0 +1,152 @@
+
+08001c10 <RAMN_UDS_SecurityAccess>:
+{
+ 8001c10:	b530      	push	{r4, r5, lr}
+ 8001c12:	b083      	sub	sp, #12
+ 8001c14:	4604      	mov	r4, r0
+	if( size <  2U )
+ 8001c16:	2901      	cmp	r1, #1
+ 8001c18:	d90a      	bls.n	8001c30 <RAMN_UDS_SecurityAccess+0x20>
+		switch(data[1]&0x7F)
+ 8001c1a:	7843      	ldrb	r3, [r0, #1]
+ 8001c1c:	f003 037f 	and.w	r3, r3, #127	@ 0x7f
+ 8001c20:	2b01      	cmp	r3, #1
+ 8001c22:	d00a      	beq.n	8001c3a <RAMN_UDS_SecurityAccess+0x2a>
+ 8001c24:	2b02      	cmp	r3, #2
+ 8001c26:	d031      	beq.n	8001c8c <RAMN_UDS_SecurityAccess+0x7c>
+			RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SFNS);
+ 8001c28:	2112      	movs	r1, #18
+ 8001c2a:	f7ff ff09 	bl	8001a40 <RAMN_UDS_FormatNegativeResponse>
+}
+ 8001c2e:	e002      	b.n	8001c36 <RAMN_UDS_SecurityAccess+0x26>
+		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
+ 8001c30:	2113      	movs	r1, #19
+ 8001c32:	f7ff ff05 	bl	8001a40 <RAMN_UDS_FormatNegativeResponse>
+}
+ 8001c36:	b003      	add	sp, #12
+ 8001c38:	bd30      	pop	{r4, r5, pc}
+	uint8_t answer[6] = {0x67, data[1]&0x7F, 0x00, 0x00, 0x00, 0x00};
+ 8001c3a:	2367      	movs	r3, #103	@ 0x67
+ 8001c3c:	f88d 3000 	strb.w	r3, [sp]
+ 8001c40:	2501      	movs	r5, #1
+ 8001c42:	f88d 5001 	strb.w	r5, [sp, #1]
+	udsSessionHandler.defaultSAhandler.currentSeed = RAMN_RNG_Pop32();
+ 8001c46:	f7ff fec1 	bl	80019cc <RAMN_RNG_Pop32>
+ 8001c4a:	4a38      	ldr	r2, [pc, #224]	@ (8001d2c <RAMN_UDS_SecurityAccess+0x11c>)
+ 8001c4c:	60d0      	str	r0, [r2, #12]
+	 //?????? EXPECTED ANSWER TO SEED ????????????
+ 8001c4e:	eb00 0340 	add.w	r3, r0, r0, lsl #1
+ 8001c52:	f503 5391 	add.w	r3, r3, #4640	@ 0x1220
+ 8001c56:	3314      	adds	r3, #20
+ 8001c58:	f483 437f 	eor.w	r3, r3, #65280	@ 0xff00
+ 8001c5c:	f083 03ff 	eor.w	r3, r3, #255	@ 0xff
+	udsSessionHandler.defaultSAhandler.currentKey  = ????????????
+ 8001c60:	6113      	str	r3, [r2, #16]
+	answer[2] = (uint8_t)(udsSessionHandler.defaultSAhandler.currentSeed >> 24)&0xFF;
+ 8001c62:	0e03      	lsrs	r3, r0, #24
+ 8001c64:	f88d 3002 	strb.w	r3, [sp, #2]
+	answer[3] = (uint8_t)(udsSessionHandler.defaultSAhandler.currentSeed >> 16)&0xFF;
+ 8001c68:	0c03      	lsrs	r3, r0, #16
+ 8001c6a:	f88d 3003 	strb.w	r3, [sp, #3]
+	answer[4] = (uint8_t)(udsSessionHandler.defaultSAhandler.currentSeed >> 8 )&0xFF;
+ 8001c6e:	0a03      	lsrs	r3, r0, #8
+ 8001c70:	f88d 3004 	strb.w	r3, [sp, #4]
+	answer[5] = (uint8_t)(udsSessionHandler.defaultSAhandler.currentSeed      )&0xFF;
+ 8001c74:	f88d 0005 	strb.w	r0, [sp, #5]
+	udsSessionHandler.defaultSAhandler.status = SECURITY_ACCESS_SEED_REQUESTED;
+ 8001c78:	7715      	strb	r5, [r2, #28]
+	if ((data[1]&0x80) == 0U) RAMN_UDS_FormatAnswer(answer, 6);
+ 8001c7a:	f994 3001 	ldrsb.w	r3, [r4, #1]
+ 8001c7e:	2b00      	cmp	r3, #0
+ 8001c80:	dbd9      	blt.n	8001c36 <RAMN_UDS_SecurityAccess+0x26>
+ 8001c82:	2106      	movs	r1, #6
+ 8001c84:	4668      	mov	r0, sp
+ 8001c86:	f7ff fec5 	bl	8001a14 <RAMN_UDS_FormatAnswer>
+}
+ 8001c8a:	e7d4      	b.n	8001c36 <RAMN_UDS_SecurityAccess+0x26>
+			if( size !=  6U ) RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
+ 8001c8c:	2906      	cmp	r1, #6
+ 8001c8e:	d003      	beq.n	8001c98 <RAMN_UDS_SecurityAccess+0x88>
+ 8001c90:	2113      	movs	r1, #19
+ 8001c92:	f7ff fed5 	bl	8001a40 <RAMN_UDS_FormatNegativeResponse>
+ 8001c96:	e7ce      	b.n	8001c36 <RAMN_UDS_SecurityAccess+0x26>
+	uint8_t answer[2] = {0x67, data[1]&0x7F};
+ 8001c98:	2367      	movs	r3, #103	@ 0x67
+ 8001c9a:	f88d 3000 	strb.w	r3, [sp]
+ 8001c9e:	2302      	movs	r3, #2
+ 8001ca0:	f88d 3001 	strb.w	r3, [sp, #1]
+	uint32_t try = (data[2] << 24) + (data[3] << 16) + (data[4] << 8) + (data[5]);
+ 8001ca4:	f890 e002 	ldrb.w	lr, [r0, #2]
+ 8001ca8:	78c3      	ldrb	r3, [r0, #3]
+ 8001caa:	f890 c004 	ldrb.w	ip, [r0, #4]
+ 8001cae:	7945      	ldrb	r5, [r0, #5]
+	if(udsSessionHandler.defaultSAhandler.attemptNumber >= SECURITY_ACCESS_MAX_ATTEMPTS)
+ 8001cb0:	4a1e      	ldr	r2, [pc, #120]	@ (8001d2c <RAMN_UDS_SecurityAccess+0x11c>)
+ 8001cb2:	6991      	ldr	r1, [r2, #24]
+ 8001cb4:	2904      	cmp	r1, #4
+ 8001cb6:	d81f      	bhi.n	8001cf8 <RAMN_UDS_SecurityAccess+0xe8>
+	else if(udsSessionHandler.lastMessageTimestamp - udsSessionHandler.defaultSAhandler.lastAttemptTimestamp < SECURITY_ACCESS_RETRY_TIMEOUT_MS)
+ 8001cb8:	4a1c      	ldr	r2, [pc, #112]	@ (8001d2c <RAMN_UDS_SecurityAccess+0x11c>)
+ 8001cba:	6850      	ldr	r0, [r2, #4]
+ 8001cbc:	6952      	ldr	r2, [r2, #20]
+ 8001cbe:	1a82      	subs	r2, r0, r2
+ 8001cc0:	2a09      	cmp	r2, #9
+ 8001cc2:	d91d      	bls.n	8001d00 <RAMN_UDS_SecurityAccess+0xf0>
+	else if (udsSessionHandler.defaultSAhandler.status != SECURITY_ACCESS_SEED_REQUESTED)
+ 8001cc4:	4a19      	ldr	r2, [pc, #100]	@ (8001d2c <RAMN_UDS_SecurityAccess+0x11c>)
+ 8001cc6:	7f12      	ldrb	r2, [r2, #28]
+ 8001cc8:	2a01      	cmp	r2, #1
+ 8001cca:	d11e      	bne.n	8001d0a <RAMN_UDS_SecurityAccess+0xfa>
+	uint32_t try = (data[2] << 24) + (data[3] << 16) + (data[4] << 8) + (data[5]);
+ 8001ccc:	041b      	lsls	r3, r3, #16
+ 8001cce:	eb03 630e 	add.w	r3, r3, lr, lsl #24
+ 8001cd2:	eb03 230c 	add.w	r3, r3, ip, lsl #8
+ 8001cd6:	442b      	add	r3, r5
+	else if (try == udsSessionHandler.defaultSAhandler.currentKey)
+ 8001cd8:	4a14      	ldr	r2, [pc, #80]	@ (8001d2c <RAMN_UDS_SecurityAccess+0x11c>)
+ 8001cda:	6912      	ldr	r2, [r2, #16]
+ 8001cdc:	4293      	cmp	r3, r2
+ 8001cde:	d119      	bne.n	8001d14 <RAMN_UDS_SecurityAccess+0x104>
+		udsSessionHandler.defaultSAhandler.status = SECURITY_ACCESS_SUCCESS;
+ 8001ce0:	4b12      	ldr	r3, [pc, #72]	@ (8001d2c <RAMN_UDS_SecurityAccess+0x11c>)
+ 8001ce2:	2202      	movs	r2, #2
+ 8001ce4:	771a      	strb	r2, [r3, #28]
+		if ((data[1]&0x80) == 0U) RAMN_UDS_FormatAnswer(answer, 2);
+ 8001ce6:	f994 3001 	ldrsb.w	r3, [r4, #1]
+ 8001cea:	2b00      	cmp	r3, #0
+ 8001cec:	dba3      	blt.n	8001c36 <RAMN_UDS_SecurityAccess+0x26>
+ 8001cee:	4611      	mov	r1, r2
+ 8001cf0:	4668      	mov	r0, sp
+ 8001cf2:	f7ff fe8f 	bl	8001a14 <RAMN_UDS_FormatAnswer>
+ 8001cf6:	e79e      	b.n	8001c36 <RAMN_UDS_SecurityAccess+0x26>
+		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_ENOA);
+ 8001cf8:	2136      	movs	r1, #54	@ 0x36
+ 8001cfa:	f7ff fea1 	bl	8001a40 <RAMN_UDS_FormatNegativeResponse>
+ 8001cfe:	e79a      	b.n	8001c36 <RAMN_UDS_SecurityAccess+0x26>
+		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_RTDNE);
+ 8001d00:	2137      	movs	r1, #55	@ 0x37
+ 8001d02:	4620      	mov	r0, r4
+ 8001d04:	f7ff fe9c 	bl	8001a40 <RAMN_UDS_FormatNegativeResponse>
+ 8001d08:	e795      	b.n	8001c36 <RAMN_UDS_SecurityAccess+0x26>
+		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SAD);
+ 8001d0a:	2133      	movs	r1, #51	@ 0x33
+ 8001d0c:	4620      	mov	r0, r4
+ 8001d0e:	f7ff fe97 	bl	8001a40 <RAMN_UDS_FormatNegativeResponse>
+ 8001d12:	e790      	b.n	8001c36 <RAMN_UDS_SecurityAccess+0x26>
+		udsSessionHandler.defaultSAhandler.status =  SECURITY_ACCESS_UNAUTHENTICATED;
+ 8001d14:	4b05      	ldr	r3, [pc, #20]	@ (8001d2c <RAMN_UDS_SecurityAccess+0x11c>)
+ 8001d16:	2200      	movs	r2, #0
+ 8001d18:	771a      	strb	r2, [r3, #28]
+		udsSessionHandler.defaultSAhandler.attemptNumber++;
+ 8001d1a:	3101      	adds	r1, #1
+ 8001d1c:	6199      	str	r1, [r3, #24]
+		udsSessionHandler.defaultSAhandler.lastAttemptTimestamp = udsSessionHandler.lastMessageTimestamp;
+ 8001d1e:	6158      	str	r0, [r3, #20]
+		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IK);
+ 8001d20:	2135      	movs	r1, #53	@ 0x35
+ 8001d22:	4620      	mov	r0, r4
+ 8001d24:	f7ff fe8c 	bl	8001a40 <RAMN_UDS_FormatNegativeResponse>
+}
+ 8001d28:	e785      	b.n	8001c36 <RAMN_UDS_SecurityAccess+0x26>
+ 8001d2a:	bf00      	nop
+ 8001d2c:	20034c2c 	.word	0x20034c2c
