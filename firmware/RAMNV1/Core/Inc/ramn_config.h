@@ -105,6 +105,8 @@
 //#define ENABLE_KWP
 #define ENABLE_XCP
 #define RTR_DEMO_ID 0x703
+//enable define below to force LEDs to light up for 3 seconds at startup
+#define PERFORM_STARTUP_LED_TEST
 #endif
 
 #if defined(ENABLE_UDS) || defined(ENABLE_KWP) || defined(ENABLE_XCP)

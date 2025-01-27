@@ -21,6 +21,10 @@
 static uint8_t LEDState;
 #endif
 
+#ifdef PERFORM_STARTUP_LED_TEST
+RAMN_Bool_t led_test_over = False;
+#endif
+
 void RAMN_ACTUATORS_Init(void)
 {
 #ifdef EXPANSION_BODY
@@ -53,7 +57,16 @@ void RAMN_ACTUATORS_ApplyControls(uint32_t tick)
 #elif defined(EXPANSION_BODY) //BODY
 	msg_control_enginekey.data->ramn_data.payload = RAMN_DBC_Handle.control_enginekey;
 	msg_control_lights.data->ramn_data.payload = RAMN_DBC_Handle.control_lights;
+#ifdef PERFORM_STARTUP_LED_TEST
+	if((tick < 3000) && (led_test_over == False))
+	{
+		RAMN_DBC_Handle.control_lights = 0xFF;
+	}
+	else
+	{
+		led_test_over = True;
+	}
+#endif
 	RAMN_SPI_UpdateLED((uint8_t*)&(RAMN_DBC_Handle.control_lights));
-
 #endif
 }
