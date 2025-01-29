@@ -13,7 +13,7 @@ If RAMN is missing a feature that you need, or is incompatible with a tool that 
 
 ## Obtaining a board
 
-We have setup 're-orders' at PCBWay, the cost should be ~200USD per board. Please [see the hardware/README for more details.](hardware/README.d#ordering-from-pcbway).
+We have setup 're-orders' at PCBWay, the cost should be ~200USD per board. Please [see the docs 'PCB Ordering' for more details.](https://ramn.readthedocs.io/page/hardware/Fabrication/ordering.html).
 
 You can also request a prototype from any PCB manufacturer, using the gerber files and BOM in the Hardware folder. Feel free to [contact us](mailto:camille.gay@toyota.global) if you need assistance to fabricate RAMN boards.
 
