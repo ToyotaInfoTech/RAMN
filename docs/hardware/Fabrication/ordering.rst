@@ -9,17 +9,17 @@ all by itself, but acquiring the expansions is required for changing the
 simulated vehicle state e.g. driving the car in CARLA.
 
 .. button-link:: https://www.pcbway.com/project/shareproject/https_github_com_ToyotaInfoTech_RAMN_mainboard_ONLY_0dae9b72.html
-    :text: Mainboard from PCBWay
     :color: primary
     :expand:
 
+    Mainboard from PCBWay
 
 
 .. button-link:: https://www.pcbway.com/project/shareproject/https_github_com_ToyotaInfoTech_RAMN_pods_ONLY_3ff2c7a7.html
-    :text: Expansions Panel from PCBWay (you must order additional parts yourself, see below)
     :color: secondary
     :expand:
 
+    Expansions Panel from PCBWay (you must order additional parts yourself, see below)
 
 
 The bill of materials used in the above orders were tailored to match
