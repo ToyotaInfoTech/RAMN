@@ -26,6 +26,17 @@ The bill of materials used in the above orders were tailored to match
 the components that are available from PCBWay, and some parts are
 removed (marked DNP) to reduce costs (e.g. test points).
 
+Ordering Fewer Than a Quantity of Five (5)
+------------------------------------------
+
+The PCBWay ordering system might make it seem like ordering 5 or more is required; however, only (bare) PCBs must be ordered at a minimum of 5. It is possible to order as little as 1 assembled mainboard and/or expansions panel.
+
+Customers can select the number of PCBs and assembled boards separately when placing an order. As shown in the pic below, for example: we have checked 5 pieces in the PCB order column, while we filled in only 1 set for the assembly order. This way, we will finally get 4 bare boards and 1 assembled board with components installed.
+
+.. image:: img/0121A.png
+   :align: center
+
+
 
 Aditional Parts Needed for Re-Orders of Expansions
 --------------------------------------------------
