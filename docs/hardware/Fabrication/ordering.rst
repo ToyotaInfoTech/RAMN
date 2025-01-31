@@ -1,6 +1,10 @@
 PCB Ordering
 ============
 
+.. image:: img/1000015167.jpg
+   :align: center
+
+
 The design files are complete enough that you can fabricate and/or
 assemble your own RAMN and expansions. But there are two 're-orders' that can
 be made from PCBWay to get your own RAMN: 1) the mainboard and 2) the
@@ -8,23 +12,31 @@ expansions (excluding the debugger expansion). The mainboard is usable for many 
 all by itself, but acquiring the expansions is required for changing the
 simulated vehicle state e.g. driving the car in CARLA.
 
+.. image:: img/1000015167-mainboard.png
+   :align: center
+
+
 .. button-link:: https://www.pcbway.com/project/shareproject/https_github_com_ToyotaInfoTech_RAMN_mainboard_ONLY_0dae9b72.html
     :color: primary
     :expand:
 
     Mainboard from PCBWay
 
+.. image:: img/1000015167-expansions.png
+   :align: center
+
 
 .. button-link:: https://www.pcbway.com/project/shareproject/https_github_com_ToyotaInfoTech_RAMN_pods_ONLY_3ff2c7a7.html
     :color: secondary
     :expand:
 
-    Expansions Panel from PCBWay (you must order additional parts yourself, see below)
+    Expansions Panel from PCBWay (⚠️you must order additional parts yourself, see below⚠️)
 
 
 The bill of materials used in the above orders were tailored to match
 the components that are available from PCBWay, and some parts are
 removed (marked DNP) to reduce costs (e.g. test points).
+
 
 Ordering Fewer Than a Quantity of Five (5)
 ------------------------------------------
@@ -38,7 +50,7 @@ Customers can select the number of PCBs and assembled boards separately when pla
 
 
 
-Aditional Parts Needed for Re-Orders of Expansions
+Aditional Parts Needed for Expansions Orders
 --------------------------------------------------
 
 The RAMN mainboard assembly can be ordered completely from PCBWay.
