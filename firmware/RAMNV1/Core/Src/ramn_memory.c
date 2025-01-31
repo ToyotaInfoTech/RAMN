@@ -51,22 +51,29 @@ static HAL_StatusTypeDef EraseBank(uint32_t bank)
 
 #if defined(TARGET_ECUA)
 
-//To work correctly, Option bytes must be configured so that:
+// For ECU A work correctly, Option bytes must be configured so that:
 // - ECU A boots from OB
 // - nBOOT0 is set
-//We therefore check for  OB_BOOT0_FROM_PIN bit set and OB_nBOOT0_SET NOT set
-//If that is the case, we overwrite the option bytes and restart
-//We do not check for errors as improperly configured board cannot report them anyway.
+// (ECU B/C/D have their boot0 pin controlled by ECU A and therefore should keep default option bytes)
+// We therefore check for OB_BOOT0_FROM_PIN bit set and OB_nBOOT0_SET NOT set
+// If that is the case, we overwrite the option bytes and restart
 RAMN_Result_t RAMN_FLASH_ConfigureOptionBytesApplicationMode(void)
 {
 	HAL_StatusTypeDef result = HAL_OK;
 	FLASH_OBProgramInitTypeDef obHandle;
+
 	HAL_FLASHEx_OBGetConfig(&obHandle);
 
 	if((obHandle.USERConfig & OB_BOOT0_FROM_PIN) ||!(obHandle.USERConfig & OB_nBOOT0_SET))
 	{
 		FLASH_OBProgramInitTypeDef obHandle;
 		HAL_FLASHEx_OBGetConfig(&obHandle);
+
+		if (HAL_GPIO_ReadPin (SELF_BOOT0_GPIO_Port, SELF_BOOT0_Pin) == GPIO_PIN_RESET)
+		{
+			//BOOT0 is low, someone probably flashed ECUA firmware to ECUB/C/D by mistake, do not change option bytes.
+			return RAMN_ERROR;
+		}
 
 		obHandle.OptionType = OPTIONBYTE_USER;
 		obHandle.USERType = OB_USER_nSWBOOT0 | OB_USER_nBOOT0;

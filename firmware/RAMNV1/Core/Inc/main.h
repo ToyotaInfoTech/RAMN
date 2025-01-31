@@ -103,6 +103,8 @@ void Error_Handler(void);
 #define FDCAN1_STB_GPIO_Port GPIOB
 #define ECUB_BOOT0_Pin GPIO_PIN_7
 #define ECUB_BOOT0_GPIO_Port GPIOB
+#define SELF_BOOT0_Pin GPIO_PIN_3
+#define SELF_BOOT0_GPIO_Port GPIOH
 
 /* USER CODE BEGIN Private defines */
 #define HARDWARE_UNIQUE_ID_ADDRESS ((uint32_t*)0x0BFA0590)
