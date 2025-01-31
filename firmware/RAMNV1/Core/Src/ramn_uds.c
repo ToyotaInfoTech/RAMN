@@ -1620,7 +1620,7 @@ static void processCustomServiceFlag(const uint8_t* data, uint16_t size)
 
 // Exported Components ---------------------------------------
 
-RAMN_ISOTPHandler_t RAMN_UDS_ISOTPHandler;
+__attribute__ ((section (".buffers"))) RAMN_ISOTPHandler_t RAMN_UDS_ISOTPHandler;
 
 RAMN_Result_t RAMN_UDS_Init(uint32_t tick)
 {

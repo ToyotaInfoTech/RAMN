@@ -25,7 +25,7 @@
 0x200-0xFFF - Actual game memory
  */
 static uint16_t opcode; //Current opcode
-static uint8_t memory[0x1000]; //Interpreter memory
+__attribute__ ((section (".buffers"))) static uint8_t memory[0x1000]; //Interpreter memory
 static uint8_t V[16]; //Sixteen working registers
 static uint8_t RPL[8]; //RPL registers (for super chip)
 static uint16_t I; //Memory pointer

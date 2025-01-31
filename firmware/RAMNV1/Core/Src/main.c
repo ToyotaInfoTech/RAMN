@@ -120,7 +120,7 @@ const osThreadAttr_t RAMN_SendCAN_attributes = {
 };
 /* Definitions for RAMN_Periodic */
 osThreadId_t RAMN_PeriodicHandle;
-uint32_t RAMN_PeriodicBuffer[ 512 ];
+uint32_t RAMN_PeriodicBuffer[ 256 ];
 osStaticThreadDef_t RAMN_PeriodicControlBlock;
 const osThreadAttr_t RAMN_Periodic_attributes = {
   .name = "RAMN_Periodic",
@@ -144,7 +144,7 @@ const osThreadAttr_t RAMN_ErrorTask_attributes = {
 };
 /* Definitions for RAMN_DiagRX */
 osThreadId_t RAMN_DiagRXHandle;
-uint32_t RAMN_DiagRXBuffer[ 1024 ];
+uint32_t RAMN_DiagRXBuffer[ 256 ];
 osStaticThreadDef_t RAMN_DiagRXControlBlock;
 const osThreadAttr_t RAMN_DiagRX_attributes = {
   .name = "RAMN_DiagRX",
@@ -156,7 +156,7 @@ const osThreadAttr_t RAMN_DiagRX_attributes = {
 };
 /* Definitions for RAMN_DiagTX */
 osThreadId_t RAMN_DiagTXHandle;
-uint32_t RAMN_DiagTXBuffer[ 512 ];
+uint32_t RAMN_DiagTXBuffer[ 256 ];
 osStaticThreadDef_t RAMN_DiagTXControlBlock;
 const osThreadAttr_t RAMN_DiagTX_attributes = {
   .name = "RAMN_DiagTX",
@@ -182,19 +182,19 @@ const osThreadAttr_t RAMN_SendUSB_attributes = {
 
 #if defined(ENABLE_USB)
 static StaticStreamBuffer_t USB_RX_BUFFER_STRUCT;
-static uint8_t USB_RX_BUFFER[USB_RX_BUFFER_SIZE];
+__attribute__ ((section (".buffers")))  static uint8_t USB_RX_BUFFER[USB_RX_BUFFER_SIZE];
 StreamBufferHandle_t USBD_RxStreamBufferHandle;
 
 static StaticStreamBuffer_t USB_TX_BUFFER_STRUCT;
-static uint8_t USB_TX_BUFFER[USB_TX_BUFFER_SIZE];
+__attribute__ ((section (".buffers")))  static uint8_t USB_TX_BUFFER[USB_TX_BUFFER_SIZE];
 StreamBufferHandle_t USBD_TxStreamBufferHandle;
 
 //Holds currently processed USB RX Buffer
-uint8_t USBRxBuffer[USB_COMMAND_BUFFER_SIZE];
+__attribute__ ((section (".buffers")))  uint8_t USBRxBuffer[USB_COMMAND_BUFFER_SIZE];
 //Holds currently generated slcan command (Used by CAN receiving thread)
 uint8_t slCAN_USBTxBuffer[0x200];
 //Holds USB DATA currently being sent over USB. TODO: remove ?
-uint8_t USBIntermediateTxBuffer[APP_TX_DATA_SIZE];
+__attribute__ ((section (".buffers")))  uint8_t USBIntermediateTxBuffer[APP_TX_DATA_SIZE];
 #endif
 
 #ifdef START_IN_CLI_MODE
@@ -207,15 +207,15 @@ uint8_t USBCommandBuffer[LOCAL_USB_COMMAND_BUFFER_SIZE];
 
 #if defined(ENABLE_DIAG)
 //Holds currently processed Diag Command from CAN
-uint8_t diagRxbuf[0xFFF+2];
+__attribute__ ((section (".buffers")))  uint8_t diagRxbuf[0xFFF+2];
 //Holds currently generated Diag Command Answer for CAN
-uint8_t diagTxbuf[0xFFF];
+__attribute__ ((section (".buffers")))  uint8_t diagTxbuf[0xFFF];
 
 #if defined(ENABLE_USB)
 //Holds currently processed Diag Command from USB
-uint8_t diagRxUSBbuf[0xFFF+2];
+__attribute__ ((section (".buffers")))  uint8_t diagRxUSBbuf[0xFFF+2];
 //Holds currently processed Diag Command Answer from USB
-uint8_t diagTxUSBbuf[0xFFF+2];
+__attribute__ ((section (".buffers")))  uint8_t diagTxUSBbuf[0xFFF+2];
 #endif
 
 #endif
@@ -223,32 +223,32 @@ uint8_t diagTxUSBbuf[0xFFF+2];
 //Buffers for UDS commands, only allocated if enabled
 #if defined(ENABLE_UDS)
 static StaticStreamBuffer_t UDS_ISOTP_RX_BUFFER_STRUCT;
-static uint8_t UDS_ISOTP_RX_BUFFER[UDS_ISOTP_RX_BUFFER_SIZE];
+__attribute__ ((section (".buffers")))  static uint8_t UDS_ISOTP_RX_BUFFER[UDS_ISOTP_RX_BUFFER_SIZE];
 static StaticStreamBuffer_t UDS_ISOTP_TX_BUFFER_STRUCT;
-static uint8_t UDS_ISOTP_TX_BUFFER[UDS_ISOTP_RX_BUFFER_SIZE];
+__attribute__ ((section (".buffers")))  static uint8_t UDS_ISOTP_TX_BUFFER[UDS_ISOTP_RX_BUFFER_SIZE];
 #endif
 
 //Buffers for KWP commands, only allocated if enabled
 #if defined(ENABLE_KWP)
 static StaticStreamBuffer_t KWP_ISOTP_RX_BUFFER_STRUCT;
-static uint8_t KWP_ISOTP_RX_BUFFER[KWP_ISOTP_RX_BUFFER_SIZE];
+__attribute__ ((section (".buffers"))) static uint8_t KWP_ISOTP_RX_BUFFER[KWP_ISOTP_RX_BUFFER_SIZE];
 static StaticStreamBuffer_t KWP_ISOTP_TX_BUFFER_STRUCT;
-static uint8_t KWP_ISOTP_TX_BUFFER[KWP_ISOTP_RX_BUFFER_SIZE];
+__attribute__ ((section (".buffers"))) static uint8_t KWP_ISOTP_TX_BUFFER[KWP_ISOTP_RX_BUFFER_SIZE];
 #endif
 
 //Buffers for XCP commands, only allocated if enabled
 #if defined(ENABLE_XCP)
 static StaticStreamBuffer_t XCP_RX_BUFFER_STRUCT;
-static uint8_t XCP_RX_BUFFER[XCP_RX_BUFFER_SIZE];
+__attribute__ ((section (".buffers"))) static uint8_t XCP_RX_BUFFER[XCP_RX_BUFFER_SIZE];
 static StaticStreamBuffer_t XCP_TX_BUFFER_STRUCT;
-static uint8_t XCP_TX_BUFFER[XCP_RX_BUFFER_SIZE];
+__attribute__ ((section (".buffers"))) static uint8_t XCP_TX_BUFFER[XCP_RX_BUFFER_SIZE];
 #endif
 
 //Buffers for CAN Messages
 static StaticStreamBuffer_t CAN_RX_BUFFER_STRUCT;
-static uint8_t CAN_RX_BUFFER[CAN_RX_BUFFER_SIZE];
+__attribute__ ((section (".buffers")))  static uint8_t CAN_RX_BUFFER[CAN_RX_BUFFER_SIZE];
 static StaticStreamBuffer_t CAN_TX_BUFFER_STRUCT;
-static uint8_t CAN_TX_BUFFER[CAN_TX_BUFFER_SIZE];
+__attribute__ ((section (".buffers")))  static uint8_t CAN_TX_BUFFER[CAN_TX_BUFFER_SIZE];
 
 //Buffers for Diag Messages, even unallocated one
 StreamBufferHandle_t UdsRxDataStreamBufferHandle;

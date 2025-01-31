@@ -101,7 +101,7 @@ static StreamBufferHandle_t* USBD_recvBuffer = NULL;
 static osThreadId_t* USBD_recvTask = NULL;
 static osThreadId_t* USBD_sendTask = NULL;
 static uint16_t currentIndex = 0;
-static uint8_t  recvBuf[USB_COMMAND_BUFFER_SIZE];
+__attribute__ ((section (".buffers"))) static uint8_t  recvBuf[USB_COMMAND_BUFFER_SIZE];
 /* USER CODE END PRIVATE_VARIABLES */
 
 /**

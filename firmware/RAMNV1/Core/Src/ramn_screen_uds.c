@@ -26,7 +26,7 @@ uint8_t uds_draw_x = 0;
 uint8_t uds_draw_y = 0;
 uint8_t uds_draw_w = 0;
 uint8_t uds_draw_h = 0;
-volatile uint8_t uds_draw_buffer[UDS_DRAW_BUFFER_SIZE];
+__attribute__ ((section (".buffers"))) volatile uint8_t uds_draw_buffer[UDS_DRAW_BUFFER_SIZE];
 #endif
 
 
