@@ -356,8 +356,16 @@ int main(void)
 
 #if defined(TARGET_ECUA)
 	//Check that ECU A BOOT option bytes are properly configured to hardware BOOT0, which is set pulled-up by default.
-	RAMN_FLASH_ConfigureOptionBytesApplicationMode(); //TODO: remove ?
+	RAMN_FLASH_ConfigureOptionBytesApplicationMode();
 #endif
+
+#if defined(MEMORY_AUTOLOCK)
+	if(RAMN_FLASH_isMemoryProtected() == False)
+	{
+	RAMN_FLASH_ConfigureRDPOptionByte(RDP_OPTIONBYTE);
+	}
+#endif
+
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -1795,7 +1803,10 @@ void RAMN_ReceiveUSBFunc(void *argument)
 					break;
 				case 'D'://Restart in DFU Mode
 					if(commandLength == 3U &&  (USBRxBuffer[1U] == 'z') && (USBRxBuffer[2U] == 'Z') )
-						RAMN_FLASH_ConfigureOptionBytesBootloaderMode();
+					{
+						if(RAMN_FLASH_isMemoryProtected() == False) RAMN_FLASH_ConfigureOptionBytesBootloaderMode();
+						else RAMN_FLASH_RemoveMemoryProtection();
+					}
 					//Board should reset automatically, if we reach here there was an error
 					RAMN_USB_SendFromTask((uint8_t*)"\a",1);
 					break;

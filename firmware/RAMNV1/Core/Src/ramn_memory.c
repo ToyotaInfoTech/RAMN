@@ -80,12 +80,15 @@ RAMN_Result_t RAMN_FLASH_ConfigureOptionBytesApplicationMode(void)
 		obHandle.USERConfig = obHandle.USERConfig | OB_nBOOT0_SET;
 		obHandle.USERConfig = (obHandle.USERConfig & ~(OB_BOOT0_FROM_PIN));
 
+		__disable_irq();
 		result |= HAL_FLASH_Unlock();
 		result |= HAL_FLASH_OB_Unlock();
 		result |= HAL_FLASHEx_OBProgram(&obHandle);
 		result |= HAL_FLASH_OB_Launch(); //resets automatically here
 		result |= HAL_FLASH_OB_Lock();
 		result |= HAL_FLASH_Lock();
+		__enable_irq();
+
 	}
 
 	if (result == HAL_OK) return RAMN_OK;
@@ -94,12 +97,49 @@ RAMN_Result_t RAMN_FLASH_ConfigureOptionBytesApplicationMode(void)
 
 #endif
 
+RAMN_Bool_t RAMN_FLASH_isMemoryProtected(void)
+{
+	FLASH_OBProgramInitTypeDef obHandle;
+
+	HAL_FLASHEx_OBGetConfig(&obHandle);
+	if(obHandle.RDPLevel == OB_RDP_LEVEL_0) return False;
+	else return True;
+
+}
+
+
+RAMN_Result_t RAMN_FLASH_ConfigureRDPOptionByte(uint8_t val)
+{
+	HAL_StatusTypeDef result = HAL_OK;
+	FLASH_OBProgramInitTypeDef obHandle;
+
+	HAL_FLASHEx_OBGetConfig(&obHandle);
+
+	obHandle.OptionType = OPTIONBYTE_RDP;
+	obHandle.RDPLevel = val;
+
+	__disable_irq();
+	result |= HAL_FLASH_Unlock();
+	result |= HAL_FLASH_OB_Unlock();
+	result |= HAL_FLASHEx_OBProgram(&obHandle);
+	result |= HAL_FLASH_OB_Launch(); //resets automatically here
+	result |= HAL_FLASH_OB_Lock();
+	result |= HAL_FLASH_Lock();
+	__enable_irq();
+
+	if (result == HAL_OK) return RAMN_OK;
+	else return RAMN_ERROR;
+
+}
+
+
+//Must be placed in RAM because this function will erase flash
 RAMN_Result_t RAMN_FLASH_ConfigureOptionBytesBootloaderMode(void)
 {
-	//TODO: Do not overwrite option bytes, but simply jump to bootloader ?
 	FLASH_OBProgramInitTypeDef obHandle;
 	HAL_StatusTypeDef result = HAL_OK;
 
+	__disable_irq();
 	HAL_FLASHEx_OBGetConfig(&obHandle);
 
 	obHandle.OptionType = OPTIONBYTE_USER;
@@ -124,7 +164,87 @@ RAMN_Result_t RAMN_FLASH_ConfigureOptionBytesBootloaderMode(void)
 
 	}
 
+	__enable_irq();
 	if (result == HAL_OK) return RAMN_OK;
+	else return RAMN_ERROR;
+}
+
+
+__attribute__((__section__(".RamFunc"))) RAMN_Result_t RAMN_FLASH_RemoveMemoryProtection(void)
+{
+	FLASH_OBProgramInitTypeDef obHandle;
+	HAL_StatusTypeDef result = HAL_OK;
+	HAL_StatusTypeDef status;
+
+	__disable_irq();
+	HAL_FLASHEx_OBGetConfig(&obHandle);
+
+	obHandle.OptionType = OPTIONBYTE_USER | OPTIONBYTE_RDP;
+	obHandle.USERType = OB_USER_nSWBOOT0;
+	obHandle.USERConfig = obHandle.USERConfig | OB_BOOT0_FROM_PIN;
+	obHandle.RDPLevel = OB_RDP_LEVEL_0; //This will not work if RDP level is set to 2 (permanently locked).
+
+	if(READ_BIT(FLASH->NSCR, FLASH_NSCR_NSLOCK) != 0u)
+	{
+		/* Authorize the FLASH Registers access */
+		WRITE_REG(FLASH->NSKEYR, FLASH_KEY1);
+		WRITE_REG(FLASH->NSKEYR, FLASH_KEY2);
+	}
+
+	if(READ_BIT(FLASH->NSCR, FLASH_NSCR_OPTLOCK) != 0u)
+	{
+		/* Authorizes the Option Byte register programming */
+		WRITE_REG(FLASH->OPTKEYR, FLASH_OPTKEY1);
+		WRITE_REG(FLASH->OPTKEYR, FLASH_OPTKEY2);
+	}
+
+	/* Process Locked */
+	__HAL_LOCK(&pFlash);
+
+	/* Reset error code */
+	pFlash.ErrorCode = HAL_FLASH_ERROR_NONE;
+
+	/* Wait for last operation to be completed */
+	status = FLASH_WaitForLastOperation(FLASH_TIMEOUT_VALUE);
+
+	if(status == HAL_OK)
+	{
+		uint32_t optr_reg_val = 0;
+		uint32_t optr_reg_mask = 0;
+		MODIFY_REG(FLASH->OPTR, FLASH_OPTR_RDP, obHandle.RDPLevel);
+
+		optr_reg_val |= (obHandle.USERConfig & FLASH_OPTR_nSWBOOT0);
+		optr_reg_mask |= FLASH_OPTR_nSWBOOT0;
+
+		/* Configure the option bytes register */
+		MODIFY_REG(FLASH->OPTR, optr_reg_mask, optr_reg_val);
+
+		/* Set OPTSTRT Bit */
+		SET_BIT(FLASH->NSCR, FLASH_NSCR_OPTSTRT);
+
+		/* Wait for last operation to be completed */
+		status = FLASH_WaitForLastOperation(FLASH_TIMEOUT_VALUE);
+	}
+
+	/* Process Unlocked */
+	__HAL_UNLOCK(&pFlash);
+
+	//result |= HAL_FLASHEx_OBProgram(&obHandle);
+
+	if (status == HAL_OK)
+	{
+		SET_BIT(FLASH->NSCR, FLASH_NSCR_OBL_LAUNCH); //do not use HAL library as this will be loaded in RAM
+	}
+	else
+	{
+		SET_BIT(FLASH->NSCR, FLASH_NSCR_OPTLOCK);
+		SET_BIT(FLASH->NSCR, FLASH_NSCR_NSLOCK);
+	}
+
+	//Should not reach here.
+
+	__enable_irq();
+	if (status == HAL_OK) return RAMN_OK;
 	else return RAMN_ERROR;
 }
 
@@ -282,7 +402,7 @@ RAMN_Bool_t RAMN_MEMORY_CheckAreaReadable(uint32_t start, uint32_t end)
 		uint16_t memsize = *(const uint16_t*)FLASHSIZE_BASE;
 		if (memsize == 512)
 		{
-		result = True;
+			result = True;
 		}
 		else
 		{

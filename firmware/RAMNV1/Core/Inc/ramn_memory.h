@@ -47,9 +47,20 @@
 //Configure Option Bytes for Bootloader Mode  (for ECU A)
 RAMN_Result_t RAMN_FLASH_ConfigureOptionBytesBootloaderMode(void);
 
-//Configure Option Bytes for Application Mode (for ECU A)
+//Checks Option Byte to see if memory protection is currently active
+RAMN_Bool_t RAMN_FLASH_isMemoryProtected(void);
+
+//Configure Option Bytes for Application Mode (for ECU A). Only works when security level is 0.
 RAMN_Result_t RAMN_FLASH_ConfigureOptionBytesApplicationMode(void);
+
+//Removes memory protection, erasing flash and resetting flash in the process.
+//This function is entirely in RAM because otherwise it gets deleted in the process.
+RAMN_Result_t RAMN_FLASH_RemoveMemoryProtection(void);
+
 #endif
+
+//Configure the RDP option byte to enable memory protection (e.g., Flash or SRAM2 dumping).
+RAMN_Result_t RAMN_FLASH_ConfigureRDPOptionByte(uint8_t val);
 
 //Changes The "SWAP BANK" Option Byte of the MCU. Used after successful firmware update
 RAMN_Result_t RAMN_FLASH_SwitchActiveBank(void);
