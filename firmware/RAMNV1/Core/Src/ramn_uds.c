@@ -1046,6 +1046,22 @@ static void displayPixels(const uint8_t* data, uint16_t size)
 }
 #endif
 
+typedef void (*exec_func_t)(void);
+
+//Routine to execute arbitrary code (e.g., to test ARM shellcode)
+static void RAMN_UDS_RoutineControlExecuteArbitraryCode(const uint8_t* data, uint16_t size)
+{
+	if (checkAuthenticated() == True)
+	{
+		exec_func_t func = (&data[4] + 1); //use +1 to force thumb mode, data must be aligned.
+		__DSB();
+		__ISB();
+		func();
+		RAMN_UDS_FormatPositiveResponseEcho(data, 4U);
+	}
+	else RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SAD);
+}
+
 //0000 to 00FF ISO Reserved
 //0100 to 01FF Tachograph
 //0200 to 0DFF Manufacturer Specific
@@ -1131,10 +1147,13 @@ static void RAMN_UDS_RoutineControl(uint8_t* data, uint16_t size)
 			break;
 #endif
 #if defined(ENABLE_EEPROM_EMULATION)
-		case 0x0208: //Enable/Disable Autopilot features:
+		case 0x0208: //Add DTC Entry:
 			RAMN_UDS_RoutineControlAddDTCEntry(data,size);
 			break;
 #endif
+		case 0x0209: //Execute Arbitrary code
+			RAMN_UDS_RoutineControlExecuteArbitraryCode(data,size);
+			break;
 		case 0x0210: //Reset Option Bytes:
 			RAMN_UDS_RoutineControlResetBootOptionBytes(data,size);
 			break;

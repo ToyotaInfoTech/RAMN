@@ -207,7 +207,7 @@ uint8_t USBCommandBuffer[LOCAL_USB_COMMAND_BUFFER_SIZE];
 
 #if defined(ENABLE_DIAG)
 //Holds currently processed Diag Command from CAN
-__attribute__ ((section (".buffers")))  uint8_t diagRxbuf[0xFFF+2];
+__attribute__ ((section (".buffers"), aligned(4)))  uint8_t diagRxbuf[0xFFF+2];
 //Holds currently generated Diag Command Answer for CAN
 __attribute__ ((section (".buffers")))  uint8_t diagTxbuf[0xFFF];
 
