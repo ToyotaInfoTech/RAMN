@@ -26,8 +26,6 @@
 //#define TARGET_ECUD
 #endif
 
-
-
 //Loop time for the "simulator" that is executed periodically
 #define SIM_LOOP_CLOCK_MS 10
 
@@ -44,6 +42,10 @@
 #define ENABLE_SCREEN
 #define ENABLE_MINICTF
 
+//Use this to define a "password" for the command to put ECU A back into DFU mode.
+//Note that this is not for security (because STM32 can be put back into DFU mode over JTAG, and if JTAG is permanently disabled (level 2) the back-to-DFU command won't work correctly anyway).
+//This is only to prevent users from accidentally putting the ECU back into DFU mode (e.g. because of fuzzing).
+#define DFU_COMMAND_STRING "zZ"
 
 //Automatically stops transceiving when serial port close is detected. May not work well with some OS/Applications
 //#define ENABLE_USB_AUTODETECT
