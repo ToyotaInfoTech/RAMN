@@ -22,61 +22,38 @@ static RAMNScreen *currentScreen = NULL;
 
 #define DEFAULT_SCREEN &ScreenSaver
 
+static const RAMNScreen* screens[] = {
+    &ScreenSaver,
+    &ScreenCANMonitor,
+    &ScreenCANLog,
+    &ScreenStats,
+    &ScreenChip8,
+    &ScreenUDS
+};
+
+#define SCREEN_COUNT (sizeof(screens) / sizeof(screens[0]))
+
+static void changeScreen(int8_t direction)
+{
+    for (int8_t i = 0; i < SCREEN_COUNT; i++)
+    {
+        if (currentScreen == screens[i])
+        {
+        	int8_t nextIndex = (i + direction + SCREEN_COUNT) % SCREEN_COUNT;
+            RAMN_ScreenManager_SwitchScreen(screens[nextIndex]);
+            break;
+        }
+    }
+}
 
 static void changeScreenRight()
 {
-	if (currentScreen == &ScreenSaver)
-	{
-		RAMN_ScreenManager_SwitchScreen(&ScreenCANMonitor);
-	}
-	else if (currentScreen == &ScreenCANMonitor)
-	{
-		RAMN_ScreenManager_SwitchScreen(&ScreenCANLog);
-	}
-	else if (currentScreen == &ScreenCANLog)
-	{
-		RAMN_ScreenManager_SwitchScreen(&ScreenStats);
-	}
-	else if (currentScreen == &ScreenStats)
-	{
-		RAMN_ScreenManager_SwitchScreen(&ScreenChip8);
-	}
-	else if (currentScreen == &ScreenChip8)
-	{
-		RAMN_ScreenManager_SwitchScreen(&ScreenUDS);
-	}
-	else if (currentScreen == &ScreenUDS)
-	{
-		RAMN_ScreenManager_SwitchScreen(&ScreenSaver);
-	}
+    changeScreen(1);
 }
 
 static void changeScreenLeft()
 {
-	if (currentScreen == &ScreenSaver)
-	{
-		RAMN_ScreenManager_SwitchScreen(&ScreenUDS);
-	}
-	else if (currentScreen == &ScreenCANMonitor)
-	{
-		RAMN_ScreenManager_SwitchScreen(&ScreenSaver);
-	}
-	else if (currentScreen == &ScreenCANLog)
-	{
-		RAMN_ScreenManager_SwitchScreen(&ScreenCANMonitor);
-	}
-	else if (currentScreen == &ScreenStats)
-	{
-		RAMN_ScreenManager_SwitchScreen(&ScreenCANLog);
-	}
-	else if (currentScreen == &ScreenChip8)
-	{
-		RAMN_ScreenManager_SwitchScreen(&ScreenStats);
-	}
-	else if (currentScreen == &ScreenUDS)
-	{
-		RAMN_ScreenManager_SwitchScreen(&ScreenChip8);
-	}
+    changeScreen(-1);
 }
 
 
