@@ -819,9 +819,18 @@ static void RAMN_UDS_RoutineControlResetBootOptionBytes(const uint8_t* data, uin
 		}
 		else
 		{
+			RAMN_Result_t result = RAMN_OK;
 			switch (data[1]){
 			case 0x01://Start
-				if (RAMN_FLASH_ConfigureOptionBytesBootloaderMode() != RAMN_OK)
+				if(RAMN_FLASH_isMemoryProtected() == False)
+				{
+					result = RAMN_FLASH_ConfigureOptionBytesBootloaderMode();
+				}
+				else
+				{
+					result = RAMN_FLASH_RemoveMemoryProtection();
+				}
+				if (result != RAMN_OK)
 				{
 					RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_GPF);
 				}
