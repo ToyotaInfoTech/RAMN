@@ -163,4 +163,23 @@
 #endif
 
 
+//To use the internal oscillator (instead of the default external 10MHz crystal), You should modify RAMNV1.ioc so that:
+//- PLL Source Mux uses HSI with *N = X 10
+//- PLLSAI1 Source Mux uses HSI with *N = X 15
+//You should then regenerate the source code (refer to docs/firmware/img/internal_clock_settings.png and external_clock_settings.png to compare clock settings).
+//If you do not want to use the code generation feature,you can also modify the source code directly so that the following values are used instead of default values:
+//
+//In stm32l5xx_hal_msp.c:
+//PeriphClkInit.PLLSAI1.PLLSAI1Source = RCC_PLLSAI1SOURCE_HSI;
+//PeriphClkInit.PLLSAI1.PLLSAI1N = 15;
+//
+//In main.c:
+//
+//RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI48|RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_LSI;
+//RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+//RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+//RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
+//RCC_OscInitStruct.PLL.PLLN = 10;
+
+
 #endif /* INC_RAMN_CONFIG_H_ */
