@@ -66,6 +66,7 @@ class RAMN_USB_Handler():
             time.sleep(0.1)
         while (self.ser.in_waiting != 0):
             self.ser.read(self.ser.in_waiting)
+            time.sleep(0.01)
     
     def sendUDSCommandUSB(self,command,timeout=0,recvAnswer=True):
         if command != None:
