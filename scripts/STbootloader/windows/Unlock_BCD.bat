@@ -2,9 +2,11 @@
 
 SET RAMN_PORT=AUTO
 
-python ..\canboot.py %RAMN_PORT% B -wu -ru
+rem You should use -wu if you used write protection
 
-python ..\canboot.py %RAMN_PORT% C -wu -ru
+python ..\canboot.py %RAMN_PORT% B -ru
 
-python ..\canboot.py %RAMN_PORT% D -wu -ru --reset
+python ..\canboot.py %RAMN_PORT% C -ru
+
+python ..\canboot.py %RAMN_PORT% D -ru --reset
 
