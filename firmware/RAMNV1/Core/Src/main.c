@@ -49,6 +49,7 @@
 #if defined(ENABLE_MINICTF)
 #include "ramn_ctf.h"
 #endif
+#include "ramn_customize.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -2055,6 +2056,7 @@ void RAMN_ReceiveCANFunc(void *argument)
 #if defined(ENABLE_MINICTF) && defined(TARGET_ECUD)
 			RAMN_CTF_ProcessRxCANMessage(&CANRxHeader, CANRxData, xTaskGetTickCount());
 #endif
+			RAMN_CUSTOM_ProcessRxCANMessage(&CANRxHeader, CANRxData, xTaskGetTickCount());
 
 #if defined(ENABLE_USB)
 			if (RAMN_USB_Config.slcanOpened)
@@ -2215,6 +2217,7 @@ void RAMN_PeriodicTaskFunc(void *argument)
 #ifdef ENABLE_MINICTF
 	RAMN_CTF_Init(xTaskGetTickCount());
 #endif
+	RAMN_CUSTOM_Init(xTaskGetTickCount());
 
 #if defined(ENABLE_SCREEN)
 	RAMN_ScreenManager_Init(&hspi2, &RAMN_PeriodicHandle);
@@ -2228,16 +2231,18 @@ void RAMN_PeriodicTaskFunc(void *argument)
 #ifdef WATCHDOG_ENABLE
 		if(HAL_IWDG_Refresh(&hiwdg) != HAL_OK) { Error_Handler();  }
 #endif
+		RAMN_SENSORS_Update(xLastWakeTime);
+		RAMN_SIM_UpdatePeriodic(xLastWakeTime);
+		RAMN_ACTUATORS_ApplyControls(xLastWakeTime);
 		if (RAMN_DBC_RequestSilence == 0U)
 		{
-			RAMN_SENSORS_Update(xLastWakeTime);
-			RAMN_SIM_UpdatePeriodic(xLastWakeTime);
-			RAMN_ACTUATORS_ApplyControls(xLastWakeTime);
 			RAMN_DBC_Send(xLastWakeTime);
 #ifdef ENABLE_MINICTF
 			RAMN_CTF_Update(xLastWakeTime);
 #endif
 		}
+
+		RAMN_CUSTOM_Update(xLastWakeTime);
 #ifdef ENABLE_SCREEN
 		RAMN_SCREEN_Update(xLastWakeTime);
 #endif
