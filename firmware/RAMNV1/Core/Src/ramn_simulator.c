@@ -27,19 +27,22 @@ void RAMN_SIM_UpdatePeriodic(uint32_t tick)
 {
 
 #if defined(TARGET_ECUA)
-	uint8_t index = 0U;
-	uint8_t statusBuffer[30U];
-	statusBuffer[index++] = 'u';
-	index += uint12toASCII((uint16_t)RAMN_DBC_Handle.control_brake     ,&statusBuffer[index]);
-	index += uint12toASCII((uint16_t)RAMN_DBC_Handle.control_accel     ,&statusBuffer[index]);
-	index += uint12toASCII((uint16_t)RAMN_DBC_Handle.control_steer     ,&statusBuffer[index]);
-	index += uint8toASCII ((uint8_t)RAMN_DBC_Handle.control_shift      ,&statusBuffer[index]);
-	index += uint8toASCII ((uint8_t)RAMN_DBC_Handle.control_lights     ,&statusBuffer[index]);
-	index += uint4toASCII ((uint8_t)RAMN_DBC_Handle.control_sidebrake  ,&statusBuffer[index]);
-	index += uint4toASCII ((uint8_t)RAMN_DBC_Handle.command_horn       ,&statusBuffer[index]);
-	index += uint4toASCII ((uint8_t)RAMN_DBC_Handle.control_enginekey  ,&statusBuffer[index]);
-	statusBuffer[index++] = '\r';
-	RAMN_USB_SendFromTask(statusBuffer,index);
+	if (RAMN_USB_Config.simulatorActive == True)
+	{
+		uint8_t index = 0U;
+		uint8_t statusBuffer[30U];
+		statusBuffer[index++] = 'u';
+		index += uint12toASCII((uint16_t)RAMN_DBC_Handle.control_brake     ,&statusBuffer[index]);
+		index += uint12toASCII((uint16_t)RAMN_DBC_Handle.control_accel     ,&statusBuffer[index]);
+		index += uint12toASCII((uint16_t)RAMN_DBC_Handle.control_steer     ,&statusBuffer[index]);
+		index += uint8toASCII ((uint8_t)RAMN_DBC_Handle.control_shift      ,&statusBuffer[index]);
+		index += uint8toASCII ((uint8_t)RAMN_DBC_Handle.control_lights     ,&statusBuffer[index]);
+		index += uint4toASCII ((uint8_t)RAMN_DBC_Handle.control_sidebrake  ,&statusBuffer[index]);
+		index += uint4toASCII ((uint8_t)RAMN_DBC_Handle.command_horn       ,&statusBuffer[index]);
+		index += uint4toASCII ((uint8_t)RAMN_DBC_Handle.control_enginekey  ,&statusBuffer[index]);
+		statusBuffer[index++] = '\r';
+		RAMN_USB_SendFromTask(statusBuffer,index);
+	}
 #endif
 
 #if defined(EXPANSION_POWERTRAIN)
