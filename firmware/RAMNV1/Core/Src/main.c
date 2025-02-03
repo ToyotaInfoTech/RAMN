@@ -1015,13 +1015,23 @@ void RAMN_ReceiveUSBFunc(void *argument)
 		uint8_t dlc;
 		uint8_t offset = 0U; //TODO: remove use of offset by using pointers and dedicated functions
 		uint8_t smallResponseBuffer[50U]; //buffer for small responses
+		RAMN_Bool_t invalid_buffer_data = False;
 
-		xBytesReceived = xStreamBufferReceive(USBD_RxStreamBufferHandle, (void *)&commandLength, 2U, portMAX_DELAY );
-		if (xBytesReceived != 2U) Error_Handler();
-		if (commandLength > USB_COMMAND_BUFFER_SIZE) Error_Handler();
+		xBytesReceived = xStreamBufferReceive(USBD_RxStreamBufferHandle, (void *)&commandLength, 2U, portMAX_DELAY);
+		if ((xBytesReceived != 2U) || (commandLength > USB_COMMAND_BUFFER_SIZE)) invalid_buffer_data = True;
+		else
+		{
+			xBytesReceived = xStreamBufferReceive(USBD_RxStreamBufferHandle, (void*)USBRxBuffer, commandLength, portMAX_DELAY);
+			if (xBytesReceived != commandLength) invalid_buffer_data = True;
+		}
 
-		xBytesReceived = xStreamBufferReceive(USBD_RxStreamBufferHandle, (void*)USBRxBuffer, commandLength,portMAX_DELAY);
-		if (xBytesReceived != commandLength) Error_Handler();
+		if (invalid_buffer_data == True)
+		{
+			// Error counter should already have been increased by CDC_Receive_FS
+			if (USB_CLI_ENABLE != 0U) RAMN_USB_SendStringFromTask("Error processing USB Buffer.\r");
+			else RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
+			continue;
+		}
 
 		if (USB_CLI_ENABLE != 0U)
 		{
@@ -1726,8 +1736,12 @@ void RAMN_ReceiveUSBFunc(void *argument)
 					}
 					break;
 				case '#': //Enable CLI
+					if (commandLength == 1U)
+					{
 					USB_CLI_ENABLE = 1U;
 					RAMN_USB_SendStringFromTask("Welcome to RAMN CLI. Type 'help' for help.\r>");
+					}
+					else RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
 					break;
 				case 'd': //Enable/Disable debug reports
 					if (commandLength == 2)
@@ -1897,12 +1911,15 @@ void RAMN_ReceiveUSBFunc(void *argument)
 					else RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
 					break;
 				case 'n'://Reset whole board (used to leave programming mode)
+					if (commandLength == 1U)
+					{
 					RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
 					RAMN_DEBUG_Log("d Resetting\r");
 					RAMN_ECU_SetEnableAll(GPIO_PIN_RESET);
 					RAMN_ECU_SetBoot0All(GPIO_PIN_RESET);
 					osDelay(100);
 					HAL_NVIC_SystemReset();
+					} else RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
 					break; //Should not reach here
 				case 'c': //Connection to computer
 					if (commandLength == 2U)
