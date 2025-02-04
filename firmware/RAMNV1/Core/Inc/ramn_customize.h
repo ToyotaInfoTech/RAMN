@@ -29,4 +29,11 @@ void	RAMN_CUSTOM_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, const
 //Function that is called periodically
 void 	RAMN_CUSTOM_Update(uint32_t tick);
 
+#ifdef ENABLE_I2C
+//Function (in ISR) that is called when data was received on the I2C2 interface
+void RAMN_CUSTOM_ReceiveI2C(uint8_t buf[], uint16_t buf_size);
+
+//Function (in ISR) that is called when data was requested to be transmitted on the I2C2 interface.
+void RAMN_CUSTOM_PrepareTransmitDataI2C(uint8_t buf[], uint16_t buf_size);
+#endif
 #endif /* INC_RAMN_CUSTOMIZE_H_ */

@@ -76,6 +76,8 @@ CRC_HandleTypeDef hcrc;
 
 FDCAN_HandleTypeDef hfdcan1;
 
+I2C_HandleTypeDef hi2c2;
+
 IWDG_HandleTypeDef hiwdg;
 
 RNG_HandleTypeDef hrng;
@@ -206,6 +208,11 @@ uint8_t USB_CLI_ENABLE = 0U;
 #define LOCAL_USB_COMMAND_BUFFER_SIZE  0x200
 uint8_t USBCommandBuffer[LOCAL_USB_COMMAND_BUFFER_SIZE];
 
+#if defined(ENABLE_I2C)
+__attribute__ ((section (".buffers"))) uint8_t i2c_rxBuf[I2C_RX_BUFFER_SIZE];
+__attribute__ ((section (".buffers"))) uint8_t i2c_txBuf[I2C_TX_BUFFER_SIZE] = {'R', 'A', 'M', 'N'};
+#endif
+
 #if defined(ENABLE_DIAG)
 //Holds currently processed Diag Command from CAN
 __attribute__ ((section (".buffers"), aligned(4)))  uint8_t diagRxbuf[0xFFF+2];
@@ -274,6 +281,7 @@ static void MX_SPI2_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_IWDG_Init(void);
 static void MX_CRC_Init(void);
+static void MX_I2C2_Init(void);
 void RAMN_ReceiveUSBFunc(void *argument);
 void RAMN_ReceiveCANFunc(void *argument);
 void RAMN_SendCANFunc(void *argument);
@@ -386,6 +394,7 @@ int main(void)
 	MX_ADC1_Init();
 	MX_IWDG_Init();
 	MX_CRC_Init();
+	MX_I2C2_Init();
 	/* USER CODE BEGIN 2 */
 
 	//Assign the Stream buffer used by the USB receive callback function
@@ -759,6 +768,54 @@ static void MX_FDCAN1_Init(void)
 }
 
 /**
+ * @brief I2C2 Initialization Function
+ * @param None
+ * @retval None
+ */
+static void MX_I2C2_Init(void)
+{
+
+	/* USER CODE BEGIN I2C2_Init 0 */
+#ifdef ENABLE_I2C
+	/* USER CODE END I2C2_Init 0 */
+
+	/* USER CODE BEGIN I2C2_Init 1 */
+
+	/* USER CODE END I2C2_Init 1 */
+	hi2c2.Instance = I2C2;
+	hi2c2.Init.Timing = 0x10D19CE4;
+	hi2c2.Init.OwnAddress1 = 238;
+	hi2c2.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+	hi2c2.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+	hi2c2.Init.OwnAddress2 = 0;
+	hi2c2.Init.OwnAddress2Masks = I2C_OA2_NOMASK;
+	hi2c2.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+	hi2c2.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+	if (HAL_I2C_Init(&hi2c2) != HAL_OK)
+	{
+		Error_Handler();
+	}
+
+	/** Configure Analogue filter
+	 */
+	if (HAL_I2CEx_ConfigAnalogFilter(&hi2c2, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
+	{
+		Error_Handler();
+	}
+
+	/** Configure Digital filter
+	 */
+	if (HAL_I2CEx_ConfigDigitalFilter(&hi2c2, 0) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	/* USER CODE BEGIN I2C2_Init 2 */
+#endif
+	/* USER CODE END I2C2_Init 2 */
+
+}
+
+/**
  * @brief ICACHE Initialization Function
  * @param None
  * @retval None
@@ -982,6 +1039,66 @@ static int countElements(char* buffer, int length) {
 	}
 	return count;
 }
+
+
+#ifdef ENABLE_I2C
+void HAL_I2C_SlaveRxCpltCallback(I2C_HandleTypeDef *hi2c)
+{
+	if (hi2c != 0)
+	{
+		RAMN_CUSTOM_ReceiveI2C(i2c_rxBuf, I2C_RX_BUFFER_SIZE);
+	}
+}
+
+void HAL_I2C_SlaveTxCpltCallback(I2C_HandleTypeDef *hi2c)
+{
+	if (hi2c != 0)
+	{
+
+	}
+}
+
+void HAL_I2C_AddrCallback(I2C_HandleTypeDef *hi2c, uint8_t transferDirect, uint16_t AddrMatchCode)
+{
+	if (hi2c != 0U)
+	{
+		if (transferDirect == I2C_DIRECTION_TRANSMIT)
+		{
+			if (HAL_I2C_Slave_Sequential_Receive_IT(hi2c, i2c_rxBuf, I2C_RX_BUFFER_SIZE, I2C_FIRST_AND_LAST_FRAME) != HAL_OK) Error_Handler();
+		}
+		else if (transferDirect == I2C_DIRECTION_RECEIVE)
+		{
+			RAMN_CUSTOM_PrepareTransmitDataI2C(i2c_txBuf, I2C_TX_BUFFER_SIZE);
+			if (HAL_I2C_Slave_Sequential_Transmit_IT(hi2c, i2c_txBuf, I2C_TX_BUFFER_SIZE, I2C_FIRST_AND_LAST_FRAME) != HAL_OK) Error_Handler();
+		}
+		else Error_Handler();
+	}
+}
+
+void HAL_I2C_ListenCpltCallback(I2C_HandleTypeDef *hi2c)
+{
+	if (hi2c != 0)
+	{
+		HAL_I2C_EnableListen_IT(hi2c);
+	}
+}
+
+void HAL_I2C_ErrorCallback(I2C_HandleTypeDef *hi2c)
+{
+	uint32_t err = HAL_I2C_GetError(hi2c);
+
+	//if (err != HAL_I2C_ERROR_AF)
+	if (err != HAL_I2C_ERROR_NONE)
+	{
+		HAL_I2C_EnableListen_IT(hi2c);
+	}
+	else
+	{
+		//Error_Handler();
+	}
+}
+#endif
+
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_RAMN_ReceiveUSBFunc */
@@ -1738,8 +1855,8 @@ void RAMN_ReceiveUSBFunc(void *argument)
 				case '#': //Enable CLI
 					if (commandLength == 1U)
 					{
-					USB_CLI_ENABLE = 1U;
-					RAMN_USB_SendStringFromTask("Welcome to RAMN CLI. Type 'help' for help.\r>");
+						USB_CLI_ENABLE = 1U;
+						RAMN_USB_SendStringFromTask("Welcome to RAMN CLI. Type 'help' for help.\r>");
 					}
 					else RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
 					break;
@@ -1913,12 +2030,12 @@ void RAMN_ReceiveUSBFunc(void *argument)
 				case 'n'://Reset whole board (used to leave programming mode)
 					if (commandLength == 1U)
 					{
-					RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
-					RAMN_DEBUG_Log("d Resetting\r");
-					RAMN_ECU_SetEnableAll(GPIO_PIN_RESET);
-					RAMN_ECU_SetBoot0All(GPIO_PIN_RESET);
-					osDelay(100);
-					HAL_NVIC_SystemReset();
+						RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
+						RAMN_DEBUG_Log("d Resetting\r");
+						RAMN_ECU_SetEnableAll(GPIO_PIN_RESET);
+						RAMN_ECU_SetBoot0All(GPIO_PIN_RESET);
+						osDelay(100);
+						HAL_NVIC_SystemReset();
 					} else RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
 					break; //Should not reach here
 				case 'c': //Connection to computer
@@ -2223,6 +2340,10 @@ void RAMN_PeriodicTaskFunc(void *argument)
 
 #if defined(TARGET_ECUA)
 	RAMN_ECU_SetDefaultState();
+#endif
+
+#ifdef ENABLE_I2C
+	if (HAL_I2C_EnableListen_IT(&hi2c2) != HAL_OK) Error_Handler();
 #endif
 
 #if defined(EXPANSION_CHASSIS) || defined(EXPANSION_POWERTRAIN) || defined(EXPANSION_BODY)

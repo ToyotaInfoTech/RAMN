@@ -37,6 +37,9 @@
 
 #define UDS_ACCEPT_FUNCTIONAL_ADDRESSING //Value must be defined in ramn_vehicle_specific.h
 
+//Enable the I2C interface
+//#define ENABLE_I2C
+
 #if defined(TARGET_ECUA)
 #define ENABLE_USB
 #define ENABLE_SCREEN
@@ -162,6 +165,10 @@
 #define XCP_TX_BUFFER_SIZE 				(4000)
 #endif
 
+#ifdef ENABLE_I2C
+#define I2C_RX_BUFFER_SIZE				(16)
+#define I2C_TX_BUFFER_SIZE				(4)
+#endif
 
 //To use the internal oscillator (instead of the default external 10MHz crystal), You should modify RAMNV1.ioc so that:
 //- PLL Source Mux uses HSI with *N = X 10

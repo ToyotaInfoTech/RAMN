@@ -58,3 +58,24 @@ void RAMN_CUSTOM_Update(uint32_t tick)
 
 }
 
+#ifdef ENABLE_I2C
+void RAMN_CUSTOM_ReceiveI2C(uint8_t buf[], uint16_t buf_size)
+{
+// ** FUNCTION CURRENTLY NOT FULLY TESTED **
+
+//Warning: This function is called within an ISR. It should not use freeRTOS functions not available to ISRs, and should not be blocking.
+//See RAMNV1.ioc for I2C device address (likely 0x77)
+//Note that by default, buf_size is fixed and equal to I2C_RX_BUFFER_SIZE. Function will NOT be called if fewer bytes are received.
+//You'll need to modify HAL_I2C_AddrCallback and HAL_I2C_SlaveRxCpltCallback in main.c if you need another behavior.
+
+}
+
+void RAMN_CUSTOM_PrepareTransmitDataI2C(uint8_t buf[], uint16_t buf_size)
+{
+// ** FUNCTION CURRENTLY NOT FULLY TESTED **
+
+	//Warning: This function is called within an ISR. It should not use freeRTOS functions not available to ISRs, and should not be blocking.
+//Note that you cannot modify buf_size, only buf.
+//You'll need to modify HAL_I2C_AddrCallback in main.c if you need another behavior.
+}
+#endif
