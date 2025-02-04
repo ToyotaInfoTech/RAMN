@@ -36,4 +36,11 @@ void RAMN_CUSTOM_ReceiveI2C(uint8_t buf[], uint16_t buf_size);
 //Function (in ISR) that is called when data was requested to be transmitted on the I2C2 interface.
 void RAMN_CUSTOM_PrepareTransmitDataI2C(uint8_t buf[], uint16_t buf_size);
 #endif
+
+#ifdef ENABLE_UART
+
+//Function called when UART data was received (with \r endline); can be customized for other data formats.
+void RAMN_CUSTOM_ReceiveUART(uint8_t buf[], uint16_t buf_size);
+#endif
+
 #endif /* INC_RAMN_CUSTOMIZE_H_ */

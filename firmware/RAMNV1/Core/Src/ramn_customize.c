@@ -16,6 +16,10 @@
 
 #include "ramn_customize.h"
 
+#ifdef ENABLE_UART
+#include "ramn_uart.h"
+#endif
+
 uint32_t custom_loop_counter = 0;
 
 void 	RAMN_CUSTOM_Init(uint32_t tick)
@@ -52,6 +56,11 @@ void RAMN_CUSTOM_Update(uint32_t tick)
 	if ((custom_loop_counter % 100) == 0)
 	{
 		//Code here is executed every 1s
+
+		//Example: send uart data every second
+#ifdef ENABLE_UART
+		RAMN_UART_SendStringFromTask("Hello from RAMN\r");
+#endif
 	}
 
 	custom_loop_counter += 1; 	//You may want to add a custom_loop_counter check for integer overflow.
@@ -61,21 +70,30 @@ void RAMN_CUSTOM_Update(uint32_t tick)
 #ifdef ENABLE_I2C
 void RAMN_CUSTOM_ReceiveI2C(uint8_t buf[], uint16_t buf_size)
 {
-// ** FUNCTION CURRENTLY NOT FULLY TESTED **
-
-//Warning: This function is called within an ISR. It should not use freeRTOS functions not available to ISRs, and should not be blocking.
-//See RAMNV1.ioc for I2C device address (likely 0x77)
-//Note that by default, buf_size is fixed and equal to I2C_RX_BUFFER_SIZE. Function will NOT be called if fewer bytes are received.
-//You'll need to modify HAL_I2C_AddrCallback and HAL_I2C_SlaveRxCpltCallback in main.c if you need another behavior.
+	//Warning: This function is called within an ISR. It should not use freeRTOS functions not available to ISRs, and should not be blocking.
+	//See RAMNV1.ioc for I2C device address (likely 0x77)
+	//Note that by default, buf_size is fixed and equal to I2C_RX_BUFFER_SIZE. Function will NOT be called if fewer bytes are received.
+	//You'll need to modify HAL_I2C_AddrCallback and HAL_I2C_SlaveRxCpltCallback in main.c if you need another behavior.
 
 }
 
 void RAMN_CUSTOM_PrepareTransmitDataI2C(uint8_t buf[], uint16_t buf_size)
 {
-// ** FUNCTION CURRENTLY NOT FULLY TESTED **
-
 	//Warning: This function is called within an ISR. It should not use freeRTOS functions not available to ISRs, and should not be blocking.
-//Note that you cannot modify buf_size, only buf.
-//You'll need to modify HAL_I2C_AddrCallback in main.c if you need another behavior.
+	//Note that you cannot modify buf_size, only buf.
+	//You'll need to modify HAL_I2C_AddrCallback in main.c if you need another behavior.
+}
+#endif
+
+#ifdef ENABLE_UART
+
+//You can send UART data using RAMN_UART_SendStringFromTask or RAMN_UART_SendFromTask, which are both non-blocking.
+
+void RAMN_CUSTOM_ReceiveUART(uint8_t buf[], uint16_t buf_size)
+{
+	//By default, this function receives commands line by line, without endline character (\r)
+	//You can modify this behavior in main.c (look for HAL_UART_Receive_IT and  HAL_UART_RxCpltCallback)
+
+
 }
 #endif

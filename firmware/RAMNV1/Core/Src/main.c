@@ -50,6 +50,9 @@
 #include "ramn_ctf.h"
 #endif
 #include "ramn_customize.h"
+#ifdef ENABLE_UART
+#include "ramn_uart.h"
+#endif
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -79,6 +82,8 @@ FDCAN_HandleTypeDef hfdcan1;
 I2C_HandleTypeDef hi2c2;
 
 IWDG_HandleTypeDef hiwdg;
+
+UART_HandleTypeDef hlpuart1;
 
 RNG_HandleTypeDef hrng;
 
@@ -196,8 +201,35 @@ StreamBufferHandle_t USBD_TxStreamBufferHandle;
 __attribute__ ((section (".buffers")))  uint8_t USBRxBuffer[USB_COMMAND_BUFFER_SIZE];
 //Holds currently generated slcan command (Used by CAN receiving thread)
 uint8_t slCAN_USBTxBuffer[0x200];
-//Holds USB DATA currently being sent over USB. TODO: remove ?
+//Holds USB DATA currently being sent over USB.
 __attribute__ ((section (".buffers")))  uint8_t USBIntermediateTxBuffer[APP_TX_DATA_SIZE];
+#endif
+
+#if defined(ENABLE_UART)
+
+static StaticStreamBuffer_t UART_RX_BUFFER_STRUCT;
+__attribute__ ((section (".buffers")))  static uint8_t UART_RX_BUFFER[UART_RX_BUFFER_SIZE];
+StreamBufferHandle_t UART_RxStreamBufferHandle;
+
+static StaticStreamBuffer_t UART_TX_BUFFER_STRUCT;
+__attribute__ ((section (".buffers")))  static uint8_t UART_TX_BUFFER[UART_TX_BUFFER_SIZE];
+StreamBufferHandle_t UART_TxStreamBufferHandle;
+
+//Holds data currently being processed, used by TASK
+__attribute__ ((section (".buffers")))  uint8_t UARTRxBuffer[UART_RX_COMMAND_BUFFER_SIZE];
+
+//Holds data currently being sent over UART.
+__attribute__ ((section (".buffers")))  uint8_t UARTIntermediateTxBuffer[UART_TX_COMMAND_BUFFER_SIZE];
+
+//buffer to receive next UART char
+uint8_t uart_rx_data[1];
+
+//current index of uart command
+static uint16_t uart_current_index = 0;
+
+//Holds command currently being received over UART, used by ISR
+__attribute__ ((section (".buffers"))) static uint8_t  UART_recvBuf[UART_RX_COMMAND_BUFFER_SIZE];
+
 #endif
 
 #ifdef START_IN_CLI_MODE
@@ -282,6 +314,7 @@ static void MX_ADC1_Init(void);
 static void MX_IWDG_Init(void);
 static void MX_CRC_Init(void);
 static void MX_I2C2_Init(void);
+static void MX_LPUART1_UART_Init(void);
 void RAMN_ReceiveUSBFunc(void *argument);
 void RAMN_ReceiveCANFunc(void *argument);
 void RAMN_SendCANFunc(void *argument);
@@ -395,12 +428,18 @@ int main(void)
 	MX_IWDG_Init();
 	MX_CRC_Init();
 	MX_I2C2_Init();
+	MX_LPUART1_UART_Init();
 	/* USER CODE BEGIN 2 */
 
 	//Assign the Stream buffer used by the USB receive callback function
 #if defined(ENABLE_USB)
 	USBD_RxStreamBufferHandle   = xStreamBufferCreateStatic(USB_RX_BUFFER_SIZE,sizeof(uint8_t),USB_RX_BUFFER,&USB_RX_BUFFER_STRUCT);
 	USBD_TxStreamBufferHandle   = xStreamBufferCreateStatic(USB_TX_BUFFER_SIZE,sizeof(uint8_t),USB_TX_BUFFER,&USB_TX_BUFFER_STRUCT);
+#endif
+
+#if defined(ENABLE_UART)
+	UART_RxStreamBufferHandle   = xStreamBufferCreateStatic(UART_RX_BUFFER_SIZE,sizeof(uint8_t),UART_RX_BUFFER,&UART_RX_BUFFER_STRUCT);
+	UART_TxStreamBufferHandle   = xStreamBufferCreateStatic(UART_TX_BUFFER_SIZE,sizeof(uint8_t),UART_TX_BUFFER,&UART_TX_BUFFER_STRUCT);
 #endif
 
 #if defined(ENABLE_UDS)
@@ -877,6 +916,54 @@ static void MX_IWDG_Init(void)
 }
 
 /**
+ * @brief LPUART1 Initialization Function
+ * @param None
+ * @retval None
+ */
+static void MX_LPUART1_UART_Init(void)
+{
+
+	/* USER CODE BEGIN LPUART1_Init 0 */
+#ifdef ENABLE_UART
+	/* USER CODE END LPUART1_Init 0 */
+
+	/* USER CODE BEGIN LPUART1_Init 1 */
+
+	/* USER CODE END LPUART1_Init 1 */
+	hlpuart1.Instance = LPUART1;
+	hlpuart1.Init.BaudRate = 115200;
+	hlpuart1.Init.WordLength = UART_WORDLENGTH_8B;
+	hlpuart1.Init.StopBits = UART_STOPBITS_1;
+	hlpuart1.Init.Parity = UART_PARITY_NONE;
+	hlpuart1.Init.Mode = UART_MODE_TX_RX;
+	hlpuart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+	hlpuart1.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+	hlpuart1.Init.ClockPrescaler = UART_PRESCALER_DIV1;
+	hlpuart1.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+	hlpuart1.FifoMode = UART_FIFOMODE_DISABLE;
+	if (HAL_UART_Init(&hlpuart1) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	if (HAL_UARTEx_SetTxFifoThreshold(&hlpuart1, UART_TXFIFO_THRESHOLD_1_8) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	if (HAL_UARTEx_SetRxFifoThreshold(&hlpuart1, UART_RXFIFO_THRESHOLD_1_8) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	if (HAL_UARTEx_DisableFifoMode(&hlpuart1) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	/* USER CODE BEGIN LPUART1_Init 2 */
+#endif
+	/* USER CODE END LPUART1_Init 2 */
+
+}
+
+/**
  * @brief RNG Initialization Function
  * @param None
  * @retval None
@@ -1099,6 +1186,62 @@ void HAL_I2C_ErrorCallback(I2C_HandleTypeDef *hi2c)
 }
 #endif
 
+#ifdef ENABLE_UART
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+{
+	// End of transmit
+	if(RAMN_SendUSBHandle != NULL)
+	{
+		BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+		vTaskNotifyGiveFromISR(RAMN_SendUSBHandle,&xHigherPriorityTaskWoken);
+		portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
+	}
+}
+
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+	//TODO: better error reporting
+	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+	if (uart_current_index >= sizeof(UART_recvBuf))
+	{
+		uart_current_index = 0;
+	}
+	else if(uart_rx_data[0] != '\r')
+	{
+		UART_recvBuf[uart_current_index] = uart_rx_data[0];
+		uart_current_index++;
+	}
+	else
+	{
+		if ((uart_current_index > 0) && (uart_current_index <= sizeof(UART_recvBuf))) //Don't forward empty commands or commands longer than buffer
+		{
+			if(UART_RxStreamBufferHandle != NULL){
+
+				if (xStreamBufferSendFromISR(UART_RxStreamBufferHandle,&uart_current_index, 2U, NULL ) != 2U)
+				{
+					//Error_Handler()
+				}
+				else
+				{
+					if (xStreamBufferSendFromISR(UART_RxStreamBufferHandle,UART_recvBuf, uart_current_index, NULL ) != uart_current_index)
+					{
+						//Error_Handler()
+					}
+					else
+					{
+						vTaskNotifyGiveFromISR(RAMN_ReceiveUSBHandle,&xHigherPriorityTaskWoken);
+						portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
+					}
+				}
+			}
+		}
+		uart_current_index = 0;
+	}
+	HAL_UART_Receive_IT(&hlpuart1, &uart_rx_data, 1);
+}
+#endif
+
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_RAMN_ReceiveUSBFunc */
@@ -1114,9 +1257,7 @@ void RAMN_ReceiveUSBFunc(void *argument)
 	/* init code for USB_Device */
 	MX_USB_Device_Init();
 	/* USER CODE BEGIN 5 */
-#if !defined(ENABLE_USB)
-	vTaskDelete(NULL);
-#else
+#if defined(ENABLE_USB)
 	/* init code for USB_Device */
 	MX_USB_Device_Init();
 
@@ -2129,6 +2270,24 @@ void RAMN_ReceiveUSBFunc(void *argument)
 		}
 
 	}
+#elif defined(ENABLE_UART)
+	HAL_UART_Receive_IT(&hlpuart1, &uart_rx_data, 1); //start receiving characters, one by one by default (slow)
+
+	for(;;)
+	{
+		uint16_t commandLength;
+		size_t xBytesReceived;
+		xBytesReceived = xStreamBufferReceive(UART_RxStreamBufferHandle, (void *)&commandLength, 2U, portMAX_DELAY );
+		if (xBytesReceived != 2U) Error_Handler();
+
+		xBytesReceived = xStreamBufferReceive(UART_RxStreamBufferHandle, (void*)UARTRxBuffer, commandLength,portMAX_DELAY);
+		if (xBytesReceived != commandLength) Error_Handler();
+
+		RAMN_CUSTOM_ReceiveUART(UARTRxBuffer, commandLength);
+
+	}
+#else
+	vTaskDelete(NULL);
 #endif
 	/* USER CODE END 5 */
 }
@@ -2719,9 +2878,7 @@ void RAMN_DiagTXFunc(void *argument)
 void RAMN_SendUSBFunc(void *argument)
 {
 	/* USER CODE BEGIN RAMN_SendUSBFunc */
-#if !defined(ENABLE_USB)
-	vTaskDelete(NULL);
-#else
+#if defined(ENABLE_USB)
 	RAMN_USB_Init(&USBD_TxStreamBufferHandle,&RAMN_SendUSBHandle);
 	RAMN_CDC_Init(&USBD_RxStreamBufferHandle, &RAMN_ReceiveUSBHandle, &RAMN_SendUSBHandle);
 
@@ -2749,6 +2906,19 @@ void RAMN_SendUSBFunc(void *argument)
 #endif
 		}
 	}
+#elif defined(ENABLE_UART)
+	RAMN_UART_Init(&UART_TxStreamBufferHandle,&RAMN_SendUSBHandle);
+	for(;;)
+	{
+		size_t size = xStreamBufferReceive(UART_TxStreamBufferHandle,UARTIntermediateTxBuffer,sizeof(UARTIntermediateTxBuffer), portMAX_DELAY);
+		if (size > 0)
+		{
+			HAL_UART_Transmit_IT(&hlpuart1,UARTIntermediateTxBuffer, size);
+			ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+		}
+	}
+#else
+	vTaskDelete(NULL);
 #endif
 	/* USER CODE END RAMN_SendUSBFunc */
 }

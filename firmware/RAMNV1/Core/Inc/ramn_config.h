@@ -38,7 +38,12 @@
 #define UDS_ACCEPT_FUNCTIONAL_ADDRESSING //Value must be defined in ramn_vehicle_specific.h
 
 //Enable the I2C interface
+// /!\CURRENTLY UNTESTED /!\
 //#define ENABLE_I2C
+
+//Enable the UART interface
+// /!\ CURRENTLY UNTESTED /!\
+//#define ENABLE_UART
 
 #if defined(TARGET_ECUA)
 #define ENABLE_USB
@@ -170,6 +175,25 @@
 #define I2C_TX_BUFFER_SIZE				(4)
 #endif
 
+#ifdef ENABLE_UART
+
+//UART module works by queuing commands in a stream buffer.
+//You should define the size of working buffers (for currently processed command/answers) and of Stream Buffers (where all commands/queued are queued and waiting for transmission).
+
+//Working buffer
+#define UART_RX_COMMAND_BUFFER_SIZE			128 //This is the maximum length of a command to receive, used by both TASK and ISR
+#define UART_TX_COMMAND_BUFFER_SIZE			128 //This is the maximum length of a command to send back
+
+//Stream buffer
+#define UART_RX_BUFFER_SIZE 				512
+#define UART_TX_BUFFER_SIZE 				512
+
+#if (UART_RX_COMMAND_BUFFER_SIZE > UART_RX_BUFFER_SIZE) || (UART_TX_COMMAND_BUFFER_SIZE > UART_TX_BUFFER_SIZE)
+#error command size should be smaller than stream buffer size
+#endif
+
+#endif
+
 //To use the internal oscillator (instead of the default external 10MHz crystal), You should modify RAMNV1.ioc so that:
 //- PLL Source Mux uses HSI with *N = X 10
 //- PLLSAI1 Source Mux uses HSI with *N = X 15
@@ -188,5 +212,12 @@
 //RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
 //RCC_OscInitStruct.PLL.PLLN = 10;
 
+
+#if defined(ENABLE_UART) && defined(ENABLE_USB)
+#error Default code does not support UART and USB at the same time. See comments for details.
+//UART uses USB task by default, and therefore USB and UART cannot be used at the same time.
+//You can enable both simultaneously by creating new receive/transmit tasks for UART, and move the UART code (between #define ENABLE_UART) in RAMN_ReceiveUSBFunc and RAMN_SendUSBFunc there.
+//You should then modify HAL_UART_TxCpltCallback and HAL_UART_RxCpltCallback to notify these tasks instead.
+#endif
 
 #endif /* INC_RAMN_CONFIG_H_ */
