@@ -66,6 +66,7 @@
 #if defined(TARGET_ECUA)
 #define ENABLE_USB
 #define ENABLE_SCREEN
+#define ENABLE_CHIP8
 #define ENABLE_MINICTF
 
 //Use this to define a "password" for the command to put ECU A back into DFU mode.
@@ -237,6 +238,10 @@
 //UART uses USB task by default, and therefore USB and UART cannot be used at the same time.
 //You can enable both simultaneously by creating new receive/transmit tasks for UART, and move the UART code (between #define ENABLE_UART) in RAMN_ReceiveUSBFunc and RAMN_SendUSBFunc there.
 //You should then modify HAL_UART_TxCpltCallback and HAL_UART_RxCpltCallback to notify these tasks instead.
+#endif
+
+#if defined(ENABLE_CHIP8) && !defined(ENABLE_SCREEN)
+#error ENABLE_SCREEN must be defined to define ENABLE_CHIP8
 #endif
 
 #endif /* INC_RAMN_CONFIG_H_ */

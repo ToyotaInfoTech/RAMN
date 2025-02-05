@@ -27,8 +27,12 @@ static const RAMNScreen* screens[] = {
     &ScreenCANMonitor,
     &ScreenCANLog,
     &ScreenStats,
+#ifdef ENABLE_CHIP8
     &ScreenChip8,
+#endif
+#ifdef ENABLE_UDS
     &ScreenUDS
+#endif
 };
 
 #define SCREEN_COUNT (sizeof(screens) / sizeof(screens[0]))

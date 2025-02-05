@@ -3,7 +3,7 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2024 TOYOTA MOTOR CORPORATION.
+  * <h2><center>&copy; Copyright (c) 2025 TOYOTA MOTOR CORPORATION.
   * ALL RIGHTS RESERVED.</center></h2>
   *
   * This software component is licensed by TOYOTA MOTOR CORPORATION under BSD 3-Clause license,
@@ -28,12 +28,18 @@
 #include "ramn_trng.h"
 #include "ramn_spi.h"
 
-#define DEFAULT_PIXEL_SIZE 3
-#define FONT_ADDRESS 0
-#define MAX_SCREEN_WIDTH 128
-#define MAX_SCREEN_HEIGHT 64
+#define CHIP8_MEMORY_SIZE 0x1000
+#define DEFAULT_PIXEL_SIZE 3U
+#define FONT_ADDRESS 0U
+#define MAX_SCREEN_WIDTH 128U
+#define MAX_SCREEN_HEIGHT 64U
 
-//Games stored in ECU memory
+// This is used to define the screen buffer width
+// Chip8 screen is larger than Super Chip because pixel size is larger (3), therefore we use Chip8 size
+#define SPRITE_BUFFER_HEIGHT 64U
+#define SPRITE_BUFFER_WIDTH 32U
+
+// Games stored in ECU memory
 extern const uint8_t cave_explorer[];
 extern const uint16_t cave_explorer_size;
 
@@ -43,25 +49,22 @@ extern const uint16_t danmaku_size;
 extern const uint8_t octopeg[];
 extern const uint16_t octopeg_size;
 
-//Sets the foreground and background colors used for display
+// Sets the foreground and background colors used for display
 void RAMN_CHIP8_SetColor(uint16_t fg, uint16_t bg);
 
-//Initializes the Chip8 Interpreter
+// Initializes the Chip8 Interpreter
 void RAMN_CHIP8_Init(const uint8_t* game_to_load, uint16_t game_size);
 
-//Returns whether a game is currently being played or not
+// Returns whether a game is currently being played or not
 uint8_t RAMN_CHIP8_IsGameActive();
 
-//Starts the game currently loaded in memory
+// Starts the game currently loaded in memory
 void RAMN_CHIP8_StartGame(uint32_t xLastWakeTime);
 
-//Asks interpreter to stop current game
+// Asks interpreter to stop current game
 void RAMN_CHIP8_StopGame();
 
-//Update the interpreter (main loop to update periodically)
-uint8_t RAMN_CHIP8_Update(uint32_t xLastWakeTime);
-
-//Redraw current game on screen (all pixels)
-void RAMN_Chip8_RedrawScreen();
+// Update the interpreter (main loop to update periodically)
+void RAMN_CHIP8_Update(uint32_t xLastWakeTime);
 
 #endif /* INC_RAMN_CHIP8_H_ */
