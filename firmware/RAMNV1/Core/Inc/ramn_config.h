@@ -20,10 +20,10 @@
 #define INC_RAMN_CONFIG_H_
 
 #if !defined(TARGET_ECUA) && !defined(TARGET_ECUB) && !defined(TARGET_ECUC) && !defined(TARGET_ECUD)
-//#define TARGET_ECUA
+#define TARGET_ECUA
 //#define TARGET_ECUB
 //#define TARGET_ECUC
-#define TARGET_ECUD
+//#define TARGET_ECUD
 #endif
 
 //Loop time for the "simulator" that is executed periodically
@@ -238,6 +238,10 @@
 #define CTF_STANDARD_ID_2 0x772
 #define CTF_STANDARD_ID_3 0x457
 #define CTF_STANDARD_ID_4 0x458
+#endif
+
+#if defined(TARGET_ECUA) + defined(TARGET_ECUB) + defined(TARGET_ECUC) + defined(TARGET_ECUD) != 1
+    #error "You must define only one of TARGET_ECUA, TARGET_ECUB, TARGET_ECUC, and TARGET_ECUD."
 #endif
 
 #if defined(ENABLE_UART) && defined(ENABLE_USB)

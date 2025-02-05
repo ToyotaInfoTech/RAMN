@@ -3,7 +3,7 @@
  ******************************************************************************
  * @attention
  *
- * <h2><center>&copy; Copyright (c) 2021 TOYOTA MOTOR CORPORATION.
+ * <h2><center>&copy; Copyright (c) 2025 TOYOTA MOTOR CORPORATION.
  * ALL RIGHTS RESERVED.</center></h2>
  *
  * This software component is licensed by TOYOTA MOTOR CORPORATION under BSD 3-Clause license,
@@ -16,10 +16,13 @@
 
 #include "ramn_dbc.h"
 
-volatile uint8_t RAMN_DBC_RequestSilence = True;
+#define NUMBER_OF_PERIODIC_MSG (sizeof(periodicTxCANMsgs)/sizeof(RAMN_PeriodicFDCANTx_t*))
 
-RAMN_DBC_Handle_t RAMN_DBC_Handle = {.command_steer = 0x7FF, .control_shift =0x01, .command_shift = 0x01, .horn_count = 0};
+volatile RAMN_Bool_t RAMN_DBC_RequestSilence = True;
 
+RAMN_DBC_Handle_t RAMN_DBC_Handle = {.command_steer = 0x7FF, .control_shift =0x01, .command_shift = 0x01};
+
+// array that holds messages to be sent periodically
 static RAMN_PeriodicFDCANTx_t* periodicTxCANMsgs[] = {
 #if defined(TARGET_ECUA)
 		&msg_command_brake,&msg_command_accel,&msg_status_RPM,&msg_command_steering,&msg_command_shift,&msg_control_horn,&msg_command_parkingbrake
@@ -35,10 +38,9 @@ static RAMN_PeriodicFDCANTx_t* periodicTxCANMsgs[] = {
 #endif
 };
 
-//Function that formats messages with counter/checksum/random/etc.
+// Function that formats messages with counter/checksum/random/etc.
 static void RAMN_DBC_FormatDefaultPeriodicMessage(RAMN_PeriodicFDCANTx_t* msg)
 {
-	//uint32_t random = RAMN_RNG_Pop32();
 	msg->data->ramn_data.counter = switchEndian16(msg->counter);
 	msg->data->ramn_data.random = RAMN_CRC_SoftCalculate(msg->data->raw_data,4U);
 	msg->header.ErrorStateIndicator = RAMN_FDCAN_Status.ErrorStateIndicator;
@@ -54,14 +56,13 @@ void RAMN_DBC_Init(void)
 
 }
 
-uint8_t prev_horn;
 void RAMN_DBC_ProcessCANMessage(uint32_t canid, uint32_t dlc, RAMN_CANFrameData_t* dataframe)
 {
-	//ignore fields other than useful data
+	// Ignore fields other than useful data
 	dataframe->ramn_data.payload = dataframe->ramn_data.payload&0xFFFF;
-	if (dlc <= 1) dataframe->ramn_data.payload = dataframe->ramn_data.payload&0xFF;
+	if (dlc <= 1U) dataframe->ramn_data.payload = dataframe->ramn_data.payload&0xFF;
 
-	//To avoid overloading the ECU with processing of incoming messages, only expected messages are included in the switch/case
+	// To avoid overloading the ECU with processing of incoming messages, only expected messages are included in the switch/case
 	if (dlc != 0)
 	{
 		switch(canid)
@@ -117,11 +118,6 @@ void RAMN_DBC_ProcessCANMessage(uint32_t canid, uint32_t dlc, RAMN_CANFrameData_
 #ifdef RECEIVE_COMMAND_HORN
 		case CAN_SIM_COMMAND_HORN_CANID:
 			RAMN_DBC_Handle.command_horn 				= (dataframe->ramn_data.payload)&0xFF;
-			if ((RAMN_DBC_Handle.command_horn != 0x00) && (prev_horn == 0x00))
-			{
-				RAMN_DBC_Handle.horn_count++;
-			}
-			prev_horn = RAMN_DBC_Handle.command_horn;
 			break;
 #endif
 #ifdef RECEIVE_CONTROL_HORN
@@ -165,10 +161,9 @@ void RAMN_DBC_ProcessCANMessage(uint32_t canid, uint32_t dlc, RAMN_CANFrameData_
 	}
 }
 
-#define NUMBER_OF_PERIODIC_MSG (sizeof(periodicTxCANMsgs)/sizeof(RAMN_PeriodicFDCANTx_t*))
 void RAMN_DBC_Send(uint32_t tick)
 {
-	for(uint8_t i = 0; i < NUMBER_OF_PERIODIC_MSG ; i++)
+	for(uint16_t i = 0; i < NUMBER_OF_PERIODIC_MSG ; i++)
 	{
 		if((tick - periodicTxCANMsgs[i]->lastSent) >= periodicTxCANMsgs[i]->periodms)
 		{
