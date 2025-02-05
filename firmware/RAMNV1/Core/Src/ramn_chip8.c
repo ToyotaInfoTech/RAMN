@@ -31,6 +31,7 @@
  */
 
 // Interpreter memory
+// TODO: put these in heap?
 __attribute__ ((section (".buffers"))) static uint8_t memory[CHIP8_MEMORY_SIZE];
 // Current opcode
 static uint16_t opcode;
@@ -71,6 +72,7 @@ static RAMN_Bool_t extended = False;
 
 // screenBuffer is used for CHIP8 pixel status.
 // spriteBuffer is used to actually draw on the screen (SPI buffer).
+// TODO: put these in heap?
 __attribute__ ((section (".buffers"))) static uint8_t screenBuffer[SCREEN_BUFFER_SIZE];
 __attribute__ ((section (".buffers"))) static uint16_t spriteBuffer[SPRITE_BUFFER_HEIGHT*SPRITE_BUFFER_WIDTH*DEFAULT_PIXEL_SIZE*DEFAULT_PIXEL_SIZE] __attribute__ ((section (".buffers")));
 
