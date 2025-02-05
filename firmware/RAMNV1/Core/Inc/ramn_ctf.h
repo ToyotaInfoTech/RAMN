@@ -24,6 +24,12 @@
 
 #ifdef ENABLE_MINICTF
 
+#define CTF_EXTENDED_ID 0x77cafe
+#define CTF_STANDARD_ID_1 0x456
+#define CTF_STANDARD_ID_2 0x772
+#define CTF_STANDARD_ID_3 0x457
+#define CTF_STANDARD_ID_4 0x458
+
 #define FLAG_USB_1 "flag{USB_COMMAND}"
 #define FLAG_USB_2 "flag{USB_BRUTEFORCE}"
 #define FLAG_CAN_1 "flag{CAN_FIRST_MESSAGE}"

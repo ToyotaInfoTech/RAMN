@@ -62,7 +62,7 @@ static uint8_t checkIfShouldSendFlag4(const FDCAN_RxHeaderTypeDef* pHeader, cons
 {
 	if (pHeader->RxFrameType == FDCAN_DATA_FRAME)
 	{
-		if (pHeader->Identifier == 0x77cafe)
+		if (pHeader->Identifier == CTF_EXTENDED_ID)
 		{
 			if ((data[0] == 'P') && (data[1] == '4') && (data[2] == '$') && (data[3] == '$') && (data[4] == 'W') && (data[5] == '0') && (data[6] == 'R') && (data[7] == 'D')) return 1U;
 		}
@@ -75,7 +75,7 @@ void	RAMN_CTF_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, const ui
 #ifdef TARGET_ECUD
 	if (pHeader->RxFrameType == FDCAN_DATA_FRAME)
 	{
-		if (pHeader->Identifier == 0x456)
+		if (pHeader->Identifier == CTF_STANDARD_ID_1)
 		{
 			sendFlagOverCAN(0x770, FLAG_CAN_1);
 		}
@@ -83,7 +83,7 @@ void	RAMN_CTF_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, const ui
 
 	if (pHeader->RxFrameType == FDCAN_REMOTE_FRAME)
 	{
-		if (pHeader->Identifier == 0x772)
+		if (pHeader->Identifier == CTF_STANDARD_ID_2)
 		{
 			sendFlagOverCAN(0x772, FLAG_CAN_2);
 		}
@@ -91,7 +91,7 @@ void	RAMN_CTF_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, const ui
 
 	if (pHeader->RxFrameType == FDCAN_DATA_FRAME)
 	{
-		if (pHeader->Identifier == 0x457)
+		if (pHeader->Identifier == CTF_STANDARD_ID_3)
 		{
 			if (memcmp(data,"GIVEFLAG",8) == 0) sendFlagOverCAN(0x771, FLAG_CAN_3);
 		}
@@ -101,7 +101,7 @@ void	RAMN_CTF_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, const ui
 
 	if (pHeader->RxFrameType == FDCAN_DATA_FRAME)
 	{
-		if (pHeader->Identifier == 0x458)
+		if (pHeader->Identifier == CTF_STANDARD_ID_4)
 		{
 			if (pHeader->DataLength == 0)
 			{

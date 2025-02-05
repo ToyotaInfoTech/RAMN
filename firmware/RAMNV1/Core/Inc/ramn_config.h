@@ -37,13 +37,31 @@
 
 #define UDS_ACCEPT_FUNCTIONAL_ADDRESSING //Value must be defined in ramn_vehicle_specific.h
 
+// Enable computations of tseg1 and tseg2 to get non-standard baudrate
+// /!\CURRENTLY UNTESTED
+#define ENABLE_DYNAMIC_BITRATE
+
+// Automatically close the serial port if it overflows (consider that the user forgot to close it).
+#define CLOSE_DEVICE_ON_USB_TX_OVERFLOW
+
+#ifndef TARGET_ECUA
+//Use Hardware CAN filters (Up to 28 standard IDs, 8 extended IDs)
+//If this is enabled, you need to update filters when you want to add CAN IDs to the network
+// /!\CURRENTLY UNTESTED
+#define USE_HARDWARE_CAN_FILTERS
+#endif
+
 //Enable the I2C interface
-// /!\CURRENTLY UNTESTED /!\
+// /!\CURRENTLY UNTESTED
 //#define ENABLE_I2C
 
 //Enable the UART interface
-// /!\ CURRENTLY UNTESTED /!\
+// /!\ CURRENTLY UNTESTED
 //#define ENABLE_UART
+
+//Enable this variable to force code to while(1) when encountering errors that could typically be ignored.
+#define HANG_ON_ERRORS
+
 
 #if defined(TARGET_ECUA)
 #define ENABLE_USB

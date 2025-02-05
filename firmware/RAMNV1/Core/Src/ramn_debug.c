@@ -176,7 +176,7 @@ void	RAMN_DEBUG_PrintCANError(const FDCAN_ErrorCountersTypeDef* pErrorCount, con
 		{
 			//CAN-FD Protocol Error during arbitration phase
 			RAMN_DEBUG_Log("d HAL_FDCAN_ERROR_PROTOCOL_ARBT -> ");
-			RAMN_FDCAN_Status.slcan_flags |= SLCAN_FLAG_BUS_ERROR;
+			RAMN_FDCAN_Status.slcanFlags |= SLCAN_FLAG_BUS_ERROR;
 
 			uint32_t errorCode = pProtocolStatus->LastErrorCode;
 			if (errorCode == FDCAN_PROTOCOL_ERROR_STUFF)
@@ -220,7 +220,7 @@ void	RAMN_DEBUG_PrintCANError(const FDCAN_ErrorCountersTypeDef* pErrorCount, con
 			//CAN-FD Protocol Error during data phase
 			RAMN_DEBUG_Log("d HAL_FDCAN_ERROR_PROTOCOL_DATA -> ");
 
-			RAMN_FDCAN_Status.slcan_flags |= SLCAN_FLAG_BUS_ERROR;
+			RAMN_FDCAN_Status.slcanFlags |= SLCAN_FLAG_BUS_ERROR;
 			uint32_t errorCode = pProtocolStatus->DataLastErrorCode;
 			if (errorCode == FDCAN_PROTOCOL_ERROR_STUFF)
 			{

@@ -1817,7 +1817,7 @@ void RAMN_ReceiveUSBFunc(void *argument)
 					break;
 				case 'F':
 					smallResponseBuffer[0U] = USBRxBuffer[0U];
-					uint8toASCII(RAMN_FDCAN_Status.slcan_flags,&smallResponseBuffer[1U]);
+					uint8toASCII(RAMN_FDCAN_Status.slcanFlags,&smallResponseBuffer[1U]);
 					smallResponseBuffer[3U] = '\r';
 					RAMN_USB_SendFromTask(smallResponseBuffer,4U);
 					break;
@@ -2420,7 +2420,10 @@ void RAMN_ReceiveCANFunc(void *argument)
 				slCAN_USBTxBuffer[index++] = '\r';
 				if (RAMN_USB_SendFromTask(slCAN_USBTxBuffer,index) != RAMN_OK)
 				{
+#ifdef CLOSE_DEVICE_ON_USB_TX_OVERFLOW
+					//USB overflow, user probably forgot to close the device
 					RAMN_USB_Config.slcanOpened = False;
+#endif
 				}
 			}
 #endif
