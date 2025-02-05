@@ -40,14 +40,14 @@
 #define SPRITE_BUFFER_WIDTH 32U
 
 // Games stored in ECU memory
-extern const uint8_t cave_explorer[];
-extern const uint16_t cave_explorer_size;
+extern const uint8_t CAVE_EXPLORER[];
+extern const uint16_t CAVE_EXPLORER_SIZE;
 
-extern const uint8_t danmaku[];
-extern const uint16_t danmaku_size;
+extern const uint8_t DANMAKU[];
+extern const uint16_t DANMAKU_SIZE;
 
-extern const uint8_t octopeg[];
-extern const uint16_t octopeg_size;
+extern const uint8_t OCTOPEG[];
+extern const uint16_t OCTOPEG_SIZE;
 
 // Sets the foreground and background colors used for display
 void RAMN_CHIP8_SetColor(uint16_t fg, uint16_t bg);

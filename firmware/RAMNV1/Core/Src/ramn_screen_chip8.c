@@ -60,13 +60,13 @@ void RAMN_ScreenChip8_StartGameFromIndex(uint8_t index)
 {
 	switch(index){
 	case 0x01:
-		RAMN_ScreenChip8_RequestGame(danmaku, danmaku_size);
+		RAMN_ScreenChip8_RequestGame(DANMAKU, DANMAKU_SIZE);
 		break;
 	case 0x02:
-		RAMN_ScreenChip8_RequestGame(cave_explorer, cave_explorer_size);
+		RAMN_ScreenChip8_RequestGame(CAVE_EXPLORER, CAVE_EXPLORER_SIZE);
 		break;
 	case 0x03:
-		RAMN_ScreenChip8_RequestGame(octopeg, octopeg_size);
+		RAMN_ScreenChip8_RequestGame(OCTOPEG, OCTOPEG_SIZE);
 		break;
 	default:
 		break;
