@@ -3,7 +3,7 @@
  ******************************************************************************
  * @attention
  *
- * <h2><center>&copy; Copyright (c) 2024 TOYOTA MOTOR CORPORATION.
+ * <h2><center>&copy; Copyright (c) 2025 TOYOTA MOTOR CORPORATION.
  * ALL RIGHTS RESERVED.</center></h2>
  *
  * This software component is licensed by TOYOTA MOTOR CORPORATION under BSD 3-Clause license,
@@ -18,17 +18,20 @@
 
 #ifdef ENABLE_MINICTF
 
-static uint32_t ctf_loop_counter;
+#if defined(TARGET_ECUD)
 
-//To answer immediately when a message is received
+static uint32_t ctfLoopCounter;
+
+// TODO: put these variables in stack
+// variables to answer immediately when a message is received
 static FDCAN_TxHeaderTypeDef CTFTxHeader;
-static uint8_t CTFTxData[8];
+static uint8_t CTFTxData[8U];
 
-//To transmit messages periodically
+// variables to transmit messages periodically
 static FDCAN_TxHeaderTypeDef CTFTxHeaderPeriodic;
-static uint8_t CTFTxDataPeriodic[8];
+static uint8_t CTFTxDataPeriodic[8U];
 
-static uint8_t periodic_flag_enabled = False;
+static RAMN_Bool_t periodicFlagEnabled = False;
 
 static void sendFlagOverCAN(uint16_t can_id, char* flag)
 {
@@ -53,11 +56,6 @@ static void sendFlagOverCAN(uint16_t can_id, char* flag)
 	}
 }
 
-void 	RAMN_CTF_Init(uint32_t tick)
-{
-	ctf_loop_counter = 0;
-}
-
 static uint8_t checkIfShouldSendFlag4(const FDCAN_RxHeaderTypeDef* pHeader, const uint8_t* data)
 {
 	if (pHeader->RxFrameType == FDCAN_DATA_FRAME)
@@ -70,48 +68,6 @@ static uint8_t checkIfShouldSendFlag4(const FDCAN_RxHeaderTypeDef* pHeader, cons
 	return 0U;
 }
 
-void	RAMN_CTF_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, const uint8_t* data, uint32_t tick)
-{
-#ifdef TARGET_ECUD
-	if (pHeader->RxFrameType == FDCAN_DATA_FRAME)
-	{
-		if (pHeader->Identifier == CTF_STANDARD_ID_1)
-		{
-			sendFlagOverCAN(0x770, FLAG_CAN_1);
-		}
-	}
-
-	if (pHeader->RxFrameType == FDCAN_REMOTE_FRAME)
-	{
-		if (pHeader->Identifier == CTF_STANDARD_ID_2)
-		{
-			sendFlagOverCAN(0x772, FLAG_CAN_2);
-		}
-	}
-
-	if (pHeader->RxFrameType == FDCAN_DATA_FRAME)
-	{
-		if (pHeader->Identifier == CTF_STANDARD_ID_3)
-		{
-			if (memcmp(data,"GIVEFLAG",8) == 0) sendFlagOverCAN(0x771, FLAG_CAN_3);
-		}
-	}
-
-	if (checkIfShouldSendFlag4(pHeader,data) != 0U) sendFlagOverCAN(0x773, FLAG_CAN_4);
-
-	if (pHeader->RxFrameType == FDCAN_DATA_FRAME)
-	{
-		if (pHeader->Identifier == CTF_STANDARD_ID_4)
-		{
-			if (pHeader->DataLength == 0)
-			{
-				periodic_flag_enabled = True;
-				ctf_loop_counter = 0U;
-			}
-		}
-	}
-#endif
-}
 
 static uint16_t offset_flag5 = 0;
 static void SendNextDataFlag5()
@@ -205,29 +161,79 @@ static void SendNextDataFlag7()
 			break;
 		}
 	}
-
-
 }
 
+#endif
+
+void 	RAMN_CTF_Init(uint32_t tick)
+{
+#ifdef TARGET_ECUD
+	ctfLoopCounter = 0;
+#endif
+}
+
+
+void	RAMN_CTF_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, const uint8_t* data, uint32_t tick)
+{
+#ifdef TARGET_ECUD
+	if (pHeader->RxFrameType == FDCAN_DATA_FRAME)
+	{
+		if (pHeader->Identifier == CTF_STANDARD_ID_1)
+		{
+			sendFlagOverCAN(0x770, FLAG_CAN_1);
+		}
+	}
+
+	if (pHeader->RxFrameType == FDCAN_REMOTE_FRAME)
+	{
+		if (pHeader->Identifier == CTF_STANDARD_ID_2)
+		{
+			sendFlagOverCAN(0x772, FLAG_CAN_2);
+		}
+	}
+
+	if (pHeader->RxFrameType == FDCAN_DATA_FRAME)
+	{
+		if (pHeader->Identifier == CTF_STANDARD_ID_3)
+		{
+			if (memcmp(data,"GIVEFLAG",8) == 0) sendFlagOverCAN(0x771, FLAG_CAN_3);
+		}
+	}
+
+	if (checkIfShouldSendFlag4(pHeader,data) != 0U) sendFlagOverCAN(0x773, FLAG_CAN_4);
+
+	if (pHeader->RxFrameType == FDCAN_DATA_FRAME)
+	{
+		if (pHeader->Identifier == CTF_STANDARD_ID_4)
+		{
+			if (pHeader->DataLength == 0)
+			{
+				periodicFlagEnabled = True;
+				ctfLoopCounter = 0U;
+			}
+		}
+	}
+#endif
+}
 
 void RAMN_CTF_Update(uint32_t tick)
 {
 #ifdef TARGET_ECUD
-	if (periodic_flag_enabled)
+	if (periodicFlagEnabled)
 	{
-		if ((ctf_loop_counter % 10) == 0)
+		if ((ctfLoopCounter % 10) == 0)
 		{
 			SendNextDataFlag5();
 			SendNextDataFlag6();
 		}
 
-		if ((ctf_loop_counter % 100) == 0)
+		if ((ctfLoopCounter % 100) == 0)
 		{
 			SendNextDataFlag7();
 
 		}
 
-		ctf_loop_counter += 1;
+		ctfLoopCounter += 1;
 	}
 #endif
 }

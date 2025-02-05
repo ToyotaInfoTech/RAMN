@@ -20,10 +20,10 @@
 #define INC_RAMN_CONFIG_H_
 
 #if !defined(TARGET_ECUA) && !defined(TARGET_ECUB) && !defined(TARGET_ECUC) && !defined(TARGET_ECUD)
-#define TARGET_ECUA
+//#define TARGET_ECUA
 //#define TARGET_ECUB
 //#define TARGET_ECUC
-//#define TARGET_ECUD
+#define TARGET_ECUD
 #endif
 
 //Loop time for the "simulator" that is executed periodically
@@ -232,6 +232,13 @@
 //RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
 //RCC_OscInitStruct.PLL.PLLN = 10;
 
+#ifdef ENABLE_MINICTF
+#define CTF_EXTENDED_ID 0x77cafe
+#define CTF_STANDARD_ID_1 0x456
+#define CTF_STANDARD_ID_2 0x772
+#define CTF_STANDARD_ID_3 0x457
+#define CTF_STANDARD_ID_4 0x458
+#endif
 
 #if defined(ENABLE_UART) && defined(ENABLE_USB)
 #error Default code does not support UART and USB at the same time. See comments for details.
