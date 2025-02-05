@@ -21,19 +21,24 @@
 
 #include "main.h"
 
+/////////////////////////////////////////////////////////////////////
+// Hardware CRC and Software CRC may use different CRC parameters. //
+/////////////////////////////////////////////////////////////////////
+
 //Initializes the module
 void RAMN_CRC_Init(CRC_HandleTypeDef* h);
 
+// These functions use the CRC engine (that may be overtaken by the EEPROM emulation layer).
+// You can still use them if you ensure there is no conflict
+#ifndef ENABLE_EEPROM_EMULATION
 // Computes the CRC of specified buffer (Hardware implementation, not compatible with EEPROM emulation).
-//Note that Hardware CRC and Software CRC may use different CRC parameters.
 uint32_t RAMN_CRC_Calculate(const uint8_t* src, uint32_t size);
 
-//Accumulates the CRC with specified buffer  (Hardware implementation, not compatible with EEPROM emulation).
-//Note that Hardware CRC and Software CRC may use different CRC parameters.
+// Accumulates the CRC with specified buffer  (Hardware implementation, not compatible with EEPROM emulation).
 uint32_t RAMN_CRC_Accumulate(const uint8_t* src, uint32_t size);
+#endif
 
 // Computes the CRC of specified buffer (Software implementation).
-//Note that Hardware CRC and Software CRC may use different CRC parameters.
 uint32_t RAMN_CRC_SoftCalculate(const uint8_t* buf, uint32_t size);
 
 
