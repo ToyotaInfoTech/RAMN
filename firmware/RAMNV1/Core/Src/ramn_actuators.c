@@ -3,7 +3,7 @@
  ******************************************************************************
  * @attention
  *
- * <h2><center>&copy; Copyright (c) 2024 TOYOTA MOTOR CORPORATION.
+ * <h2><center>&copy; Copyright (c) 2025 TOYOTA MOTOR CORPORATION.
  * ALL RIGHTS RESERVED.</center></h2>
  *
  * This software component is licensed by TOYOTA MOTOR CORPORATION under BSD 3-Clause license,
@@ -15,14 +15,15 @@
  */
 
 #include "ramn_actuators.h"
-#include "ramn_sensors.h"
 
 #ifdef EXPANSION_BODY
+//Byte that store the state of each LED of ECU D.
 static uint8_t LEDState;
 #endif
 
-#ifdef PERFORM_STARTUP_LED_TEST
-RAMN_Bool_t led_test_over = False;
+#if (LED_TEST_DURATION_MS > 0U)
+//Bool set to 1 when the LED Test over is over. Used to avoid redoing the test on SysTick overflow.
+static RAMN_Bool_t LEDTestOver = False;
 #endif
 
 void RAMN_ACTUATORS_Init(void)
@@ -31,7 +32,6 @@ void RAMN_ACTUATORS_Init(void)
 	LEDState = (uint8_t)(RAMN_DBC_Handle.control_lights&0xFF);
 	RAMN_SPI_UpdateLED(&LEDState);
 #endif
-
 }
 
 void RAMN_ACTUATORS_SetLampState(uint8_t mask, uint8_t val)
@@ -57,15 +57,9 @@ void RAMN_ACTUATORS_ApplyControls(uint32_t tick)
 #elif defined(EXPANSION_BODY) //BODY
 	msg_control_enginekey.data->ramn_data.payload = RAMN_DBC_Handle.control_enginekey;
 	msg_control_lights.data->ramn_data.payload = RAMN_DBC_Handle.control_lights;
-#ifdef PERFORM_STARTUP_LED_TEST
-	if((tick < 3000) && (led_test_over == False))
-	{
-		RAMN_DBC_Handle.control_lights = 0xFF;
-	}
-	else
-	{
-		led_test_over = True;
-	}
+#if (LED_TEST_DURATION_MS > 0)
+	if((tick < LED_TEST_DURATION_MS) && (LEDTestOver == False)) RAMN_DBC_Handle.control_lights = 0xFF;
+	else LEDTestOver = True;
 #endif
 	RAMN_SPI_UpdateLED((uint8_t*)&(RAMN_DBC_Handle.control_lights));
 #endif

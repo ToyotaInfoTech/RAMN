@@ -124,8 +124,9 @@
 //#define ENABLE_KWP
 #define ENABLE_XCP
 #define RTR_DEMO_ID 0x703
-//enable define below to force LEDs to light up for 3 seconds at startup
-#define PERFORM_STARTUP_LED_TEST
+
+//How long to light up ECU D's LEDs at startup. Set to 0 to skip test.
+#define LED_TEST_DURATION_MS 3000U
 #endif
 
 #if defined(ENABLE_UDS) || defined(ENABLE_KWP) || defined(ENABLE_XCP)
