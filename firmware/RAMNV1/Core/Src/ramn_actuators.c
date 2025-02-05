@@ -17,12 +17,12 @@
 #include "ramn_actuators.h"
 
 #ifdef EXPANSION_BODY
-//Byte that store the state of each LED of ECU D.
+// Byte that store the state of each LED of ECU D.
 static uint8_t LEDState;
 #endif
 
 #if (LED_TEST_DURATION_MS > 0U)
-//Bool set to 1 when the LED Test over is over. Used to avoid redoing the test on SysTick overflow.
+// Bool set to 1 when the LED Test over is over. Used to avoid redoing the test on SysTick overflow.
 static RAMN_Bool_t LEDTestOver = False;
 #endif
 
