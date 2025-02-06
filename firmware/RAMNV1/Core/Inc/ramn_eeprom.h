@@ -3,7 +3,7 @@
  ******************************************************************************
  * @attention
  *
- * <h2><center>&copy; Copyright (c) 2021 TOYOTA MOTOR CORPORATION.
+ * <h2><center>&copy; Copyright (c) 2025 TOYOTA MOTOR CORPORATION.
  * ALL RIGHTS RESERVED.</center></h2>
  *
  * This software component is licensed by TOYOTA MOTOR CORPORATION under BSD 3-Clause license,
@@ -14,7 +14,7 @@
  ******************************************************************************
  */
 
-//This modules wraps the EEPROM emulation layer of STMicroelectronics (cf. AN4894)
+// This modules wraps the EEPROM emulation layer of STMicroelectronics (cf. AN4894)
 
 #ifndef INC_RAMN_EEPROM_H_
 #define INC_RAMN_EEPROM_H_
@@ -24,6 +24,10 @@
 #if defined(ENABLE_EEPROM_EMULATION)
 
 #include "eeprom_emul.h"
+
+#if PAGES_NUMBER > 4
+#warning "EEPROM layer using more than 4 pages"
+#endif
 
 // Index 0x0000 is not supported (reserved by EEPROM Layer)
 // Index 0x0001 to 0x00FF are reserved for internal management
@@ -41,13 +45,13 @@
 #define DTC_LAST_VALID_ADDRESS	0x00FF
 #define RESERVED_FFFF_INDEX     0xFFFF
 
-//Inits the EEPROM Layer. May take some time.
+// Initializes the EEPROM Layer. May take some time.
 EE_Status 	RAMN_EEPROM_Init();
 
-//Writes a 32-bit value at the specified index. May take some time.
+// Writes a 32-bit value at the specified index. May take some time.
 EE_Status 	RAMN_EEPROM_Write32(uint16_t index, uint32_t val);
 
-//Reads a 32-bit value from the specified index.
+// Reads a 32-bit value from the specified index.
 EE_Status 	RAMN_EEPROM_Read32(uint16_t index, uint32_t* pval);
 
 #endif
