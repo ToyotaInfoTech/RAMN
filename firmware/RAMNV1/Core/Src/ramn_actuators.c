@@ -50,7 +50,7 @@ void RAMN_ACTUATORS_ApplyControls(uint32_t tick)
 #elif defined(EXPANSION_POWERTRAIN) //POWERTRAIN
 	msg_control_brake.data->ramn_data.payload = switchEndian16((uint16_t)RAMN_DBC_Handle.control_brake);
 	msg_control_accel.data->ramn_data.payload = switchEndian16((uint16_t)RAMN_DBC_Handle.control_accel);
-	msg_control_shift.data->ramn_data.payload = RAMN_DBC_Handle.control_shift | (RAMN_SENSORS_POWERTRAIN.shift_lever << 8);
+	msg_control_shift.data->ramn_data.payload = RAMN_DBC_Handle.control_shift | (RAMN_DBC_Handle.joystick << 8);
 	msg_command_horn.data->ramn_data.payload = RAMN_DBC_Handle.command_horn;
 	msg_command_turnindicator.data->ramn_data.payload = RAMN_DBC_Handle.command_turnindicator;
 

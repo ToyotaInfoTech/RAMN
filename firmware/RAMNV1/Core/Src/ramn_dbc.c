@@ -60,7 +60,7 @@ void RAMN_DBC_ProcessCANMessage(uint32_t canid, uint32_t dlc, RAMN_CANFrameData_
 {
 	// Ignore fields other than useful data
 	dataframe->ramn_data.payload = dataframe->ramn_data.payload&0xFFFF;
-	if (dlc <= 1U) dataframe->ramn_data.payload = dataframe->ramn_data.payload&0xFF;
+	if (dlc <= 1U) dataframe->ramn_data.payload = dataframe->ramn_data.payload&0xFF; //TODO: reject dlc == 2U message instead of casting them?
 
 	// To avoid overloading the ECU with processing of incoming messages, only expected messages are included in the switch/case
 	if (dlc != 0)
@@ -104,10 +104,12 @@ void RAMN_DBC_ProcessCANMessage(uint32_t canid, uint32_t dlc, RAMN_CANFrameData_
 #endif
 #ifdef RECEIVE_CONTROL_SHIFT
 		case CAN_SIM_CONTROL_SHIFT_CANID:
-			RAMN_DBC_Handle.control_shift				= dataframe->ramn_data.payload;
-#ifdef ENABLE_SCREEN
-			RAMN_Joystick_Update(RAMN_DBC_Handle.control_shift >> 8);
-#endif
+			RAMN_DBC_Handle.control_shift				=  dataframe->ramn_data.payload&0xFF;
+			if (dlc >= 2U)
+			{
+				RAMN_DBC_Handle.joystick					= (dataframe->ramn_data.payload>>8)&0xFF;
+				RAMN_Joystick_Update(RAMN_DBC_Handle.joystick);
+			}
 			break;
 #endif
 #ifdef RECEIVE_COMMAND_SHIFT
