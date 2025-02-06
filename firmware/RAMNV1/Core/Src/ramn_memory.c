@@ -137,35 +137,7 @@ RAMN_Result_t RAMN_FLASH_ConfigureOptionBytesApplicationMode(void)
 	else return RAMN_ERROR;
 }
 
-RAMN_Result_t RAMN_FLASH_ConfigureOptionBytesBootloaderMode(void)
-{
-	FLASH_OBProgramInitTypeDef obHandle;
-	HAL_StatusTypeDef result = HAL_OK;
-
-	__disable_irq();
-	HAL_FLASHEx_OBGetConfig(&obHandle);
-
-	obHandle.OptionType = OPTIONBYTE_USER;
-	obHandle.USERType = OB_USER_nSWBOOT0;
-	obHandle.USERConfig = obHandle.USERConfig | OB_BOOT0_FROM_PIN;
-
-	result |= HAL_FLASH_Unlock();
-	if (result == HAL_OK) {
-		result |=  HAL_FLASH_OB_Unlock();
-		if (result == HAL_OK) {
-			result |= HAL_FLASHEx_OBProgram(&obHandle);
-			if (result == HAL_OK) result |= HAL_FLASH_OB_Launch(); // Should reset here
-			else
-			{
-				result |= HAL_FLASH_OB_Lock();
-				result |= HAL_FLASH_Lock();
-			}
-		}
-
-	}
-	__enable_irq();
-	return RAMN_ERROR;
-}
+#endif
 
 // This function is essentially the same as RAMN_FLASH_ConfigureRDPOptionByte, but everything is in RAM.
 // TODO: merge with RAMN_FLASH_ConfigureRDPOptionByte (?)
@@ -228,8 +200,35 @@ __attribute__((__section__(".RamFunc"))) RAMN_Result_t RAMN_FLASH_RemoveMemoryPr
 	return RAMN_ERROR; 	// Should not reach here.
 }
 
-#endif
+RAMN_Result_t RAMN_FLASH_ConfigureOptionBytesBootloaderMode(void)
+{
+	FLASH_OBProgramInitTypeDef obHandle;
+	HAL_StatusTypeDef result = HAL_OK;
 
+	__disable_irq();
+	HAL_FLASHEx_OBGetConfig(&obHandle);
+
+	obHandle.OptionType = OPTIONBYTE_USER;
+	obHandle.USERType = OB_USER_nSWBOOT0;
+	obHandle.USERConfig = obHandle.USERConfig | OB_BOOT0_FROM_PIN;
+
+	result |= HAL_FLASH_Unlock();
+	if (result == HAL_OK) {
+		result |=  HAL_FLASH_OB_Unlock();
+		if (result == HAL_OK) {
+			result |= HAL_FLASHEx_OBProgram(&obHandle);
+			if (result == HAL_OK) result |= HAL_FLASH_OB_Launch(); // Should reset here
+			else
+			{
+				result |= HAL_FLASH_OB_Lock();
+				result |= HAL_FLASH_Lock();
+			}
+		}
+
+	}
+	__enable_irq();
+	return RAMN_ERROR;
+}
 
 #ifdef MEMORY_AUTOLOCK
 
@@ -262,7 +261,6 @@ RAMN_Result_t RAMN_FLASH_ConfigureRDPOptionByte(uint8_t val)
 }
 
 #endif
-
 
 RAMN_Result_t RAMN_FLASH_SwitchActiveBank(void)
 {
