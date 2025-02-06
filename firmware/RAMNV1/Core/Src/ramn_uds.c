@@ -930,11 +930,11 @@ static void RAMN_UDS_RoutineControlAutopilot(const uint8_t* data, uint16_t size)
 	else{
 		switch (data[1]){
 		case 0x01://Start
-			autopilot_enabled = True;
+			RAMN_SIM_AutopilotEnabled = True;
 			RAMN_UDS_FormatPositiveResponseEcho(data, size);
 			break;
 		case 0x02://Stop
-			autopilot_enabled = False;
+			RAMN_SIM_AutopilotEnabled = False;
 			RAMN_UDS_FormatPositiveResponseEcho(data, size);
 			break;
 		case 0x03://Read Results
