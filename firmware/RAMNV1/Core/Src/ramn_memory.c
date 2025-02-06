@@ -3,7 +3,7 @@
  ******************************************************************************
  * @attention
  *
- * <h2><center>&copy; Copyright (c) 2021 TOYOTA MOTOR CORPORATION.
+ * <h2><center>&copy; Copyright (c) 2025 TOYOTA MOTOR CORPORATION.
  * ALL RIGHTS RESERVED.</center></h2>
  *
  * This software component is licensed by TOYOTA MOTOR CORPORATION under BSD 3-Clause license,
@@ -18,22 +18,18 @@
 
 //  Private Functions -----------------------------------
 
-
-static uint32_t getInactiveBank()
+// Using uint32_t to stay consistent with macro
+static uint32_t MEMORY_GetInactiveBank()
 {
 	FLASH_OBProgramInitTypeDef    OBInit;
 
-	HAL_FLASH_OB_Unlock();
-	OBInit.OptionType = OPTIONBYTE_USER;
-	OBInit.USERType   = OB_USER_SWAP_BANK;
 	HAL_FLASHEx_OBGetConfig(&OBInit);
-	HAL_FLASH_OB_Lock();
 
 	if (((OBInit.USERConfig) & (OB_SWAP_BANK_ENABLE)) == OB_SWAP_BANK_ENABLE) return FLASH_BANK_1;
 	else return FLASH_BANK_2;
 }
 
-static HAL_StatusTypeDef EraseBank(uint32_t bank)
+static HAL_StatusTypeDef MEMORY_EraseBank(uint32_t bank)
 {
 	uint32_t PageError = 0;
 	FLASH_EraseInitTypeDef EraseInitStruct;
@@ -47,6 +43,54 @@ static HAL_StatusTypeDef EraseBank(uint32_t bank)
 }
 
 // Exported Functions -----------------------------------
+
+RAMN_Bool_t RAMN_FLASH_CheckFlashAreaValidForFirmware(uint32_t start, uint32_t end)
+{
+	RAMN_Bool_t result = True;
+
+	if (end <= start) result = False; // Consider empty firmware as invalid
+	else if ((start < FLASH_START_ADDRESS) || (start >= FLASH_FIRMWARE_END_ADDRESS)) result = False;
+	else if ((end <= FLASH_START_ADDRESS) || (end > FLASH_FIRMWARE_END_ADDRESS)) result = False;
+
+	return result;
+}
+
+RAMN_Bool_t RAMN_RAM_CheckAreaWritable(uint32_t start, uint32_t end)
+{
+	uint8_t result = False;
+
+	if (end <= start) result = False; // Consider empty data as invalid
+	else if ((start >= SRAM1_START_ADDRESS) && (end <= SRAM2_END_ADDRESS)) result = True;
+
+	return result;
+}
+
+RAMN_Bool_t RAMN_MEMORY_CheckAreaReadable(uint32_t start, uint32_t end)
+{
+	RAMN_Bool_t result = False;
+
+	if (end <= start) result = False; // Consider empty data as invalid
+	else if ((start >= SRAM1_START_ADDRESS) 		&& (end <= SRAM2_END_ADDRESS)) result = True;
+	else if ((start >= OTP_START_ADDRESS) 			&& (end <= OTP_STOP_ADDRESS)) result = True;
+	else if ((start >= SYSTEMFLASH_START_ADDRESS) 	&& (end <= SYSTEMFLASH_STOP_ADDRESS)) result = True;
+	else if ((start >= OPTIONBYTES_START_ADDRESS) 	&& (end <= OPTIONBYTES_STOP_ADDRESS)) result = True;
+	else if ((start >= FLASH_START_ADDRESS) 		&& (end <= FLASH_END_ADDRESS))
+	{
+		if (*(const uint16_t*)FLASHSIZE_BASE == 512) result = True; // Flash size may be 256 or 512 depending on uc
+		else if (end <= FLASH_START_ADDRESS + ((FLASH_END_ADDRESS-FLASH_START_ADDRESS)/2)) result = True;
+	}
+
+	return result;
+}
+
+RAMN_Bool_t RAMN_FLASH_isMemoryProtected(void)
+{
+	FLASH_OBProgramInitTypeDef obHandle;
+
+	HAL_FLASHEx_OBGetConfig(&obHandle);
+	if(obHandle.RDPLevel == OB_RDP_LEVEL_0) return False;
+	else return True;
+}
 
 
 #if defined(TARGET_ECUA)
@@ -64,76 +108,35 @@ RAMN_Result_t RAMN_FLASH_ConfigureOptionBytesApplicationMode(void)
 
 	HAL_FLASHEx_OBGetConfig(&obHandle);
 
-	if((obHandle.USERConfig & OB_BOOT0_FROM_PIN) ||!(obHandle.USERConfig & OB_nBOOT0_SET))
+	if((result != HAL_OK) || (obHandle.USERConfig & OB_BOOT0_FROM_PIN))
 	{
-		FLASH_OBProgramInitTypeDef obHandle;
-		HAL_FLASHEx_OBGetConfig(&obHandle);
-
 		if (HAL_GPIO_ReadPin (SELF_BOOT0_GPIO_Port, SELF_BOOT0_Pin) == GPIO_PIN_RESET)
 		{
 			//BOOT0 is low, someone probably flashed ECUA firmware to ECUB/C/D by mistake, do not change option bytes.
-			return RAMN_ERROR;
+			result =  HAL_ERROR;
 		}
+		else
+		{
+			obHandle.OptionType = OPTIONBYTE_USER;
+			obHandle.USERType = OB_USER_nSWBOOT0 | OB_USER_nBOOT0;
+			obHandle.USERConfig = obHandle.USERConfig | OB_nBOOT0_SET;
+			obHandle.USERConfig = (obHandle.USERConfig & ~(OB_BOOT0_FROM_PIN));
 
-		obHandle.OptionType = OPTIONBYTE_USER;
-		obHandle.USERType = OB_USER_nSWBOOT0 | OB_USER_nBOOT0;
-		obHandle.USERConfig = obHandle.USERConfig | OB_nBOOT0_SET;
-		obHandle.USERConfig = (obHandle.USERConfig & ~(OB_BOOT0_FROM_PIN));
+			__disable_irq();
+			result |= HAL_FLASH_Unlock();
+			result |= HAL_FLASH_OB_Unlock();
+			result |= HAL_FLASHEx_OBProgram(&obHandle);
+			result |= HAL_FLASH_OB_Launch(); //resets automatically here
+			result |= HAL_FLASH_OB_Lock();
+			result |= HAL_FLASH_Lock();
+			__enable_irq();
 
-		__disable_irq();
-		result |= HAL_FLASH_Unlock();
-		result |= HAL_FLASH_OB_Unlock();
-		result |= HAL_FLASHEx_OBProgram(&obHandle);
-		result |= HAL_FLASH_OB_Launch(); //resets automatically here
-		result |= HAL_FLASH_OB_Lock();
-		result |= HAL_FLASH_Lock();
-		__enable_irq();
-
+		}
 	}
-
 	if (result == HAL_OK) return RAMN_OK;
 	else return RAMN_ERROR;
 }
 
-#endif
-
-RAMN_Bool_t RAMN_FLASH_isMemoryProtected(void)
-{
-	FLASH_OBProgramInitTypeDef obHandle;
-
-	HAL_FLASHEx_OBGetConfig(&obHandle);
-	if(obHandle.RDPLevel == OB_RDP_LEVEL_0) return False;
-	else return True;
-
-}
-
-
-RAMN_Result_t RAMN_FLASH_ConfigureRDPOptionByte(uint8_t val)
-{
-	HAL_StatusTypeDef result = HAL_OK;
-	FLASH_OBProgramInitTypeDef obHandle;
-
-	HAL_FLASHEx_OBGetConfig(&obHandle);
-
-	obHandle.OptionType = OPTIONBYTE_RDP;
-	obHandle.RDPLevel = val;
-
-	__disable_irq();
-	result |= HAL_FLASH_Unlock();
-	result |= HAL_FLASH_OB_Unlock();
-	result |= HAL_FLASHEx_OBProgram(&obHandle);
-	result |= HAL_FLASH_OB_Launch(); //resets automatically here
-	result |= HAL_FLASH_OB_Lock();
-	result |= HAL_FLASH_Lock();
-	__enable_irq();
-
-	if (result == HAL_OK) return RAMN_OK;
-	else return RAMN_ERROR;
-
-}
-
-
-//Must be placed in RAM because this function will erase flash
 RAMN_Result_t RAMN_FLASH_ConfigureOptionBytesBootloaderMode(void)
 {
 	FLASH_OBProgramInitTypeDef obHandle;
@@ -151,10 +154,7 @@ RAMN_Result_t RAMN_FLASH_ConfigureOptionBytesBootloaderMode(void)
 		result |=  HAL_FLASH_OB_Unlock();
 		if (result == HAL_OK) {
 			result |= HAL_FLASHEx_OBProgram(&obHandle);
-			if (result == HAL_OK)
-			{
-				result |= HAL_FLASH_OB_Launch(); //Reset will be generated
-			}
+			if (result == HAL_OK) result |= HAL_FLASH_OB_Launch(); // Should reset here
 			else
 			{
 				result |= HAL_FLASH_OB_Lock();
@@ -163,18 +163,18 @@ RAMN_Result_t RAMN_FLASH_ConfigureOptionBytesBootloaderMode(void)
 		}
 
 	}
-
 	__enable_irq();
-	if (result == HAL_OK) return RAMN_OK;
-	else return RAMN_ERROR;
+	return RAMN_ERROR;
 }
 
-
+// This function is essentially the same as RAMN_FLASH_ConfigureRDPOptionByte, but everything is in RAM.
+// TODO: merge with RAMN_FLASH_ConfigureRDPOptionByte (?)
 __attribute__((__section__(".RamFunc"))) RAMN_Result_t RAMN_FLASH_RemoveMemoryProtection(void)
 {
 	FLASH_OBProgramInitTypeDef obHandle;
-	HAL_StatusTypeDef result = HAL_OK;
 	HAL_StatusTypeDef status;
+
+	// Do not use HAL library as this should be all in RAM
 
 	__disable_irq();
 	HAL_FLASHEx_OBGetConfig(&obHandle);
@@ -182,29 +182,22 @@ __attribute__((__section__(".RamFunc"))) RAMN_Result_t RAMN_FLASH_RemoveMemoryPr
 	obHandle.OptionType = OPTIONBYTE_USER | OPTIONBYTE_RDP;
 	obHandle.USERType = OB_USER_nSWBOOT0;
 	obHandle.USERConfig = obHandle.USERConfig | OB_BOOT0_FROM_PIN;
-	obHandle.RDPLevel = OB_RDP_LEVEL_0; //This will not work if RDP level is set to 2 (permanently locked).
+	obHandle.RDPLevel = OB_RDP_LEVEL_0;
 
 	if(READ_BIT(FLASH->NSCR, FLASH_NSCR_NSLOCK) != 0u)
 	{
-		/* Authorize the FLASH Registers access */
 		WRITE_REG(FLASH->NSKEYR, FLASH_KEY1);
 		WRITE_REG(FLASH->NSKEYR, FLASH_KEY2);
 	}
 
 	if(READ_BIT(FLASH->NSCR, FLASH_NSCR_OPTLOCK) != 0u)
 	{
-		/* Authorizes the Option Byte register programming */
 		WRITE_REG(FLASH->OPTKEYR, FLASH_OPTKEY1);
 		WRITE_REG(FLASH->OPTKEYR, FLASH_OPTKEY2);
 	}
 
-	/* Process Locked */
 	__HAL_LOCK(&pFlash);
-
-	/* Reset error code */
 	pFlash.ErrorCode = HAL_FLASH_ERROR_NONE;
-
-	/* Wait for last operation to be completed */
 	status = FLASH_WaitForLastOperation(FLASH_TIMEOUT_VALUE);
 
 	if(status == HAL_OK)
@@ -216,45 +209,67 @@ __attribute__((__section__(".RamFunc"))) RAMN_Result_t RAMN_FLASH_RemoveMemoryPr
 		optr_reg_val |= (obHandle.USERConfig & FLASH_OPTR_nSWBOOT0);
 		optr_reg_mask |= FLASH_OPTR_nSWBOOT0;
 
-		/* Configure the option bytes register */
 		MODIFY_REG(FLASH->OPTR, optr_reg_mask, optr_reg_val);
-
-		/* Set OPTSTRT Bit */
 		SET_BIT(FLASH->NSCR, FLASH_NSCR_OPTSTRT);
 
-		/* Wait for last operation to be completed */
 		status = FLASH_WaitForLastOperation(FLASH_TIMEOUT_VALUE);
 	}
 
-	/* Process Unlocked */
 	__HAL_UNLOCK(&pFlash);
 
-	//result |= HAL_FLASHEx_OBProgram(&obHandle);
-
-	if (status == HAL_OK)
-	{
-		SET_BIT(FLASH->NSCR, FLASH_NSCR_OBL_LAUNCH); //do not use HAL library as this will be loaded in RAM
-	}
+	if (status == HAL_OK) SET_BIT(FLASH->NSCR, FLASH_NSCR_OBL_LAUNCH);
 	else
 	{
 		SET_BIT(FLASH->NSCR, FLASH_NSCR_OPTLOCK);
-		SET_BIT(FLASH->NSCR, FLASH_NSCR_NSLOCK);
+		SET_BIT(FLASH->NSCR, FLASH_NSCR_NSLOCK); // Should reset here
 	}
 
-	//Should not reach here.
-
 	__enable_irq();
-	if (status == HAL_OK) return RAMN_OK;
-	else return RAMN_ERROR;
+	return RAMN_ERROR; 	// Should not reach here.
 }
+
+#endif
+
+
+#ifdef MEMORY_AUTOLOCK
+
+RAMN_Result_t RAMN_FLASH_ConfigureRDPOptionByte(uint8_t val)
+{
+	HAL_StatusTypeDef result = HAL_OK;
+	FLASH_OBProgramInitTypeDef obHandle;
+
+	// User trying to unlock an already unlocked ECU, just return OK.
+	if ((RAMN_FLASH_isMemoryProtected() == False) && (val == OB_RDP_LEVEL_0)) return RAMN_OK;
+
+	// User trying to unlock an already locked board, should use the remove protection feature instead.
+	else if ((RAMN_FLASH_isMemoryProtected() == True) && (val == OB_RDP_LEVEL_0)) return RAMN_ERROR;
+
+	HAL_FLASHEx_OBGetConfig(&obHandle);
+
+	obHandle.OptionType = OPTIONBYTE_RDP;
+	obHandle.RDPLevel = val;
+
+	__disable_irq();
+	result |= HAL_FLASH_Unlock();
+	result |= HAL_FLASH_OB_Unlock();
+	result |= HAL_FLASHEx_OBProgram(&obHandle);
+	result |= HAL_FLASH_OB_Launch(); // Should reset here
+	result |= HAL_FLASH_OB_Lock();
+	result |= HAL_FLASH_Lock();
+	__enable_irq();
+
+	return RAMN_ERROR; // Should not reach here
+}
+
+#endif
 
 
 RAMN_Result_t RAMN_FLASH_SwitchActiveBank(void)
 {
 	HAL_StatusTypeDef result = HAL_OK;
 	FLASH_OBProgramInitTypeDef OBInit;
-	result = HAL_FLASH_Unlock();
 
+	result = HAL_FLASH_Unlock();
 	result |= HAL_FLASH_OB_Unlock();
 
 	HAL_FLASHEx_OBGetConfig(&OBInit);
@@ -262,23 +277,13 @@ RAMN_Result_t RAMN_FLASH_SwitchActiveBank(void)
 	OBInit.OptionType = OPTIONBYTE_USER;
 	OBInit.USERType   = OB_USER_SWAP_BANK;
 
-	if (((OBInit.USERConfig) & (OB_SWAP_BANK_ENABLE)) == OB_SWAP_BANK_ENABLE)
-	{
-		OBInit.USERConfig = OB_SWAP_BANK_DISABLE;
-	}
-	else
-	{
-		OBInit.USERConfig = OB_SWAP_BANK_ENABLE;
-	}
+	if (((OBInit.USERConfig) & (OB_SWAP_BANK_ENABLE)) == OB_SWAP_BANK_ENABLE) OBInit.USERConfig = OB_SWAP_BANK_DISABLE;
+	else OBInit.USERConfig = OB_SWAP_BANK_ENABLE;
 
 	if (result == HAL_OK)
 	{
 		result |= HAL_FLASHEx_OBProgram (&OBInit);
-		if (result == HAL_OK)
-		{
-			//TODO: Do not reset launch here?
-			result |= HAL_FLASH_OB_Launch();
-		}
+		if (result == HAL_OK) result |= HAL_FLASH_OB_Launch(); //TODO: Do not reset launch here?
 	}
 
 	result |= HAL_FLASH_OB_Lock();
@@ -292,7 +297,7 @@ RAMN_Result_t RAMN_FLASH_EraseAlternativeFirmware(void)
 {
 	HAL_StatusTypeDef result;
 	result =  HAL_FLASH_Unlock();
-	result |= EraseBank(getInactiveBank());
+	result |= MEMORY_EraseBank(MEMORY_GetInactiveBank());
 	result |= HAL_FLASH_Lock();
 
 	if (result == HAL_OK) return RAMN_OK;
@@ -304,22 +309,19 @@ RAMN_Result_t RAMN_FLASH_CopyEEPROMToInactiveBank(void)
 #if defined(ENABLE_EEPROM_EMULATION)
 	HAL_StatusTypeDef result;
 	uint32_t startAddress = START_PAGE_ADDRESS;
-	uint32_t endAddress = 0x08040000;
+	uint32_t endAddress = FLASH_FIRMWARE_END_ADDRESS;
 	result = HAL_FLASH_Unlock();
 	for (uint32_t addr = startAddress; addr < endAddress; addr += 8)
 	{
 		//Only copy if memory is not written
-		if((uint64_t)(*(uint64_t*)(addr)) != 0xFFFFFFFFFFFFFFFF)
-		{
-			result |= RAMN_FLASH_Write64(addr + 0x00040000, (uint64_t)(*(uint64_t*)(addr)));
-		}
+		if((uint64_t)(*(uint64_t*)(addr)) != 0xFFFFFFFFFFFFFFFF) result |= RAMN_FLASH_Write64(addr + 0x00040000, (uint64_t)(*(uint64_t*)(addr)));
 	}
 	result |= HAL_FLASH_Lock();
 
 	if (result == HAL_OK) return RAMN_OK;
 	else return RAMN_ERROR;
 #endif
-	return RAMN_OK;
+	return RAMN_ERROR;
 }
 
 RAMN_Result_t RAMN_FLASH_EraseActiveEEPROM(void)
@@ -331,7 +333,7 @@ RAMN_Result_t RAMN_FLASH_EraseActiveEEPROM(void)
 	result = HAL_FLASH_Unlock();
 
 	EraseInitStruct.TypeErase   = FLASH_TYPEERASE_PAGES;
-	EraseInitStruct.Banks       = (getInactiveBank() == FLASH_BANK_1) ? FLASH_BANK_2: FLASH_BANK_1;
+	EraseInitStruct.Banks       = (MEMORY_GetInactiveBank() == FLASH_BANK_1) ? FLASH_BANK_2: FLASH_BANK_1;
 	EraseInitStruct.Page        = 124;
 	EraseInitStruct.NbPages     = 4;
 
@@ -349,87 +351,4 @@ RAMN_Result_t RAMN_FLASH_Write64(uint32_t address, uint64_t data)
 
 	if (result == HAL_OK) return RAMN_OK;
 	else return RAMN_ERROR;
-}
-
-RAMN_Bool_t RAMN_FLASH_CheckFlashAreaValidForFirmware(uint32_t start, uint32_t end)
-{
-	RAMN_Bool_t result = True;
-	if ((start < 0x08000000) || (start >= 0x0803E000))
-	{
-		result = False;
-	}
-	if ((end < 0x08000000) || (end >= 0x0803E000))
-	{
-		result = False;
-	}
-	if (start > end)
-	{
-		result = False;
-	}
-	return result;
-}
-
-RAMN_Bool_t RAMN_RAM_CheckAreaWritable(uint32_t start, uint32_t end)
-{
-	uint8_t result = False;
-	if (end < start)
-	{
-		//Overflow
-		result = False;
-	}
-	else if ((start >= SRAM1_START_ADDRESS) && (end <= SRAM1_END_ADDRESS))
-	{
-		result = True;
-	}
-	else if ((start >= SRAM2_START_ADDRESS) && (end <= SRAM2_END_ADDRESS))
-	{
-		result = True;
-	}
-	return result;
-}
-
-// "end" address excluded
-RAMN_Bool_t RAMN_MEMORY_CheckAreaReadable(uint32_t start, uint32_t end)
-{
-	RAMN_Bool_t result = False;
-	if (end < start)
-	{
-		//Overflow
-		result = False;
-	}
-	else if ((start >= FLASH_START_ADDRESS) && (end <= FLASH_END_ADDRESS))
-	{
-		uint16_t memsize = *(const uint16_t*)FLASHSIZE_BASE;
-		if (memsize == 512)
-		{
-			result = True;
-		}
-		else
-		{
-			uint32_t flash_end = FLASH_START_ADDRESS + ((FLASH_END_ADDRESS-FLASH_START_ADDRESS)/2);
-			if (end <= flash_end) result = True;
-		}
-	}
-	else if ((start >= SRAM1_START_ADDRESS) && (end <= SRAM1_END_ADDRESS))
-	{
-		result = True;
-	}
-	else if ((start >= SRAM2_START_ADDRESS) && (end <= SRAM2_END_ADDRESS))
-	{
-		result = True;
-	}
-	else if ((start >= OTP_START_ADDRESS) && (end <= OTP_STOP_ADDRESS))
-	{
-		result = True;
-	}
-	else if ((start >= SYSTEMFLASH_START_ADDRESS) && (end < SYSTEMFLASH_STOP_ADDRESS))
-	{
-		result = True;
-	}
-	else if ((start >= OPTIONBYTES_START_ADDRESS) && (end < OPTIONBYTES_STOP_ADDRESS))
-	{
-		result = True;
-	}
-
-	return result;
 }

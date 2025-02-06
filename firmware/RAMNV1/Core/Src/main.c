@@ -402,10 +402,7 @@ int main(void)
 #endif
 
 #if defined(MEMORY_AUTOLOCK)
-	if(RAMN_FLASH_isMemoryProtected() == False)
-	{
-		RAMN_FLASH_ConfigureRDPOptionByte(RDP_OPTIONBYTE);
-	}
+	if(RAMN_FLASH_isMemoryProtected() == False) RAMN_FLASH_ConfigureRDPOptionByte(RDP_OPTIONBYTE);
 #endif
 
 	/* USER CODE END Init */
