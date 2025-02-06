@@ -91,6 +91,9 @@
 //This is useful to demonstrate the impact of CAN fuzzing on ECU A's screen
 #define PROCESS_SLCAN_BY_DBC
 
+//Define this to enable USB debugging module. Note that it also needs to be activated by a function call, or by setting RAMN_DEBUG_ENABLE in ramn_debug.c to True.
+#define ENABLE_USB_DEBUG
+
 //UDS programming does not work on microcontrollers with only 256 kb memory
 #define ENABLE_REPROGRAMMING
 #define ENABLE_UDS

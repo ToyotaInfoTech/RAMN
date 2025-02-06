@@ -2001,6 +2001,7 @@ void RAMN_ReceiveUSBFunc(void *argument)
 					}
 					else RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
 					break;
+#if defined(ENABLE_USB) && defined(ENABLE_USB_DEBUG)
 				case 'd': //Enable/Disable debug reports
 					if (commandLength == 2)
 					{
@@ -2013,6 +2014,7 @@ void RAMN_ReceiveUSBFunc(void *argument)
 						RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
 					}
 					break;
+#endif
 				case 'k': //Configure "Nominal (arbitration) phase" bit rate
 					if (commandLength == 9)
 					{
@@ -2172,7 +2174,9 @@ void RAMN_ReceiveUSBFunc(void *argument)
 					if (commandLength == 1U)
 					{
 						RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
+#ifdef ENABLE_USB_DEBUG
 						RAMN_DEBUG_Log("d Resetting\r");
+#endif
 						RAMN_ECU_SetEnableAll(GPIO_PIN_RESET);
 						RAMN_ECU_SetBoot0All(GPIO_PIN_RESET);
 						osDelay(100);
@@ -2605,8 +2609,12 @@ void RAMN_ErrorTaskFunc(void *argument)
 
 		taskEXIT_CRITICAL();
 #endif
-#if defined(ENABLE_USB)
+#if defined(ENABLE_USB) && defined(ENABLE_USB_DEBUG)
 		RAMN_DEBUG_PrintCANError(&errorCount, &protocolStatus, &gw_freeze, err);
+#endif
+
+#ifdef ENABLE_USB
+		if(err & HAL_FDCAN_ERROR_PROTOCOL_DATA) RAMN_FDCAN_Status.slcanFlags |= SLCAN_FLAG_BUS_ERROR;
 #endif
 
 #if defined(AUTO_RECOVER_BUSOFF)

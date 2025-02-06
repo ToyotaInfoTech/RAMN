@@ -105,6 +105,26 @@ RAMN_Result_t RAMN_USB_SendStringFromTask(char* data)
 	return RAMN_USB_SendFromTask(data, strlen(data));
 }
 
+RAMN_Result_t RAMN_USB_SendASCIIUint8(uint8_t val)
+{
+	uint8_t tmp[2U];
+	uint8toASCII(val,tmp);
+	return RAMN_USB_SendFromTask(tmp, 2U);
+}
+
+RAMN_Result_t RAMN_USB_SendASCIIUint16(uint16_t val)
+{
+	uint8_t tmp[4U];
+	uint16toASCII(val,tmp);
+	return RAMN_USB_SendFromTask(tmp, 4U);
+}
+
+RAMN_Result_t RAMN_USB_SendASCIIUint32(uint32_t val)
+{
+	uint8_t tmp[8U];
+	uint32toASCII(val,tmp);
+	return RAMN_USB_SendFromTask(tmp, 8U);
+}
 
 void RAMM_USB_ErrorCallback(USBD_HandleTypeDef* hUsbDeviceFS)
 {

@@ -58,6 +58,15 @@ RAMN_Result_t 	RAMN_USB_SendFromTask(uint8_t* data, uint32_t length);
 //Sends a string over serial USB
 RAMN_Result_t RAMN_USB_SendStringFromTask(char* data);
 
+//Send an unsigned byte (in ASCII) over serial USB
+RAMN_Result_t RAMN_USB_SendASCIIUint8(uint8_t val);
+
+//Send an unsigned short (in ASCII) over serial USB
+RAMN_Result_t RAMN_USB_SendASCIIUint16(uint16_t val);
+
+//Send an unsigned integer (in ASCII) over serial USB
+RAMN_Result_t RAMN_USB_SendASCIIUint32(uint32_t val);
+
 //Callback for when USB errors are detected
 void 			RAMM_USB_ErrorCallback(USBD_HandleTypeDef* hUsbDeviceFS);
 
