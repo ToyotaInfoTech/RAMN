@@ -47,10 +47,10 @@ void RAMN_SIM_UpdatePeriodic(uint32_t tick)
 
 #if defined(EXPANSION_POWERTRAIN)
 	// Powertrain ECU sends back data from the Self-Driving agent, except if sensors are above a certain threshold
-	if ((!RAMN_SIM_AutopilotEnabled) || ((RAMN_SENSORS_POWERTRAIN.brake_pedal >= 0x20) || (RAMN_SENSORS_POWERTRAIN.accel_pedal >= 0x20)))
+	if ((!RAMN_SIM_AutopilotEnabled) || ((RAMN_SENSORS_POWERTRAIN.brakePotentiometer >= 0x20) || (RAMN_SENSORS_POWERTRAIN.accelPotentiometer >= 0x20)))
 	{
-		RAMN_DBC_Handle.control_brake = RAMN_SENSORS_POWERTRAIN.brake_pedal;
-		RAMN_DBC_Handle.control_accel = RAMN_SENSORS_POWERTRAIN.accel_pedal;
+		RAMN_DBC_Handle.control_brake = RAMN_SENSORS_POWERTRAIN.brakePotentiometer;
+		RAMN_DBC_Handle.control_accel = RAMN_SENSORS_POWERTRAIN.accelPotentiometer;
 	}
 	else
 	{
@@ -75,9 +75,9 @@ void RAMN_SIM_UpdatePeriodic(uint32_t tick)
 	// Chassis ECU sends back data from the Self-Driving agent, except if steering wheel is not centered
 	if (RAMN_SIM_AutopilotEnabled)
 	{
-		if((RAMN_SENSORS_CHASSIS.steering_wheel <= 0x7E0) || (RAMN_SENSORS_CHASSIS.steering_wheel >= 0x820))
+		if((RAMN_SENSORS_CHASSIS.steeringPotentiometer <= 0x7E0) || (RAMN_SENSORS_CHASSIS.steeringPotentiometer >= 0x820))
 		{
-			RAMN_DBC_Handle.control_steer = RAMN_SENSORS_CHASSIS.steering_wheel;
+			RAMN_DBC_Handle.control_steer = RAMN_SENSORS_CHASSIS.steeringPotentiometer;
 			RAMN_DBC_Handle.command_lights = 0xFF00; //Engine Warning LED ON
 		}
 		else
@@ -88,24 +88,24 @@ void RAMN_SIM_UpdatePeriodic(uint32_t tick)
 	}
 	else
 	{
-		RAMN_DBC_Handle.control_steer = RAMN_SENSORS_CHASSIS.steering_wheel;
+		RAMN_DBC_Handle.control_steer = RAMN_SENSORS_CHASSIS.steeringPotentiometer;
 		RAMN_DBC_Handle.command_lights = 0x0000; //Engine Warning LED OFF
 	}
-	if ((!RAMN_SIM_AutopilotEnabled) || (RAMN_SENSORS_CHASSIS.sidebrake_switch != 0U))
+	if ((!RAMN_SIM_AutopilotEnabled) || (RAMN_SENSORS_CHASSIS.sidebrakeSwitch != 0U))
 	{
-		RAMN_DBC_Handle.control_sidebrake  = RAMN_SENSORS_CHASSIS.sidebrake_switch;
+		RAMN_DBC_Handle.control_sidebrake  = RAMN_SENSORS_CHASSIS.sidebrakeSwitch;
 	}
 	else
 	{
 		RAMN_DBC_Handle.control_sidebrake = RAMN_DBC_Handle.command_sidebrake;
 	}
-	RAMN_DBC_Handle.command_lights  |= ((RAMN_SENSORS_CHASSIS.lights_switch)&0xFF); //We use command here and not control because we consider we command the simulator's lights
+	RAMN_DBC_Handle.command_lights  |= ((RAMN_SENSORS_CHASSIS.lightsSwitch)&0xFF); //We use command here and not control because we consider we command the simulator's lights
 #endif
 
 #if defined(EXPANSION_BODY)
 	// Body Expansion simply lights up LED based on current state
-	RAMN_DBC_Handle.control_enginekey  = RAMN_SENSORS_BODY.engine_key;
-	RAMN_ACTUATORS_SetLampState(LED_BATTERY		, (RAMN_SENSORS_BODY.engine_key == RAMN_ENGINEKEY_MIDDLE) || (RAMN_SENSORS_BODY.engine_key == RAMN_ENGINEKEY_RIGHT));
+	RAMN_DBC_Handle.control_enginekey  = RAMN_SENSORS_BODY.engineKey;
+	RAMN_ACTUATORS_SetLampState(LED_BATTERY		, (RAMN_SENSORS_BODY.engineKey == RAMN_ENGINEKEY_MIDDLE) || (RAMN_SENSORS_BODY.engineKey == RAMN_ENGINEKEY_RIGHT));
 	RAMN_ACTUATORS_SetLampState(LED_CHECKENGINE	, ((RAMN_DBC_Handle.command_lights&0xFF00) != 0U));
 	RAMN_ACTUATORS_SetLampState(LED_SIDEBRAKE	, (RAMN_DBC_Handle.control_brake >= 0x010) || (RAMN_DBC_Handle.control_sidebrake != RAMN_SIDEBRAKE_DOWN));
 	RAMN_ACTUATORS_SetLampState(LED_TAILLAMP	, ((RAMN_DBC_Handle.command_lights&0x00FF) == RAMN_LIGHTSWITCH_POS2) || ((RAMN_DBC_Handle.command_lights&0x00FF) == RAMN_LIGHTSWITCH_POS3) || ((RAMN_DBC_Handle.command_lights&0x00FF) == RAMN_LIGHTSWITCH_POS4) );
