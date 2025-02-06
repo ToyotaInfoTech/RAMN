@@ -3,7 +3,7 @@
  ******************************************************************************
  * @attention
  *
- * <h2><center>&copy; Copyright (c) 2021 TOYOTA MOTOR CORPORATION.
+ * <h2><center>&copy; Copyright (c) 2025 TOYOTA MOTOR CORPORATION.
  * ALL RIGHTS RESERVED.</center></h2>
  *
  * This software component is licensed by TOYOTA MOTOR CORPORATION under BSD 3-Clause license,
@@ -22,9 +22,12 @@
 #define INC_RAMN_J1979_H_
 
 #include "main.h"
+
 #if defined(ENABLE_UDS) || defined(ENABLE_KWP)
+
 #include "ramn_isotp.h"
 
+// Processes a received J1979 message.
 RAMN_Result_t RAMN_J1979_ProcessMessage(const uint8_t* data, uint16_t size, uint8_t* answerData, uint16_t* answerSize);
 
 #endif

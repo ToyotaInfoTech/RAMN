@@ -3,7 +3,7 @@
  ******************************************************************************
  * @attention
  *
- * <h2><center>&copy; Copyright (c) 2021 TOYOTA MOTOR CORPORATION.
+ * <h2><center>&copy; Copyright (c) 2025 TOYOTA MOTOR CORPORATION.
  * ALL RIGHTS RESERVED.</center></h2>
  *
  * This software component is licensed by TOYOTA MOTOR CORPORATION under BSD 3-Clause license,
@@ -38,7 +38,7 @@ RAMN_Result_t RAMN_J1979_ProcessMessage(const uint8_t* data, uint16_t size, uint
 		answerData[0] = 0x7F;
 		answerData[1] = data[0];
 		answerData[2] = J1979_DEFAULT_ERROR_CODE;
-		*answerSize = 3; //TODO: implement padding with 0xAA
+		*answerSize = 3; //TODO: implement padding with 0xAA (?)
 		break;
 	}
 	return RAMN_OK;
