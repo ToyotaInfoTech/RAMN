@@ -291,9 +291,6 @@ void RAMN_ScreenUtils_Init(SPI_HandleTypeDef* handler, osThreadId_t* pTask)
 	else  current_theme %= 5;
 
 	RAMN_ScreenUtils_DrawBase(current_theme);
-
-	//Init joystick for screen controls
-	RAMN_Joystick_Init();
 }
 
 

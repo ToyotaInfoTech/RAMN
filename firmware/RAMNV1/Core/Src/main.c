@@ -2524,6 +2524,11 @@ void RAMN_PeriodicTaskFunc(void *argument)
 	RAMN_ScreenManager_Init(&hspi2, &RAMN_PeriodicHandle);
 #endif
 
+	//Init joystick for screen controls
+#ifdef ENABLE_JOYSTICK_CONTROLS
+	RAMN_Joystick_Init();
+#endif
+
 	/* Infinite loop */
 	for(;;)
 	{

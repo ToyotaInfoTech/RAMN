@@ -108,7 +108,10 @@ void RAMN_DBC_ProcessCANMessage(uint32_t canid, uint32_t dlc, RAMN_CANFrameData_
 			if (dlc >= 2U)
 			{
 				RAMN_DBC_Handle.joystick					= (dataframe->ramn_data.payload>>8)&0xFF;
+				//Init joystick for screen controls
+			#ifdef ENABLE_JOYSTICK_CONTROLS
 				RAMN_Joystick_Update(RAMN_DBC_Handle.joystick);
+			#endif
 			}
 			break;
 #endif

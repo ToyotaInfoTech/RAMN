@@ -68,6 +68,7 @@
 #define ENABLE_SCREEN
 #define ENABLE_CHIP8
 #define ENABLE_MINICTF
+#define ENABLE_JOYSTICK_CONTROLS // ECU will monitor joystick CAN message and generate events such as PRESSED and RELEASED. Make sure the ECU does not filter out the relevant CAN message.
 
 //Use this to define a "password" for the command to put ECU A back into DFU mode.
 //Note that this is not for security (because STM32 can be put back into DFU mode over JTAG, and if JTAG is permanently disabled (level 2) the back-to-DFU command won't work correctly anyway).
