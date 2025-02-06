@@ -34,18 +34,18 @@ typedef volatile struct
 	volatile uint16_t command_accel; 			//CANID_COMMAND_ACCEL
 	volatile uint16_t control_steer; 			//CANID_CONTROL_STEERING
 	volatile uint16_t command_steer; 			//CANID_COMMAND_STEERING
-	volatile uint8_t control_shift;				//CANID_CONTROL_SHIFT
-	volatile uint8_t joystick;			// second byte of SHIFT
-	volatile uint8_t command_shift;				//CANID_COMMAND_SHIFT
-	volatile uint8_t control_sidebrake; 		//CANID_CONTROL_SIDEBRAKE
-	volatile uint8_t command_sidebrake; 		//CANID_COMMAND_SIDEBRAKE
+	volatile uint16_t control_shift;			//CANID_CONTROL_SHIFT
+	volatile uint16_t command_shift;			//CANID_COMMAND_SHIFT
+	volatile uint16_t control_sidebrake; 		//CANID_CONTROL_SIDEBRAKE
+	volatile uint16_t command_sidebrake; 		//CANID_COMMAND_SIDEBRAKE
 	volatile uint16_t status_rpm; 				//CANID_STATUS_RPM
 	volatile uint8_t command_horn;				//CANID_COMMAND_HORN
-	volatile uint8_t control_horn; 			//CANID_CONTROL_HORN
-	volatile uint8_t command_lights; 			//CANID_COMMAND_LIGHTS
-	volatile uint8_t command_turnindicator;	//CANID_COMMAND_TURNINDICATOR
-	volatile uint8_t control_enginekey;		//CANID_CONTROL_ENGINEKEY
-	volatile uint8_t control_lights; 			//CANID_CONTROL_LIGHTS
+	volatile uint8_t control_horn; 				//CANID_CONTROL_HORN
+	volatile uint16_t command_lights; 			//CANID_COMMAND_LIGHTS
+	volatile uint16_t command_turnindicator;	//CANID_COMMAND_TURNINDICATOR
+	volatile uint16_t control_enginekey;		//CANID_CONTROL_ENGINEKEY
+	volatile uint16_t control_lights; 			//CANID_CONTROL_LIGHTS
+	volatile uint8_t joystick;					// Second byte of SHIFT, saved for convenience
 
 } RAMN_DBC_Handle_t;
 
