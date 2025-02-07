@@ -200,7 +200,7 @@ StreamBufferHandle_t USBD_TxStreamBufferHandle;
 //Holds currently processed USB RX Buffer
 __attribute__ ((section (".buffers")))  uint8_t USBRxBuffer[USB_COMMAND_BUFFER_SIZE];
 //Holds currently generated slcan command (Used by CAN receiving thread)
-uint8_t slCAN_USBTxBuffer[0x200];
+__attribute__ ((section (".buffers")))  uint8_t slCAN_USBTxBuffer[0x200];
 //Holds USB DATA currently being sent over USB.
 __attribute__ ((section (".buffers")))  uint8_t USBIntermediateTxBuffer[APP_TX_DATA_SIZE];
 #endif
@@ -238,7 +238,7 @@ uint8_t USB_CLI_ENABLE = 1U;
 uint8_t USB_CLI_ENABLE = 0U;
 #endif
 #define LOCAL_USB_COMMAND_BUFFER_SIZE  0x200
-uint8_t USBCommandBuffer[LOCAL_USB_COMMAND_BUFFER_SIZE];
+__attribute__ ((section (".buffers"))) uint8_t USBCommandBuffer[LOCAL_USB_COMMAND_BUFFER_SIZE];
 
 #if defined(ENABLE_I2C)
 __attribute__ ((section (".buffers"))) uint8_t i2c_rxBuf[I2C_RX_BUFFER_SIZE];
