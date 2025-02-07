@@ -3,7 +3,7 @@
  ******************************************************************************
  * @attention
  *
- * <h2><center>&copy; Copyright (c) 2021 TOYOTA MOTOR CORPORATION.
+ * <h2><center>&copy; Copyright (c) 2025 TOYOTA MOTOR CORPORATION.
  * ALL RIGHTS RESERVED.</center></h2>
  *
  * This software component is licensed by TOYOTA MOTOR CORPORATION under BSD 3-Clause license,
@@ -57,6 +57,9 @@ uint32_t UINT8toDLC(uint8_t dlc);
 
 //Regular memcpy operation
 void RAMN_memcpy(uint8_t* dst, const uint8_t* src, uint32_t size);
+
+// Regular strlen operation
+uint16_t RAMN_strlen(const char *str);
 
 //Apply required endian
 //TODO: replace by modifying RAMN_DefaultCANFrameFormat_t defition (?)

@@ -35,7 +35,7 @@ void 			RAMN_UART_Init(StreamBufferHandle_t* buffer,  osThreadId_t* pSendTask);
 RAMN_Result_t 	RAMN_UART_SendFromTask(uint8_t* data, uint32_t length);
 
 // Sends a string over serial UART.
-RAMN_Result_t 	RAMN_UART_SendStringFromTask(char* data);
+RAMN_Result_t 	RAMN_UART_SendStringFromTask(const char* data);
 
 
 #endif

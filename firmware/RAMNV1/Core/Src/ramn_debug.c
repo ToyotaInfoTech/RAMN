@@ -69,7 +69,7 @@ void RAMN_DEBUG_SetStatus(RAMN_Bool_t status)
 
 inline void RAMN_DEBUG_Log(const char* src)
 {
-	if (RAMN_DEBUG_ENABLE == True) RAMN_USB_SendFromTask((uint8_t*)src,strlen(src));
+	if (RAMN_DEBUG_ENABLE == True) RAMN_USB_SendFromTask((uint8_t*)src,RAMN_strlen(src));
 }
 
 void	RAMN_DEBUG_PrintCANError(const FDCAN_ErrorCountersTypeDef* pErrorCount, const FDCAN_ProtocolStatusTypeDef* pProtocolStatus, const RAMN_FDCAN_Status_t* pGw_freeze, uint32_t err)

@@ -53,10 +53,10 @@ void 			RAMN_USB_Init(StreamBufferHandle_t* buffer,  osThreadId_t* pSendTask);
 void 			RAMN_USB_SendFromTask_Blocking(uint8_t* data, uint32_t length);
 
 //Sends Data over USB. Returns as soon as buffer is filled.
-RAMN_Result_t 	RAMN_USB_SendFromTask(uint8_t* data, uint32_t length);
+RAMN_Result_t 	RAMN_USB_SendFromTask(const uint8_t* data, uint32_t length);
 
 //Sends a string over serial USB
-RAMN_Result_t RAMN_USB_SendStringFromTask(char* data);
+RAMN_Result_t RAMN_USB_SendStringFromTask(const char* data);
 
 //Send an unsigned byte (in ASCII) over serial USB
 RAMN_Result_t RAMN_USB_SendASCIIUint8(uint8_t val);

@@ -41,7 +41,7 @@ static void sendFlagOverCAN(uint16_t can_id, char* flag)
 	CTFTxHeader.IdType = FDCAN_STANDARD_ID;
 	CTFTxHeader.Identifier = can_id;
 
-	uint16_t size = strlen(flag);
+	uint16_t size = RAMN_strlen(flag);
 	uint16_t offset = 0;
 	while (offset < size)
 	{

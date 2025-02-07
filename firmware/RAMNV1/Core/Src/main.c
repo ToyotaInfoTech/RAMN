@@ -2075,9 +2075,9 @@ void RAMN_ReceiveUSBFunc(void *argument)
 					break;
 				case 'D'://Restart in DFU Mode
 					//Note that we do not worry about potential timing analysis as this is not a security feature.
-					if (commandLength == (strlen(DFU_COMMAND_STRING)+1U))
+					if (commandLength == (RAMN_strlen(DFU_COMMAND_STRING)+1U))
 					{
-						if(strncmp(&USBRxBuffer[1],DFU_COMMAND_STRING, strlen(DFU_COMMAND_STRING)) == 0U)
+						if(strncmp(&USBRxBuffer[1],DFU_COMMAND_STRING, RAMN_strlen(DFU_COMMAND_STRING)) == 0U)
 						{
 							RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
 							osDelay(200);

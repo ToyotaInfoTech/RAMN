@@ -3,7 +3,7 @@
  ******************************************************************************
  * @attention
  *
- * <h2><center>&copy; Copyright (c) 2021 TOYOTA MOTOR CORPORATION.
+ * <h2><center>&copy; Copyright (c) 2025 TOYOTA MOTOR CORPORATION.
  * ALL RIGHTS RESERVED.</center></h2>
  *
  * This software component is licensed by ST under BSD 3-Clause license,
@@ -15,8 +15,6 @@
  */
 
 #include "ramn_utils.h"
-#include "string.h"
-
 
 // mapping of ASCII characters to hex values
 static const uint8_t ascii_hashmap[] =
@@ -160,6 +158,19 @@ void RAMN_memcpy(uint8_t* dst, const uint8_t* src, uint32_t size)
 {
 	for(uint32_t i = 0; i < size; i++) dst[i] = src[i];
 }
+
+uint16_t RAMN_strlen(const char *str)
+{
+	uint32_t i;
+
+	for(i = 0; ; i++)
+	{
+		if(str[i] == '\0') break;
+	}
+
+	return i;
+}
+
 
 uint16_t switchEndian16(uint16_t val)
 {

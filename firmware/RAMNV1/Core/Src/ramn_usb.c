@@ -81,7 +81,7 @@ void RAMN_USB_SendFromTask_Blocking(uint8_t* data, uint32_t length)
 	}
 }
 
-RAMN_Result_t RAMN_USB_SendFromTask(uint8_t* data, uint32_t length)
+RAMN_Result_t RAMN_USB_SendFromTask(const uint8_t* data, uint32_t length)
 {
 	size_t xBytesSent = 0;
 	RAMN_Result_t result = RAMN_OK;
@@ -100,9 +100,9 @@ RAMN_Result_t RAMN_USB_SendFromTask(uint8_t* data, uint32_t length)
 	return result;
 }
 
-RAMN_Result_t RAMN_USB_SendStringFromTask(char* data)
+RAMN_Result_t RAMN_USB_SendStringFromTask(const char* data)
 {
-	return RAMN_USB_SendFromTask(data, strlen(data));
+	return RAMN_USB_SendFromTask((uint8_t*)data, RAMN_strlen(data));
 }
 
 RAMN_Result_t RAMN_USB_SendASCIIUint8(uint8_t val)

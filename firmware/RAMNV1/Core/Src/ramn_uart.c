@@ -18,8 +18,6 @@
 
 #ifdef ENABLE_UART
 
-#include "string.h"
-
 // Buffer that holds outgoing UART data
 static StreamBufferHandle_t* uartTxBuffer;
 
@@ -54,9 +52,9 @@ RAMN_Result_t RAMN_UART_SendFromTask(uint8_t* data, uint32_t length)
 	return result;
 }
 
-RAMN_Result_t RAMN_UART_SendStringFromTask(char* data)
+RAMN_Result_t RAMN_UART_SendStringFromTask(const char* data)
 {
-	return RAMN_UART_SendFromTask((uint8_t*)data, strlen(data));
+	return RAMN_UART_SendFromTask((uint8_t*)data, RAMN_strlen(data));
 }
 
 #endif
