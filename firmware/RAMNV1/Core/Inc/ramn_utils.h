@@ -59,6 +59,7 @@ uint32_t UINT8toDLC(uint8_t dlc);
 void RAMN_memcpy(uint8_t* dst, const uint8_t* src, uint32_t size);
 
 //Apply required endian
+//TODO: replace by modifying RAMN_DefaultCANFrameFormat_t defition (?)
 uint16_t switchEndian16(uint16_t val);
 
 #endif /* INC_RAMN_UTILS_H_ */
