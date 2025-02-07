@@ -1327,7 +1327,7 @@ static void RAMN_UDS_TransferData(const uint8_t* data, uint16_t size)
 				{
 					transferManager.seq = (transferManager.seq +1)&0xFF;
 					uint16_t count = 0;
-					//memcpy to buffer to send
+					// RAMN_memcpy to buffer to send
 					uds_answerData[0] = data[0] + 0x40;
 					uds_answerData[1] = data[1];
 					for(uint16_t i = 0; (i <TRANSFER_DATA_BLOCKSIZE) && (transferManager.index < transferManager.size);i++)
@@ -1634,7 +1634,7 @@ static void processCustomServiceFlag(const uint8_t* data, uint16_t size)
 	else if ((data[2] == 0x13) && data[3] == 0x37)
 	{
 		uds_answerData[0] = data[0] + 0x40;
-		memcpy(&uds_answerData[1], FLAG_UDS_3, sizeof(FLAG_UDS_3)-1);
+		RAMN_memcpy(&uds_answerData[1], FLAG_UDS_3, sizeof(FLAG_UDS_3)-1);
 		*uds_answerSize = sizeof(FLAG_UDS_3);
 	}
 	else

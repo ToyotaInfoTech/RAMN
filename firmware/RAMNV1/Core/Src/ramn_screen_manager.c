@@ -159,7 +159,7 @@ void RAMN_SCREEN_Update(uint32_t tick)
 	//	{
 	//		//lastHornCountDisplayed = RAMN_DBC_Handle.horn_count;
 	//		uint16toASCII(RAMN_DBC_Handle.horn_count&0xFFFF,(uint8_t*)cntStr);
-	//		memcpy(cntStr,"SLW",4);
+	//		RAMN_memcpy(cntStr,"SLW",4);
 	//		RAMN_SPI_DrawStringColor(5, 5+(1*16), SPI_COLOR_THEME.BACKGROUND, SPI_COLOR_THEME.LIGHT, cntStr);
 	//	}
 

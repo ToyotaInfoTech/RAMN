@@ -67,7 +67,7 @@ void RAMN_ScreenCANLog_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader,
 		message->identifier = pHeader->Identifier;
 		message->payload_size = pHeader->DataLength;
 
-		memcpy(message->data, data, pHeader->DataLength);
+		RAMN_memcpy(message->data, data, pHeader->DataLength);
 
 		// Update the buffer head and count
 		canMessageBuffer.head = (canMessageBuffer.head + 1) % CAN_MESSAGE_BUFFER_SIZE;

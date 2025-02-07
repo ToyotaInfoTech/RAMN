@@ -164,7 +164,7 @@ void RAMN_ScreenCANMonitor_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHea
 			node->messages[0].header = *pHeader;
 			node->messages[0].header.RxTimestamp = tick;
 
-			memcpy(node->messages[0].data, data, pHeader->DataLength);
+			RAMN_memcpy(node->messages[0].data, data, pHeader->DataLength);
 
 			//TODO better handle DLC changes
 			for(uint8_t i=0; i < pHeader->DataLength; i++)

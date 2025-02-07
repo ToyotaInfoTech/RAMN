@@ -38,7 +38,7 @@ void RAMN_ScreenUDS_RequestDrawImage(uint16_t x, uint16_t y, uint16_t w, uint16_
 	uds_draw_y = y;
 	uds_draw_w = w;
 	uds_draw_h = h;
-	memcpy(uds_draw_buffer, image, w*h*2);
+	RAMN_memcpy(uds_draw_buffer, image, w*h*2);
 	uds_draw_need_refresh = 1U;
 #endif
 }
