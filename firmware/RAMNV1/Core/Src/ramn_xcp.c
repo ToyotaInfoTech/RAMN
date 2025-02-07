@@ -3,7 +3,7 @@
  ******************************************************************************
  * @attention
  *
- * <h2><center>&copy; Copyright (c) 2021 TOYOTA MOTOR CORPORATION.
+ * <h2><center>&copy; Copyright (c) 2025 TOYOTA MOTOR CORPORATION.
  * ALL RIGHTS RESERVED.</center></h2>
  *
  * This software component is licensed by TOYOTA MOTOR CORPORATION under BSD 3-Clause license,
@@ -96,10 +96,26 @@
 #define XCP_COMMAND_PROGRAM_MAX					0xC9
 #define XCP_COMMAND_PROGRAM_VERIFY				0xC8
 
-//Common pointer to avoid passing answer data as argument each sub-function
+// Exported variables ----------------------------------
+
+RAMN_XCPHandler_t RAMN_XCP_Handler;
+
+// Private variables ----------------------------------
+
+// Common pointers to avoid passing answer data as argument each sub-function
 static uint8_t* xcp_answerData;
 static uint16_t* xcp_answerSize;
 
+// XCP Device Name
+#if   defined(TARGET_ECUB)
+static const char XCP_DEVICE_NAME[] = "ECUB";
+#elif defined(TARGET_ECUC)
+static const char XCP_DEVICE_NAME[] = "ECUC";
+#elif defined(TARGET_ECUD)
+static const char XCP_DEVICE_NAME[] = "ECUD";
+#endif
+
+// Header used to request transmission of XCP answer CAN message
 static FDCAN_TxHeaderTypeDef RAMN_XCP_TxMsgHeader =
 {
 		.Identifier  = XCP_TX_CANID,
@@ -113,67 +129,57 @@ static FDCAN_TxHeaderTypeDef RAMN_XCP_TxMsgHeader =
 		. MessageMarker = 0,
 };
 
-//Resets session to default state
-static void resetSession(uint32_t tick)
+// Resets session to default state
+static void XCP_ResetSession(uint32_t tick)
 {
 	RAMN_XCP_Handler.connected 			= False;
 	RAMN_XCP_Handler.lastRXTimestamp 	= tick;
 	RAMN_XCP_Handler.authenticated 		= False;
 	RAMN_XCP_Handler.seedRequested 		= False;
 	RAMN_XCP_Handler.currentSeed 		= 0U;
-	RAMN_XCP_Handler.targetST			= 0U;
-	RAMN_XCP_Handler.targetBS			= 0U;
 	RAMN_XCP_Handler.mtaPointer			= 0U;
 }
 
-
-static void RAMN_XCP_FormatNegativeAnswer(uint8_t errCode)
+static void XCP_FormatNegativeAnswer(uint8_t errCode)
 {
 	xcp_answerData[0] = 0xFE;
 	xcp_answerData[1] = errCode;
 	*xcp_answerSize = 2U;
 }
 
-
-static void RAMN_XCP_Connect(const uint8_t* data, uint16_t size)
+static void XCP_Connect(const uint8_t* data, uint16_t size)
 {
 	uint8_t mode;
-	if (size < 2)
-	{
-		mode = 0;
-	}
-	else
-	{
-		mode = data[1];
-	}
+	if (size < 2U) mode = 0U;
+	else mode = data[1U];
 
 	switch(mode)
 	{
 	case 0x00:
-		resetSession(RAMN_XCP_Handler.lastRXTimestamp);
+		XCP_ResetSession(RAMN_XCP_Handler.lastRXTimestamp);
 		RAMN_XCP_Handler.connected = True;
-		xcp_answerData[1] = 0x00; //No Resource
-		xcp_answerData[2] = 0x00; //Intel format
-		xcp_answerData[3] = 0x08; //8-bytes max CTO
-		xcp_answerData[4] = 0x08; //8-bytes max DTO
-		xcp_answerData[5] = 0x00; //8-bytes max DTO
-		xcp_answerData[6] = 0x01; //Ver1
-		xcp_answerData[7] = 0x01; //Ver1
+		xcp_answerData[1] = 0x00; // No Resource
+		xcp_answerData[2] = 0x00; // Intel format
+		xcp_answerData[3] = 0x08; // 8-bytes max CTO
+		xcp_answerData[4] = 0x08; // 8-bytes max DTO
+		xcp_answerData[5] = 0x00; // 8-bytes max DTO
+		xcp_answerData[6] = 0x01; // Ver1
+		xcp_answerData[7] = 0x01; // Ver1
 		*xcp_answerSize = 8U;
 		break;
 	default:
-		RAMN_XCP_FormatNegativeAnswer(XCP_ERR_OUT_OF_RANGE);
+		XCP_FormatNegativeAnswer(XCP_ERR_OUT_OF_RANGE);
 		break;
 	}
 }
 
-static void RAMN_XCP_Disconnect(const uint8_t* data, uint16_t size)
+static void XCP_Disconnect(const uint8_t* data, uint16_t size)
 {
-	resetSession(RAMN_XCP_Handler.lastRXTimestamp);
+	XCP_ResetSession(RAMN_XCP_Handler.lastRXTimestamp);
 	*xcp_answerSize = 1U;
 }
 
-static void RAMN_XCP_GetStatus(const uint8_t* data, uint16_t size)
+static void XCP_GetStatus(const uint8_t* data, uint16_t size)
 {
 	xcp_answerData[1] = 0x00; //No Status
 	xcp_answerData[2] = (RAMN_XCP_Handler.authenticated == True) ? 0 : (1 << 4); //Programming protection
@@ -183,18 +189,11 @@ static void RAMN_XCP_GetStatus(const uint8_t* data, uint16_t size)
 	*xcp_answerSize = 6U;
 }
 
-#if   defined(TARGET_ECUB)
-static char XCP_DEVICE_NAME[] = "ECUB";
-#elif defined(TARGET_ECUC)
-static char XCP_DEVICE_NAME[] = "ECUC";
-#elif defined(TARGET_ECUD)
-static char XCP_DEVICE_NAME[] = "ECUD";
-#endif
 static void RAMN_XCP_GetID(const uint8_t* data, uint16_t size)
 {
 	if (size < 2U)
 	{
-		RAMN_XCP_FormatNegativeAnswer(XCP_ERR_CMD_SYNTAX);
+		XCP_FormatNegativeAnswer(XCP_ERR_CMD_SYNTAX);
 	}
 	else
 	{
@@ -212,27 +211,24 @@ static void RAMN_XCP_GetID(const uint8_t* data, uint16_t size)
 			RAMN_XCP_Handler.mtaPointer = (uint32_t)&XCP_DEVICE_NAME;
 			break;
 		default:
-			RAMN_XCP_FormatNegativeAnswer(XCP_ERR_OUT_OF_RANGE);
+			XCP_FormatNegativeAnswer(XCP_ERR_OUT_OF_RANGE);
 			break;
 		}
 	}
 }
 
-static void RAMN_XCP_Upload(const uint8_t* data, uint16_t size)
+static void XCP_Upload(const uint8_t* data, uint16_t size)
 {
-	if (size < 2U)
-	{
-		RAMN_XCP_FormatNegativeAnswer(XCP_ERR_CMD_SYNTAX);
-	}
+	if (size < 2U) XCP_FormatNegativeAnswer(XCP_ERR_CMD_SYNTAX);
 	else
 	{
 		if ((data[1] > 7))
 		{
-			RAMN_XCP_FormatNegativeAnswer(XCP_ERR_OUT_OF_RANGE);
+			XCP_FormatNegativeAnswer(XCP_ERR_OUT_OF_RANGE);
 		}
 		else if (RAMN_MEMORY_CheckAreaReadable(RAMN_XCP_Handler.mtaPointer,RAMN_XCP_Handler.mtaPointer + (uint32_t)data[1]) != True)
 		{
-			RAMN_XCP_FormatNegativeAnswer(XCP_ERR_OUT_OF_RANGE);
+			XCP_FormatNegativeAnswer(XCP_ERR_OUT_OF_RANGE);
 		}
 		else
 		{
@@ -246,12 +242,9 @@ static void RAMN_XCP_Upload(const uint8_t* data, uint16_t size)
 	}
 }
 
-static void RAMN_XCP_SetMTA(const uint8_t* data, uint16_t size)
+static void XCP_SetMTA(const uint8_t* data, uint16_t size)
 {
-	if (size != 8U)
-	{
-		RAMN_XCP_FormatNegativeAnswer(XCP_ERR_CMD_SYNTAX);
-	}
+	if (size != 8U) XCP_FormatNegativeAnswer(XCP_ERR_CMD_SYNTAX);
 	else
 	{
 		RAMN_XCP_Handler.mtaPointer = (data[4] << 24) + (data[5] << 16) + (data[6] << 8) + (data[7]);
@@ -259,13 +252,11 @@ static void RAMN_XCP_SetMTA(const uint8_t* data, uint16_t size)
 	}
 }
 
-// Exported ----------------------------------
-
-RAMN_XCPHandler_t RAMN_XCP_Handler;
+// Exported Functions ----------------------------------
 
 RAMN_Result_t RAMN_XCP_Init(uint32_t tick)
 {
-	resetSession(tick);
+	XCP_ResetSession(tick);
 	return RAMN_OK;
 }
 
@@ -273,10 +264,7 @@ RAMN_Bool_t RAMN_XCP_Update(uint32_t tick)
 {
 	if (RAMN_XCP_Handler.connected)
 	{
-		if ((tick - RAMN_XCP_Handler.lastRXTimestamp) > XCP_RX_TIMEOUT)
-		{
-			resetSession(tick);
-		}
+		if ((tick - RAMN_XCP_Handler.lastRXTimestamp) > XCP_RX_TIMEOUT) XCP_ResetSession(tick);
 	}
 	return RAMN_OK;
 }
@@ -293,62 +281,61 @@ RAMN_Bool_t RAMN_XCP_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, c
 	size_t xBytesSent;
 	uint16_t size;
 	RAMN_Bool_t result = False;
+
 	if (pHeader->Identifier == XCP_RX_CANID)
 	{
 		size = (uint16_t)DLCtoUINT8(pHeader->DataLength);
 		if (size > 0U)
 		{
-			//Got an XCP payload, should be forwarded to diag thread
-			xBytesSent = xStreamBufferSend(*strbuf, (void *) &(size), sizeof(size), portMAX_DELAY );
-			xBytesSent += xStreamBufferSend(*strbuf, (void *) data, size, portMAX_DELAY );
-			if( xBytesSent != (size + sizeof(size) )) Error_Handler();
+			// Got an XCP payload, should be forwarded to diag thread
+			xBytesSent = xStreamBufferSend(*strbuf, (void*) &(size), sizeof(size), portMAX_DELAY );
+			xBytesSent += xStreamBufferSend(*strbuf, (void*) data, size, portMAX_DELAY );
+			if(xBytesSent != (size + sizeof(size))) Error_Handler();
 			result = True;
 		}
 	}
 	return result;
 }
 
-
 void RAMN_XCP_ProcessDiagPayload(uint32_t tick, const uint8_t* data, uint16_t size, uint8_t* answerData, uint16_t* answerSize)
 {
 	xcp_answerData = answerData;
 	xcp_answerSize = answerSize;
 	RAMN_XCP_Handler.lastRXTimestamp = tick;
-	if (size > 0)
+	if (size > 0U)
 	{
-		xcp_answerData[0] = 0xFF; //Positive Response by default
-		if ((data[0] == XCP_COMMAND_CONNECT) || (RAMN_XCP_Handler.connected == True))
+		xcp_answerData[0U] = 0xFF; //Positive Response by default
+		if ((data[0U] == XCP_COMMAND_CONNECT) || (RAMN_XCP_Handler.connected == True))
 		{
-			switch(data[0]) //Analyze command byte
+			switch(data[0U]) //Analyze command byte
 			{
 			case XCP_COMMAND_CONNECT:
-				RAMN_XCP_Connect(data,size);
+				XCP_Connect(data,size);
 				break;
 			case XCP_COMMAND_DISCONNECT:
-				RAMN_XCP_Disconnect(data,size);
+				XCP_Disconnect(data,size);
 				break;
 			case XCP_COMMAND_GET_STATUS:
-				RAMN_XCP_GetStatus(data,size);
+				XCP_GetStatus(data,size);
 				break;
 			case XCP_COMMAND_SYNCH:
-				RAMN_XCP_FormatNegativeAnswer(XCP_ERR_CMD_SYNCH);
+				XCP_FormatNegativeAnswer(XCP_ERR_CMD_SYNCH);
 				break;
 			case XCP_COMMAND_GET_ID:
 				RAMN_XCP_GetID(data,size);
 				break;
 			case XCP_COMMAND_UPLOAD:
-				RAMN_XCP_Upload(data,size);
+				XCP_Upload(data,size);
 				break;
 			case XCP_COMMAND_SET_MTA:
-				RAMN_XCP_SetMTA(data,size);
+				XCP_SetMTA(data,size);
 				break;
 			default:
-				RAMN_XCP_FormatNegativeAnswer(XCP_ERR_CMD_UNKNOWN);
+				XCP_FormatNegativeAnswer(XCP_ERR_CMD_UNKNOWN);
 				break;
 			}
 		}
 	}
-
 }
 
 
