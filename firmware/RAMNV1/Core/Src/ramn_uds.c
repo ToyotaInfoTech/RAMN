@@ -502,7 +502,7 @@ static void RAMN_UDS_ReadDataByIdentifier(uint8_t* data, uint16_t size)
 				answer_size = 1+3;
 				break;
 			case 0xF187: //Spare part
-				RAMN_memcpy(&(answer[3]),"RAMN",4U);
+				RAMN_memcpy(&(answer[3]),(uint8_t*)"RAMN",4U);
 				answer_size = 4+3;
 				break;
 			case 0xF18C: //ECU Serial Hardware

@@ -15,8 +15,9 @@
  */
 
 #include "ramn_utils.h"
+#include "cmsis_os.h"
 
-// mapping of ASCII characters to hex values
+// Mapping of ASCII characters to hex values
 static const uint8_t ascii_hashmap[] =
 {
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // ........
@@ -53,8 +54,11 @@ static const uint8_t ascii_hashmap[] =
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00  // ........
 };
 
-//mapping of nibble (half-byte) to ASCII
+// Mapping of nibble (half-byte) to ASCII
 static const uint8_t nibble_to_ascii[] = { '0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F' };
+
+// Tools to convert DLC enum (e.g. FDCAN_DLC_BYTES_0) in RX and TX header to uint8, and vice-versa
+static const uint8_t DlcToUint8convTable[] = {0,1,2,3,4,5,6,7,8,12,16,20,24,32,48,64};
 
 uint32_t  rawtoASCII(uint8_t* dst, const uint8_t* src, uint32_t raw_size)
 {
@@ -142,8 +146,42 @@ inline uint32_t ASCIItoUint32(const uint8_t* src)
 	return (ascii_hashmap[src[0]] << 28)  + (ascii_hashmap[src[1]] << 24) + (ascii_hashmap[src[2]] << 20)  + (ascii_hashmap[src[3]] << 16)  + (ascii_hashmap[src[4]] << 12)  + (ascii_hashmap[src[5]] << 8) + (ascii_hashmap[src[6]] << 4) + (ascii_hashmap[src[7]]);
 }
 
-//tools to convert DLC enum (e.g. FDCAN_DLC_BYTES_0) in RX and TX header to uint8, and vice-versa
-const uint8_t DlcToUint8convTable[] = {0,1,2,3,4,5,6,7,8,12,16,20,24,32,48,64};
+uint32_t convertBytesToUint32(uint8_t *data, uint16_t dataSize)
+{
+	if(dataSize < sizeof(uint32_t)) return 0;
+	return (data[0] << 24) | (data[1] << 16) | (data[2] << 8) | data[3];
+}
+
+uint32_t convertBytesToUint32_l(uint8_t *data, uint16_t dataSize)
+{
+	if(dataSize < sizeof(uint32_t)) return 0;
+	return (data[3] << 24) | (data[2] << 16) | (data[1] << 8) | data[0];
+}
+
+uint16_t convertBytesToUint16(uint8_t *data, uint16_t dataSize)
+{
+	if(dataSize < sizeof(uint16_t)) return 0;
+	return (data[0] << 8) | data[1];
+}
+
+uint16_t convertUint16ToBytes(uint8_t *data, uint16_t dataSize, uint16_t n)
+{
+	if(dataSize < sizeof(uint16_t)) return 0;
+	data[0] = (n & 0xFF00) >> 8;
+	data[1] = n & 0xFF;
+	return sizeof(uint16_t);
+}
+
+uint16_t convertUint32ToBytes(uint8_t *data, uint16_t dataSize, uint32_t n)
+{
+	if(dataSize < sizeof(uint32_t)) return 0;
+	data[0] = n >> 24;
+	data[1] = (n & 0x00FF0000) >> 16;
+	data[2] = (n & 0x0000FF00) >> 8;
+	data[3] = n & 0x000000FF;
+	return sizeof(uint32_t);
+}
+
 uint8_t DLCtoUINT8(uint32_t dlc_enum)
 {
 	return DlcToUint8convTable[(uint8_t)(dlc_enum)];
@@ -151,7 +189,16 @@ uint8_t DLCtoUINT8(uint32_t dlc_enum)
 
 uint32_t UINT8toDLC(uint8_t dlc)
 {
-	return dlc; //no conversion needed with new STM32 library
+	return dlc; // No conversion needed with new STM32 library
+}
+
+void RAMN_memset(void* dst, uint8_t byte, uint32_t size)
+{
+	for(uint32_t i = 0; i < size; i++)
+	{
+		*(uint8_t *)dst = byte;
+		(uint8_t *)(dst)++;
+	}
 }
 
 void RAMN_memcpy(uint8_t* dst, const uint8_t* src, uint32_t size)
@@ -163,16 +210,11 @@ uint16_t RAMN_strlen(const char *str)
 {
 	uint32_t i;
 
-	for(i = 0; ; i++)
-	{
-		if(str[i] == '\0') break;
-	}
-
+	for(i = 0; ; i++) if(str[i] == '\0') break;
 	return i;
 }
 
-
-uint16_t switchEndian16(uint16_t val)
+uint16_t applyEndian16(uint16_t val)
 {
 #ifdef USE_BIG_ENDIAN_CAN
 	return ((val&0xFF) << 8) | ((val >> 8)&0xFF);
@@ -180,3 +222,9 @@ uint16_t switchEndian16(uint16_t val)
 	return val;
 #endif
 }
+
+void RAMN_TaskDelay(uint32_t msec)
+{
+	osDelay(pdMS_TO_TICKS(msec));
+}
+
