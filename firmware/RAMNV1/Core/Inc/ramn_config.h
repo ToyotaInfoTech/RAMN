@@ -62,6 +62,17 @@
 //Enable this variable to force code to while(1) when encountering errors that could typically be ignored.
 #define HANG_ON_ERRORS
 
+//Enable flag below to automatically enable memory protection at startup. Once activated, it can only be removed by bootloader/usb commands.
+//Avoid using if you are not sure what you are doing.
+//#define MEMORY_AUTOLOCK
+
+//Value to set to RDP option byte if flag above is active.
+//It is 0xAA when unlocked (OB_RDP_LEVEL_0), 0xBB if temporarily locked by bootloader (OB_RDP_LEVEL_1, or 0xDC if locked by STM32CubeProgrammer).
+//Setting this value to 0xCC (OB_RDP_LEVEL_2) will PERMANENTLY LOCK JTAG (the ECU will not be reprogrammable anymore)
+#define RDP_OPTIONBYTE OB_RDP_LEVEL_1
+
+// If this is defined, the TRNG module will fill a stream buffer with random bytes instead of calling the HAL library
+#define USE_TRNG_BUFFER
 
 #if defined(TARGET_ECUA)
 #define ENABLE_USB
@@ -102,15 +113,6 @@
 //#define ENABLE_XCP
 #define RTR_DEMO_ID 0x700
 #endif
-
-//Enable flag below to automatically enable memory protection at startup. Once activated, it can only be removed by bootloader/usb commands.
-//Avoid using if you are not sure what you are doing.
-//#define MEMORY_AUTOLOCK
-
-//Value to set to RDP option byte if flag above is active.
-//It is 0xAA when unlocked (OB_RDP_LEVEL_0), 0xBB if temporarily locked by bootloader (OB_RDP_LEVEL_1, or 0xDC if locked by STM32CubeProgrammer).
-//Setting this value to 0xCC (OB_RDP_LEVEL_2) will PERMANENTLY LOCK JTAG (the ECU will not be reprogrammable anymore)
-#define RDP_OPTIONBYTE OB_RDP_LEVEL_1
 
 #if defined(TARGET_ECUB)
 //#define ENABLE_SCREEN
