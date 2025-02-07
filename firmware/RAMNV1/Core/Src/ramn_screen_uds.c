@@ -45,9 +45,9 @@ void RAMN_ScreenUDS_RequestDrawImage(uint16_t x, uint16_t y, uint16_t w, uint16_
 
 static void ScreenUDS_Init() {
 	RAMN_ScreenUtils_DrawBase(current_theme);
-	RAMN_SPI_DrawStringColor(75,5, SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.BACKGROUND, "UDS DRAW");
-	RAMN_SPI_DrawStringColor(10,5+32, SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.BACKGROUND, "Use UDS Service to\ndraw an image here.");
-	RAMN_SPI_DrawStringColor(10,5+80, SPI_COLOR_THEME.BACKGROUND,  SPI_COLOR_THEME.LIGHT, "ramn.readthedocs.io");
+	RAMN_SPI_DrawString(75,5, SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.BACKGROUND, "UDS DRAW");
+	RAMN_SPI_DrawString(10,5+32, SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.BACKGROUND, "Use UDS Service to\ndraw an image here.");
+	RAMN_SPI_DrawString(10,5+80, SPI_COLOR_THEME.BACKGROUND,  SPI_COLOR_THEME.LIGHT, "ramn.readthedocs.io");
 }
 
 static void ScreenUDS_Update(uint32_t tick) {

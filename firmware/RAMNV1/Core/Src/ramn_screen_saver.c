@@ -29,7 +29,7 @@ static void ScreenSaver_Update(uint32_t tick) {
 	if (menu_drawn == 0U)
 	{
 		menu_drawn = 1U;
-		RAMN_SPI_DrawStringColor(5+22,5+64, SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.BACKGROUND, " Use ECU C Shift \rto control screen");
+		RAMN_SPI_DrawString(5+22,5+64, SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.BACKGROUND, " Use ECU C Shift \rto control screen");
 
 	}
 	if (tick > 5000) // don't erase display for the first 5 seconds
@@ -42,7 +42,7 @@ static void ScreenSaver_Update(uint32_t tick) {
 	uint16_t color = random_colors[random_val % ((sizeof(random_colors)/sizeof(uint16_t)))];
 	uint8_t random_char = (random_val % 75) + '0';
 
-	RAMN_SPI_DrawCharColor(5+(random_X_line*12), 5+(random_Y_line*16), color, SPI_COLOR_THEME.BACKGROUND, random_char);
+	RAMN_SPI_DrawChar(5+(random_X_line*12), 5+(random_Y_line*16), color, SPI_COLOR_THEME.BACKGROUND, random_char);
 	}
 	//Code to display a message if problems happened happened
 	if (spi_refresh_counter % 5 == 0)

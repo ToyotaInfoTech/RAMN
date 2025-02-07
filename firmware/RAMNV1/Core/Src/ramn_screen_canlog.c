@@ -18,7 +18,7 @@
 
 #ifdef ENABLE_SCREEN
 
-CAN_MessageBuffer canMessageBuffer = { .head = 0, .count = 0 };
+__attribute__ ((section (".buffers"))) CAN_MessageBuffer canMessageBuffer = { .head = 0, .count = 0 };
 
 const uint16_t FILTER_ID_LIST[]   = {0x024, 0x039, 0x062, 0x077, 0x098, 0x150, 0x1A7, 0x1B8, 0x1BB, 0x1D3, 0x550, 0x7E0, 0x000};
 const uint16_t FILTER_MASK_LIST[] = {0x7FF, 0x7FF, 0x7FF, 0x7FF, 0x7FF, 0x7FF, 0x7FF, 0x7FF, 0x7FF, 0x7FF, 0x7F0, 0x7F0, 0x000};
@@ -89,16 +89,16 @@ static void draw_header()
 
 	//RAMN_SPI_DrawRectangle(0, 0, LCD_WIDTH, 16+6, SPI_COLOR_THEME.BACKGROUND);
 	RAMN_SPI_DrawContour(0, 0, LCD_WIDTH, 16+6, CONTOUR_WIDTH, SPI_COLOR_THEME.LIGHT);
-	RAMN_SPI_DrawStringColor2(5,5, SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.BACKGROUND, "RX DUMP");
-	RAMN_SPI_DrawStringColor2(5+8*11,5, SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.BACKGROUND, tmp);
+	RAMN_SPI_RefreshString(5,5, SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.BACKGROUND, "RX DUMP");
+	RAMN_SPI_RefreshString(5+8*11,5, SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.BACKGROUND, tmp);
 
 	if(active)
 	{
-		RAMN_SPI_DrawStringColor2(5+16*11,5, SPI_COLOR_THEME.WHITE, SPI_COLOR_THEME.BACKGROUND, "  ON");
+		RAMN_SPI_RefreshString(5+16*11,5, SPI_COLOR_THEME.WHITE, SPI_COLOR_THEME.BACKGROUND, "  ON");
 	}
 	else
 	{
-		RAMN_SPI_DrawStringColor2(5+16*11,5, SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.BACKGROUND, "STOP");
+		RAMN_SPI_RefreshString(5+16*11,5, SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.BACKGROUND, "STOP");
 	}
 
 }
@@ -141,7 +141,7 @@ static void ScreenCANLog_Update(uint32_t tick) {
 				tmp[4+message->payload_size*2] = 0;
 				if (disp_index < CAN_MESSAGE_BUFFER_SIZE)
 				{
-						RAMN_SPI_DrawStringColor2(9, CANVAS_OFFSET+(16*(disp_index)), SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.BACKGROUND, tmp);
+						RAMN_SPI_RefreshString(9, CANVAS_OFFSET+(16*(disp_index)), SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.BACKGROUND, tmp);
 					if (8 - message->payload_size > 0)
 					{
 						RAMN_SPI_DrawRectangle(9+(4*11)+message->payload_size*22,CANVAS_OFFSET+(16*(disp_index)),22*(8 - message->payload_size),14,SPI_COLOR_THEME.BACKGROUND);
@@ -151,7 +151,7 @@ static void ScreenCANLog_Update(uint32_t tick) {
 				{
 					//Must scroll and display at last line
 					RAMN_SPI_ScrollUp(16);
-					RAMN_SPI_DrawStringColor2(9, CANVAS_OFFSET+(16*(disp_index%SCREEN_BUFFER_MESSAGE_COUNT)), SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.BACKGROUND, tmp);
+					RAMN_SPI_RefreshString(9, CANVAS_OFFSET+(16*(disp_index%SCREEN_BUFFER_MESSAGE_COUNT)), SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.BACKGROUND, tmp);
 					if (8 - message->payload_size > 0)
 					{
 						RAMN_SPI_DrawRectangle(9+(4*11)+message->payload_size*22,CANVAS_OFFSET+(16*(disp_index%SCREEN_BUFFER_MESSAGE_COUNT)),22*(8 - message->payload_size),14,SPI_COLOR_THEME.BACKGROUND);

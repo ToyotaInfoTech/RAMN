@@ -189,7 +189,7 @@ static void ScreenCANMonitor_Init() {
 	if (CANMONITOR_SEMAPHORE == 0U) CANMONITOR_SEMAPHORE   = xSemaphoreCreateMutexStatic(&CANMONITOR_SEMAPHORE_STRUCT);
 	RAMN_ScreenUtils_DrawBase(current_theme);
 	newIdentifierAdded = 1U; // make sure the IDs get drawn
-	RAMN_SPI_DrawStringColor(42,5, SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.BACKGROUND, "CAN RX MONITOR");
+	RAMN_SPI_DrawString(42,5, SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.BACKGROUND, "CAN RX MONITOR");
 }
 
 uint32_t last_update = 0;
@@ -222,7 +222,7 @@ static void ScreenCANMonitor_Update(uint32_t tick) {
 
 				if (identifierOverflowed != 0U)
 				{
-					RAMN_SPI_DrawStringColor(200,5, SPI_COLOR_THEME.WHITE, SPI_COLOR_THEME.BACKGROUND, "OVF");
+					RAMN_SPI_DrawString(200,5, SPI_COLOR_THEME.WHITE, SPI_COLOR_THEME.BACKGROUND, "OVF");
 					identifierOverflowed = 0;
 				}
 
@@ -232,7 +232,7 @@ static void ScreenCANMonitor_Update(uint32_t tick) {
 
 					uint12toASCII(current->identifier, tmp);
 					tmp[3] = 0;
-					RAMN_SPI_DrawStringColor(7,25+(msg_cnt*16), SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.BACKGROUND, tmp);
+					RAMN_SPI_DrawString(7,25+(msg_cnt*16), SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.BACKGROUND, tmp);
 
 					current = current->next;
 					msg_cnt += 1;
@@ -251,11 +251,11 @@ static void ScreenCANMonitor_Update(uint32_t tick) {
 
 					if (tick - current->lastNibbleChange[i] >= 500)
 					{
-						RAMN_SPI_DrawCharColor2(7+(4*11)+i*11,25+(msg_cnt*16), SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.BACKGROUND, tmp[i]);
+						RAMN_SPI_RefreshChar(7+(4*11)+i*11,25+(msg_cnt*16), SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.BACKGROUND, tmp[i]);
 					}
 					else
 					{
-						RAMN_SPI_DrawCharColor2(7+(4*11)+i*11,25+(msg_cnt*16), SPI_COLOR_THEME.WHITE, SPI_COLOR_THEME.BACKGROUND, tmp[i]);
+						RAMN_SPI_RefreshChar(7+(4*11)+i*11,25+(msg_cnt*16), SPI_COLOR_THEME.WHITE, SPI_COLOR_THEME.BACKGROUND, tmp[i]);
 					}
 				}
 				if (8 - current->messages[0].header.DataLength > 0)

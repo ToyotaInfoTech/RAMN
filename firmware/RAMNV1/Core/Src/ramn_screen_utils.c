@@ -87,7 +87,7 @@ void RAMN_ScreenUtils_DrawSubconsoleStatic()
 
 	RAMN_SPI_DrawRectangle(0, LCD_HEIGHT-36, LCD_WIDTH, 36, SPI_SUBCONSOLE_BACKGROUNDCOLOR);
 	RAMN_SPI_DrawContour(0, LCD_HEIGHT-36, LCD_WIDTH, LCD_HEIGHT, 2, SPI_SUBCONSOLE_COLORCONTOUR);
-	RAMN_SPI_DrawStringColor(2,CONTROL_WINDOW_Y,SPI_SUBCONSOLE_COLORSTATIC,SPI_SUBCONSOLE_BACKGROUNDCOLOR,"STEER BRAK ACCL");
+	RAMN_SPI_DrawString(2,CONTROL_WINDOW_Y,SPI_SUBCONSOLE_COLORSTATIC,SPI_SUBCONSOLE_BACKGROUNDCOLOR,"STEER BRAK ACCL");
 
 	//Reset strings
 	memset(prev_steer_ascii,0,6);
@@ -111,21 +111,21 @@ void RAMN_ScreenUtils_DrawSubconsoleUpdate()
 	{
 		prev_steer = RAMN_DBC_Handle.control_steer;
 		uint16toBCDSteering((((int16_t)(RAMN_DBC_Handle.control_steer) - 0x800)*100)/0x7ff, cntStr);
-		RAMN_SPI_RefreshStringColor(2,CONTROL_WINDOW_Y+16,SPI_SUBCONSOLE_COLORDYNAMIC,SPI_SUBCONSOLE_BACKGROUNDCOLOR,cntStr, prev_steer_ascii);
+		RAMN_SPI_RefreshString(2,CONTROL_WINDOW_Y+16,SPI_SUBCONSOLE_COLORDYNAMIC,SPI_SUBCONSOLE_BACKGROUNDCOLOR,cntStr);
 	}
 
 	if (RAMN_DBC_Handle.control_brake != prev_brake)
 	{
 		prev_brake = RAMN_DBC_Handle.control_brake;
 		uint16toBCDPercent((RAMN_DBC_Handle.control_brake*100 / (0xfff)),cntStr);
-		RAMN_SPI_RefreshStringColor(66,CONTROL_WINDOW_Y+16,SPI_SUBCONSOLE_COLORDYNAMIC,SPI_SUBCONSOLE_BACKGROUNDCOLOR,cntStr, prev_brake_ascii);
+		RAMN_SPI_RefreshString(66,CONTROL_WINDOW_Y+16,SPI_SUBCONSOLE_COLORDYNAMIC,SPI_SUBCONSOLE_BACKGROUNDCOLOR,cntStr);
 	}
 
 	if (RAMN_DBC_Handle.control_accel != prev_accel)
 	{
 		prev_accel = RAMN_DBC_Handle.control_accel;
 		uint16toBCDPercent(RAMN_DBC_Handle.control_accel*100 / (0xfff),cntStr);
-		RAMN_SPI_RefreshStringColor(122,CONTROL_WINDOW_Y+16,SPI_SUBCONSOLE_COLORDYNAMIC,SPI_SUBCONSOLE_BACKGROUNDCOLOR,cntStr, prev_accel_ascii);
+		RAMN_SPI_RefreshString(122,CONTROL_WINDOW_Y+16,SPI_SUBCONSOLE_COLORDYNAMIC,SPI_SUBCONSOLE_BACKGROUNDCOLOR,cntStr);
 	}
 
 	if ((RAMN_DBC_Handle.control_shift >> 8) != prev_shift)
@@ -157,14 +157,14 @@ void RAMN_ScreenUtils_DrawSubconsoleUpdate()
 			strcpy(cntStr, "  ");
 			break;
 		}
-		RAMN_SPI_DrawStringColor(170,CONTROL_WINDOW_Y+16,SPI_SUBCONSOLE_COLORDYNAMIC,SPI_SUBCONSOLE_BACKGROUNDCOLOR,cntStr);
+		RAMN_SPI_DrawString(170,CONTROL_WINDOW_Y+16,SPI_SUBCONSOLE_COLORDYNAMIC,SPI_SUBCONSOLE_BACKGROUNDCOLOR,cntStr);
 	}
 	if (RAMN_DBC_Handle.control_sidebrake != prev_sidebrake)
 	{
 		prev_sidebrake = RAMN_DBC_Handle.control_sidebrake;
 		if (RAMN_DBC_Handle.control_sidebrake != 0) strcpy(cntStr, "SB");
 		else strcpy(cntStr, "  ");
-		RAMN_SPI_DrawStringColor(210,CONTROL_WINDOW_Y,SPI_SUBCONSOLE_COLORDYNAMIC,SPI_SUBCONSOLE_BACKGROUNDCOLOR,cntStr);
+		RAMN_SPI_DrawString(210,CONTROL_WINDOW_Y,SPI_SUBCONSOLE_COLORDYNAMIC,SPI_SUBCONSOLE_BACKGROUNDCOLOR,cntStr);
 	}
 
 	if ((RAMN_DBC_Handle.command_lights&0xFF) != prev_lamp)
@@ -188,7 +188,7 @@ void RAMN_ScreenUtils_DrawSubconsoleUpdate()
 			strcpy(cntStr, "  ");
 			break;
 		}
-		RAMN_SPI_DrawStringColor(180,CONTROL_WINDOW_Y,SPI_SUBCONSOLE_COLORDYNAMIC,SPI_SUBCONSOLE_BACKGROUNDCOLOR,cntStr);
+		RAMN_SPI_DrawString(180,CONTROL_WINDOW_Y,SPI_SUBCONSOLE_COLORDYNAMIC,SPI_SUBCONSOLE_BACKGROUNDCOLOR,cntStr);
 	}
 
 	if ((RAMN_DBC_Handle.control_enginekey &0xFF) != prev_enginekey)
@@ -209,7 +209,7 @@ void RAMN_ScreenUtils_DrawSubconsoleUpdate()
 			strcpy(cntStr, "   ");
 			break;
 		}
-		RAMN_SPI_DrawStringColor(200,CONTROL_WINDOW_Y+16,SPI_SUBCONSOLE_COLORDYNAMIC,SPI_SUBCONSOLE_BACKGROUNDCOLOR,cntStr);
+		RAMN_SPI_DrawString(200,CONTROL_WINDOW_Y+16,SPI_SUBCONSOLE_COLORDYNAMIC,SPI_SUBCONSOLE_BACKGROUNDCOLOR,cntStr);
 	}
 
 }
