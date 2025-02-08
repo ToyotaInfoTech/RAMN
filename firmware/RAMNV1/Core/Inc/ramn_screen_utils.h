@@ -26,6 +26,7 @@
 #include "ramn_spi.h"
 #include "ramn_dbc.h"
 #include "ramn_joystick.h"
+#include "ramn_sensors.h"
 
 // Update configureColorTheme (and potentially RAMN_SCREENUTILS_Init) to add/remove themes.
 #define NUMBER_OF_THEMES 7

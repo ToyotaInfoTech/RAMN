@@ -18,8 +18,6 @@
 
 #ifdef ENABLE_SCREEN
 
-#include "ramn_sensors.h"
-
 // Exported variables
 
 uint32_t 				RAMN_SCREENUTILS_LoopCounter = 0U;
