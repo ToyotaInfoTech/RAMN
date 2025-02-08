@@ -315,7 +315,22 @@ void RAMN_SPI_RefreshString(uint16_t x, uint16_t y, uint16_t fgColor, uint16_t b
 
 		index++;
 	}
+}
 
+void RAMN_SPI_DrawUint32(uint16_t x, uint16_t y, uint16_t fgColor, uint16_t bgColor, uint32_t val)
+{
+	uint8_t tmp[9];
+	tmp[8] = 0; // Terminate string
+	uint32toASCII(val, tmp);
+	RAMN_SPI_DrawString(x, y, fgColor, bgColor, (char*)tmp);
+}
+
+void RAMN_SPI_RefreshUint32(uint16_t x, uint16_t y, uint16_t fgColor, uint16_t bgColor, uint32_t val)
+{
+	uint8_t tmp[9];
+	tmp[8] = 0; // Terminate string
+	uint32toASCII(val, tmp);
+	RAMN_SPI_RefreshString(x, y, fgColor, bgColor, (char*)tmp);
 }
 
 #endif

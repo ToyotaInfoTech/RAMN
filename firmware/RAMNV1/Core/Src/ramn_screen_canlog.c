@@ -119,11 +119,11 @@ static void ScreenCANLog_Update(uint32_t tick) {
 		//Too many CAN messages available (would be immediately overwritten, skip)
 		return;
 	}
-	if (RAMN_SCREENUTILS_LoopCounter % 5 == 0)
+	if (RAMN_SCREENUTILS_LoopCounter % 5U == 0U)
 	{
 		while (xSemaphoreTake(CANLOG_SEMAPHORE, portMAX_DELAY ) != pdTRUE);
 
-		if (active && (canMessageBuffer.count != 0)) {
+		if (active && (canMessageBuffer.count != 0U)) {
 
 			uint32_t start_index = (canMessageBuffer.head + CAN_MESSAGE_BUFFER_SIZE - canMessageBuffer.count) % CAN_MESSAGE_BUFFER_SIZE;
 			for (uint8_t i = 0; i < canMessageBuffer.count; i++) {

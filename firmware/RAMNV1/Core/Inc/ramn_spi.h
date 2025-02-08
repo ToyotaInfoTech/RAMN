@@ -102,6 +102,12 @@ void 	RAMN_SPI_DrawString(uint16_t x, uint16_t y, uint16_t fgColor, uint16_t bgC
 // Same as RAMN_SPI_RefreshChar but with strings.
 void 	RAMN_SPI_RefreshString(uint16_t x, uint16_t y, uint16_t fgColor, uint16_t bgColor, const char* src);
 
+// Same as RAMN_SPI_DrawString/RAMN_SPI_RefreshString  but using uint32_t as argument. Displays in hex by default (without leading 0x)
+void 	RAMN_SPI_DrawUint32(uint16_t x, uint16_t y, uint16_t fgColor, uint16_t bgColor, uint32_t val);
+void 	RAMN_SPI_RefreshUint32(uint16_t x, uint16_t y, uint16_t fgColor, uint16_t bgColor, uint32_t val);
+
+
+
 #endif
 
 #ifdef EXPANSION_BODY

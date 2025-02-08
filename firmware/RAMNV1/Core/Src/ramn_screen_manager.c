@@ -98,10 +98,12 @@ void RAMN_SCREENMANAGER_Update(uint32_t tick)
 	}
 
 	// Force to move to the UDS screen if a UDS draw was requested.
+#ifdef ENABLE_UDS
 	if ((RAMN_SCREENUDS_RedrawNeeded != 0U) && (currentScreen != &ScreenUDS))
 	{
 		switchScreen(&ScreenUDS);
 	}
+#endif
 
 	joystickEvent = RAMN_Joystick_Pop();
 
@@ -136,15 +138,12 @@ void RAMN_SCREENMANAGER_Update(uint32_t tick)
 	// Display a message if the loop execution takes too much time.
 	if (RAMN_SCREENUTILS_LoopCounter >= SLOW_WARNING_MIN_LOOP_COUNT && (xTaskGetTickCount() - tick) > SIM_LOOP_CLOCK_MS)
 	{
-		uint8_t tmp[9U];
-		tmp[8U] = 0;
-		uint32toASCII(xTaskGetTickCount() - tick, tmp);
 		RAMN_SPI_DrawString(5, 5, RAMN_SCREENUTILS_COLORTHEME.BACKGROUND, RAMN_SCREENUTILS_COLORTHEME.LIGHT, "SLOW: ");
-		RAMN_SPI_DrawString(5+(6*11), 5, RAMN_SCREENUTILS_COLORTHEME.BACKGROUND, RAMN_SCREENUTILS_COLORTHEME.LIGHT, (char*)tmp);
+		RAMN_SPI_DrawUint32(5+(6*11), 5, RAMN_SCREENUTILS_COLORTHEME.BACKGROUND, RAMN_SCREENUTILS_COLORTHEME.LIGHT, xTaskGetTickCount() - tick);
 	}
 #endif
 
-	RAMN_SCREENUTILS_LoopCounter += 1;
+	RAMN_SCREENUTILS_LoopCounter += 1U;
 }
 
 void RAMN_SCREENMANAGER_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, const uint8_t* data, uint32_t tick)
@@ -158,13 +157,13 @@ void RAMN_SCREENMANAGER_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader
 
 void RAMN_SCREENMANAGER_RequestGame(const uint8_t* game_to_load, uint16_t game_size)
 {
-	RAMN_ScreenChip8_RequestGame(game_to_load, game_size);
+	RAMN_SCREENCHIP8_RequestGame(game_to_load, game_size);
 
 }
 
 void RAMN_SCREENMANAGER_StartGameFromIndex(uint8_t index)
 {
-	RAMN_ScreenChip8_StartGameFromIndex(index);
+	RAMN_SCREENCHIP8_StartGameFromIndex(index);
 }
 
 #endif
@@ -178,7 +177,7 @@ RAMN_Bool_t RAMN_SCREENMANAGER_IsUDSScreenUpdatePending()
 
 void RAMN_ScreenManager_RequestDrawImage(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const uint8_t* image)
 {
-	RAMN_ScreenUDS_RequestDrawImage(x, y, w, h, image);
+	RAMN_SCREENUDS_RequestDrawImage(x, y, w, h, image);
 }
 
 #endif

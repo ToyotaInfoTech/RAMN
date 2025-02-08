@@ -163,7 +163,7 @@
 #define ENABLE_DIAG
 #define ENABLE_EEPROM_EMULATION
 #if defined(ENABLE_SCREEN)
-#define UDS_DRAW_BUFFER_SIZE 0x1000
+#define UDS_DRAW_BUFFER_SIZE 0x1000 // Size of the buffer used to draw on screen using UDS commands
 #endif
 #endif
 

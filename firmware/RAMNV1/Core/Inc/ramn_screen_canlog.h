@@ -20,6 +20,9 @@
 #define INC_RAMN_SCREEN_CANLOG_H_
 
 #include "main.h"
+
+#ifdef ENABLE_SCREEN
+
 #include "ramn_screen_utils.h"
 
 #define SCREEN_BUFFER_MESSAGE_COUNT 18
@@ -43,4 +46,7 @@ typedef struct {
 extern RAMNScreen ScreenCANLog;
 
 void RAMN_ScreenCANLog_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, const uint8_t* data, uint32_t tick);
+
+#endif
+
 #endif

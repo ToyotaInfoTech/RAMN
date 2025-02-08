@@ -198,16 +198,16 @@ static void ScreenCANMonitor_Update(uint32_t tick) {
 	uint8_t msg_cnt = 0;
 	uint8_t tmp[21];
 
-	if (RAMN_SCREENUTILS_LoopCounter % 5 == 0)
+	if (RAMN_SCREENUTILS_LoopCounter % 5U == 0U)
 	{
-		if ((new_messages > 0) || (tick - last_update > 500))
+		if ((new_messages > 0) || (tick - last_update > 500U))
 		{
 
 			while (xSemaphoreTake(CANMONITOR_SEMAPHORE, portMAX_DELAY ) != pdTRUE);
 
 			if (tick > 2000)
 			{
-				if (removeOldNodes(tick - 2000) != 0U)
+				if (removeOldNodes(tick - 2000U) != 0U)
 				{
 					//screen redraw needed pretend there is a new ID
 					RAMN_SPI_DrawRectangle(5,25+((identifierCount)*16),LCD_WIDTH-10,(MAX_CANMONITOR_IDS-identifierCount)*16,RAMN_SCREENUTILS_COLORTHEME.BACKGROUND);

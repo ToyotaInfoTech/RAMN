@@ -20,6 +20,9 @@
 #define INC_RAMN_SCREEN_CANMONITOR_H_
 
 #include "main.h"
+
+#ifdef ENABLE_SCREEN
+
 #include "ramn_screen_utils.h"
 #include "cmsis_os.h"
 #include "stream_buffer.h"
@@ -43,4 +46,5 @@ extern RAMNScreen ScreenCANMonitor;
 
 void RAMN_ScreenCANMonitor_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, const uint8_t* data, uint32_t tick);
 
+#endif
 #endif
