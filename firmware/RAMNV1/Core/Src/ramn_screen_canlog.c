@@ -3,7 +3,7 @@
  ******************************************************************************
  * @attention
  *
- * <h2><center>&copy; Copyright (c) 2024 TOYOTA MOTOR CORPORATION.
+ * <h2><center>&copy; Copyright (c) 2025 TOYOTA MOTOR CORPORATION.
  * ALL RIGHTS RESERVED.</center></h2>
  *
  * This software component is licensed by TOYOTA MOTOR CORPORATION under BSD 3-Clause license,
@@ -18,62 +18,81 @@
 
 #ifdef ENABLE_SCREEN
 
-__attribute__ ((section (".buffers"))) CAN_MessageBuffer canMessageBuffer = { .head = 0, .count = 0 };
+__attribute__ ((section (".buffers"))) static CAN_MessageBuffer canMessageBuffer = { .head = 0, .count = 0 };
 
-const uint16_t FILTER_ID_LIST[]   = {0x024, 0x039, 0x062, 0x077, 0x098, 0x150, 0x1A7, 0x1B8, 0x1BB, 0x1D3, 0x550, 0x7E0, 0x000};
-const uint16_t FILTER_MASK_LIST[] = {0x7FF, 0x7FF, 0x7FF, 0x7FF, 0x7FF, 0x7FF, 0x7FF, 0x7FF, 0x7FF, 0x7FF, 0x7F0, 0x7F0, 0x000};
+// If you update this list, make sure you also update FILTER_MASK_LIST
+const uint16_t FILTER_ID_LIST[]   = {
+		CAN_SIM_CONTROL_BRAKE_CANID,
+		CAN_SIM_CONTROL_ACCEL_CANID,
+		CAN_SIM_CONTROL_STEERING_CANID,
+		CAN_SIM_CONTROL_SHIFT_CANID,
+		CAN_SIM_COMMAND_HORN_CANID,
+		CAN_SIM_COMMAND_LIGHTS_CANID,
+		CAN_SIM_COMMAND_TURNINDICATOR_CANID,
+		CAN_SIM_CONTROL_ENGINEKEY_CANID,
+		CAN_SIM_CONTROL_LIGHTS_CANID,
+		CAN_SIM_CONTROL_SIDEBRAKE_CANID,
+		0x550, // Assume XCP all start 0x55
+		0x7E0, // Assume UDS all start 0x7E
+		0x000
+};
 
-#define NUMBER_OF_FILTERS (sizeof(FILTER_ID_LIST)/sizeof(uint16_t))
+const uint16_t FILTER_MASK_LIST[] = {
+		0x7FF,
+		0x7FF,
+		0x7FF,
+		0x7FF,
+		0x7FF,
+		0x7FF,
+		0x7FF,
+		0x7FF,
+		0x7FF,
+		0x7FF,
+		0x7F0,
+		0x7F0,
+		0x000};
 
-#define DEFAULT_FILTER_INDEX 0
-uint8_t filter_index = DEFAULT_FILTER_INDEX;
+// Index of filter currently used
+static uint8_t filterIndex = 0U;
 
-static uint32_t disp_index = 0;
+// Index of line being displayed on screen
+static uint32_t dispIndex = 0U;
+
+// Whether the screen is active or not
 static uint8_t active = 1U;
-static uint16_t filter_id = FILTER_ID_LIST[DEFAULT_FILTER_INDEX];
-static uint16_t filter_mask = FILTER_MASK_LIST[DEFAULT_FILTER_INDEX];
 
-////Semaphore to enable access from different threads
+// Semaphore to enable access from different tasks
 static SemaphoreHandle_t CANLOG_SEMAPHORE = 0U;
 static StaticSemaphore_t CANLOG_SEMAPHORE_STRUCT;
 
-// Function to set CAN filter
-static void setCANfilterIndex(uint8_t index) {
-	filter_id = FILTER_ID_LIST[filter_index];
-	filter_mask = FILTER_MASK_LIST[filter_index];
-}
-
 static void ScreenCANLog_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, const uint8_t* data, uint32_t tick)
 {
-	while (CANLOG_SEMAPHORE == 0U) osDelay(50);
+	CAN_Message *message = &canMessageBuffer.messages[canMessageBuffer.head];
+
+	while (CANLOG_SEMAPHORE == 0U) osDelay(1); //TODO: change delay (?)
 	if (xStreamBufferBytesAvailable(CANRxDataStreamBufferHandle) > MAX_BUFFER_BYTES)
 	{
-		//Too many CAN messages available (would be immediately overwritten, skip)
+		// Too many CAN messages waiting (would be immediately overwritten, skip)
 		return;
 	}
 	if ((pHeader->IdType == FDCAN_STANDARD_ID) && (pHeader->FDFormat == FDCAN_CLASSIC_CAN) && (pHeader->RxFrameType == FDCAN_DATA_FRAME) && (pHeader->DataLength <= 8))
 	{
-		// Apply the filter
-		if ((pHeader->Identifier & filter_mask) != (filter_id & filter_mask)) {
-			// Identifier does not match the filter
-			return;
+		// Check filter
+		if ((pHeader->Identifier & FILTER_MASK_LIST[filterIndex]) != (FILTER_ID_LIST[filterIndex] & FILTER_MASK_LIST[filterIndex])) return;
+
+		while (xSemaphoreTake(CANLOG_SEMAPHORE, 5) != pdTRUE)
+		{
+			if (xStreamBufferBytesAvailable(CANRxDataStreamBufferHandle) > MAX_BUFFER_BYTES) return; // Too many messages, skip
 		}
 
-		// Store the message in the buffer
-		while (xSemaphoreTake(CANLOG_SEMAPHORE, 5 ) != pdTRUE){
-			if (xStreamBufferBytesAvailable(CANRxDataStreamBufferHandle) > MAX_BUFFER_BYTES) return;
-		}
-		CAN_Message *message = &canMessageBuffer.messages[canMessageBuffer.head];
 		message->identifier = pHeader->Identifier;
 		message->payload_size = pHeader->DataLength;
-
 		RAMN_memcpy(message->data, data, pHeader->DataLength);
 
 		// Update the buffer head and count
 		canMessageBuffer.head = (canMessageBuffer.head + 1) % CAN_MESSAGE_BUFFER_SIZE;
-		if (canMessageBuffer.count < CAN_MESSAGE_BUFFER_SIZE) {
-			canMessageBuffer.count++;
-		}
+		if (canMessageBuffer.count < CAN_MESSAGE_BUFFER_SIZE) canMessageBuffer.count++;
+
 		xSemaphoreGive(CANLOG_SEMAPHORE);
 	}
 }
@@ -82,38 +101,29 @@ static void ScreenCANLog_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeade
 static void draw_header()
 {
 	uint8_t tmp[8];
-	uint12toASCII(filter_id, tmp);
+	uint12toASCII(FILTER_ID_LIST[filterIndex], tmp);
 	tmp[3] = ':';
-	uint12toASCII(filter_mask, &tmp[4]);
-	tmp[7] = 0;
+	uint12toASCII(FILTER_MASK_LIST[filterIndex], &tmp[4]);
+	tmp[7] = 0; // Terminate string
 
-	//RAMN_SPI_DrawRectangle(0, 0, LCD_WIDTH, 16+6, SPI_COLOR_THEME.BACKGROUND);
 	RAMN_SPI_DrawContour(0, 0, LCD_WIDTH, 16+6, CONTOUR_WIDTH, RAMN_SCREENUTILS_COLORTHEME.LIGHT);
 	RAMN_SPI_RefreshString(5,5, RAMN_SCREENUTILS_COLORTHEME.LIGHT, RAMN_SCREENUTILS_COLORTHEME.BACKGROUND, "RX DUMP");
-	RAMN_SPI_RefreshString(5+8*11,5, RAMN_SCREENUTILS_COLORTHEME.LIGHT, RAMN_SCREENUTILS_COLORTHEME.BACKGROUND, tmp);
+	RAMN_SPI_RefreshString(5+8*11,5, RAMN_SCREENUTILS_COLORTHEME.LIGHT, RAMN_SCREENUTILS_COLORTHEME.BACKGROUND, (char*)tmp);
 
-	if(active)
-	{
-		RAMN_SPI_RefreshString(5+16*11,5, RAMN_SCREENUTILS_COLORTHEME.WHITE, RAMN_SCREENUTILS_COLORTHEME.BACKGROUND, "  ON");
-	}
-	else
-	{
-		RAMN_SPI_RefreshString(5+16*11,5, RAMN_SCREENUTILS_COLORTHEME.LIGHT, RAMN_SCREENUTILS_COLORTHEME.BACKGROUND, "STOP");
-	}
-
+	if(active) RAMN_SPI_RefreshString(5+16*11,5, RAMN_SCREENUTILS_COLORTHEME.WHITE, RAMN_SCREENUTILS_COLORTHEME.BACKGROUND, "  ON");
+	else RAMN_SPI_RefreshString(5+16*11,5, RAMN_SCREENUTILS_COLORTHEME.LIGHT, RAMN_SCREENUTILS_COLORTHEME.BACKGROUND, "STOP");
 }
 
-static void ScreenCANLog_Init() {
-
+static void SCREENCANLOG_Init()
+{
 	if (CANLOG_SEMAPHORE == 0U) CANLOG_SEMAPHORE = xSemaphoreCreateMutexStatic(&CANLOG_SEMAPHORE_STRUCT);
 	RAMN_SCREENUTILS_PrepareScrollScreen();
-	disp_index = 0;
+	dispIndex = 0;
 	draw_header();
 }
 
-#define CANVAS_OFFSET SCREEN_HEADER_SIZE
-static void ScreenCANLog_Update(uint32_t tick) {
-
+static void SCREENCANLOG_Update(uint32_t tick)
+{
 	if (xStreamBufferBytesAvailable(CANRxDataStreamBufferHandle) > MAX_BUFFER_BYTES)
 	{
 		//Too many CAN messages available (would be immediately overwritten, skip)
@@ -121,17 +131,18 @@ static void ScreenCANLog_Update(uint32_t tick) {
 	}
 	if (RAMN_SCREENUTILS_LoopCounter % 5U == 0U)
 	{
-		while (xSemaphoreTake(CANLOG_SEMAPHORE, portMAX_DELAY ) != pdTRUE);
+		while (xSemaphoreTake(CANLOG_SEMAPHORE, portMAX_DELAY) != pdTRUE);
 
-		if (active && (canMessageBuffer.count != 0U)) {
-
+		if (active && (canMessageBuffer.count != 0U))
+		{
 			uint32_t start_index = (canMessageBuffer.head + CAN_MESSAGE_BUFFER_SIZE - canMessageBuffer.count) % CAN_MESSAGE_BUFFER_SIZE;
-			for (uint8_t i = 0; i < canMessageBuffer.count; i++) {
+			for (uint8_t i = 0; i < canMessageBuffer.count; i++)
+			{
 				uint32_t index = (start_index + i) % CAN_MESSAGE_BUFFER_SIZE;
 				CAN_Message *message = &canMessageBuffer.messages[index];
 				uint8_t tmp[21];
-				tmp[20] = 0;
 
+				tmp[20] = 0;
 				uint12toASCII(message->identifier, tmp);
 				tmp[3] = ' ';
 				for(uint8_t i=0;i<message->payload_size*2;i++)
@@ -139,28 +150,28 @@ static void ScreenCANLog_Update(uint32_t tick) {
 					uint4toASCII((message->data[i/2] >> (4*((i+1)%2)))&0xF,&tmp[4+i]);
 				}
 				tmp[4+message->payload_size*2] = 0;
-				if (disp_index < CAN_MESSAGE_BUFFER_SIZE)
+				if (dispIndex < CAN_MESSAGE_BUFFER_SIZE)
 				{
-						RAMN_SPI_RefreshString(9, CANVAS_OFFSET+(16*(disp_index)), RAMN_SCREENUTILS_COLORTHEME.LIGHT, RAMN_SCREENUTILS_COLORTHEME.BACKGROUND, tmp);
+					RAMN_SPI_RefreshString(9, CANVAS_OFFSET+(16*(dispIndex)), RAMN_SCREENUTILS_COLORTHEME.LIGHT, RAMN_SCREENUTILS_COLORTHEME.BACKGROUND, (char*)tmp);
 					if (8 - message->payload_size > 0)
 					{
-						RAMN_SPI_DrawRectangle(9+(4*11)+message->payload_size*22,CANVAS_OFFSET+(16*(disp_index)),22*(8 - message->payload_size),14,RAMN_SCREENUTILS_COLORTHEME.BACKGROUND);
+						// Erase bytes after DLC (that could have been written by a previous message with longer DLC)
+						RAMN_SPI_DrawRectangle(9+(4*11)+message->payload_size*22,CANVAS_OFFSET+(16*(dispIndex)),22*(8 - message->payload_size),14,RAMN_SCREENUTILS_COLORTHEME.BACKGROUND);
 					}
 				}
 				else
 				{
-					//Must scroll and display at last line
+					// Must scroll and display at last line
 					RAMN_SPI_ScrollUp(16);
-					RAMN_SPI_RefreshString(9, CANVAS_OFFSET+(16*(disp_index%SCREEN_BUFFER_MESSAGE_COUNT)), RAMN_SCREENUTILS_COLORTHEME.LIGHT, RAMN_SCREENUTILS_COLORTHEME.BACKGROUND, tmp);
+					RAMN_SPI_RefreshString(9, CANVAS_OFFSET+(16*(dispIndex%SCREEN_BUFFER_MESSAGE_COUNT)), RAMN_SCREENUTILS_COLORTHEME.LIGHT, RAMN_SCREENUTILS_COLORTHEME.BACKGROUND, (char*)tmp);
 					if (8 - message->payload_size > 0)
 					{
-						RAMN_SPI_DrawRectangle(9+(4*11)+message->payload_size*22,CANVAS_OFFSET+(16*(disp_index%SCREEN_BUFFER_MESSAGE_COUNT)),22*(8 - message->payload_size),14,RAMN_SCREENUTILS_COLORTHEME.BACKGROUND);
+						// Erase bytes after DLC (that could have been written by a previous message with longer DLC)
+						RAMN_SPI_DrawRectangle(9+(4*11)+message->payload_size*22,CANVAS_OFFSET+(16*(dispIndex%SCREEN_BUFFER_MESSAGE_COUNT)),22*(8 - message->payload_size),14,RAMN_SCREENUTILS_COLORTHEME.BACKGROUND);
 					}
 				}
-
-				disp_index += 1;
+				dispIndex += 1;
 			}
-
 			// Empty buffer
 			canMessageBuffer.head = 0;
 			canMessageBuffer.count = 0;
@@ -169,23 +180,22 @@ static void ScreenCANLog_Update(uint32_t tick) {
 	}
 }
 
-static void ScreenCANLog_Deinit() {
+static void SCREENCANLOG_Deinit()
+{
 	RAMN_SPI_SetScroll(SCREEN_HEADER_SIZE);
 }
 
-static RAMN_Bool_t ScreenCANLog_UpdateInput(JoystickEventType event) {
-
+static RAMN_Bool_t SCREENCANLOG_UpdateInput(JoystickEventType event)
+{
 	if (event == JOYSTICK_EVENT_DOWN_PRESSED)
 	{
-		if (filter_index == 0) filter_index = NUMBER_OF_FILTERS-1;
-		else filter_index--;
-		setCANfilterIndex(filter_index);
+		if (filterIndex == 0) filterIndex = (sizeof(FILTER_ID_LIST)/sizeof(uint16_t))-1;
+		else filterIndex--;
 		draw_header();
 	}
 	else if (event == JOYSTICK_EVENT_UP_PRESSED)
 	{
-		filter_index = (filter_index + 1) % NUMBER_OF_FILTERS;
-		setCANfilterIndex(filter_index);
+		filterIndex = (filterIndex + 1) % (sizeof(FILTER_ID_LIST)/sizeof(uint16_t));
 		draw_header();
 	}
 	else if (event == JOYSTICK_EVENT_CENTER_PRESSED)
@@ -197,10 +207,10 @@ static RAMN_Bool_t ScreenCANLog_UpdateInput(JoystickEventType event) {
 }
 
 RAMNScreen ScreenCANLog = {
-		.Init = ScreenCANLog_Init,
-		.Update = ScreenCANLog_Update,
-		.Deinit = ScreenCANLog_Deinit,
-		.UpdateInput = ScreenCANLog_UpdateInput,
+		.Init = SCREENCANLOG_Init,
+		.Update = SCREENCANLOG_Update,
+		.Deinit = SCREENCANLOG_Deinit,
+		.UpdateInput = SCREENCANLOG_UpdateInput,
 		.ProcessRxCANMessage = ScreenCANLog_ProcessRxCANMessage
 };
 

@@ -3,7 +3,7 @@
  ******************************************************************************
  * @attention
  *
- * <h2><center>&copy; Copyright (c) 2024 TOYOTA MOTOR CORPORATION.
+ * <h2><center>&copy; Copyright (c) 2025 TOYOTA MOTOR CORPORATION.
  * ALL RIGHTS RESERVED.</center></h2>
  *
  * This software component is licensed by TOYOTA MOTOR CORPORATION under BSD 3-Clause license,
@@ -17,123 +17,130 @@
 
 #ifdef ENABLE_SCREEN
 
-
-////Semaphore to enable access  from different threads
+// Semaphore to enable access  from different threads
 static SemaphoreHandle_t CANMONITOR_SEMAPHORE = 0U;
 static StaticSemaphore_t CANMONITOR_SEMAPHORE_STRUCT;
 
+// Number of new messages to display
+volatile static uint8_t newMsgCnt = 0U;
 
-//linked list for storing messages
-CANMessageNode* head = NULL;
-//number of new messages to display
-volatile uint8_t new_messages = 0U;
+// Number of identifiers observed
+volatile static uint8_t idCnt = 0U;
 
-//number of identifiers observed
-volatile uint8_t identifierCount = 0U;
-//flag set when a new identifier was added and a screen redraw is needed
-volatile uint8_t newIdentifierAdded = 0U;
-//flag set when an identifier cannot be displayed on screen.
-volatile uint8_t identifierOverflowed = 0U;
+// Flag set when a new identifier was added and a screen redraw is needed
+volatile static RAMN_Bool_t newIdentifierAdded = False;
 
+// Flag set when an identifier cannot be displayed on screen.
+volatile static RAMN_Bool_t identifierOverflowed = False;
 
-static void freeCANMessageList() {
+// Linked list for storing messages
+static CANMessageNode* head = NULL;
+
+// Ticks of last update
+static uint32_t lastUpdated = 0;
+
+static void freeCANMessageList()
+{
 	CANMessageNode* current = head;
 	CANMessageNode* next;
 
-	while (current != NULL) {
+	while (current != NULL)
+	{
 		next = current->next;
 		free(current);
 		current = next;
 	}
-	identifierCount = 0U;
+	idCnt = 0U;
 	head = NULL;
 }
 
-//TODO optimize access
-static CANMessageNode* findOrCreateCANMessageNode(uint32_t identifier) {
+//TODO: optimize access by keeping pointer to last item
+static CANMessageNode* findOrCreateCANMessageNode(uint32_t identifier)
+{
 	CANMessageNode* current = head;
 	CANMessageNode* previous = NULL;
 
-	//find the correct position or existing node
-	while (current != NULL && current->identifier < identifier) {
+	// Find the correct position or existing node
+	while (current != NULL && current->identifier < identifier)
+	{
 		previous = current;
 		current = current->next;
 	}
 
-	// return if node exists
-	if (current != NULL && current->identifier == identifier) {
-		return current;
-	}
+	// Return if node exists
+	if (current != NULL && current->identifier == identifier)  return current;
 
-	if (identifierCount >= MAX_CANMONITOR_IDS) {
-
+	if (idCnt >= MAX_CANMONITOR_IDS)
+	{
 		// Remove the last node to make space if the new identifier has higher priority
 		CANMessageNode* temp = head;
 		CANMessageNode* prevTemp = NULL;
-		while (temp->next != NULL) {
+
+		while (temp->next != NULL)
+		{
 			prevTemp = temp;
 			temp = temp->next;
 		}
 
-		//last item in the list
-		if (temp != NULL) {
-
-			if (temp->identifier > identifier) {
+		// Last item in the list
+		if (temp != NULL)
+		{
+			if (temp->identifier > identifier) // Last message has lower priority (higher identifier)
+			{
 				free(temp);
 				if (prevTemp != NULL) prevTemp->next = NULL;
 			}
-			else
-			{
-				return NULL; //no place for this new identifier
-			}
+			else return NULL; // No place for this new identifier
 		}
-		identifierCount--;
-		identifierOverflowed = 1;
+		idCnt--;
+		identifierOverflowed = True;
 	}
 
+	// Create new node
 	CANMessageNode* newNode = (CANMessageNode*)malloc(sizeof(CANMessageNode));
-	if (newNode == NULL) {
-		identifierOverflowed = 1;
+
+	if (newNode == NULL)
+	{
+		// No place in memory
+		identifierOverflowed = True;
 		return NULL;
 	}
 	newNode->identifier = identifier;
-	memset(newNode->messages, 0, sizeof(newNode->messages));
-	memset(newNode->lastNibbleChange, 0, sizeof(newNode->lastNibbleChange));
+	RAMN_memset(newNode->messages, 0, sizeof(newNode->messages));
+	RAMN_memset(newNode->lastNibbleChange, 0, sizeof(newNode->lastNibbleChange));
 	newNode->next = current;
 
-	if (previous == NULL) {
-		head = newNode;
-	} else {
-		previous->next = newNode;
-	}
-	if (newNode->next == newNode) newNode->next = NULL; //case where we are at the end of the list
+	if (previous == NULL) head = newNode;
+	else previous->next = newNode;
 
-	identifierCount++;
-	newIdentifierAdded = 1;
+	if (newNode->next == newNode) newNode->next = NULL; // Case where we are at the end of the list
 
+	idCnt++;
+	newIdentifierAdded = True;
 	return newNode;
 }
 
-//Function to remove messages with old timestamps
-uint8_t removeOldNodes(uint32_t thresholdTick) {
+// Removes messages with old timestamps
+uint8_t removeOldNodes(uint32_t thresholdTick)
+{
 	CANMessageNode* current = head;
 	CANMessageNode* previous = NULL;
 	uint8_t node_deleted = 0U;
-	while (current != NULL) {
+
+	while (current != NULL)
+	{
 		// Check if the current node's latest message timestamp is less than the threshold
-		if (current->messages[0].header.RxTimestamp < thresholdTick) {
+		if (current->messages[0].header.RxTimestamp < thresholdTick)
+		{
 			CANMessageNode* nodeToRemove = current;
 
 			// If the node to remove is the head of the list
-			if (previous == NULL) {
-				head = current->next;
-			} else {
-				previous->next = current->next;
-			}
+			if (previous == NULL) head = current->next;
+			else previous->next = current->next;
 
 			current = current->next;
 			free(nodeToRemove);
-			identifierCount--;
+			idCnt--;
 			node_deleted = 1U;
 		} else {
 			previous = current;
@@ -143,113 +150,98 @@ uint8_t removeOldNodes(uint32_t thresholdTick) {
 	return node_deleted;
 }
 
-static void ScreenCANMonitor_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, const uint8_t* data, uint32_t tick)
+static void SCREENCANMONITOR_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, const uint8_t* data, uint32_t tick)
 {
-	//TODO process more types?
+	//TODO: process more types (?)
 	if ((pHeader->IdType == FDCAN_STANDARD_ID) && (pHeader->FDFormat == FDCAN_CLASSIC_CAN) && (pHeader->RxFrameType == FDCAN_DATA_FRAME) && (pHeader->DataLength <= 8))
 	{
 
-		while (CANMONITOR_SEMAPHORE == 0U) osDelay(50);
+		while (CANMONITOR_SEMAPHORE == 0U) osDelay(1U); //TODO: use larger delay (?)
 		while (xSemaphoreTake(CANMONITOR_SEMAPHORE, portMAX_DELAY ) != pdTRUE);
 
-		//Process Message here
+		// Process Message
 		CANMessageNode* node = findOrCreateCANMessageNode(pHeader->Identifier);
-		if (node == NULL) {
-			identifierOverflowed = 1U;
-		}
+		if (node == NULL) identifierOverflowed = True;
 		else
 		{
 			node->messages[1] = node->messages[0];
-
 			node->messages[0].header = *pHeader;
 			node->messages[0].header.RxTimestamp = tick;
 
 			RAMN_memcpy(node->messages[0].data, data, pHeader->DataLength);
 
-			//TODO better handle DLC changes
 			for(uint8_t i=0; i < pHeader->DataLength; i++)
 			{
-				if ((node->messages[0].data[i]&0xF) != (node->messages[1].data[i]&0xF))
-				{
-					node->lastNibbleChange[(2*i)+1] = tick;
-				}
-				if ((node->messages[0].data[i]&0xF0) != (node->messages[1].data[i]&0xF0))
-				{
-					node->lastNibbleChange[(2*i)] = tick;
-				}
+				if ((node->messages[0].data[i]&0xF) != (node->messages[1].data[i]&0xF)) node->lastNibbleChange[(2*i)+1] = tick;
+				if ((node->messages[0].data[i]&0xF0) != (node->messages[1].data[i]&0xF0)) node->lastNibbleChange[(2*i)] = tick;
 			}
-			//end processing
-			new_messages++;
+			newMsgCnt++;
 		}
 		xSemaphoreGive(CANMONITOR_SEMAPHORE);
 	}
 }
 
-static void ScreenCANMonitor_Init() {
+static void SCREENCANMONITOR_Init()
+{
 	if (CANMONITOR_SEMAPHORE == 0U) CANMONITOR_SEMAPHORE   = xSemaphoreCreateMutexStatic(&CANMONITOR_SEMAPHORE_STRUCT);
 	RAMN_SCREENUTILS_DrawBase();
-	newIdentifierAdded = 1U; // make sure the IDs get drawn
+	newIdentifierAdded = True; // make sure the IDs get drawn
 	RAMN_SPI_DrawString(42,5, RAMN_SCREENUTILS_COLORTHEME.LIGHT, RAMN_SCREENUTILS_COLORTHEME.BACKGROUND, "CAN RX MONITOR");
 }
 
-uint32_t last_update = 0;
-static void ScreenCANMonitor_Update(uint32_t tick) {
-
+static void SCREENCANMONITOR_Update(uint32_t tick)
+{
 	uint8_t msg_cnt = 0;
 	uint8_t tmp[21];
 
 	if (RAMN_SCREENUTILS_LoopCounter % 5U == 0U)
 	{
-		if ((new_messages > 0) || (tick - last_update > 500U))
+		if ((newMsgCnt > 0) || (tick - lastUpdated > 500U))
 		{
-
 			while (xSemaphoreTake(CANMONITOR_SEMAPHORE, portMAX_DELAY ) != pdTRUE);
 
-			if (tick > 2000)
+			if (tick > 2000U)
 			{
 				if (removeOldNodes(tick - 2000U) != 0U)
 				{
 					//screen redraw needed pretend there is a new ID
-					RAMN_SPI_DrawRectangle(5,25+((identifierCount)*16),LCD_WIDTH-10,(MAX_CANMONITOR_IDS-identifierCount)*16,RAMN_SCREENUTILS_COLORTHEME.BACKGROUND);
+					RAMN_SPI_DrawRectangle(5,25+((idCnt)*16),LCD_WIDTH-10,(MAX_CANMONITOR_IDS-idCnt)*16,RAMN_SCREENUTILS_COLORTHEME.BACKGROUND);
 					newIdentifierAdded = 1U;
 				}
 			}
 
 			CANMessageNode* current = head;
-			if (newIdentifierAdded != 0)
+			if (newIdentifierAdded != False)
 			{
-				newIdentifierAdded = 0U;
+				newIdentifierAdded = False;
 
-				if (identifierOverflowed != 0U)
+				if (identifierOverflowed != False)
 				{
 					RAMN_SPI_DrawString(200,5, RAMN_SCREENUTILS_COLORTHEME.WHITE, RAMN_SCREENUTILS_COLORTHEME.BACKGROUND, "OVF");
-					identifierOverflowed = 0;
+					identifierOverflowed = False; //No need to redisplay message
 				}
 
 				//Update IDs
 
-				while (current != NULL) {
-
+				while (current != NULL)
+				{
 					uint12toASCII(current->identifier, tmp);
 					tmp[3] = 0;
 					RAMN_SPI_DrawString(7,25+(msg_cnt*16), RAMN_SCREENUTILS_COLORTHEME.LIGHT, RAMN_SCREENUTILS_COLORTHEME.BACKGROUND, tmp);
-
 					current = current->next;
 					msg_cnt += 1;
 				}
-
-
 			}
 
 			current = head; //reset head location
 			msg_cnt = 0;
-			while (current != NULL) {
-
+			while (current != NULL)
+			{
 				for(uint8_t i=0;i<current->messages[0].header.DataLength*2;i++)
 				{
 					uint4toASCII((current->messages[0].data[i/2] >> (4*((i+1)%2)))&0xF,&tmp[i]);
 
-					if (tick - current->lastNibbleChange[i] >= 500)
+					if (tick - current->lastNibbleChange[i] >= 500U)
 					{
 						RAMN_SPI_RefreshChar(7+(4*11)+i*11,25+(msg_cnt*16), RAMN_SCREENUTILS_COLORTHEME.LIGHT, RAMN_SCREENUTILS_COLORTHEME.BACKGROUND, tmp[i]);
 					}
@@ -260,37 +252,31 @@ static void ScreenCANMonitor_Update(uint32_t tick) {
 				}
 				if (8 - current->messages[0].header.DataLength > 0)
 				{
+					// Erase bytes after DLC (that could have been written by a previous message with longer DLC)
 					RAMN_SPI_DrawRectangle(7+(4*11)+current->messages[0].header.DataLength*22,25+(msg_cnt*16),22*(8 - current->messages[0].header.DataLength),14,RAMN_SCREENUTILS_COLORTHEME.BACKGROUND);
 				}
 				current = current->next;
 				msg_cnt += 1;
 			}
-			new_messages = 0U;
-
-			last_update = tick;
+			newMsgCnt = 0U;
+			lastUpdated = tick;
 			xSemaphoreGive(CANMONITOR_SEMAPHORE);
 		}
-
 		RAMN_SCREENUTILS_DrawSubconsoleUpdate();
 	}
-
-
 }
 
-static void ScreenCANMonitor_Deinit() {
+static void SCREENCANMONITOR_Deinit()
+{
 	freeCANMessageList();
 }
 
-static RAMN_Bool_t ScreenCANMonitor_UpdateInput(JoystickEventType event) {
-	return True;
-}
-
 RAMNScreen ScreenCANMonitor = {
-		.Init = ScreenCANMonitor_Init,
-		.Update = ScreenCANMonitor_Update,
-		.Deinit = ScreenCANMonitor_Deinit,
-		.UpdateInput = ScreenCANMonitor_UpdateInput,
-		.ProcessRxCANMessage = ScreenCANMonitor_ProcessRxCANMessage
+		.Init = SCREENCANMONITOR_Init,
+		.Update = SCREENCANMONITOR_Update,
+		.Deinit = SCREENCANMONITOR_Deinit,
+		.UpdateInput = 0U,
+		.ProcessRxCANMessage = SCREENCANMONITOR_ProcessRxCANMessage
 };
 
 #endif

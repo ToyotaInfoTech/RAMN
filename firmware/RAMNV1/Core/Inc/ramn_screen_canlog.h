@@ -3,7 +3,7 @@
  ******************************************************************************
  * @attention
  *
- * <h2><center>&copy; Copyright (c) 2024 TOYOTA MOTOR CORPORATION.
+ * <h2><center>&copy; Copyright (c) 2025 TOYOTA MOTOR CORPORATION.
  * ALL RIGHTS RESERVED.</center></h2>
  *
  * This software component is licensed by TOYOTA MOTOR CORPORATION under BSD 3-Clause license,
@@ -27,16 +27,17 @@
 
 #define SCREEN_BUFFER_MESSAGE_COUNT 18
 #define CAN_MESSAGE_BUFFER_SIZE 13
-#define MAX_BUFFER_BYTES (CAN_RX_BUFFER_SIZE/10) //Won't attempt to display CAN if the receive buffer is above this threshold
+#define MAX_BUFFER_BYTES (CAN_RX_BUFFER_SIZE/10) // Won't attempt to display CAN if the receive buffer is above this threshold (message would immediately be overwritten by another message)
+#define CANVAS_OFFSET SCREEN_HEADER_SIZE
 
-
+// Struct to save a CAN message in the screen memory (using less size than HAL library)
 typedef struct {
     uint32_t identifier;
     uint8_t data[8];
     uint8_t payload_size;
 } CAN_Message;
 
-// circular buffer to store the CAN messages
+// Circular buffer to store CAN messages
 typedef struct {
     CAN_Message messages[CAN_MESSAGE_BUFFER_SIZE];
     uint8_t head;
