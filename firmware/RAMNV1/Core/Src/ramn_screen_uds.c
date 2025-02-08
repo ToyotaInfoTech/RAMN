@@ -19,7 +19,6 @@
 #ifdef ENABLE_SCREEN
 
 #ifdef ENABLE_UDS
-static uint8_t menu_drawn = 0U;
 uint8_t uds_draw_need_refresh = 0U;
 
 uint8_t uds_draw_x = 0;
@@ -44,10 +43,10 @@ void RAMN_ScreenUDS_RequestDrawImage(uint16_t x, uint16_t y, uint16_t w, uint16_
 }
 
 static void ScreenUDS_Init() {
-	RAMN_ScreenUtils_DrawBase(current_theme);
-	RAMN_SPI_DrawString(75,5, SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.BACKGROUND, "UDS DRAW");
-	RAMN_SPI_DrawString(10,5+32, SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.BACKGROUND, "Use UDS Service to\ndraw an image here.");
-	RAMN_SPI_DrawString(10,5+80, SPI_COLOR_THEME.BACKGROUND,  SPI_COLOR_THEME.LIGHT, "ramn.readthedocs.io");
+	RAMN_SCREENUTILS_DrawBase();
+	RAMN_SPI_DrawString(75,5, RAMN_SCREENUTILS_COLORTHEME.LIGHT, RAMN_SCREENUTILS_COLORTHEME.BACKGROUND, "UDS DRAW");
+	RAMN_SPI_DrawString(10,5+32, RAMN_SCREENUTILS_COLORTHEME.LIGHT, RAMN_SCREENUTILS_COLORTHEME.BACKGROUND, "Use UDS Service to\ndraw an image here.");
+	RAMN_SPI_DrawString(10,5+80, RAMN_SCREENUTILS_COLORTHEME.BACKGROUND,  RAMN_SCREENUTILS_COLORTHEME.LIGHT, "ramn.readthedocs.io");
 }
 
 static void ScreenUDS_Update(uint32_t tick) {
@@ -61,9 +60,9 @@ static void ScreenUDS_Update(uint32_t tick) {
 	}
 #endif
 
-	if (spi_refresh_counter % 5 == 0)
+	if (RAMN_SCREENUTILS_LoopCounter % 5 == 0)
 	{
-		RAMN_ScreenUtils_DrawSubconsoleUpdate();
+		RAMN_SCREENUTILS_DrawSubconsoleUpdate();
 	}
 }
 

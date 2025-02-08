@@ -49,22 +49,25 @@ extern const uint16_t DANMAKU_SIZE;
 extern const uint8_t OCTOPEG[];
 extern const uint16_t OCTOPEG_SIZE;
 
-// Sets the foreground and background colors used for display
+// Sets the foreground and background colors used for display.
 void RAMN_CHIP8_SetColor(uint16_t fg, uint16_t bg);
 
-// Initializes the Chip8 Interpreter
+// Initializes the Chip8 Interpreter.
 void RAMN_CHIP8_Init(const uint8_t* game_to_load, uint16_t game_size);
 
-// Returns whether a game is currently being played or not
+// Returns whether a game is currently being played or not.
 uint8_t RAMN_CHIP8_IsGameActive();
 
-// Starts the game currently loaded in memory
+// Starts the game currently loaded in memory.
 void RAMN_CHIP8_StartGame(uint32_t xLastWakeTime);
 
-// Asks interpreter to stop current game
+// Asks interpreter to stop current game.
 void RAMN_CHIP8_StopGame();
 
-// Update the interpreter (main loop to update periodically)
+// Update the interpreter (main loop to update periodically).
 void RAMN_CHIP8_Update(uint32_t xLastWakeTime);
+
+// Redraws the screen.
+void RAMN_CHIP8_RedrawScreen();
 
 #endif /* INC_RAMN_CHIP8_H_ */

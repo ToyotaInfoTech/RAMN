@@ -1525,13 +1525,13 @@ void RAMN_ReceiveUSBFunc(void *argument)
 							else
 							{
 								token = strtok(NULL, " ");
-								if (strcmp(token, "1") == 0) {  RAMN_ScreenUtils_UpdateTheme(1); RAMN_USB_SendStringFromTask("Updated.\r");
-								} else if (strcmp(token, "2") == 0) {  RAMN_ScreenUtils_UpdateTheme(2); RAMN_USB_SendStringFromTask("Updated.\r");
-								} else if (strcmp(token, "3") == 0) {  RAMN_ScreenUtils_UpdateTheme(3); RAMN_USB_SendStringFromTask("Updated.\r");
-								} else if (strcmp(token, "4") == 0) {  RAMN_ScreenUtils_UpdateTheme(4); RAMN_USB_SendStringFromTask("Updated.\r");
-								} else if (strcmp(token, "5") == 0) {  RAMN_ScreenUtils_UpdateTheme(5); RAMN_USB_SendStringFromTask("Updated.\r");
-								} else if (strcmp(token, "6") == 0) {  RAMN_ScreenUtils_UpdateTheme(6); RAMN_USB_SendStringFromTask("Updated.\r");
-								} else if (strcmp(token, "7") == 0) {  RAMN_ScreenUtils_UpdateTheme(7); RAMN_USB_SendStringFromTask("Updated.\r");
+								if (strcmp(token, "1") == 0) {  RAMN_SCREENUTILS_UpdateTheme(1); RAMN_USB_SendStringFromTask("Updated.\r");
+								} else if (strcmp(token, "2") == 0) {  RAMN_SCREENUTILS_UpdateTheme(2); RAMN_USB_SendStringFromTask("Updated.\r");
+								} else if (strcmp(token, "3") == 0) {  RAMN_SCREENUTILS_UpdateTheme(3); RAMN_USB_SendStringFromTask("Updated.\r");
+								} else if (strcmp(token, "4") == 0) {  RAMN_SCREENUTILS_UpdateTheme(4); RAMN_USB_SendStringFromTask("Updated.\r");
+								} else if (strcmp(token, "5") == 0) {  RAMN_SCREENUTILS_UpdateTheme(5); RAMN_USB_SendStringFromTask("Updated.\r");
+								} else if (strcmp(token, "6") == 0) {  RAMN_SCREENUTILS_UpdateTheme(6); RAMN_USB_SendStringFromTask("Updated.\r");
+								} else if (strcmp(token, "7") == 0) {  RAMN_SCREENUTILS_UpdateTheme(7); RAMN_USB_SendStringFromTask("Updated.\r");
 
 								}
 								else

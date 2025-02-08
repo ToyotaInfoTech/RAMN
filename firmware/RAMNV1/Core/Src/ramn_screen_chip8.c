@@ -22,7 +22,9 @@
 static uint8_t menu_is_drawn = 0U;
 
 static void ScreenChip8_Init() {
-	RAMN_ScreenUtils_DrawBase(current_theme);
+	RAMN_SCREENUTILS_DrawBase();
+	RAMN_CHIP8_SetColor(RAMN_SCREENUTILS_COLORTHEME.LIGHT, RAMN_SCREENUTILS_COLORTHEME.BACKGROUND);
+	if (RAMN_CHIP8_IsGameActive()) RAMN_CHIP8_RedrawScreen();
 	menu_is_drawn = 0U;
 }
 
@@ -38,11 +40,11 @@ static void drawGameTitles()
 	{
 		if (i != selected_game_index)
 		{
-			RAMN_SPI_DrawString(5,32+(i*16), SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.BACKGROUND, GAME_TITLES[i]);
+			RAMN_SPI_DrawString(5,32+(i*16), RAMN_SCREENUTILS_COLORTHEME.LIGHT, RAMN_SCREENUTILS_COLORTHEME.BACKGROUND, GAME_TITLES[i]);
 		}
 		else
 		{
-			RAMN_SPI_DrawString(5,32+(i*16), SPI_COLOR_THEME.BACKGROUND, SPI_COLOR_THEME.LIGHT, GAME_TITLES[i]);
+			RAMN_SPI_DrawString(5,32+(i*16), RAMN_SCREENUTILS_COLORTHEME.BACKGROUND, RAMN_SCREENUTILS_COLORTHEME.LIGHT, GAME_TITLES[i]);
 		}
 	}
 }
@@ -80,8 +82,8 @@ static void ScreenChip8_Update(uint32_t tick) {
 		{
 			ScreenChip8_Init();
 			menu_is_drawn = 0U;
-			RAMN_SPI_DrawString(5,160-16, SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.BACKGROUND, "Turn Key to quit.");
-			RAMN_SPI_DrawString(5,160, SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.BACKGROUND, "Use BRAKE to control\rgame speed.");
+			RAMN_SPI_DrawString(5,160-16, RAMN_SCREENUTILS_COLORTHEME.LIGHT, RAMN_SCREENUTILS_COLORTHEME.BACKGROUND, "Turn Key to quit.");
+			RAMN_SPI_DrawString(5,160, RAMN_SCREENUTILS_COLORTHEME.LIGHT, RAMN_SCREENUTILS_COLORTHEME.BACKGROUND, "Use BRAKE to control\rgame speed.");
 
 		}
 		//Adjust game speed (number of instructions) based on current brake slider position
@@ -98,16 +100,16 @@ static void ScreenChip8_Update(uint32_t tick) {
 	}
 	else if (menu_is_drawn == 0U)
 	{
-		RAMN_ScreenUtils_DrawBase(current_theme);
-		RAMN_SPI_DrawString(90,5, SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.BACKGROUND, "CHIP-8");
+		RAMN_SCREENUTILS_DrawBase();
+		RAMN_SPI_DrawString(90,5, RAMN_SCREENUTILS_COLORTHEME.LIGHT, RAMN_SCREENUTILS_COLORTHEME.BACKGROUND, "CHIP-8");
 
 		drawGameTitles();
 		menu_is_drawn = 1U;
 	}
 
-	if (spi_refresh_counter % 5 == 0)
+	if (RAMN_SCREENUTILS_LoopCounter % 5 == 0)
 	{
-		RAMN_ScreenUtils_DrawSubconsoleUpdate();
+		RAMN_SCREENUTILS_DrawSubconsoleUpdate();
 	}
 }
 

@@ -88,17 +88,17 @@ static void draw_header()
 	tmp[7] = 0;
 
 	//RAMN_SPI_DrawRectangle(0, 0, LCD_WIDTH, 16+6, SPI_COLOR_THEME.BACKGROUND);
-	RAMN_SPI_DrawContour(0, 0, LCD_WIDTH, 16+6, CONTOUR_WIDTH, SPI_COLOR_THEME.LIGHT);
-	RAMN_SPI_RefreshString(5,5, SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.BACKGROUND, "RX DUMP");
-	RAMN_SPI_RefreshString(5+8*11,5, SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.BACKGROUND, tmp);
+	RAMN_SPI_DrawContour(0, 0, LCD_WIDTH, 16+6, CONTOUR_WIDTH, RAMN_SCREENUTILS_COLORTHEME.LIGHT);
+	RAMN_SPI_RefreshString(5,5, RAMN_SCREENUTILS_COLORTHEME.LIGHT, RAMN_SCREENUTILS_COLORTHEME.BACKGROUND, "RX DUMP");
+	RAMN_SPI_RefreshString(5+8*11,5, RAMN_SCREENUTILS_COLORTHEME.LIGHT, RAMN_SCREENUTILS_COLORTHEME.BACKGROUND, tmp);
 
 	if(active)
 	{
-		RAMN_SPI_RefreshString(5+16*11,5, SPI_COLOR_THEME.WHITE, SPI_COLOR_THEME.BACKGROUND, "  ON");
+		RAMN_SPI_RefreshString(5+16*11,5, RAMN_SCREENUTILS_COLORTHEME.WHITE, RAMN_SCREENUTILS_COLORTHEME.BACKGROUND, "  ON");
 	}
 	else
 	{
-		RAMN_SPI_RefreshString(5+16*11,5, SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.BACKGROUND, "STOP");
+		RAMN_SPI_RefreshString(5+16*11,5, RAMN_SCREENUTILS_COLORTHEME.LIGHT, RAMN_SCREENUTILS_COLORTHEME.BACKGROUND, "STOP");
 	}
 
 }
@@ -106,7 +106,7 @@ static void draw_header()
 static void ScreenCANLog_Init() {
 
 	if (CANLOG_SEMAPHORE == 0U) CANLOG_SEMAPHORE = xSemaphoreCreateMutexStatic(&CANLOG_SEMAPHORE_STRUCT);
-	RAMN_ScreenUtils_PrepareScrollScreen();
+	RAMN_SCREENUTILS_PrepareScrollScreen();
 	disp_index = 0;
 	draw_header();
 }
@@ -119,7 +119,7 @@ static void ScreenCANLog_Update(uint32_t tick) {
 		//Too many CAN messages available (would be immediately overwritten, skip)
 		return;
 	}
-	if (spi_refresh_counter % 5 == 0)
+	if (RAMN_SCREENUTILS_LoopCounter % 5 == 0)
 	{
 		while (xSemaphoreTake(CANLOG_SEMAPHORE, portMAX_DELAY ) != pdTRUE);
 
@@ -141,20 +141,20 @@ static void ScreenCANLog_Update(uint32_t tick) {
 				tmp[4+message->payload_size*2] = 0;
 				if (disp_index < CAN_MESSAGE_BUFFER_SIZE)
 				{
-						RAMN_SPI_RefreshString(9, CANVAS_OFFSET+(16*(disp_index)), SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.BACKGROUND, tmp);
+						RAMN_SPI_RefreshString(9, CANVAS_OFFSET+(16*(disp_index)), RAMN_SCREENUTILS_COLORTHEME.LIGHT, RAMN_SCREENUTILS_COLORTHEME.BACKGROUND, tmp);
 					if (8 - message->payload_size > 0)
 					{
-						RAMN_SPI_DrawRectangle(9+(4*11)+message->payload_size*22,CANVAS_OFFSET+(16*(disp_index)),22*(8 - message->payload_size),14,SPI_COLOR_THEME.BACKGROUND);
+						RAMN_SPI_DrawRectangle(9+(4*11)+message->payload_size*22,CANVAS_OFFSET+(16*(disp_index)),22*(8 - message->payload_size),14,RAMN_SCREENUTILS_COLORTHEME.BACKGROUND);
 					}
 				}
 				else
 				{
 					//Must scroll and display at last line
 					RAMN_SPI_ScrollUp(16);
-					RAMN_SPI_RefreshString(9, CANVAS_OFFSET+(16*(disp_index%SCREEN_BUFFER_MESSAGE_COUNT)), SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.BACKGROUND, tmp);
+					RAMN_SPI_RefreshString(9, CANVAS_OFFSET+(16*(disp_index%SCREEN_BUFFER_MESSAGE_COUNT)), RAMN_SCREENUTILS_COLORTHEME.LIGHT, RAMN_SCREENUTILS_COLORTHEME.BACKGROUND, tmp);
 					if (8 - message->payload_size > 0)
 					{
-						RAMN_SPI_DrawRectangle(9+(4*11)+message->payload_size*22,CANVAS_OFFSET+(16*(disp_index%SCREEN_BUFFER_MESSAGE_COUNT)),22*(8 - message->payload_size),14,SPI_COLOR_THEME.BACKGROUND);
+						RAMN_SPI_DrawRectangle(9+(4*11)+message->payload_size*22,CANVAS_OFFSET+(16*(disp_index%SCREEN_BUFFER_MESSAGE_COUNT)),22*(8 - message->payload_size),14,RAMN_SCREENUTILS_COLORTHEME.BACKGROUND);
 					}
 				}
 

@@ -19,6 +19,7 @@
 #ifdef ENABLE_CHIP8
 
 // Used to read joystick input
+#include "ramn_sensors.h"
 #include "ramn_dbc.h"
 
 /*=====================================================================*
@@ -169,26 +170,6 @@ static inline uint8_t CHIP8_GetPixel(uint32_t x, uint32_t y)
     return (screenBuffer[byteIndex] & (1U << bitIndex)) ? 1U : 0U;
 }
 
-static void CHIP8_RedrawScreen()
-{
-	uint16_t color;
-	for (uint16_t xline = 0; xline < screenWidth; xline++)
-	{
-		for(uint16_t yline = 0; yline < screenHeight; yline++)
-		{
-			color = (CHIP8_GetPixel(xline,yline) == 0U) ? backColor : frontColor;
-			for(uint8_t px = 0; px < pixelSize; px++)
-			{
-				for(uint8_t py = 0; py < pixelSize; py++)
-				{
-					spriteBuffer[(xline*pixelSize+px) + (yline*pixelSize+py)*(screenWidth*pixelSize)] = color;
-				}
-			}
-		}
-	}
-	RAMN_SPI_DrawImage(screenStartX, screenStartY, (uint16_t)(pixelSize)*screenWidth, (uint16_t)(pixelSize)*screenHeight, (uint8_t*)spriteBuffer);
-}
-
 static void CHIP8_ScrollUpByNPixels(uint8_t n)
 {
 	for (int x = 0; x < screenWidth; x++) {
@@ -328,26 +309,21 @@ void RAMN_CHIP8_Update(uint32_t xLastWakeTime)
 	uint8_t CARRY;
 
 	keys = 0x0000;
-	switch((RAMN_DBC_Handle.control_shift >> 8))
+	switch((RAMN_DBC_Handle.joystick))
 	{
-	case 0x02:
-		//up
+	case RAMN_SHIFT_UP:
 		CHIP8_SetKeyState(0x5,True);
 		break;
-	case 0x03:
-		//down
+	case RAMN_SHIFT_DOWN:
 		CHIP8_SetKeyState(0x8,True);
 		break;
-	case 0x04:
-		//right
+	case RAMN_SHIFT_RIGHT:
 		CHIP8_SetKeyState(0x9,True);
 		break;
-	case 0x05:
-		//left
+	case RAMN_SHIFT_LEFT:
 		CHIP8_SetKeyState(0x7,True);
 		break;
-	case 0x06:
-		//center
+	case RAMN_SHIFT_PUSH:
 		CHIP8_SetKeyState(0x6,True); //redundant with UP
 		break;
 	}
@@ -391,12 +367,12 @@ void RAMN_CHIP8_Update(uint32_t xLastWakeTime)
 			break;
 		case 0x00FB:
 			CHIP8_ScrollRightBy4Pixels();
-			CHIP8_RedrawScreen();
+			RAMN_CHIP8_RedrawScreen();
 			PC += 2;
 			break;
 		case 0x00FC:
 			CHIP8_ScrollLeftBy4Pixels();
-			CHIP8_RedrawScreen();
+			RAMN_CHIP8_RedrawScreen();
 			PC += 2;
 			break;
 		case 0x00FD:
@@ -427,12 +403,12 @@ void RAMN_CHIP8_Update(uint32_t xLastWakeTime)
 			{
 			case 0x00D0:
 				CHIP8_ScrollUpByNPixels(opcode&0xF);
-				CHIP8_RedrawScreen();
+				RAMN_CHIP8_RedrawScreen();
 				PC += 2;
 				break;
 			case 0x00C0:
 				CHIP8_ScrollDownByNPixels(opcode&0xF);
-				CHIP8_RedrawScreen();
+				RAMN_CHIP8_RedrawScreen();
 				PC += 2;
 				break;
 			default:
@@ -809,7 +785,26 @@ void RAMN_CHIP8_Update(uint32_t xLastWakeTime)
 					default:
 						gameStarted = False;
 	}
+}
 
+void RAMN_CHIP8_RedrawScreen()
+{
+	uint16_t color;
+	for (uint16_t xline = 0; xline < screenWidth; xline++)
+	{
+		for(uint16_t yline = 0; yline < screenHeight; yline++)
+		{
+			color = (CHIP8_GetPixel(xline,yline) == 0U) ? backColor : frontColor;
+			for(uint8_t px = 0; px < pixelSize; px++)
+			{
+				for(uint8_t py = 0; py < pixelSize; py++)
+				{
+					spriteBuffer[(xline*pixelSize+px) + (yline*pixelSize+py)*(screenWidth*pixelSize)] = color;
+				}
+			}
+		}
+	}
+	RAMN_SPI_DrawImage(screenStartX, screenStartY, (uint16_t)(pixelSize)*screenWidth, (uint16_t)(pixelSize)*screenHeight, (uint8_t*)spriteBuffer);
 }
 
 #endif

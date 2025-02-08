@@ -74,7 +74,7 @@ void RAMN_ScreenManager_SwitchScreen(RAMNScreen* newScreen)
 
 void RAMN_ScreenManager_Init(SPI_HandleTypeDef* handler, osThreadId_t* pTask)
 {
-	RAMN_ScreenUtils_Init(handler, pTask);
+	RAMN_SCREENUTILS_Init(handler, pTask);
 
 	RAMN_ScreenManager_SwitchScreen(DEFAULT_SCREEN);
 }
@@ -134,11 +134,10 @@ void RAMN_SCREEN_Update(uint32_t tick)
 
 	}
 
-	if (theme_change_requested != 0U)
+	if (RAMN_SCREENUTILS_RequestRedraw != False)
 	{
 		RAMN_ScreenManager_SwitchScreen(currentScreen);
-		//		if (RAMN_CHIP8_IsGameActive()) RAMN_Chip8_RedrawScreen();
-		theme_change_requested = 0U;
+		RAMN_SCREENUTILS_RequestRedraw = False;
 	}
 
 	if (currentScreen != NULL) {
@@ -148,7 +147,7 @@ void RAMN_SCREEN_Update(uint32_t tick)
 		}
 	}
 
-	spi_refresh_counter += 1;
+	RAMN_SCREENUTILS_LoopCounter += 1;
 
 	//Example to scroll screen
 	//RAMN_SPI_SetScroll(SCREEN_HEADER_SIZE + ((tick/10)%(SCROLL_WINDOW_HEIGHT-SCREEN_HEADER_SIZE)));

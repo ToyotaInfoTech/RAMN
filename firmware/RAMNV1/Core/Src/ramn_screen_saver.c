@@ -22,32 +22,32 @@ char random_char_line[19] = {0};
 uint8_t menu_drawn = 0U;
 
 static void ScreenSaver_Init() {
-	RAMN_ScreenUtils_DrawBase(current_theme);
+	RAMN_SCREENUTILS_DrawBase();
 }
 
 static void ScreenSaver_Update(uint32_t tick) {
 	if (menu_drawn == 0U)
 	{
 		menu_drawn = 1U;
-		RAMN_SPI_DrawString(5+22,5+64, SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.BACKGROUND, " Use ECU C Shift \rto control screen");
+		RAMN_SPI_DrawString(5+22,5+64, RAMN_SCREENUTILS_COLORTHEME.LIGHT, RAMN_SCREENUTILS_COLORTHEME.BACKGROUND, " Use ECU C Shift \rto control screen");
 
 	}
 	if (tick > 5000) // don't erase display for the first 5 seconds
 	{
 	//random value for the "digital rain" effect on screen
-	uint16_t random_colors[] = {SPI_COLOR_THEME.DARK, SPI_COLOR_THEME.DARK, SPI_COLOR_THEME.MEDIUM, SPI_COLOR_THEME.MEDIUM, SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.WHITE};
+	uint16_t random_colors[] = {RAMN_SCREENUTILS_COLORTHEME.DARK, RAMN_SCREENUTILS_COLORTHEME.DARK, RAMN_SCREENUTILS_COLORTHEME.MEDIUM, RAMN_SCREENUTILS_COLORTHEME.MEDIUM, RAMN_SCREENUTILS_COLORTHEME.LIGHT, RAMN_SCREENUTILS_COLORTHEME.LIGHT, RAMN_SCREENUTILS_COLORTHEME.WHITE};
 	uint8_t random_X_line = RAMN_RNG_Pop8() % sizeof(random_char_line);
 	uint8_t random_Y_line = RAMN_RNG_Pop8() % 12;
 	uint8_t random_val = RAMN_RNG_Pop8();
 	uint16_t color = random_colors[random_val % ((sizeof(random_colors)/sizeof(uint16_t)))];
 	uint8_t random_char = (random_val % 75) + '0';
 
-	RAMN_SPI_DrawChar(5+(random_X_line*12), 5+(random_Y_line*16), color, SPI_COLOR_THEME.BACKGROUND, random_char);
+	RAMN_SPI_DrawChar(5+(random_X_line*12), 5+(random_Y_line*16), color, RAMN_SCREENUTILS_COLORTHEME.BACKGROUND, random_char);
 	}
 	//Code to display a message if problems happened happened
-	if (spi_refresh_counter % 5 == 0)
+	if (RAMN_SCREENUTILS_LoopCounter % 5 == 0)
 	{
-		RAMN_ScreenUtils_DrawSubconsoleUpdate();
+		RAMN_SCREENUTILS_DrawSubconsoleUpdate();
 	}
 
 
@@ -64,7 +64,7 @@ static void ScreenSaver_UpdateInput(JoystickEventType event) {
 	// As an example, change color theme if center button is pressed
 	if (event == JOYSTICK_EVENT_CENTER_PRESSED)
 	{
-		RAMN_ScreenUtils_UpdateTheme((current_theme%(NUMBER_OF_THEMES-1))+1);
+		RAMN_SCREENUTILS_NextTheme();
 	};
 
 }
