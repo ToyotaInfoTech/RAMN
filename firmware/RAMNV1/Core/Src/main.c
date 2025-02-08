@@ -1566,9 +1566,9 @@ void RAMN_ReceiveUSBFunc(void *argument)
 							else
 							{
 								token = strtok(NULL, " ");
-								if (strcmp(token, "1") == 0) {  RAMN_ScreenManager_StartGameFromIndex(1); RAMN_USB_SendStringFromTask("Starting game 1.\r");
-								} else if (strcmp(token, "2") == 0) {  RAMN_ScreenManager_StartGameFromIndex(2); RAMN_USB_SendStringFromTask("Starting game 2.\r");
-								} else if (strcmp(token, "3") == 0) {  RAMN_ScreenManager_StartGameFromIndex(3); RAMN_USB_SendStringFromTask("Starting game 3.\r");
+								if (strcmp(token, "1") == 0) {  RAMN_SCREENMANAGER_StartGameFromIndex(1); RAMN_USB_SendStringFromTask("Starting game 1.\r");
+								} else if (strcmp(token, "2") == 0) {  RAMN_SCREENMANAGER_StartGameFromIndex(2); RAMN_USB_SendStringFromTask("Starting game 2.\r");
+								} else if (strcmp(token, "3") == 0) {  RAMN_SCREENMANAGER_StartGameFromIndex(3); RAMN_USB_SendStringFromTask("Starting game 3.\r");
 								}
 								else
 								{
@@ -2325,7 +2325,7 @@ void RAMN_ReceiveCANFunc(void *argument)
 				RAMN_DIAG_ProcessRxCANMessage(&CANRxHeader, CANRxData, xTaskGetTickCount());
 #endif
 #if defined(ENABLE_SCREEN)
-				RAMN_ScreenManager_ProcessRxCANMessage(&CANRxHeader, CANRxData, xTaskGetTickCount());
+				RAMN_SCREENMANAGER_ProcessRxCANMessage(&CANRxHeader, CANRxData, xTaskGetTickCount());
 #endif
 			}
 #ifdef RTR_DEMO_ID
@@ -2521,7 +2521,7 @@ void RAMN_PeriodicTaskFunc(void *argument)
 	RAMN_CUSTOM_Init(xTaskGetTickCount());
 
 #if defined(ENABLE_SCREEN)
-	RAMN_ScreenManager_Init(&hspi2, &RAMN_PeriodicHandle);
+	RAMN_SCREENMANAGER_Init(&hspi2, &RAMN_PeriodicHandle);
 #endif
 
 	//Init joystick for screen controls
@@ -2549,12 +2549,13 @@ void RAMN_PeriodicTaskFunc(void *argument)
 		}
 
 		RAMN_CUSTOM_Update(xLastWakeTime);
-#ifdef ENABLE_SCREEN
-		RAMN_SCREEN_Update(xLastWakeTime);
-#endif
 
 #if defined(ENABLE_DIAG)
 		RAMN_DIAG_Update(xLastWakeTime);
+#endif
+
+#ifdef ENABLE_SCREEN
+		RAMN_SCREENMANAGER_Update(xLastWakeTime);
 #endif
 
 		vTaskDelayUntil(&xLastWakeTime, SIM_LOOP_CLOCK_MS);

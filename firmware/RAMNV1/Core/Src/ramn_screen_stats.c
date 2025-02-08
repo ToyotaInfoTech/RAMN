@@ -108,14 +108,16 @@ static void ScreenStats_Update(uint32_t tick) {
 static void ScreenStats_Deinit() {
 }
 
-static void ScreenStats_UpdateInput(JoystickEventType event) {
+static RAMN_Bool_t ScreenStats_UpdateInput(JoystickEventType event) {
+	return True;
 }
 
 RAMNScreen ScreenStats = {
 		.Init = ScreenStats_Init,
 		.Update = ScreenStats_Update,
 		.Deinit = ScreenStats_Deinit,
-		.UpdateInput = ScreenStats_UpdateInput
+		.UpdateInput = ScreenStats_UpdateInput,
+		.ProcessRxCANMessage = 0U
 };
 
 #endif

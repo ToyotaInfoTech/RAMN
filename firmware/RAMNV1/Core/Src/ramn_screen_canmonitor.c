@@ -143,7 +143,7 @@ uint8_t removeOldNodes(uint32_t thresholdTick) {
 	return node_deleted;
 }
 
-void RAMN_ScreenCANMonitor_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, const uint8_t* data, uint32_t tick)
+static void ScreenCANMonitor_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, const uint8_t* data, uint32_t tick)
 {
 	//TODO process more types?
 	if ((pHeader->IdType == FDCAN_STANDARD_ID) && (pHeader->FDFormat == FDCAN_CLASSIC_CAN) && (pHeader->RxFrameType == FDCAN_DATA_FRAME) && (pHeader->DataLength <= 8))
@@ -281,14 +281,16 @@ static void ScreenCANMonitor_Deinit() {
 	freeCANMessageList();
 }
 
-static void ScreenCANMonitor_UpdateInput(JoystickEventType event) {
+static RAMN_Bool_t ScreenCANMonitor_UpdateInput(JoystickEventType event) {
+	return True;
 }
 
 RAMNScreen ScreenCANMonitor = {
 		.Init = ScreenCANMonitor_Init,
 		.Update = ScreenCANMonitor_Update,
 		.Deinit = ScreenCANMonitor_Deinit,
-		.UpdateInput = ScreenCANMonitor_UpdateInput
+		.UpdateInput = ScreenCANMonitor_UpdateInput,
+		.ProcessRxCANMessage = ScreenCANMonitor_ProcessRxCANMessage
 };
 
 #endif

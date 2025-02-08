@@ -19,7 +19,7 @@
 #ifdef ENABLE_SCREEN
 
 #ifdef ENABLE_UDS
-uint8_t uds_draw_need_refresh = 0U;
+RAMN_Bool_t RAMN_SCREENUDS_RedrawNeeded = False;
 
 uint8_t uds_draw_x = 0;
 uint8_t uds_draw_y = 0;
@@ -38,7 +38,7 @@ void RAMN_ScreenUDS_RequestDrawImage(uint16_t x, uint16_t y, uint16_t w, uint16_
 	uds_draw_w = w;
 	uds_draw_h = h;
 	RAMN_memcpy(uds_draw_buffer, image, w*h*2);
-	uds_draw_need_refresh = 1U;
+	RAMN_SCREENUDS_RedrawNeeded = True;
 #endif
 }
 
@@ -53,10 +53,10 @@ static void ScreenUDS_Update(uint32_t tick) {
 
 #ifdef ENABLE_UDS
 
-	if (uds_draw_need_refresh != 0U)
+	if (RAMN_SCREENUDS_RedrawNeeded != False)
 	{
 		RAMN_SPI_DrawImage(uds_draw_x,uds_draw_y,uds_draw_w,uds_draw_h,uds_draw_buffer);
-		uds_draw_need_refresh = 0U;
+		RAMN_SCREENUDS_RedrawNeeded = False;
 	}
 #endif
 
@@ -69,14 +69,16 @@ static void ScreenUDS_Update(uint32_t tick) {
 static void ScreenUDS_Deinit() {
 }
 
-static void ScreenUDS_UpdateInput(JoystickEventType event) {
+static RAMN_Bool_t ScreenUDS_UpdateInput(JoystickEventType event) {
+	return True;
 }
 
 RAMNScreen ScreenUDS = {
 		.Init = ScreenUDS_Init,
 		.Update = ScreenUDS_Update,
 		.Deinit = ScreenUDS_Deinit,
-		.UpdateInput = ScreenUDS_UpdateInput
+		.UpdateInput = ScreenUDS_UpdateInput,
+		.ProcessRxCANMessage = 0U
 };
 
 #endif

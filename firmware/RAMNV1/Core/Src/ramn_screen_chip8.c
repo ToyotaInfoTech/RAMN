@@ -116,32 +116,35 @@ static void ScreenChip8_Update(uint32_t tick) {
 static void ScreenChip8_Deinit() {
 }
 
-static void ScreenChip8_UpdateInput(JoystickEventType event) {
+static RAMN_Bool_t ScreenChip8_UpdateInput(JoystickEventType event) {
 	if (!RAMN_CHIP8_IsGameActive())
 	{
-	if (event == JOYSTICK_EVENT_DOWN_PRESSED)
-	{
-		selected_game_index = (selected_game_index + 1) % NUMBER_OF_GAMES;
-		drawGameTitles();
+		if (event == JOYSTICK_EVENT_DOWN_PRESSED)
+		{
+			selected_game_index = (selected_game_index + 1) % NUMBER_OF_GAMES;
+			drawGameTitles();
+		}
+		else if (event == JOYSTICK_EVENT_UP_PRESSED)
+		{
+			if (selected_game_index == 0U) selected_game_index = NUMBER_OF_GAMES - 1;
+			else selected_game_index = (selected_game_index - 1);
+			drawGameTitles();
+		}
+		else if (event == JOYSTICK_EVENT_CENTER_PRESSED)
+		{
+			RAMN_ScreenChip8_StartGameFromIndex(selected_game_index+1);
+		}
+		return True;
 	}
-	else if (event == JOYSTICK_EVENT_UP_PRESSED)
-	{
-		if (selected_game_index == 0U) selected_game_index = NUMBER_OF_GAMES - 1;
-		else selected_game_index = (selected_game_index - 1);
-		drawGameTitles();
-	}
-	else if (event == JOYSTICK_EVENT_CENTER_PRESSED)
-	{
-		RAMN_ScreenChip8_StartGameFromIndex(selected_game_index+1);
-	}
-	}
+	else return False; // Game is ongoing, ask screen manager to not process inputs
 }
 
 RAMNScreen ScreenChip8 = {
 		.Init = ScreenChip8_Init,
 		.Update = ScreenChip8_Update,
 		.Deinit = ScreenChip8_Deinit,
-		.UpdateInput = ScreenChip8_UpdateInput
+		.UpdateInput = ScreenChip8_UpdateInput,
+		.ProcessRxCANMessage = 0U
 };
 
 #endif

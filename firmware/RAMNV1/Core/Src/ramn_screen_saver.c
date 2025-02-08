@@ -59,13 +59,14 @@ static void ScreenSaver_Deinit() {
 
 
 
-static void ScreenSaver_UpdateInput(JoystickEventType event) {
+static RAMN_Bool_t ScreenSaver_UpdateInput(JoystickEventType event) {
 
 	// As an example, change color theme if center button is pressed
 	if (event == JOYSTICK_EVENT_CENTER_PRESSED)
 	{
 		RAMN_SCREENUTILS_NextTheme();
 	};
+	return True;
 
 }
 
@@ -73,5 +74,6 @@ RAMNScreen ScreenSaver = {
     .Init = ScreenSaver_Init,
     .Update = ScreenSaver_Update,
     .Deinit = ScreenSaver_Deinit,
-	.UpdateInput = ScreenSaver_UpdateInput
+	.UpdateInput = ScreenSaver_UpdateInput,
+	.ProcessRxCANMessage = 0U
 };

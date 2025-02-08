@@ -43,7 +43,7 @@ static void setCANfilterIndex(uint8_t index) {
 	filter_mask = FILTER_MASK_LIST[filter_index];
 }
 
-void RAMN_ScreenCANLog_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, const uint8_t* data, uint32_t tick)
+static void ScreenCANLog_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, const uint8_t* data, uint32_t tick)
 {
 	while (CANLOG_SEMAPHORE == 0U) osDelay(50);
 	if (xStreamBufferBytesAvailable(CANRxDataStreamBufferHandle) > MAX_BUFFER_BYTES)
@@ -173,7 +173,7 @@ static void ScreenCANLog_Deinit() {
 	RAMN_SPI_SetScroll(SCREEN_HEADER_SIZE);
 }
 
-static void ScreenCANLog_UpdateInput(JoystickEventType event) {
+static RAMN_Bool_t ScreenCANLog_UpdateInput(JoystickEventType event) {
 
 	if (event == JOYSTICK_EVENT_DOWN_PRESSED)
 	{
@@ -193,14 +193,15 @@ static void ScreenCANLog_UpdateInput(JoystickEventType event) {
 		active = !active;
 		draw_header();
 	}
-
+	return True;
 }
 
 RAMNScreen ScreenCANLog = {
 		.Init = ScreenCANLog_Init,
 		.Update = ScreenCANLog_Update,
 		.Deinit = ScreenCANLog_Deinit,
-		.UpdateInput = ScreenCANLog_UpdateInput
+		.UpdateInput = ScreenCANLog_UpdateInput,
+		.ProcessRxCANMessage = ScreenCANLog_ProcessRxCANMessage
 };
 
 #endif

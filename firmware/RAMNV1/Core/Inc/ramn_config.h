@@ -51,6 +51,11 @@
 #define USE_HARDWARE_CAN_FILTERS
 #endif
 
+// Enable these flags to display a warning if the periodic task is taking longer than the defined period.
+//#define DISPLAY_SLOW_WARNING
+// If the flag above is defined, you can decide to skip some cycles, which are expected to take longer due to initializations.
+//#define SLOW_WARNING_MIN_LOOP_COUNT 1U
+
 //Enable the I2C interface
 // /!\CURRENTLY UNTESTED
 //#define ENABLE_I2C

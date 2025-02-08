@@ -160,6 +160,9 @@ void RAMN_SPI_InitScreen(void)
 
 }
 
+// /* Example to scroll screen from a task */
+// RAMN_SPI_SetScroll(SCREEN_HEADER_SIZE + ((tick/10)%(SCROLL_WINDOW_HEIGHT-SCREEN_HEADER_SIZE)));
+
 void RAMN_SPI_SetScroll(uint16_t val)
 {
 	uint8_t v[2];

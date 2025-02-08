@@ -56,13 +56,6 @@ typedef enum {
     JOYSTICK_EVENT_NONE,
 	JOYSTICK_EVENT_INVALID,
 } JoystickEventType;
-
-typedef struct RAMNScreen {
-    void (*Init)();
-    void (*Update)();
-    void (*Deinit)();
-    void (*UpdateInput)(JoystickEventType event);
-} RAMNScreen;
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/

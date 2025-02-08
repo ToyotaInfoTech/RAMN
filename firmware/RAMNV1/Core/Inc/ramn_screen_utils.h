@@ -36,6 +36,15 @@
 // Y coordinate of where the subconsole starts
 #define CONTROL_WINDOW_Y (LCD_HEIGHT-34)
 
+// Typedef of the structure for screen modules.
+typedef struct RAMNScreen {
+    void (*Init)();
+    void (*Update)();
+    void (*Deinit)();
+    RAMN_Bool_t (*UpdateInput)(JoystickEventType event); // Returns True if screen manager should also process the input
+    void (*ProcessRxCANMessage)();
+} RAMNScreen;
+
 // Color theme used by default for all screens
 typedef struct COLOR_THEME_STRUCT {
 	uint16_t BACKGROUND;

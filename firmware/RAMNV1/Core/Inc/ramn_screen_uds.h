@@ -22,7 +22,7 @@
 #include "main.h"
 #include "ramn_screen_utils.h"
 
-extern uint8_t uds_draw_need_refresh;
+extern RAMN_Bool_t RAMN_SCREENUDS_RedrawNeeded;
 
 void RAMN_ScreenUDS_RequestDrawImage(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const uint8_t* image);
 
