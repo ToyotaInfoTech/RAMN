@@ -164,7 +164,7 @@ SECTIONS
 
 /* Comment out this section if you do not care of about RAM protection */
   . = ALIGN(4);
-  .buffers :
+  .buffers (NOLOAD):
   {
     _sbuffers = .;        
     __buffers_start__ = _sbuffers;

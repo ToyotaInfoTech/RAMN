@@ -63,7 +63,7 @@ void RAMN_DBC_ProcessCANMessage(uint32_t canid, uint32_t dlc, RAMN_CANFrameData_
 	if (dlc <= 1U) dataframe->ramnData.payload = dataframe->ramnData.payload&0xFF; //TODO: reject dlc == 2U message instead of casting them?
 
 	// To avoid overloading the ECU with processing of incoming messages, only expected messages are included in the switch/case
-	if (dlc != 0)
+	if (dlc != 0U)
 	{
 		switch(canid)
 		{
@@ -108,7 +108,6 @@ void RAMN_DBC_ProcessCANMessage(uint32_t canid, uint32_t dlc, RAMN_CANFrameData_
 			if (dlc >= 2U)
 			{
 				RAMN_DBC_Handle.joystick					= (dataframe->ramnData.payload>>8)&0xFF;
-				//Init joystick for screen controls
 			#ifdef ENABLE_JOYSTICK_CONTROLS
 				RAMN_Joystick_Update(RAMN_DBC_Handle.joystick);
 			#endif

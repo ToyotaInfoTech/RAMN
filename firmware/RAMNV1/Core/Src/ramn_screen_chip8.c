@@ -16,7 +16,7 @@
 
 #include "ramn_screen_chip8.h"
 
-#ifdef ENABLE_SCREEN
+#if defined(ENABLE_CHIP8) && defined(ENABLE_SCREEN)
 
 char* GAME_TITLES[] = {"Danmaku", "Cave Explorer", "Octopeg"};
 #define NUMBER_OF_GAMES (sizeof(GAME_TITLES)/sizeof(char*))

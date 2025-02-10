@@ -44,10 +44,13 @@ void RAMN_ACTUATORS_ApplyControls(uint32_t tick)
 {
 
 #if defined(EXPANSION_CHASSIS) //CHASSIS
+
 	msg_control_steering.data->ramnData.payload = applyEndian16((uint16_t)RAMN_DBC_Handle.control_steer);
 	msg_control_sidebrake.data->ramnData.payload = RAMN_DBC_Handle.control_sidebrake;
 	msg_command_lights.data->ramnData.payload = RAMN_DBC_Handle.command_lights;
+
 #elif defined(EXPANSION_POWERTRAIN) //POWERTRAIN
+
 	msg_control_brake.data->ramnData.payload = applyEndian16((uint16_t)RAMN_DBC_Handle.control_brake);
 	msg_control_accel.data->ramnData.payload = applyEndian16((uint16_t)RAMN_DBC_Handle.control_accel);
 	msg_control_shift.data->ramnData.payload = RAMN_DBC_Handle.control_shift | (RAMN_DBC_Handle.joystick << 8);
@@ -55,11 +58,15 @@ void RAMN_ACTUATORS_ApplyControls(uint32_t tick)
 	msg_command_turnindicator.data->ramnData.payload = RAMN_DBC_Handle.command_turnindicator;
 
 #elif defined(EXPANSION_BODY) //BODY
+
 	msg_control_enginekey.data->ramnData.payload = RAMN_DBC_Handle.control_enginekey;
 	msg_control_lights.data->ramnData.payload = RAMN_DBC_Handle.control_lights;
+
 #if (LED_TEST_DURATION_MS > 0)
+
 	if((tick < LED_TEST_DURATION_MS) && (LEDTestOver == False)) RAMN_DBC_Handle.control_lights = 0xFF;
 	else LEDTestOver = True;
+
 #endif
 	RAMN_SPI_UpdateLED((uint8_t*)&(RAMN_DBC_Handle.control_lights));
 #endif

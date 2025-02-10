@@ -94,7 +94,7 @@ static void SENSORS_UpdatePowertrain(uint32_t tick)
 	RAMN_SENSORS_POWERTRAIN.accelPotentiometer = RAMN_SENSORS_ADCValues[1];
 	RAMN_SENSORS_POWERTRAIN.shiftJoystick = SENSORS_ConvertLeverADC(RAMN_SENSORS_ADCValues[2]);
 
-	if (tick - lastUpdateTick > 100U ) //TODO: replace this by better debounce
+	if (tick - lastUpdateTick > 100U) //TODO: replace this by better debounce
 	{
 		lastUpdateTick = tick;
 		if((RAMN_SENSORS_POWERTRAIN.shiftJoystick != RAMN_SHIFT_RELEASED) && (RAMN_SENSORS_POWERTRAIN_PREVIOUS.shiftJoystick == RAMN_SHIFT_RELEASED))
@@ -137,9 +137,11 @@ static RAMN_SideBrakeState_t SENSORS_ConvertSideBrakeADC(uint16_t adcval)
 	else return RAMN_SIDEBRAKE_UP;
 }
 
+#if defined(CHASSIS_LOGARITHMIC_POTENTIOMETER)
 static uint16_t SENSORS_LogToLinear(uint16_t val ) {
 	return loglookupt[val];
 }
+#endif
 
 static void SENSORS_UpdateChassis(uint32_t tick)
 {

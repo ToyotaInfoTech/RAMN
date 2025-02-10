@@ -986,6 +986,8 @@ static void RAMN_UDS_RoutineControlAddDTCEntry(const uint8_t* data, uint16_t siz
 
 
 #ifdef ENABLE_SCREEN
+
+#ifdef ENABLE_CHIP8
 static void loadChip8Game(const uint8_t* data, uint16_t size)
 {
 	uint16_t game_size = 0;
@@ -1014,6 +1016,7 @@ static void loadChip8Game(const uint8_t* data, uint16_t size)
 		}
 	}
 }
+#endif
 
 static void displayPixels(const uint8_t* data, uint16_t size)
 {
@@ -1808,9 +1811,11 @@ void RAMN_UDS_ProcessDiagPayload(uint32_t tick, const uint8_t* data, uint16_t si
 			case 0x41: //custom service to display pixels on screen
 				displayPixels(data, size);
 				break;
+#ifdef ENABLE_CHIP8
 			case 0x42: //custom service to load chip-8 games
 				loadChip8Game(data, size);
 				break;
+#endif
 #endif
 #if defined(ENABLE_MINICTF) && defined(TARGET_ECUD)
 			case 0x40:

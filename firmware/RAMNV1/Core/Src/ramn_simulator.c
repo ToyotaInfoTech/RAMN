@@ -26,7 +26,7 @@ void RAMN_SIM_Init(void)
 void RAMN_SIM_UpdatePeriodic(uint32_t tick)
 {
 
-#if defined(TARGET_ECUA)
+#if defined(TARGET_ECUA) && defined(ENABLE_USB)
 	if (RAMN_USB_Config.simulatorActive == True)
 	{
 		uint8_t index = 0U;
@@ -66,7 +66,7 @@ void RAMN_SIM_UpdatePeriodic(uint32_t tick)
 	{
 		RAMN_DBC_Handle.control_shift 			= RAMN_DBC_Handle.command_shift;
 	}
-
+	RAMN_DBC_Handle.joystick 				= (uint8_t) RAMN_SENSORS_POWERTRAIN.shiftJoystick;
 	RAMN_DBC_Handle.command_horn 			= RAMN_SENSORS_POWERTRAIN.hornRequest;
 	RAMN_DBC_Handle.command_turnindicator 	= RAMN_SENSORS_POWERTRAIN.turnIndicatorRequest;
 #endif

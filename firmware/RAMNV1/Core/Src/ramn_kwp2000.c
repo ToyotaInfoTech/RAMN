@@ -3,7 +3,7 @@
  ******************************************************************************
  * @attention
  *
- * <h2><center>&copy; Copyright (c) 2021 TOYOTA MOTOR CORPORATION.
+ * <h2><center>&copy; Copyright (c) 2025 TOYOTA MOTOR CORPORATION.
  * ALL RIGHTS RESERVED.</center></h2>
  *
  * This software component is licensed by TOYOTA MOTOR CORPORATION under BSD 3-Clause license,
@@ -18,7 +18,7 @@
 
 #if defined(ENABLE_KWP)
 
-//KWP Commands (cf. // Cf https://books.google.co.jp/books?id=ZyMPTGipUGsC)
+// KWP Commands (cf. // Cf https://books.google.co.jp/books?id=ZyMPTGipUGsC)
 #define KWP_COMMAND_DIAGNOSTIC_SESSION  			0x10
 #define	KWP_COMMAND_ECU_RESET		 				0x11
 #define KWP_COMMAND_READ_FREEZE_FRAME_DATA			0x12
@@ -51,11 +51,12 @@
 #define KWP_COMMAND_CONTROL_DTC_SETTINGS			0x85
 #define KWP_COMMAND_RESPONSE_ON_EVENT				0x86
 
-//KWP Errors
+// KWP Errors
 #define KWP_NRC_SERVICE_NOT_SUPPORTED			0x11
 #define KWP_NRC_SUBFUNCTION_NOT_SUPPORTED_IF	0x12
 
-//Common pointer to avoid passing answer data as argument each sub-function
+// TODO: refactor module
+// Common pointer to avoid passing answer data as argument each sub-function
 static uint8_t* kwp_answerData;
 static uint16_t* kwp_answerSize;
 
@@ -105,7 +106,7 @@ static void RAMN_KWP_FormatPositiveResponseEcho(const uint8_t* data, uint16_t si
 
 static void RAMN_KWP_DiagnosticSessionControl(const uint8_t* data, uint16_t size)
 {
-	//Dummy implementation, accept only Default Diag session / Programming Session
+	// Dummy implementation, accept only Default Diag session / Programming Session
 	if (size >= 2)
 	{
 		if ((data[1] == 0x81) || (data[1] == 0x85)) RAMN_KWP_FormatPositiveResponseEcho(data, 1U);
@@ -174,14 +175,14 @@ static void RAMN_KWP_SecurityAccess(const uint8_t* data, uint16_t size)
 
 static void RAMN_KWP_DisableTransmission(const uint8_t* data, uint16_t size)
 {
-	if (size >= 2)
+	if (size >= 2U)
 	{
-		if (data[1] == 0x01)
+		if (data[1U] == 0x01)
 		{
 			RAMN_DBC_RequestSilence = True;
 			RAMN_KWP_FormatPositiveResponseEcho(data, 1U);
 		}
-		else if (data[1] == 0x02) {
+		else if (data[1U] == 0x02) {
 			RAMN_DBC_RequestSilence = True;
 			/* No response  */
 		}
@@ -198,14 +199,14 @@ static void RAMN_KWP_DisableTransmission(const uint8_t* data, uint16_t size)
 
 static void RAMN_KWP_EnableTransmission(const uint8_t* data, uint16_t size)
 {
-	if (size >= 2)
+	if (size >= 2U)
 	{
-		if (data[1] == 0x01)
+		if (data[1U] == 0x01)
 		{
 			RAMN_DBC_RequestSilence = False;
 			RAMN_KWP_FormatPositiveResponseEcho(data, 1U);
 		}
-		else if (data[1] == 0x02) {
+		else if (data[1U] == 0x02) {
 			RAMN_DBC_RequestSilence = False;
 			/* No response  */
 		}
@@ -287,10 +288,10 @@ static void RAMN_KWP_WriteMemoryByAddress(const uint8_t* data, uint16_t size)
 
 static void RAMN_KWP_TesterPresent(const uint8_t* data, uint16_t size)
 {
-	if (size >= 2)
+	if (size >= 2U)
 	{
-		if (data[1] == 0x01) RAMN_KWP_FormatPositiveResponseEcho(data, 1U);
-		else if (data[1] == 0x02) { /* No response  */ }
+		if (data[1U] == 0x01) RAMN_KWP_FormatPositiveResponseEcho(data, 1U);
+		else if (data[1U] == 0x02) { /* No response  */ }
 		else
 		{
 			RAMN_KWP_FormatNegativeResponse(data, KWP_NRC_SUBFUNCTION_NOT_SUPPORTED_IF);
@@ -366,13 +367,13 @@ void RAMN_KWP_ProcessDiagPayload(uint32_t tick, const uint8_t* data, uint16_t si
 {
 	kwp_answerData = answerData;
 	kwp_answerSize = answerSize;
-	*kwp_answerSize = 0U; //Empty Response by default
+	*kwp_answerSize = 0U; // Empty Response by default
 
 	if (size > 0U)
 	{
 		if (data[0] < 0x10)
 		{
-			//J1979 command
+			// J1979 command
 			RAMN_J1979_ProcessMessage(data, size, answerData, answerSize);
 		}
 		else

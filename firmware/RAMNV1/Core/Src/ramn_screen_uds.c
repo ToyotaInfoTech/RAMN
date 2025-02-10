@@ -24,12 +24,11 @@ static uint16_t drawX = 0;
 static uint16_t drawY = 0;
 static uint16_t drawW = 0;
 static uint16_t drawH = 0;
-__attribute__ ((section (".buffers"))) static uint8_t drawBuf[UDS_DRAW_BUFFER_SIZE]; //TODO: move this do dynamic memory, make it volatile?
+__attribute__ ((section (".buffers"))) static uint8_t drawBuf[UDS_DRAW_BUFFER_SIZE]; //TODO: move this do dynamic memory; add if (drawBuf != 0U) osDelay(10); make it volatile?
 
 
 void RAMN_SCREENUDS_RequestDrawImage(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const uint8_t* image)
 {
-	if (drawBuf != 0U) osDelay(10);
 	drawX = x;
 	drawY = y;
 	drawW = w;

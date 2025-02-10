@@ -154,9 +154,7 @@ static const uint16_t recvStdCANIDList[] =
 // List of Extended CAN IDs that can be received when hardware filters are ON
 static const uint32_t recvExtCANIDList[] =
 {
-#ifdef ENABLE_MINICTF
-		CTF_EXTENDED_ID,
-#endif
+		CTF_EXTENDED_ID
 };
 
 static_assert(sizeof(recvStdCANIDList) <= 28U, "Too many hardware filters, update the code to use other types of filters (such as dual or range)");
@@ -179,94 +177,96 @@ static void FDCAN_Error_Handler()
 #ifdef USE_HARDWARE_CAN_FILTERS
 static void FDCAN_SetStandardFilterList(const uint16_t *canidList, uint16_t size)
 {
-	HAL_FDCAN_DeInit(hfdcan);
-	RAMN_FDCAN_Status.sFilterStdConfig.IdType = FDCAN_STANDARD_ID;
-	hfdcan->Init.StdFiltersNbr = size;
+	RAMN_FDCAN_Status.sFilterStdConfig.IdType 		= FDCAN_STANDARD_ID;
+	RAMN_FDCAN_Status.sFilterStdConfig.FilterType   = FDCAN_FILTER_MASK; //Use FDCAN_FILTER_DUAL if you need more IDs
+	RAMN_FDCAN_Status.sFilterStdConfig.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
+	RAMN_FDCAN_Status.sFilterStdConfig.FilterID2 	= 0x7FF;
 	for(uint8_t i = 0; i < size; i++)
 	{
 		RAMN_FDCAN_Status.sFilterStdConfig.FilterIndex  = i;
-		RAMN_FDCAN_Status.sFilterStdConfig.FilterType   = FDCAN_FILTER_MASK; //Use FDCAN_FILTER_DUAL if you need more IDs
-		RAMN_FDCAN_Status.sFilterStdConfig.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
 		RAMN_FDCAN_Status.sFilterStdConfig.FilterID1    = canidList[i];
-		if(i + 1 < size) RAMN_FDCAN_Status.sFilterStdConfig.FilterID2 = 0x7FF;
-		else RAMN_FDCAN_Status.sFilterStdConfig.FilterID2 = canidList[i];
 		// Configure Filter for STANDARD CAN IDs
-		if (HAL_FDCAN_ConfigFilter(hfdcan, &(RAMN_FDCAN_Status.sFilterStdConfig)) != HAL_OK) Error_Handler();
+		if (HAL_FDCAN_ConfigFilter(hfdcan, &(RAMN_FDCAN_Status.sFilterStdConfig)) != HAL_OK)
+		{
+			Error_Handler();
+		}
 	}
 }
 
 static void FDCAN_SetExtendedFilterList(const uint32_t *canidList, uint16_t size)
 {
-	HAL_FDCAN_DeInit(hfdcan);
-	RAMN_FDCAN_Status.sFilterExtConfig.IdType = FDCAN_EXTENDED_ID;
-	hfdcan->Init.ExtFiltersNbr = size;
+	RAMN_FDCAN_Status.sFilterExtConfig.IdType 		= FDCAN_EXTENDED_ID;
+	RAMN_FDCAN_Status.sFilterExtConfig.FilterType   = FDCAN_FILTER_MASK; //Use FDCAN_FILTER_DUAL if you need more IDs
+	RAMN_FDCAN_Status.sFilterExtConfig.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
+	RAMN_FDCAN_Status.sFilterExtConfig.FilterID2 	= 0x7FFFFFFF;
+
 	for(uint8_t i = 0; i < size; i++)
 	{
 		RAMN_FDCAN_Status.sFilterExtConfig.FilterIndex  = i;
-		RAMN_FDCAN_Status.sFilterExtConfig.FilterType   = FDCAN_FILTER_MASK; //Use FDCAN_FILTER_DUAL if you need more IDs
-		RAMN_FDCAN_Status.sFilterExtConfig.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
 		RAMN_FDCAN_Status.sFilterExtConfig.FilterID1    = canidList[i];
-		if(i + 1 < size) RAMN_FDCAN_Status.sFilterExtConfig.FilterID2 = 0x7FF;
-		else RAMN_FDCAN_Status.sFilterExtConfig.FilterID2 = canidList[i];
 		// Configure Filter for STANDARD CAN IDs
-		if (HAL_FDCAN_ConfigFilter(hfdcan, &(RAMN_FDCAN_Status.sFilterExtConfig)) != HAL_OK) Error_Handler();
+		if (HAL_FDCAN_ConfigFilter(hfdcan, &(RAMN_FDCAN_Status.sFilterExtConfig)) != HAL_OK)
+		{
+			Error_Handler();
+		}
 	}
 }
 #endif
 
 #ifdef ENABLE_DYNAMIC_BITRATE
+//TODO: test with more bitrates
 static RAMN_Result_t FDCAN_ConfigureBitrate(uint32_t bitrate)
 {
-    int32_t  error;
-    int32_t  best = 0x7FFFFFFF;
-    uint32_t fdcanClock;
-    uint8_t  tqsum;
-    uint16_t prescaler;
-    uint8_t  tseg1;
-    uint8_t  tseg2;
-    uint16_t samplePoint;
-    RAMN_Result_t result = RAMN_ERROR;
+	int32_t  error;
+	int32_t  best = 0x7FFFFFFF;
+	uint32_t fdcanClock;
+	uint8_t  tqsum;
+	uint16_t prescaler;
+	uint8_t  tseg1;
+	uint8_t  tseg2;
+	uint16_t samplePoint;
+	RAMN_Result_t result = RAMN_ERROR;
 
-    // CAN in Automation recommended sample points
-    if (bitrate > 800000) samplePoint = 750;
-    else if (bitrate > 500000) samplePoint = 800;
-    else samplePoint = 875;
+	// CAN in Automation recommended sample points
+	if (bitrate > 800000) samplePoint = 750;
+	else if (bitrate > 500000) samplePoint = 800;
+	else samplePoint = 875;
 
-    // Threhsold of 5% of the ideal sample point
-    uint16_t errorThreshold = samplePoint / 20;
+	// Threhsold of 5% of the ideal sample point
+	uint16_t errorThreshold = samplePoint / 20;
 
-    fdcanClock = HAL_RCC_GetSysClockFreq() / (hfdcan->Init.ClockDivider + 1);
+	fdcanClock = HAL_RCC_GetSysClockFreq() / (hfdcan->Init.ClockDivider + 1);
 
-    prescaler = 1;
-    tqsum = fdcanClock / bitrate;
-    while (tqsum > TQ_MAX)
-    {
-        prescaler++;
-        tqsum = (fdcanClock / prescaler) / bitrate;
-    }
+	prescaler = 1;
+	tqsum = fdcanClock / bitrate;
+	while (tqsum > TQ_MAX)
+	{
+		prescaler++;
+		tqsum = (fdcanClock / prescaler) / bitrate;
+	}
 
-    while (prescaler < PRESCALER_MAX)
-    {
-        tseg1 = tqsum / 2; // Start at 50%
-        while (tseg1 < tqsum - 2)
-        {
-            tseg2 = tqsum - tseg1 - 1;
-            error = samplePoint - ((tseg1 * 1000) / tqsum);
-            if (error < 0) error = -error;
-            if (error < best && error <= errorThreshold) // Only accept if within threshold
-            {
-                best = error;
-                hfdcan->Init.NominalPrescaler = prescaler;
-                hfdcan->Init.NominalTimeSeg1 = tseg1;
-                hfdcan->Init.NominalTimeSeg2 = tseg2;
-                result = RAMN_OK;
-            }
-            tseg1++;
-        }
-        prescaler++;
-        tqsum = (fdcanClock / prescaler) / bitrate;
-    }
-    return result;
+	while (prescaler < PRESCALER_MAX)
+	{
+		tseg1 = tqsum / 2; // Start at 50%
+		while (tseg1 < tqsum - 2)
+		{
+			tseg2 = tqsum - tseg1 - 1;
+			error = samplePoint - ((tseg1 * 1000) / tqsum);
+			if (error < 0) error = -error;
+			if (error < best && error <= errorThreshold) // Only accept if within threshold
+			{
+				best = error;
+				hfdcan->Init.NominalPrescaler = prescaler;
+				hfdcan->Init.NominalTimeSeg1 = tseg1;
+				hfdcan->Init.NominalTimeSeg2 = tseg2;
+				result = RAMN_OK;
+			}
+			tseg1++;
+		}
+		prescaler++;
+		tqsum = (fdcanClock / prescaler) / bitrate;
+	}
+	return result;
 }
 #endif
 
@@ -277,42 +277,48 @@ static void FDCAN_Config(void)
 	HAL_GPIO_WritePin(FDCAN1_STB_GPIO_Port, FDCAN1_STB_Pin, GPIO_PIN_RESET);
 
 #ifdef USE_HARDWARE_CAN_FILTERS
-	//Configure Filter for STANDARD CAN IDs
-	FDCAN_SetStandardFilterList(recvStdCANIDList, sizeof(recvStdCANIDList));
 
-	//Configure Filter for EXTENDED CAN IDs
-	FDCAN_SetExtendedFilterList(recvExtCANIDList, sizeof(recvExtCANIDList));
+	HAL_FDCAN_DeInit(hfdcan);
+	hfdcan->Init.StdFiltersNbr = sizeof(recvStdCANIDList)/sizeof(*recvStdCANIDList);
+	hfdcan->Init.ExtFiltersNbr = sizeof(recvExtCANIDList)/sizeof(*recvExtCANIDList);
+	if (HAL_FDCAN_Init(hfdcan) != HAL_OK) Error_Handler();
+
+	// Configure Filter for STANDARD CAN IDs
+	FDCAN_SetStandardFilterList(recvStdCANIDList, sizeof(recvStdCANIDList)/sizeof(*recvStdCANIDList));
+
+	// Configure Filter for EXTENDED CAN IDs
+	FDCAN_SetExtendedFilterList(recvExtCANIDList, sizeof(recvExtCANIDList)/sizeof(*recvExtCANIDList));
 #else
-	//Configure Filter for STANDARD CAN IDs
+	// Configure Filter for STANDARD CAN IDs
 	if (HAL_FDCAN_ConfigFilter(hfdcan, &(RAMN_FDCAN_Status.sFilterStdConfig)) != HAL_OK) Error_Handler();
 
-	//Configure Filter for EXTENDED CAN IDs
+	// Configure Filter for EXTENDED CAN IDs
 	if (HAL_FDCAN_ConfigFilter(hfdcan, &(RAMN_FDCAN_Status.sFilterExtConfig)) != HAL_OK) Error_Handler();
 #endif
 
-	//Configure the Filters
+	// Configure the Filters
 	if (HAL_FDCAN_ConfigGlobalFilter(hfdcan, FDCAN_REJECT , FDCAN_REJECT, FDCAN_FILTER_REMOTE, FDCAN_FILTER_REMOTE) != HAL_OK) Error_Handler();
 
-	//Start the Peripheral
+	// Start the Peripheral
 	if (HAL_FDCAN_Start(hfdcan) != HAL_OK) Error_Handler();
 
-	//Activate Message Receive Interrupts
+	// Activate Message Receive Interrupts
 	if (HAL_FDCAN_ActivateNotification(hfdcan, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0) != HAL_OK) Error_Handler();
 
-	//Activate RX FIFO errors
+	// Activate RX FIFO errors
 	if (HAL_FDCAN_ActivateNotification(hfdcan, FDCAN_IT_RX_FIFO0_MESSAGE_LOST | FDCAN_IT_RX_FIFO0_FULL , 0) != HAL_OK) Error_Handler();
 
-	//Activate Message Transmission Complete interrupts
-	//Note: we do not activate FDCAN_IT_TX_EVT_FIFO_FULL, as we expect the transmit FIFO to be full from time to time (overflowing elements stay in the stream buffer until FIFO is ready)
+	// Activate Message Transmission Complete interrupts
+	// Note: we do not activate FDCAN_IT_TX_EVT_FIFO_FULL, as we expect the transmit FIFO to be full from time to time (overflowing elements stay in the stream buffer until FIFO is ready)
 	if (HAL_FDCAN_ActivateNotification(hfdcan, FDCAN_IT_LIST_TX_FIFO_ERROR, FDCAN_TX_BUFFER0 | FDCAN_TX_BUFFER1 | FDCAN_TX_BUFFER2) != HAL_OK) Error_Handler();
 
-	//Activate Notifications for TX COMPLETE event
+	// Activate Notifications for TX COMPLETE event
 	if (HAL_FDCAN_ActivateNotification(hfdcan, FDCAN_IT_TX_COMPLETE, FDCAN_TX_BUFFER0 | FDCAN_TX_BUFFER1 | FDCAN_TX_BUFFER2) != HAL_OK) Error_Handler();
 
 	// Activate CAN-FD Controller errors interrupt
 	if (HAL_FDCAN_ActivateNotification(hfdcan, FDCAN_IT_RAM_ACCESS_FAILURE | FDCAN_IT_ERROR_LOGGING_OVERFLOW | FDCAN_IT_RAM_WATCHDOG | FDCAN_IT_ARB_PROTOCOL_ERROR | FDCAN_IT_DATA_PROTOCOL_ERROR, 0) != HAL_OK) Error_Handler();
 
-	//Activate CAN-FD Status errors interrupt
+	// Activate CAN-FD Status errors interrupt
 	if (HAL_FDCAN_ActivateNotification(hfdcan, FDCAN_IT_ERROR_PASSIVE | FDCAN_IT_ERROR_WARNING | FDCAN_IT_BUS_OFF, 0) != HAL_OK) Error_Handler();
 }
 
@@ -378,10 +384,13 @@ RAMN_Result_t RAMN_FDCAN_UpdateBaudrate(uint8_t newSelection)
 	case '8': // 1M
 		result = FDCAN_ConfigureBitrate(FDCAN_BAUDRATE_8);
 		break;
+
 	default:
+		/*// TODO: refactor to use uint32_t as argument, and accept any bitrate
 		if(newSelection >= FDCAN_BITRATE_MIN && newSelection <= FDCAN_BITRATE_MAX) result = FDCAN_ConfigureBitrate(newSelection);
 		else result = RAMN_ERROR;
 		break;
+		*/
 	}
 #else
 	switch(newSelection)

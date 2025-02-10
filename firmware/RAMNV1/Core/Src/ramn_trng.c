@@ -83,7 +83,7 @@ void HAL_RNG_ErrorCallback(RNG_HandleTypeDef *hrng)
 
 uint8_t RAMN_RNG_Pop8(void)
 {
-	uint8_t result;
+	uint32_t result;
 
 #ifdef USE_TRNG_BUFFER
 	RNG_Refill();
@@ -98,7 +98,7 @@ uint8_t RAMN_RNG_Pop8(void)
 
 uint16_t RAMN_RNG_Pop16(void)
 {
-	uint16_t result;
+	uint32_t result;
 
 #ifdef USE_TRNG_BUFFER
 	RNG_Refill();

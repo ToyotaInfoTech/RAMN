@@ -9,7 +9,7 @@
   *
   * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
   * All rights reserved.</center></h2>
-  * <h2><center>&copy; Copyright (c) 2021 TOYOTA MOTOR CORPORATION.
+  * <h2><center>&copy; Copyright (c) 2025 TOYOTA MOTOR CORPORATION.
   * ALL RIGHTS RESERVED.</center></h2>
   *
   * This software component is licensed by ST under BSD 3-Clause license,

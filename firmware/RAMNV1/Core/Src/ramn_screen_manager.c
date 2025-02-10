@@ -43,11 +43,11 @@ static RAMNScreen* screens[] = {
 void switchScreen(RAMNScreen* newScreen)
 {
 	if (currentScreen != NULL) {
-		if (currentScreen->Deinit != 0U) currentScreen->Deinit();
+		if (currentScreen->Deinit != NULL) currentScreen->Deinit();
 	}
 	currentScreen = newScreen;
 	if (currentScreen != NULL) {
-		if (currentScreen->Init != 0U) currentScreen->Init();
+		if (currentScreen->Init != NULL) currentScreen->Init();
 	}
 }
 
@@ -91,11 +91,13 @@ void RAMN_SCREENMANAGER_Update(uint32_t tick)
 	JoystickEventType joystickEvent;
 	RAMN_Bool_t canProcessInput = True;
 
+#ifdef ENABLE_CHIP8
 	// Force to move to CHIP8 screen if a game was requested (e.g., by USB or by UDS).
 	if (RAMN_CHIP8_IsGameActive() && currentScreen != &ScreenChip8)
 	{
 		switchScreen(&ScreenChip8);
 	}
+#endif
 
 	// Force to move to the UDS screen if a UDS draw was requested.
 #ifdef ENABLE_UDS
@@ -110,7 +112,7 @@ void RAMN_SCREENMANAGER_Update(uint32_t tick)
 	while (joystickEvent != JOYSTICK_EVENT_NONE)
 	{
 		if (currentScreen != NULL) {
-			if (currentScreen->UpdateInput != 0U) canProcessInput = currentScreen->UpdateInput(joystickEvent);
+			if (currentScreen->UpdateInput != NULL) canProcessInput = currentScreen->UpdateInput(joystickEvent);
 		}
 
 		if (canProcessInput == True) // Controls not overridden by screen
@@ -131,7 +133,7 @@ void RAMN_SCREENMANAGER_Update(uint32_t tick)
 
 	// Update current screen.
 	if (currentScreen != NULL) {
-		if (currentScreen->Update != 0) currentScreen->Update(tick);
+		if (currentScreen->Update != NULL) currentScreen->Update(tick);
 	}
 
 #ifdef DISPLAY_SLOW_WARNING
@@ -149,7 +151,7 @@ void RAMN_SCREENMANAGER_Update(uint32_t tick)
 void RAMN_SCREENMANAGER_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, const uint8_t* data, uint32_t tick)
 {
 	if (currentScreen != NULL) {
-		if (currentScreen->ProcessRxCANMessage != 0) currentScreen->ProcessRxCANMessage(pHeader, data, tick);
+		if (currentScreen->ProcessRxCANMessage != NULL) currentScreen->ProcessRxCANMessage(pHeader, data, tick);
 	}
 }
 
