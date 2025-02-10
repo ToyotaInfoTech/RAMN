@@ -18,7 +18,7 @@
 
 #ifdef ENABLE_SCREEN
 
-__attribute__ ((section (".buffers"))) static CAN_MessageBuffer canMessageBuffer = { .head = 0, .count = 0 };
+__attribute__ ((section (".buffers"))) static volatile CAN_MessageBuffer canMessageBuffer = { .head = 0, .count = 0 };
 
 // If you update this list, make sure you also update FILTER_MASK_LIST
 const uint16_t FILTER_ID_LIST[]   = {
@@ -59,44 +59,47 @@ static uint8_t filterIndex = 0U;
 static uint32_t dispIndex = 0U;
 
 // Whether the screen is active or not
-static uint8_t active = 1U;
+static RAMN_Bool_t active = True;
 
 // Semaphore to enable access from different tasks
 static SemaphoreHandle_t CANLOG_SEMAPHORE = 0U;
 static StaticSemaphore_t CANLOG_SEMAPHORE_STRUCT;
 
-static void ScreenCANLog_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, const uint8_t* data, uint32_t tick)
+static void SCREENCANLOG_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, const uint8_t* data, uint32_t tick)
 {
-	CAN_Message *message = &canMessageBuffer.messages[canMessageBuffer.head];
+	volatile CAN_Message *message;
 
-	while (CANLOG_SEMAPHORE == 0U) osDelay(1); //TODO: change delay (?)
+	if (CANLOG_SEMAPHORE == 0U) return; // Module is not initialized yet
+
 	if (xStreamBufferBytesAvailable(CANRxDataStreamBufferHandle) > MAX_BUFFER_BYTES)
 	{
-		// Too many CAN messages waiting (would be immediately overwritten, skip)
-		return;
+		// Too many CAN messages waiting (would be immediately overwritten, do nothing)
 	}
-	if ((pHeader->IdType == FDCAN_STANDARD_ID) && (pHeader->FDFormat == FDCAN_CLASSIC_CAN) && (pHeader->RxFrameType == FDCAN_DATA_FRAME) && (pHeader->DataLength <= 8))
+	else if ((pHeader->IdType == FDCAN_STANDARD_ID) && (pHeader->FDFormat == FDCAN_CLASSIC_CAN) && (pHeader->RxFrameType == FDCAN_DATA_FRAME) && (pHeader->DataLength <= 8))
 	{
 		// Check filter
 		if ((pHeader->Identifier & FILTER_MASK_LIST[filterIndex]) != (FILTER_ID_LIST[filterIndex] & FILTER_MASK_LIST[filterIndex])) return;
 
-		while (xSemaphoreTake(CANLOG_SEMAPHORE, 5) != pdTRUE)
+		// Try to take semaphore, but do not block indefinitely
+		if(xSemaphoreTake(CANLOG_SEMAPHORE, 50U) == pdTRUE)
 		{
-			if (xStreamBufferBytesAvailable(CANRxDataStreamBufferHandle) > MAX_BUFFER_BYTES) return; // Too many messages, skip
+			// Check that we are not too far behind processing the buffer
+			if (xStreamBufferBytesAvailable(CANRxDataStreamBufferHandle) <= MAX_BUFFER_BYTES)
+			{
+				message = &canMessageBuffer.messages[canMessageBuffer.head];
+				message->identifier = pHeader->Identifier;
+				message->payload_size = pHeader->DataLength;
+				RAMN_memcpy(message->data, data, pHeader->DataLength);
+
+				// Update the buffer head and count
+				canMessageBuffer.head = (canMessageBuffer.head + 1) % CAN_MESSAGE_BUFFER_SIZE;
+				if (canMessageBuffer.count < CAN_MESSAGE_BUFFER_SIZE) canMessageBuffer.count++;
+			}
+			// Give back Semaphore
+			xSemaphoreGive(CANLOG_SEMAPHORE);
 		}
-
-		message->identifier = pHeader->Identifier;
-		message->payload_size = pHeader->DataLength;
-		RAMN_memcpy(message->data, data, pHeader->DataLength);
-
-		// Update the buffer head and count
-		canMessageBuffer.head = (canMessageBuffer.head + 1) % CAN_MESSAGE_BUFFER_SIZE;
-		if (canMessageBuffer.count < CAN_MESSAGE_BUFFER_SIZE) canMessageBuffer.count++;
-
-		xSemaphoreGive(CANLOG_SEMAPHORE);
 	}
 }
-
 
 static void draw_header()
 {
@@ -116,6 +119,8 @@ static void draw_header()
 
 static void SCREENCANLOG_Init()
 {
+	canMessageBuffer.head = 0;
+	canMessageBuffer.count = 0;
 	if (CANLOG_SEMAPHORE == 0U) CANLOG_SEMAPHORE = xSemaphoreCreateMutexStatic(&CANLOG_SEMAPHORE_STRUCT);
 	RAMN_SCREENUTILS_PrepareScrollScreen();
 	dispIndex = 0;
@@ -126,7 +131,7 @@ static void SCREENCANLOG_Update(uint32_t tick)
 {
 	if (xStreamBufferBytesAvailable(CANRxDataStreamBufferHandle) > MAX_BUFFER_BYTES)
 	{
-		//Too many CAN messages available (would be immediately overwritten, skip)
+		// Too many CAN messages available (would be immediately overwritten, skip)
 		return;
 	}
 	if (RAMN_SCREENUTILS_LoopCounter % 5U == 0U)
@@ -211,7 +216,7 @@ RAMNScreen ScreenCANLog = {
 		.Update = SCREENCANLOG_Update,
 		.Deinit = SCREENCANLOG_Deinit,
 		.UpdateInput = SCREENCANLOG_UpdateInput,
-		.ProcessRxCANMessage = ScreenCANLog_ProcessRxCANMessage
+		.ProcessRxCANMessage = SCREENCANLOG_ProcessRxCANMessage
 };
 
 #endif

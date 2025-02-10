@@ -156,7 +156,7 @@ static void SCREENCANMONITOR_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pH
 	if ((pHeader->IdType == FDCAN_STANDARD_ID) && (pHeader->FDFormat == FDCAN_CLASSIC_CAN) && (pHeader->RxFrameType == FDCAN_DATA_FRAME) && (pHeader->DataLength <= 8))
 	{
 
-		while (CANMONITOR_SEMAPHORE == 0U) osDelay(1U); //TODO: use larger delay (?)
+		if (CANMONITOR_SEMAPHORE == 0U) return; // Module not initialized yet, skip message.
 		while (xSemaphoreTake(CANMONITOR_SEMAPHORE, portMAX_DELAY ) != pdTRUE);
 
 		// Process Message
