@@ -3,7 +3,7 @@
  ******************************************************************************
  * @attention
  *
- * <h2><center>&copy; Copyright (c) 2021 TOYOTA MOTOR CORPORATION.
+ * <h2><center>&copy; Copyright (c) 2025 TOYOTA MOTOR CORPORATION.
  * ALL RIGHTS RESERVED.</center></h2>
  *
  * This software component is licensed by TOYOTA MOTOR CORPORATION under BSD 3-Clause license,
@@ -16,7 +16,7 @@
 
 #include "ramn_crc.h"
 
-//pointer to Handle for CRC engine
+// Pointer to the HAL handle of the CRC engine
 static CRC_HandleTypeDef* pCRCHandle;
 
 void RAMN_CRC_Init(CRC_HandleTypeDef* h)
@@ -24,23 +24,22 @@ void RAMN_CRC_Init(CRC_HandleTypeDef* h)
 	pCRCHandle = h;
 }
 
-//Using the CRC engine (that may be overtaken by the EEPROM emulation layer)
-//Note that Hardware CRC and Software CRC may use different CRC parameters.
+
+#ifndef ENABLE_EEPROM_EMULATION
 uint32_t RAMN_CRC_Calculate(const uint8_t* src, uint32_t size)
 {
 	return HAL_CRC_Calculate(pCRCHandle, (uint32_t*)(src), size);
 }
 
-//Using the CRC engine (that may be overtaken by the EEPROM emulation layer).
-//Note that Hardware CRC and Software CRC may use different CRC parameters.
+// Using the CRC engine (that may be overtaken by the EEPROM emulation layer).
 uint32_t RAMN_CRC_Accumulate(const uint8_t* src, uint32_t size)
 {
 	return HAL_CRC_Accumulate(pCRCHandle, (uint32_t*)(src), size);
 }
+#endif
 
-//Using software implementation (https://web.mit.edu/freebsd/head/sys/libkern/crc32.c)
-//Note that Hardware CRC and Software CRC may use different CRC parameters.
-const uint32_t crc32_tab[] = {
+// Using software implementation (https://web.mit.edu/freebsd/head/sys/libkern/crc32.c)
+static const uint32_t crc32Constants[] = {
 		0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f,
 		0xe963a535, 0x9e6495a3,	0x0edb8832, 0x79dcb8a4, 0xe0d5e91e, 0x97d2d988,
 		0x09b64c2b, 0x7eb17cbd, 0xe7b82d07, 0x90bf1d91, 0x1db71064, 0x6ab020f2,
@@ -86,7 +85,6 @@ const uint32_t crc32_tab[] = {
 		0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
 };
 
-//Note that Hardware CRC and Software CRC may use different CRC parameters.
 uint32_t RAMN_CRC_SoftCalculate(const uint8_t* buf, uint32_t size)
 {
 	const uint8_t *p = buf;
@@ -94,7 +92,7 @@ uint32_t RAMN_CRC_SoftCalculate(const uint8_t* buf, uint32_t size)
 
 	crc = ~0U;
 	while (size--)
-		crc = crc32_tab[(crc ^ *p++) & 0xFF] ^ (crc >> 8);
+		crc = crc32Constants[(crc ^ *p++) & 0xFF] ^ (crc >> 8);
 	return crc ^ ~0U;
 }
 

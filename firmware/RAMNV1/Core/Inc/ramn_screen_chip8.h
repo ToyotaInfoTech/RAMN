@@ -3,7 +3,7 @@
  ******************************************************************************
  * @attention
  *
- * <h2><center>&copy; Copyright (c) 2024 TOYOTA MOTOR CORPORATION.
+ * <h2><center>&copy; Copyright (c) 2025 TOYOTA MOTOR CORPORATION.
  * ALL RIGHTS RESERVED.</center></h2>
  *
  * This software component is licensed by TOYOTA MOTOR CORPORATION under BSD 3-Clause license,
@@ -14,18 +14,25 @@
  ******************************************************************************
  */
 
-// This module implements a screen to display a chip8 game
+// This module implements a screen to select and then display a chip8 game.
 
 #ifndef INC_RAMN_SCREEN_CHIP8_H_
 #define INC_RAMN_SCREEN_CHIP8_H_
 
 #include "main.h"
+
+#if  defined(ENABLE_SCREEN) && defined(ENABLE_CHIP8)
 #include "ramn_screen_utils.h"
 #include "ramn_chip8.h"
 
 extern RAMNScreen ScreenChip8;
 
-void RAMN_ScreenChip8_RequestGame(const uint8_t* game_to_load, uint16_t game_size);
-void RAMN_ScreenChip8_StartGameFromIndex(uint8_t index);
+// Request to start a game
+void RAMN_SCREENCHIP8_RequestGame(const uint8_t* game_to_load, uint16_t game_size);
+
+//Load game from ECU memory
+void RAMN_SCREENCHIP8_StartGameFromIndex(uint8_t index);
+
+#endif
 
 #endif

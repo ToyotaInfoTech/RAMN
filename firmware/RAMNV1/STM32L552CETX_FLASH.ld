@@ -46,10 +46,23 @@ _Min_Stack_Size = 0x4000;	/* required amount of stack */
 /* Memories definition */
 MEMORY
 {
+/* Original RAM layout
   RAM	(xrw)	: ORIGIN = 0x20000000,	LENGTH = 256K
+*/
+  
+/* Original Layout using 512k FLASH
+  FLASH	(rx)	: ORIGIN = 0x8000000,	LENGTH = 512K 
+*/
+
+  /* This holds RAM data that will ALWAYS be readable by JTAG. Used for buffers of incoming/outgoing data (USB/CAN)*/
+  INSECURE_RAM	(xrw)	: ORIGIN = 0x20000000,	LENGTH = 192K
+  /* This holds RAM data that can be protected by JTAG */
+  RAM	(xrw)	: ORIGIN = 0x20030000,	LENGTH = 64K /* 64k */
+  /* This holds FLASH data, that can be protected by JTAG. May be extended to 256K if EEPROM emulation is not used, and to 512k if dual banks are also not used */
   FLASH	(rx)	: ORIGIN = 0x8000000,	LENGTH = 248K 
+
 }
-/* WITHOUT UDS REPROG :FLASH	(rx)	: ORIGIN = 0x8000000,	LENGTH = 512K */ 
+/* WITHOUT UDS REPROG :
 
 /* Sections */
 SECTIONS
@@ -148,6 +161,22 @@ SECTIONS
     _edata = .;        /* define a global symbol at data end */
 
   } >RAM AT> FLASH
+
+/* Comment out this section if you do not care of about RAM protection */
+  . = ALIGN(4);
+  .buffers (NOLOAD):
+  {
+    _sbuffers = .;        
+    __buffers_start__ = _sbuffers;
+    *(.buffers)
+    *(.buffers*)
+    *(COMMON)
+
+    . = ALIGN(4);
+    _ebuffers = .;     
+    __buffers_end__ = _ebuffers;
+  } >INSECURE_RAM
+/* Comment out until here */
 
   /* Uninitialized data section into "RAM" Ram type memory */
   . = ALIGN(4);

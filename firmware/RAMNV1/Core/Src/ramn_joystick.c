@@ -3,7 +3,7 @@
  ******************************************************************************
  * @attention
  *
- * <h2><center>&copy; Copyright (c) 2024 TOYOTA MOTOR CORPORATION.
+ * <h2><center>&copy; Copyright (c) 2025 TOYOTA MOTOR CORPORATION.
  * ALL RIGHTS RESERVED.</center></h2>
  *
  * This software component is licensed by TOYOTA MOTOR CORPORATION under BSD 3-Clause license,
@@ -16,18 +16,20 @@
 
 #include "ramn_joystick.h"
 
-//Stream buffer holding joystick events
+#ifdef ENABLE_JOYSTICK_CONTROLS
+
+// Stream buffer holding joystick events
 volatile static StreamBufferHandle_t joystickStreamBufferHandle;
 
-////Semaphore to enable access to this module from different threads
+// Semaphore to enable access to this module from different threads
 static SemaphoreHandle_t JOYSTICK_SEMAPHORE;
 static StaticSemaphore_t JOYSTICK_SEMAPHORE_STRUCT;
 static StaticStreamBuffer_t JOYSTICK_POOL_STRUCT;
 
-//Static buffer that holds data from the stream buffer
+// Static buffer that holds data from the stream buffer
 static uint8_t JOYSTICK_POOL[JOYSTICK_POOL_SIZE];
 
-static uint8_t previous_joystick_data = 0U;
+static uint8_t prevJoystickData = 0U;
 
 // Exported features -----------------------------
 
@@ -37,17 +39,16 @@ void RAMN_Joystick_Init()
 	JOYSTICK_SEMAPHORE   = xSemaphoreCreateMutexStatic(&JOYSTICK_SEMAPHORE_STRUCT);
 }
 
-//must be called with RAMN_DBC_Handle.control_shift >> 8
-void RAMN_Joystick_Update(uint8_t joystick_data)
+void RAMN_Joystick_Update(uint8_t joystickData)
 {
 
 	if (joystickStreamBufferHandle == 0) return; //not initialized yet
 
-	if (joystick_data != previous_joystick_data)
+	if (joystickData != prevJoystickData)
 	{
-		//joystick action detected
+		// Joystick action detected
 		JoystickEventType action = JOYSTICK_EVENT_NONE;
-		switch(joystick_data)
+		switch(joystickData)
 		{
 		case 0x02:
 			//up
@@ -71,7 +72,7 @@ void RAMN_Joystick_Update(uint8_t joystick_data)
 			break;
 		case 0x01:
 			//button was released
-			switch (previous_joystick_data)
+			switch (prevJoystickData)
 			{
 			case 0x02:
 				//up
@@ -105,31 +106,23 @@ void RAMN_Joystick_Update(uint8_t joystick_data)
 
 		if (action != JOYSTICK_EVENT_NONE)
 		{
-			if(xStreamBufferSpacesAvailable(joystickStreamBufferHandle) > 0)
-			{
-				xStreamBufferSend(joystickStreamBufferHandle, (void *)&action, sizeof(action),0U);
-			}
+			if(xStreamBufferSpacesAvailable(joystickStreamBufferHandle) > 0) xStreamBufferSend(joystickStreamBufferHandle, (void *)&action, sizeof(action),0U);
 		}
 	}
 
-	previous_joystick_data = joystick_data;
-
-
+	prevJoystickData = joystickData;
 }
 
 JoystickEventType RAMN_Joystick_Pop(void)
 {
 	JoystickEventType result;
+
 	while (xSemaphoreTake(JOYSTICK_SEMAPHORE, portMAX_DELAY ) != pdTRUE);
-	if (xStreamBufferBytesAvailable(joystickStreamBufferHandle) >= sizeof(result))
-	{
-	xStreamBufferReceive(joystickStreamBufferHandle,(void *)&result,sizeof(result),portMAX_DELAY);
-	}
-	else
-	{
-		result = JOYSTICK_EVENT_NONE;
-	}
+	if (xStreamBufferBytesAvailable(joystickStreamBufferHandle) >= sizeof(result)) xStreamBufferReceive(joystickStreamBufferHandle,(void *)&result,sizeof(result),portMAX_DELAY);
+	else result = JOYSTICK_EVENT_NONE;
 	xSemaphoreGive(JOYSTICK_SEMAPHORE);
+
 	return result;
 }
 
+#endif

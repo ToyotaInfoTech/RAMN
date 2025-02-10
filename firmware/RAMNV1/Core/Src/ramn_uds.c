@@ -502,7 +502,7 @@ static void RAMN_UDS_ReadDataByIdentifier(uint8_t* data, uint16_t size)
 				answer_size = 1+3;
 				break;
 			case 0xF187: //Spare part
-				RAMN_memcpy(&(answer[3]),"RAMN",4U);
+				RAMN_memcpy(&(answer[3]),(uint8_t*)"RAMN",4U);
 				answer_size = 4+3;
 				break;
 			case 0xF18C: //ECU Serial Hardware
@@ -819,9 +819,18 @@ static void RAMN_UDS_RoutineControlResetBootOptionBytes(const uint8_t* data, uin
 		}
 		else
 		{
+			RAMN_Result_t result = RAMN_OK;
 			switch (data[1]){
 			case 0x01://Start
-				if (RAMN_FLASH_ConfigureOptionBytesBootloaderMode() != RAMN_OK)
+				if(RAMN_FLASH_isMemoryProtected() == False)
+				{
+					result = RAMN_FLASH_ConfigureOptionBytesBootloaderMode();
+				}
+				else
+				{
+					result = RAMN_FLASH_RemoveMemoryProtection();
+				}
+				if (result != RAMN_OK)
 				{
 					RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_GPF);
 				}
@@ -921,11 +930,11 @@ static void RAMN_UDS_RoutineControlAutopilot(const uint8_t* data, uint16_t size)
 	else{
 		switch (data[1]){
 		case 0x01://Start
-			autopilot_enabled = True;
+			RAMN_SIM_AutopilotEnabled = True;
 			RAMN_UDS_FormatPositiveResponseEcho(data, size);
 			break;
 		case 0x02://Stop
-			autopilot_enabled = False;
+			RAMN_SIM_AutopilotEnabled = False;
 			RAMN_UDS_FormatPositiveResponseEcho(data, size);
 			break;
 		case 0x03://Read Results
@@ -977,6 +986,8 @@ static void RAMN_UDS_RoutineControlAddDTCEntry(const uint8_t* data, uint16_t siz
 
 
 #ifdef ENABLE_SCREEN
+
+#ifdef ENABLE_CHIP8
 static void loadChip8Game(const uint8_t* data, uint16_t size)
 {
 	uint16_t game_size = 0;
@@ -999,12 +1010,13 @@ static void loadChip8Game(const uint8_t* data, uint16_t size)
 		{
 			RAMN_CHIP8_StopGame();
 			osDelay(200); //leave some time to quit the game (TODO optimize this)
-			RAMN_ScreenManager_RequestGame(&data[3], game_size);
+			RAMN_SCREENMANAGER_RequestGame(&data[3], game_size);
 			uds_answerData[0] = data[0] + 0x40; //positive response
 			*uds_answerSize = 1;
 		}
 	}
 }
+#endif
 
 static void displayPixels(const uint8_t* data, uint16_t size)
 {
@@ -1031,7 +1043,7 @@ static void displayPixels(const uint8_t* data, uint16_t size)
 		}
 		else
 		{
-			if (RAMN_ScreenManager_IsUDSScreenUpdatePending() == 0U)
+			if (RAMN_SCREENMANAGER_IsUDSScreenUpdatePending() == 0U)
 			{
 				RAMN_ScreenManager_RequestDrawImage(x,y,w,h,&data[5]);
 				uds_answerData[0] = data[0] + 0x40; //positive response
@@ -1045,6 +1057,22 @@ static void displayPixels(const uint8_t* data, uint16_t size)
 	}
 }
 #endif
+
+typedef void (*exec_func_t)(void);
+
+//Routine to execute arbitrary code (e.g., to test ARM shellcode)
+static void RAMN_UDS_RoutineControlExecuteArbitraryCode(const uint8_t* data, uint16_t size)
+{
+	if (checkAuthenticated() == True)
+	{
+		exec_func_t func = (&data[4] + 1); //use +1 to force thumb mode, data must be aligned.
+		__DSB();
+		__ISB();
+		func();
+		RAMN_UDS_FormatPositiveResponseEcho(data, 4U);
+	}
+	else RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SAD);
+}
 
 //0000 to 00FF ISO Reserved
 //0100 to 01FF Tachograph
@@ -1131,10 +1159,13 @@ static void RAMN_UDS_RoutineControl(uint8_t* data, uint16_t size)
 			break;
 #endif
 #if defined(ENABLE_EEPROM_EMULATION)
-		case 0x0208: //Enable/Disable Autopilot features:
+		case 0x0208: //Add DTC Entry:
 			RAMN_UDS_RoutineControlAddDTCEntry(data,size);
 			break;
 #endif
+		case 0x0209: //Execute Arbitrary code
+			RAMN_UDS_RoutineControlExecuteArbitraryCode(data,size);
+			break;
 		case 0x0210: //Reset Option Bytes:
 			RAMN_UDS_RoutineControlResetBootOptionBytes(data,size);
 			break;
@@ -1299,7 +1330,7 @@ static void RAMN_UDS_TransferData(const uint8_t* data, uint16_t size)
 				{
 					transferManager.seq = (transferManager.seq +1)&0xFF;
 					uint16_t count = 0;
-					//memcpy to buffer to send
+					// RAMN_memcpy to buffer to send
 					uds_answerData[0] = data[0] + 0x40;
 					uds_answerData[1] = data[1];
 					for(uint16_t i = 0; (i <TRANSFER_DATA_BLOCKSIZE) && (transferManager.index < transferManager.size);i++)
@@ -1606,7 +1637,7 @@ static void processCustomServiceFlag(const uint8_t* data, uint16_t size)
 	else if ((data[2] == 0x13) && data[3] == 0x37)
 	{
 		uds_answerData[0] = data[0] + 0x40;
-		memcpy(&uds_answerData[1], FLAG_UDS_3, sizeof(FLAG_UDS_3)-1);
+		RAMN_memcpy(&uds_answerData[1], FLAG_UDS_3, sizeof(FLAG_UDS_3)-1);
 		*uds_answerSize = sizeof(FLAG_UDS_3);
 	}
 	else
@@ -1620,7 +1651,7 @@ static void processCustomServiceFlag(const uint8_t* data, uint16_t size)
 
 // Exported Components ---------------------------------------
 
-RAMN_ISOTPHandler_t RAMN_UDS_ISOTPHandler;
+__attribute__ ((section (".buffers"))) RAMN_ISOTPHandler_t RAMN_UDS_ISOTPHandler;
 
 RAMN_Result_t RAMN_UDS_Init(uint32_t tick)
 {
@@ -1780,9 +1811,11 @@ void RAMN_UDS_ProcessDiagPayload(uint32_t tick, const uint8_t* data, uint16_t si
 			case 0x41: //custom service to display pixels on screen
 				displayPixels(data, size);
 				break;
+#ifdef ENABLE_CHIP8
 			case 0x42: //custom service to load chip-8 games
 				loadChip8Game(data, size);
 				break;
+#endif
 #endif
 #if defined(ENABLE_MINICTF) && defined(TARGET_ECUD)
 			case 0x40:

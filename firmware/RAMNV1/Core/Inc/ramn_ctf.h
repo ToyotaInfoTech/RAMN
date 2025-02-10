@@ -3,7 +3,7 @@
  ******************************************************************************
  * @attention
  *
- * <h2><center>&copy; Copyright (c) 2024 TOYOTA MOTOR CORPORATION.
+ * <h2><center>&copy; Copyright (c) 2025 TOYOTA MOTOR CORPORATION.
  * ALL RIGHTS RESERVED.</center></h2>
  *
  * This software component is licensed by TOYOTA MOTOR CORPORATION under BSD 3-Clause license,
@@ -19,10 +19,13 @@
 #define INC_RAMN_CTF_H_
 
 #include "main.h"
-#include "ramn_canfd.h"
-#include "ramn_utils.h"
 
 #ifdef ENABLE_MINICTF
+
+#ifdef TARGET_ECUD
+#include "ramn_canfd.h"
+#include "ramn_utils.h"
+#endif
 
 #define FLAG_USB_1 "flag{USB_COMMAND}"
 #define FLAG_USB_2 "flag{USB_BRUTEFORCE}"
@@ -39,20 +42,14 @@
 #define FLAG_UDS_4 "flag{READ_MEMORY}"
 #define FLAG_UDS_5 "flag{AUTHENTICATED}"
 
-
-
-
-
-
-//Function to initializes the CTF handler
+// Function to initializes the CTF handler
 void 	RAMN_CTF_Init(uint32_t tick);
 
-//Process an incoming CAN Message
+// Processes an incoming CAN Message
 void	RAMN_CTF_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, const uint8_t* data, uint32_t tick);
 
-//Updates the module. Should be called periodically.
+// Updates the module. Should be called periodically.
 void 	RAMN_CTF_Update(uint32_t tick);
-
 
 #endif
 

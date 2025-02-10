@@ -3,7 +3,7 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2021 TOYOTA MOTOR CORPORATION.
+  * <h2><center>&copy; Copyright (c) 2025 TOYOTA MOTOR CORPORATION.
   * ALL RIGHTS RESERVED.</center></h2>
   *
   * This software component is licensed by TOYOTA MOTOR CORPORATION under BSD 3-Clause license,
@@ -28,13 +28,13 @@
 #include "ramn_usb.h"
 #endif
 
-//Variable that must be set to 1 by UDS first to enable autopilot controls (otherwise ECU will ignore command messages)
-extern uint8_t autopilot_enabled;
+// Variable that must be set to 1 by UDS first to enable autopilot controls (otherwise ECU will ignore command messages)
+extern uint8_t RAMN_SIM_AutopilotEnabled;
 
-//Initializes the module
+// Initializes the module
 void 	RAMN_SIM_Init(void);
 
-//Update the simulator
+// Update the simulator (From ECU A to Computer)
 void 	RAMN_SIM_UpdatePeriodic(uint32_t tick);
 
 

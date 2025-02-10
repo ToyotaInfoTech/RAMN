@@ -3,7 +3,7 @@
  ******************************************************************************
  * @attention
  *
- * <h2><center>&copy; Copyright (c) 2024 TOYOTA MOTOR CORPORATION.
+ * <h2><center>&copy; Copyright (c) 2025 TOYOTA MOTOR CORPORATION.
  * ALL RIGHTS RESERVED.</center></h2>
  *
  * This software component is licensed by TOYOTA MOTOR CORPORATION under BSD 3-Clause license,
@@ -20,6 +20,9 @@
 #define INC_RAMN_SCREEN_CANMONITOR_H_
 
 #include "main.h"
+
+#ifdef ENABLE_SCREEN
+
 #include "ramn_screen_utils.h"
 #include "cmsis_os.h"
 #include "stream_buffer.h"
@@ -43,4 +46,5 @@ extern RAMNScreen ScreenCANMonitor;
 
 void RAMN_ScreenCANMonitor_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, const uint8_t* data, uint32_t tick);
 
+#endif
 #endif

@@ -3,7 +3,7 @@
  ******************************************************************************
  * @attention
  *
- * <h2><center>&copy; Copyright (c) 2021 TOYOTA MOTOR CORPORATION.
+ * <h2><center>&copy; Copyright (c) 2025 TOYOTA MOTOR CORPORATION.
  * ALL RIGHTS RESERVED.</center></h2>
  *
  * This software component is licensed by TOYOTA MOTOR CORPORATION under BSD 3-Clause license,
@@ -18,18 +18,17 @@
 
 #ifdef ENABLE_USB
 
-#include "usbd_cdc_if.h"
-
-//Buffer that holds outgoing USB data
+// Pointer to buffer that holds outgoing USB data
 static StreamBufferHandle_t* usbTxBuffer;
 
-//Pointer to the task currently responsible for sending out USB data
+// Pointer to the task currently responsible for sending out USB data
 static osThreadId_t* sendTask;
 
-//Semaphore to allow writing to USB from different task
+// Semaphore to allow writing to USB from different task
 static StaticSemaphore_t USB_TX_SEMAPHORE_STRUCT;
 static SemaphoreHandle_t USB_TX_SEMAPHORE;
 
+// Public configuration
 RAMN_USB_Status_t RAMN_USB_Config =
 {
 		.slcanOpened 			= False,
@@ -49,21 +48,21 @@ RAMN_USB_Status_t RAMN_USB_Config =
 void RAMN_USB_Init(StreamBufferHandle_t* buffer,  osThreadId_t* pSendTask)
 {
 	usbTxBuffer 					= buffer;
-	sendTask = pSendTask;
+	sendTask 						= pSendTask;
 	USB_TX_SEMAPHORE 				= xSemaphoreCreateMutexStatic(&USB_TX_SEMAPHORE_STRUCT);
-	USBD_errorCallback_ptr 			= &RAMM_USB_ErrorCallback; //callback for USB Errors
+	USBD_errorCallback_ptr 			= &RAMM_USB_ErrorCallback; // Callback for USB Errors
 #ifdef ENABLE_USB_AUTODETECT
-	USBD_serialOpenCallback_ptr 	= &RAMM_USB_SerialOpenCallback; //callback for USB Errors
-	USBD_serialCloseCallback_ptr 	= &RAMN_USB_SerialCloseCallback; //callback for USB Errors
+	USBD_serialOpenCallback_ptr 	= &RAMM_USB_SerialOpenCallback; // Callback for USB Errors
+	USBD_serialCloseCallback_ptr 	= &RAMN_USB_SerialCloseCallback; // Callback for USB Errors
 #endif
 }
 
 void RAMN_USB_SendFromTask_Blocking(uint8_t* data, uint32_t length)
 {
-	//Start sending
+	// Start sending
 	if(CDC_Transmit_FS((uint8_t*)data,length) != USBD_OK)
 	{
-		//Should not Happen if serial is still opened
+		// Should not Happen if serial is still opened
 #ifdef ENABLE_USB_AUTODETECT
 		if (RAMN_USB_Config.serialOpened == True) RAMN_USB_Config.USBTxOverflowCnt++;
 #else
@@ -72,7 +71,7 @@ void RAMN_USB_SendFromTask_Blocking(uint8_t* data, uint32_t length)
 	}
 	if (ulTaskNotifyTake(pdTRUE, USB_TX_TIMEOUT_MS) == 0U)
 	{
-		//Timeout Occurred, report if serial port is still opened
+		// Timeout Occurred, report if serial port is still opened
 #ifdef ENABLE_USB_AUTODETECT
 		if (RAMN_USB_Config.serialOpened == True) RAMN_USB_Config.USBErrCnt++;
 #else
@@ -81,30 +80,50 @@ void RAMN_USB_SendFromTask_Blocking(uint8_t* data, uint32_t length)
 	}
 }
 
-RAMN_Result_t RAMN_USB_SendFromTask(uint8_t* data, uint32_t length)
+RAMN_Result_t RAMN_USB_SendFromTask(const uint8_t* data, uint32_t length)
 {
 	size_t xBytesSent = 0;
 	RAMN_Result_t result = RAMN_OK;
+
 	while (xSemaphoreTake(USB_TX_SEMAPHORE, portMAX_DELAY ) != pdTRUE);
-	xBytesSent = xStreamBufferSend(*usbTxBuffer, data, length, 2000 );
+
+	xBytesSent = xStreamBufferSend(*usbTxBuffer, data, length, 2000U);
 	xSemaphoreGive(USB_TX_SEMAPHORE);
 	if (xBytesSent != length)
 	{
 		RAMN_USB_Config.USBTxOverflowCnt++;
 		result = RAMN_ERROR;
-
-		//Clear buffer
-		while( xStreamBufferReset(*usbTxBuffer) != pdPASS) osDelay(10);
+		while( xStreamBufferReset(*usbTxBuffer) != pdPASS) osDelay(10); //Clear buffer
 	}
 
 	return result;
 }
 
-RAMN_Result_t RAMN_USB_SendStringFromTask(char* data)
+RAMN_Result_t RAMN_USB_SendStringFromTask(const char* data)
 {
-	return RAMN_USB_SendFromTask(data, strlen(data));
+	return RAMN_USB_SendFromTask((uint8_t*)data, RAMN_strlen(data));
 }
 
+RAMN_Result_t RAMN_USB_SendASCIIUint8(uint8_t val)
+{
+	uint8_t tmp[2U];
+	uint8toASCII(val,tmp);
+	return RAMN_USB_SendFromTask(tmp, 2U);
+}
+
+RAMN_Result_t RAMN_USB_SendASCIIUint16(uint16_t val)
+{
+	uint8_t tmp[4U];
+	uint16toASCII(val,tmp);
+	return RAMN_USB_SendFromTask(tmp, 4U);
+}
+
+RAMN_Result_t RAMN_USB_SendASCIIUint32(uint32_t val)
+{
+	uint8_t tmp[8U];
+	uint32toASCII(val,tmp);
+	return RAMN_USB_SendFromTask(tmp, 8U);
+}
 
 void RAMM_USB_ErrorCallback(USBD_HandleTypeDef* hUsbDeviceFS)
 {
@@ -118,7 +137,7 @@ void RAMM_USB_SerialOpenCallback(USBD_HandleTypeDef* hUsbDeviceFS)
 #endif
 }
 
-//Note that this function  gets called twice when the serial port is closed, and once at startup
+// Note that this function  gets called twice when the serial port is closed, and once at startup
 void RAMN_USB_SerialCloseCallback(USBD_HandleTypeDef* hUsbDeviceFS)
 {
 #ifdef ENABLE_USB_AUTODETECT

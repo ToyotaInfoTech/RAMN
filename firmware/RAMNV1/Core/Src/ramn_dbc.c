@@ -3,7 +3,7 @@
  ******************************************************************************
  * @attention
  *
- * <h2><center>&copy; Copyright (c) 2021 TOYOTA MOTOR CORPORATION.
+ * <h2><center>&copy; Copyright (c) 2025 TOYOTA MOTOR CORPORATION.
  * ALL RIGHTS RESERVED.</center></h2>
  *
  * This software component is licensed by TOYOTA MOTOR CORPORATION under BSD 3-Clause license,
@@ -16,10 +16,13 @@
 
 #include "ramn_dbc.h"
 
-volatile uint8_t RAMN_DBC_RequestSilence = True;
+#define NUMBER_OF_PERIODIC_MSG (sizeof(periodicTxCANMsgs)/sizeof(RAMN_PeriodicFDCANTx_t*))
 
-RAMN_DBC_Handle_t RAMN_DBC_Handle = {.command_steer = 0x7FF, .control_shift =0x01, .command_shift = 0x01, .horn_count = 0};
+volatile RAMN_Bool_t RAMN_DBC_RequestSilence = True;
 
+RAMN_DBC_Handle_t RAMN_DBC_Handle = {.command_steer = 0x7FF, .control_shift =0x01, .command_shift = 0x01};
+
+// array that holds messages to be sent periodically
 static RAMN_PeriodicFDCANTx_t* periodicTxCANMsgs[] = {
 #if defined(TARGET_ECUA)
 		&msg_command_brake,&msg_command_accel,&msg_status_RPM,&msg_command_steering,&msg_command_shift,&msg_control_horn,&msg_command_parkingbrake
@@ -35,12 +38,11 @@ static RAMN_PeriodicFDCANTx_t* periodicTxCANMsgs[] = {
 #endif
 };
 
-//Function that formats messages with counter/checksum/random/etc.
+// Function that formats messages with counter/checksum/random/etc.
 static void RAMN_DBC_FormatDefaultPeriodicMessage(RAMN_PeriodicFDCANTx_t* msg)
 {
-	//uint32_t random = RAMN_RNG_Pop32();
-	msg->data->ramn_data.counter = switchEndian16(msg->counter);
-	msg->data->ramn_data.random = RAMN_CRC_SoftCalculate(msg->data->raw_data,4U);
+	msg->data->ramnData.counter = applyEndian16(msg->counter);
+	msg->data->ramnData.crc32 = RAMN_CRC_SoftCalculate(msg->data->rawData,4U);
 	msg->header.ErrorStateIndicator = RAMN_FDCAN_Status.ErrorStateIndicator;
 }
 
@@ -54,109 +56,107 @@ void RAMN_DBC_Init(void)
 
 }
 
-uint8_t prev_horn;
 void RAMN_DBC_ProcessCANMessage(uint32_t canid, uint32_t dlc, RAMN_CANFrameData_t* dataframe)
 {
-	//ignore fields other than useful data
-	dataframe->ramn_data.payload = dataframe->ramn_data.payload&0xFFFF;
-	if (dlc <= 1) dataframe->ramn_data.payload = dataframe->ramn_data.payload&0xFF;
+	// Ignore fields other than useful data
+	dataframe->ramnData.payload = dataframe->ramnData.payload&0xFFFF;
+	if (dlc <= 1U) dataframe->ramnData.payload = dataframe->ramnData.payload&0xFF; //TODO: reject dlc == 2U message instead of casting them?
 
-	//To avoid overloading the ECU with processing of incoming messages, only expected messages are included in the switch/case
-	if (dlc != 0)
+	// To avoid overloading the ECU with processing of incoming messages, only expected messages are included in the switch/case
+	if (dlc != 0U)
 	{
 		switch(canid)
 		{
 #ifdef RECEIVE_CONTROL_BRAKE
 		case CAN_SIM_CONTROL_BRAKE_CANID:
-			RAMN_DBC_Handle.control_brake 				= switchEndian16(dataframe->ramn_data.payload);
+			RAMN_DBC_Handle.control_brake 				= applyEndian16(dataframe->ramnData.payload);
 			break;
 #endif
 #ifdef RECEIVE_COMMAND_BRAKE
 		case CAN_SIM_COMMAND_BRAKE_CANID:
-			RAMN_DBC_Handle.command_brake 				= switchEndian16(dataframe->ramn_data.payload);
+			RAMN_DBC_Handle.command_brake 				= applyEndian16(dataframe->ramnData.payload);
 			break;
 #endif
 #ifdef RECEIVE_CONTROL_ACCEL
 		case CAN_SIM_CONTROL_ACCEL_CANID:
-			RAMN_DBC_Handle.control_accel 				= switchEndian16(dataframe->ramn_data.payload);
+			RAMN_DBC_Handle.control_accel 				= applyEndian16(dataframe->ramnData.payload);
 			break;
 #endif
 #ifdef RECEIVE_COMMAND_ACCEL
 		case CAN_SIM_COMMAND_ACCEL_CANID:
-			RAMN_DBC_Handle.command_accel 				= switchEndian16(dataframe->ramn_data.payload);
+			RAMN_DBC_Handle.command_accel 				= applyEndian16(dataframe->ramnData.payload);
 			break;
 #endif
 #ifdef RECEIVE_STATUS_RPM
 		case CAN_SIM_STATUS_RPM_CANID:
-			RAMN_DBC_Handle.status_rpm  				= switchEndian16(dataframe->ramn_data.payload);
+			RAMN_DBC_Handle.status_rpm  				= applyEndian16(dataframe->ramnData.payload);
 			break;
 #endif
 #ifdef RECEIVE_CONTROL_STEERING
 		case CAN_SIM_CONTROL_STEERING_CANID:
-			RAMN_DBC_Handle.control_steer 				= switchEndian16(dataframe->ramn_data.payload);
+			RAMN_DBC_Handle.control_steer 				= applyEndian16(dataframe->ramnData.payload);
 			break;
 #endif
 #ifdef RECEIVE_COMMAND_STEERING
 		case CAN_SIM_COMMAND_STEERING_CANID:
-			RAMN_DBC_Handle.command_steer 				= switchEndian16(dataframe->ramn_data.payload);
+			RAMN_DBC_Handle.command_steer 				= applyEndian16(dataframe->ramnData.payload);
 			break;
 #endif
 #ifdef RECEIVE_CONTROL_SHIFT
 		case CAN_SIM_CONTROL_SHIFT_CANID:
-			RAMN_DBC_Handle.control_shift				= dataframe->ramn_data.payload;
-#ifdef ENABLE_SCREEN
-			RAMN_Joystick_Update(RAMN_DBC_Handle.control_shift >> 8);
-#endif
+			RAMN_DBC_Handle.control_shift				=  dataframe->ramnData.payload&0xFF;
+			if (dlc >= 2U)
+			{
+				RAMN_DBC_Handle.joystick					= (dataframe->ramnData.payload>>8)&0xFF;
+			#ifdef ENABLE_JOYSTICK_CONTROLS
+				RAMN_Joystick_Update(RAMN_DBC_Handle.joystick);
+			#endif
+			}
 			break;
 #endif
 #ifdef RECEIVE_COMMAND_SHIFT
 		case CAN_SIM_COMMAND_SHIFT_CANID:
-			RAMN_DBC_Handle.command_shift 				= dataframe->ramn_data.payload;
+			RAMN_DBC_Handle.command_shift 				= dataframe->ramnData.payload;
 			break;
 #endif
 #ifdef RECEIVE_COMMAND_HORN
 		case CAN_SIM_COMMAND_HORN_CANID:
-			RAMN_DBC_Handle.command_horn 				= (dataframe->ramn_data.payload)&0xFF;
-			if ((RAMN_DBC_Handle.command_horn != 0x00) && (prev_horn == 0x00))
-			{
-				RAMN_DBC_Handle.horn_count++;
-			}
-			prev_horn = RAMN_DBC_Handle.command_horn;
+			RAMN_DBC_Handle.command_horn 				= (dataframe->ramnData.payload)&0xFF;
 			break;
 #endif
 #ifdef RECEIVE_CONTROL_HORN
 		case CAN_SIM_CONTROL_HORN_CANID:
-			RAMN_DBC_Handle.control_horn 				= dataframe->ramn_data.payload&0xFF;
+			RAMN_DBC_Handle.control_horn 				= dataframe->ramnData.payload&0xFF;
 			break;
 #endif
 #ifdef RECEIVE_CONTROL_SIDEBRAKE
 		case CAN_SIM_CONTROL_SIDEBRAKE_CANID:
-			RAMN_DBC_Handle.control_sidebrake 			= dataframe->ramn_data.payload&0xFF;
+			RAMN_DBC_Handle.control_sidebrake 			= dataframe->ramnData.payload&0xFF;
 			break;
 #endif
 #ifdef RECEIVE_COMMAND_SIDEBRAKE
 		case CAN_SIM_COMMAND_SIDEBRAKE_CANID:
-			RAMN_DBC_Handle.command_sidebrake 			= dataframe->ramn_data.payload;
+			RAMN_DBC_Handle.command_sidebrake 			= dataframe->ramnData.payload;
 			break;
 #endif
 #ifdef RECEIVE_COMMAND_TURNINDICATOR
 		case CAN_SIM_COMMAND_TURNINDICATOR_CANID:
-			RAMN_DBC_Handle.command_turnindicator		= dataframe->ramn_data.payload;
+			RAMN_DBC_Handle.command_turnindicator		= dataframe->ramnData.payload;
 			break;
 #endif
 #ifdef RECEIVE_CONTROL_ENGINEKEY
 		case CAN_SIM_CONTROL_ENGINEKEY_CANID:
-			RAMN_DBC_Handle.control_enginekey 			= dataframe->ramn_data.payload&0xFF;
+			RAMN_DBC_Handle.control_enginekey 			= dataframe->ramnData.payload&0xFF;
 			break;
 #endif
 #ifdef RECEIVE_COMMAND_LIGHTS
 		case CAN_SIM_COMMAND_LIGHTS_CANID:
-			RAMN_DBC_Handle.command_lights 				= dataframe->ramn_data.payload&0xFFFF;
+			RAMN_DBC_Handle.command_lights 				= dataframe->ramnData.payload&0xFFFF;
 			break;
 #endif
 #ifdef RECEIVE_CONTROL_LIGHTS
 		case CAN_SIM_CONTROL_LIGHTS_CANID:
-			RAMN_DBC_Handle.control_lights 				= dataframe->ramn_data.payload&0xFF;
+			RAMN_DBC_Handle.control_lights 				= dataframe->ramnData.payload&0xFF;
 			break;
 #endif
 		default:
@@ -165,10 +165,9 @@ void RAMN_DBC_ProcessCANMessage(uint32_t canid, uint32_t dlc, RAMN_CANFrameData_
 	}
 }
 
-#define NUMBER_OF_PERIODIC_MSG (sizeof(periodicTxCANMsgs)/sizeof(RAMN_PeriodicFDCANTx_t*))
 void RAMN_DBC_Send(uint32_t tick)
 {
-	for(uint8_t i = 0; i < NUMBER_OF_PERIODIC_MSG ; i++)
+	for(uint16_t i = 0; i < NUMBER_OF_PERIODIC_MSG ; i++)
 	{
 		if((tick - periodicTxCANMsgs[i]->lastSent) >= periodicTxCANMsgs[i]->periodms)
 		{
@@ -184,13 +183,13 @@ void RAMN_DBC_Send(uint32_t tick)
 void RAMN_DBC_ProcessUSBBuffer(const uint8_t* buf)
 {
 #if defined(TARGET_ECUA)
-	msg_command_brake.data->ramn_data.payload 			= switchEndian16(ASCIItoUint12(&buf[1]));
-	msg_command_accel.data->ramn_data.payload 			= switchEndian16(ASCIItoUint12(&buf[4]));
-	msg_status_RPM.data->ramn_data.payload 				= switchEndian16(ASCIItoUint12(&buf[7]));
-	msg_command_steering.data->ramn_data.payload 		= switchEndian16(ASCIItoUint12(&buf[10]));
-	msg_command_shift.data->ramn_data.payload 			= ASCIItoUint8(&buf[13]);
-	msg_control_horn.data->ramn_data.payload 			= ASCIItoUint8(&buf[15]);
-	msg_command_parkingbrake.data->ramn_data.payload 	= ASCIItoUint8(&buf[17]);
+	msg_command_brake.data->ramnData.payload 			= applyEndian16(ASCIItoUint12(&buf[1]));
+	msg_command_accel.data->ramnData.payload 			= applyEndian16(ASCIItoUint12(&buf[4]));
+	msg_status_RPM.data->ramnData.payload 				= applyEndian16(ASCIItoUint12(&buf[7]));
+	msg_command_steering.data->ramnData.payload 		= applyEndian16(ASCIItoUint12(&buf[10]));
+	msg_command_shift.data->ramnData.payload 			= ASCIItoUint8(&buf[13]);
+	msg_control_horn.data->ramnData.payload 			= ASCIItoUint8(&buf[15]);
+	msg_command_parkingbrake.data->ramnData.payload 	= ASCIItoUint8(&buf[17]);
 #endif
 }
 #endif

@@ -9,7 +9,7 @@
   *
   * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
   * All rights reserved.</center></h2>
-  * <h2><center>&copy; Copyright (c) 2021 TOYOTA MOTOR CORPORATION.
+  * <h2><center>&copy; Copyright (c) 2025 TOYOTA MOTOR CORPORATION.
   * ALL RIGHTS RESERVED.</center></h2>
   *
   * This software component is licensed by ST under BSD 3-Clause license,
@@ -56,13 +56,6 @@ typedef enum {
     JOYSTICK_EVENT_NONE,
 	JOYSTICK_EVENT_INVALID,
 } JoystickEventType;
-
-typedef struct RAMNScreen {
-    void (*Init)();
-    void (*Update)();
-    void (*Deinit)();
-    void (*UpdateInput)(JoystickEventType event);
-} RAMNScreen;
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
@@ -103,6 +96,8 @@ void Error_Handler(void);
 #define FDCAN1_STB_GPIO_Port GPIOB
 #define ECUB_BOOT0_Pin GPIO_PIN_7
 #define ECUB_BOOT0_GPIO_Port GPIOB
+#define SELF_BOOT0_Pin GPIO_PIN_3
+#define SELF_BOOT0_GPIO_Port GPIOH
 
 /* USER CODE BEGIN Private defines */
 #define HARDWARE_UNIQUE_ID_ADDRESS ((uint32_t*)0x0BFA0590)

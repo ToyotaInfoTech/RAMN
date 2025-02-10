@@ -3,7 +3,7 @@
  ******************************************************************************
  * @attention
  *
- * <h2><center>&copy; Copyright (c) 2024 TOYOTA MOTOR CORPORATION.
+ * <h2><center>&copy; Copyright (c) 2025 TOYOTA MOTOR CORPORATION.
  * ALL RIGHTS RESERVED.</center></h2>
  *
  * This software component is licensed by TOYOTA MOTOR CORPORATION under BSD 3-Clause license,
@@ -14,33 +14,33 @@
  ******************************************************************************
  */
 
-#include <ramn_screen_utils.h>
+#include "ramn_screen_utils.h"
 
 #ifdef ENABLE_SCREEN
 
-uint32_t spi_refresh_counter = 0U;
+// Exported variables
 
-char prev_steer_ascii[6] = {0};
-char prev_accel_ascii[5] = {0};
-char prev_brake_ascii[5] = {0};
-uint16_t prev_steer = 0xFFFF;
-uint16_t prev_accel = 0xFFFF;
-uint16_t prev_brake = 0xFFFF;
-uint8_t prev_sidebrake = 0xFF;
-uint8_t prev_enginekey = 0xFF;
-uint8_t prev_lamp = 0xFF;
-uint8_t prev_shift = 0xFF;
+uint32_t 				RAMN_SCREENUTILS_LoopCounter = 0U;
+volatile RAMN_Bool_t 	RAMN_SCREENUTILS_RequestRedraw = 0U;
+volatile ColorTheme_t 	RAMN_SCREENUTILS_COLORTHEME;
 
-volatile ColorTheme_t SPI_COLOR_THEME;
-uint16_t SPI_SUBCONSOLE_BACKGROUNDCOLOR;
-uint16_t SPI_SUBCONSOLE_COLORCONTOUR;
-uint16_t SPI_SUBCONSOLE_COLORSTATIC;
-uint16_t SPI_SUBCONSOLE_COLORDYNAMIC;
+// Private variables
 
-volatile uint8_t current_theme = 1;
-volatile uint8_t theme_change_requested = 0U;
+// Currently selected theme
+static uint8_t  themeIndex = 1U;
 
+// Previously drawn sensor values
+static uint16_t prevSteer;
+static uint16_t prevAccel;
+static uint16_t prevBrake;
+static uint8_t  prevSidebrake;
+static uint8_t  prevEnginekey;
+static uint8_t  prevLamp;
+static uint8_t  prevShift;
 
+// Private functions
+
+// Function to convert a uint16 to an ASCII string with a % at the end
 static void uint16toBCDPercent(uint16_t val, char* dst)
 {
 	if (dst != 0U)
@@ -55,6 +55,7 @@ static void uint16toBCDPercent(uint16_t val, char* dst)
 	}
 }
 
+// Function to convert a SIGNED int16 to an ASCII string with a L (-) or R (+) at the beginning and % at the end
 static void uint16toBCDSteering(int16_t val, char* dst)
 {
 	if (dst != 0U)
@@ -78,239 +79,218 @@ static void uint16toBCDSteering(int16_t val, char* dst)
 	}
 }
 
-void RAMN_ScreenUtils_DrawSubconsoleStatic()
+// Configures the color theme structure
+static void configureColorTheme()
 {
-	SPI_SUBCONSOLE_BACKGROUNDCOLOR = SPI_COLOR_THEME.BACKGROUND;
-	SPI_SUBCONSOLE_COLORCONTOUR = SPI_COLOR_THEME.WHITE;
-	SPI_SUBCONSOLE_COLORDYNAMIC = SPI_COLOR_THEME.WHITE;
-	SPI_SUBCONSOLE_COLORSTATIC = SPI_COLOR_THEME.LIGHT;
-
-	RAMN_SPI_DrawRectangle(0, LCD_HEIGHT-36, LCD_WIDTH, 36, SPI_SUBCONSOLE_BACKGROUNDCOLOR);
-	RAMN_SPI_DrawContour(0, LCD_HEIGHT-36, LCD_WIDTH, LCD_HEIGHT, 2, SPI_SUBCONSOLE_COLORCONTOUR);
-	RAMN_SPI_DrawStringColor(2,CONTROL_WINDOW_Y,SPI_SUBCONSOLE_COLORSTATIC,SPI_SUBCONSOLE_BACKGROUNDCOLOR,"STEER BRAK ACCL");
-
-	//Reset strings
-	memset(prev_steer_ascii,0,6);
-	memset(prev_accel_ascii,0,5);
-	memset(prev_brake_ascii,0,5);
-
-	prev_steer = 0xFFFF;
-	prev_accel = 0xFFFF;
-	prev_brake = 0xFFFF;
-	prev_sidebrake = 0xFF;
-	prev_enginekey = 0xFF;
-	prev_lamp = 0xFF;
-	prev_shift = 0xFF;
+	RAMN_SCREENUTILS_COLORTHEME.BACKGROUND = 0x0000;
+	RAMN_SCREENUTILS_COLORTHEME.WHITE = 0xFFFF;
+	switch(themeIndex)
+	{
+	case 0:
+	case 1:
+		RAMN_SCREENUTILS_COLORTHEME.DARK = 0x01e0;
+		RAMN_SCREENUTILS_COLORTHEME.MEDIUM = 0x0462;
+		RAMN_SCREENUTILS_COLORTHEME.LIGHT = 0x07e8;
+		break;
+	case 2:
+		RAMN_SCREENUTILS_COLORTHEME.DARK = 0x210a;
+		RAMN_SCREENUTILS_COLORTHEME.MEDIUM = 0x31b2;
+		RAMN_SCREENUTILS_COLORTHEME.LIGHT = 0x52df;
+		break;
+	case 3:
+		RAMN_SCREENUTILS_COLORTHEME.DARK = 0x7145;
+		RAMN_SCREENUTILS_COLORTHEME.MEDIUM = 0xb1c7;
+		RAMN_SCREENUTILS_COLORTHEME.LIGHT = 0xf9c7;
+		break;
+	case 4:
+		RAMN_SCREENUTILS_COLORTHEME.DARK = 0x902a;
+		RAMN_SCREENUTILS_COLORTHEME.MEDIUM = 0xe02f;
+		RAMN_SCREENUTILS_COLORTHEME.LIGHT = 0xf8b2;
+		break;
+	case 5:
+		RAMN_SCREENUTILS_COLORTHEME.WHITE = 0x0000;
+		RAMN_SCREENUTILS_COLORTHEME.BACKGROUND = 0xFFFF;
+		RAMN_SCREENUTILS_COLORTHEME.DARK = 0x9c92;
+		RAMN_SCREENUTILS_COLORTHEME.MEDIUM = 0x6b4d;
+		RAMN_SCREENUTILS_COLORTHEME.LIGHT = 0x4208;
+		break;
+	case 7:
+		RAMN_SCREENUTILS_COLORTHEME.WHITE = 0x0000;
+		RAMN_SCREENUTILS_COLORTHEME.BACKGROUND = 0xFFFF;
+	case 6:
+		RAMN_SCREENUTILS_COLORTHEME.DARK = 0x07e8;
+		RAMN_SCREENUTILS_COLORTHEME.MEDIUM = 0x52df;
+		RAMN_SCREENUTILS_COLORTHEME.LIGHT = 0xf9c7;
+		break;
+	default:
+		RAMN_SCREENUTILS_COLORTHEME.DARK = 0x01e0;
+		RAMN_SCREENUTILS_COLORTHEME.MEDIUM = 0x0462;
+		RAMN_SCREENUTILS_COLORTHEME.LIGHT = 0x07e8;
+		break;
+	}
 }
 
-void RAMN_ScreenUtils_DrawSubconsoleUpdate()
+// Exported functions
+
+void RAMN_SCREENUTILS_Init(SPI_HandleTypeDef* handler, osThreadId_t* pTask)
 {
-	char cntStr[6] = {0};
+	RAMN_SPI_Init(handler, pTask);
+	RAMN_SPI_InitScreen();
 
-	if (RAMN_DBC_Handle.control_steer != prev_steer)
+	themeIndex = RAMN_RNG_Pop8(); // Select a random theme at startup
+	if (themeIndex > 127)
+		themeIndex = 1; // Make theme 1 more likely, and don't select theme 5 to 7
+	else  themeIndex %= 5;
+
+	configureColorTheme();
+	RAMN_SCREENUTILS_DrawBase();
+}
+
+
+void RAMN_SCREENUTILS_UpdateTheme(uint8_t theme)
+{
+	if (theme != themeIndex)
 	{
-		prev_steer = RAMN_DBC_Handle.control_steer;
+		themeIndex = theme;
+		configureColorTheme();
+		RAMN_SCREENUTILS_RequestRedraw = True;
+	}
+}
+
+void RAMN_SCREENUTILS_NextTheme()
+{
+	RAMN_SCREENUTILS_UpdateTheme((themeIndex%(NUMBER_OF_THEMES-1))+1);
+}
+
+void RAMN_SCREENUTILS_PrepareScrollScreen()
+{
+	RAMN_SPI_SetScroll(SCREEN_HEADER_SIZE);
+	RAMN_SPI_DrawRectangle(0,0,LCD_WIDTH,SCROLL_WINDOW_HEIGHT,RAMN_SCREENUTILS_COLORTHEME.BACKGROUND);
+}
+
+void RAMN_SCREENUTILS_DrawBase()
+{
+	RAMN_SPI_DrawRectangle(0,0,LCD_WIDTH,LCD_HEIGHT-32,RAMN_SCREENUTILS_COLORTHEME.BACKGROUND);
+	RAMN_SPI_DrawContour(0, 0, LCD_WIDTH, LCD_HEIGHT-41, CONTOUR_WIDTH, RAMN_SCREENUTILS_COLORTHEME.LIGHT);
+	RAMN_SCREENUTILS_DrawSubconsoleStatic();
+}
+
+void RAMN_SCREENUTILS_DrawSubconsoleStatic()
+{
+	RAMN_SPI_DrawRectangle(0, LCD_HEIGHT-36, LCD_WIDTH, 36, RAMN_SCREENUTILS_COLORTHEME.BACKGROUND);
+	RAMN_SPI_DrawContour(0, LCD_HEIGHT-36, LCD_WIDTH, LCD_HEIGHT, 2, RAMN_SCREENUTILS_COLORTHEME.WHITE);
+	RAMN_SPI_DrawString(2,CONTROL_WINDOW_Y,RAMN_SCREENUTILS_COLORTHEME.LIGHT,RAMN_SCREENUTILS_COLORTHEME.BACKGROUND,"STEER BRAK ACCL");
+
+	// Set values that will force redraw under normal conditions.
+	prevSteer = 0xFFFF;
+	prevAccel = 0xFFFF;
+	prevBrake = 0xFFFF;
+	prevSidebrake = 0xFF;
+	prevEnginekey = 0xFF;
+	prevLamp = 0xFF;
+	prevShift = 0xFF;
+}
+
+void RAMN_SCREENUTILS_DrawSubconsoleUpdate()
+{
+	char cntStr[6] = {0}; // temporary variable to convert sensor values to drawable ASCII
+
+	if (RAMN_DBC_Handle.control_steer != prevSteer)
+	{
+		prevSteer = RAMN_DBC_Handle.control_steer;
 		uint16toBCDSteering((((int16_t)(RAMN_DBC_Handle.control_steer) - 0x800)*100)/0x7ff, cntStr);
-		RAMN_SPI_RefreshStringColor(2,CONTROL_WINDOW_Y+16,SPI_SUBCONSOLE_COLORDYNAMIC,SPI_SUBCONSOLE_BACKGROUNDCOLOR,cntStr, prev_steer_ascii);
+		RAMN_SPI_RefreshString(2,CONTROL_WINDOW_Y+16,RAMN_SCREENUTILS_COLORTHEME.WHITE,RAMN_SCREENUTILS_COLORTHEME.BACKGROUND,cntStr);
 	}
 
-	if (RAMN_DBC_Handle.control_brake != prev_brake)
+	if (RAMN_DBC_Handle.control_brake != prevBrake)
 	{
-		prev_brake = RAMN_DBC_Handle.control_brake;
+		prevBrake = RAMN_DBC_Handle.control_brake;
 		uint16toBCDPercent((RAMN_DBC_Handle.control_brake*100 / (0xfff)),cntStr);
-		RAMN_SPI_RefreshStringColor(66,CONTROL_WINDOW_Y+16,SPI_SUBCONSOLE_COLORDYNAMIC,SPI_SUBCONSOLE_BACKGROUNDCOLOR,cntStr, prev_brake_ascii);
+		RAMN_SPI_RefreshString(66,CONTROL_WINDOW_Y+16,RAMN_SCREENUTILS_COLORTHEME.WHITE,RAMN_SCREENUTILS_COLORTHEME.BACKGROUND,cntStr);
 	}
 
-	if (RAMN_DBC_Handle.control_accel != prev_accel)
+	if (RAMN_DBC_Handle.control_accel != prevAccel)
 	{
-		prev_accel = RAMN_DBC_Handle.control_accel;
+		prevAccel = RAMN_DBC_Handle.control_accel;
 		uint16toBCDPercent(RAMN_DBC_Handle.control_accel*100 / (0xfff),cntStr);
-		RAMN_SPI_RefreshStringColor(122,CONTROL_WINDOW_Y+16,SPI_SUBCONSOLE_COLORDYNAMIC,SPI_SUBCONSOLE_BACKGROUNDCOLOR,cntStr, prev_accel_ascii);
+		RAMN_SPI_RefreshString(122,CONTROL_WINDOW_Y+16,RAMN_SCREENUTILS_COLORTHEME.WHITE,RAMN_SCREENUTILS_COLORTHEME.BACKGROUND,cntStr);
 	}
 
-	if ((RAMN_DBC_Handle.control_shift >> 8) != prev_shift)
+	if ((RAMN_DBC_Handle.joystick) != prevShift)
 	{
-		prev_shift = (RAMN_DBC_Handle.control_shift >> 8)&0xFF;
-		switch((RAMN_DBC_Handle.control_shift >> 8))
+		prevShift = (RAMN_DBC_Handle.joystick)&0xFF;
+		switch(RAMN_DBC_Handle.joystick)
 		{
-		case 0x02:
-			//up
+		case RAMN_SHIFT_UP:
 			strcpy(cntStr, "UP");
 			break;
-		case 0x03:
-			//down
+		case RAMN_SHIFT_DOWN:
 			strcpy(cntStr, "DW");
 			break;
-		case 0x04:
-			//right
+		case RAMN_SHIFT_RIGHT:
 			strcpy(cntStr, "RT");
 			break;
-		case 0x05:
-			//left
+		case RAMN_SHIFT_LEFT:
 			strcpy(cntStr, "LT");
 			break;
-		case 0x06:
-			//center
+		case RAMN_SHIFT_PUSH:
 			strcpy(cntStr, "MD");
 			break;
 		default:
 			strcpy(cntStr, "  ");
 			break;
 		}
-		RAMN_SPI_DrawStringColor(170,CONTROL_WINDOW_Y+16,SPI_SUBCONSOLE_COLORDYNAMIC,SPI_SUBCONSOLE_BACKGROUNDCOLOR,cntStr);
+		RAMN_SPI_DrawString(170,CONTROL_WINDOW_Y+16,RAMN_SCREENUTILS_COLORTHEME.WHITE,RAMN_SCREENUTILS_COLORTHEME.BACKGROUND,cntStr);
 	}
-	if (RAMN_DBC_Handle.control_sidebrake != prev_sidebrake)
+	if (RAMN_DBC_Handle.control_sidebrake != prevSidebrake)
 	{
-		prev_sidebrake = RAMN_DBC_Handle.control_sidebrake;
-		if (RAMN_DBC_Handle.control_sidebrake != 0) strcpy(cntStr, "SB");
+		prevSidebrake = RAMN_DBC_Handle.control_sidebrake;
+		if (RAMN_DBC_Handle.control_sidebrake != RAMN_SIDEBRAKE_DOWN) strcpy(cntStr, "SB");
 		else strcpy(cntStr, "  ");
-		RAMN_SPI_DrawStringColor(210,CONTROL_WINDOW_Y,SPI_SUBCONSOLE_COLORDYNAMIC,SPI_SUBCONSOLE_BACKGROUNDCOLOR,cntStr);
+		RAMN_SPI_DrawString(210,CONTROL_WINDOW_Y,RAMN_SCREENUTILS_COLORTHEME.WHITE,RAMN_SCREENUTILS_COLORTHEME.BACKGROUND,cntStr);
 	}
 
-	if ((RAMN_DBC_Handle.command_lights&0xFF) != prev_lamp)
+	if ((RAMN_DBC_Handle.command_lights&0xFF) != prevLamp)
 	{
-		prev_lamp = (RAMN_DBC_Handle.command_lights&0xFF);
+		prevLamp = (RAMN_DBC_Handle.command_lights&0xFF);
 		switch((RAMN_DBC_Handle.command_lights&0xFF))
 		{
-		case 0x02:
-			//down
+		case RAMN_LIGHTSWITCH_POS2:
 			strcpy(cntStr, "CL");
 			break;
-		case 0x03:
-			//right
+		case RAMN_LIGHTSWITCH_POS3:
 			strcpy(cntStr, "LB");
 			break;
-		case 0x04:
-			//left
+		case RAMN_LIGHTSWITCH_POS4:
 			strcpy(cntStr, "HB");
 			break;
 		default:
 			strcpy(cntStr, "  ");
 			break;
 		}
-		RAMN_SPI_DrawStringColor(180,CONTROL_WINDOW_Y,SPI_SUBCONSOLE_COLORDYNAMIC,SPI_SUBCONSOLE_BACKGROUNDCOLOR,cntStr);
+		RAMN_SPI_DrawString(180,CONTROL_WINDOW_Y,RAMN_SCREENUTILS_COLORTHEME.WHITE,RAMN_SCREENUTILS_COLORTHEME.BACKGROUND,cntStr);
 	}
 
-	if ((RAMN_DBC_Handle.control_enginekey &0xFF) != prev_enginekey)
+	if ((RAMN_DBC_Handle.control_enginekey &0xFF) != prevEnginekey)
 	{
-		prev_enginekey = (RAMN_DBC_Handle.control_enginekey &0xFF);
+		prevEnginekey = (RAMN_DBC_Handle.control_enginekey &0xFF);
 		switch((RAMN_DBC_Handle.control_enginekey &0xFF))
 		{
-		case 0x01:
+		case RAMN_ENGINEKEY_LEFT:
 			strcpy(cntStr, "OFF");
 			break;
-		case 0x02:
+		case RAMN_ENGINEKEY_MIDDLE:
 			strcpy(cntStr, "ACC");
 			break;
-		case 0x03:
+		case RAMN_ENGINEKEY_RIGHT:
 			strcpy(cntStr, "IGN");
 			break;
 		default:
-			strcpy(cntStr, "   ");
+			strcpy(cntStr, "???");
 			break;
 		}
-		RAMN_SPI_DrawStringColor(200,CONTROL_WINDOW_Y+16,SPI_SUBCONSOLE_COLORDYNAMIC,SPI_SUBCONSOLE_BACKGROUNDCOLOR,cntStr);
+		RAMN_SPI_DrawString(200,CONTROL_WINDOW_Y+16,RAMN_SCREENUTILS_COLORTHEME.WHITE,RAMN_SCREENUTILS_COLORTHEME.BACKGROUND,cntStr);
 	}
-
-}
-
-void RAMN_ScreenUtils_DrawBase(uint8_t theme)
-{
-	SPI_COLOR_THEME.BACKGROUND = 0x0000;
-	SPI_COLOR_THEME.WHITE = 0xFFFF;
-	switch(theme)
-	{
-	case 0:
-	case 1:
-		SPI_COLOR_THEME.DARK = 0x01e0;
-		SPI_COLOR_THEME.MEDIUM = 0x0462;
-		SPI_COLOR_THEME.LIGHT = 0x07e8;
-		break;
-	case 2:
-		SPI_COLOR_THEME.DARK = 0x210a;
-		SPI_COLOR_THEME.MEDIUM = 0x31b2;
-		SPI_COLOR_THEME.LIGHT = 0x52df;
-		break;
-	case 3:
-		SPI_COLOR_THEME.DARK = 0x7145;
-		SPI_COLOR_THEME.MEDIUM = 0xb1c7;
-		SPI_COLOR_THEME.LIGHT = 0xf9c7;
-		break;
-	case 4:
-		SPI_COLOR_THEME.DARK = 0x902a;
-		SPI_COLOR_THEME.MEDIUM = 0xe02f;
-		SPI_COLOR_THEME.LIGHT = 0xf8b2;
-		break;
-	case 5:
-		SPI_COLOR_THEME.WHITE = 0x0000;
-		SPI_COLOR_THEME.BACKGROUND = 0xFFFF;
-		SPI_COLOR_THEME.DARK = 0x9c92;
-		SPI_COLOR_THEME.MEDIUM = 0x6b4d;
-		SPI_COLOR_THEME.LIGHT = 0x4208;
-		break;
-	case 7:
-		SPI_COLOR_THEME.WHITE = 0x0000;
-		SPI_COLOR_THEME.BACKGROUND = 0xFFFF;
-	case 6:
-		SPI_COLOR_THEME.DARK = 0x07e8;
-		SPI_COLOR_THEME.MEDIUM = 0x52df;
-		SPI_COLOR_THEME.LIGHT = 0xf9c7;
-		break;
-	default:
-		SPI_COLOR_THEME.DARK = 0x01e0;
-		SPI_COLOR_THEME.MEDIUM = 0x0462;
-		SPI_COLOR_THEME.LIGHT = 0x07e8;
-		break;
-	}
-
-	RAMN_SPI_DrawRectangle(0,0,LCD_WIDTH,LCD_HEIGHT-32,SPI_COLOR_THEME.BACKGROUND);
-	RAMN_SPI_DrawContour(0, 0, LCD_WIDTH, LCD_HEIGHT-41, CONTOUR_WIDTH, SPI_COLOR_THEME.LIGHT);
-	RAMN_ScreenUtils_DrawSubconsoleStatic();
-	RAMN_CHIP8_SetColor(SPI_COLOR_THEME.LIGHT, SPI_COLOR_THEME.BACKGROUND);
-
-}
-
-void RAMN_ScreenUtils_UpdateTheme(uint8_t new_theme)
-{
-	if (new_theme != current_theme)
-	{
-		current_theme = new_theme;
-		theme_change_requested = 1U;
-		//TODO: ensure all screens redrawn
-	}
-}
-
-void RAMN_ScreenUtils_Init(SPI_HandleTypeDef* handler, osThreadId_t* pTask)
-{
-	RAMN_SPI_Init(handler, pTask);
-	RAMN_SPI_InitScreen();
-
-	current_theme = RAMN_RNG_Pop8();
-	if (current_theme > 127)
-		current_theme = 1; // make theme 1 more likely, and don't select theme 5 to 7
-	else  current_theme %= 5;
-
-	RAMN_ScreenUtils_DrawBase(current_theme);
-
-	//Init joystick for screen controls
-	RAMN_Joystick_Init();
-}
-
-
-void RAMN_ScreenUtils_PrepareScrollScreen()
-{
-	RAMN_SPI_SetScroll(SCREEN_HEADER_SIZE);
-	RAMN_SPI_DrawRectangle(0,0,LCD_WIDTH,SCROLL_WINDOW_HEIGHT,SPI_COLOR_THEME.BACKGROUND);
-
-	//RAMN_SPI_DrawContour(0, 0, LCD_WIDTH, LCD_HEIGHT, CONTOUR_WIDTH, SPI_COLOR_THEME.LIGHT);
-	//RAMN_SPI_DrawContour(0, 0, LCD_WIDTH, SCROLL_WINDOW_HEIGHT, CONTOUR_WIDTH, SPI_COLOR_THEME.LIGHT);
-	//RAMN_SPI_DrawStringColor(0, 240-16, SPI_COLOR_THEME.LIGHT,  SPI_COLOR_THEME.BACKGROUND, "240");
-	//RAMN_SPI_DrawStringColor(0, 320-16, SPI_COLOR_THEME.LIGHT,  SPI_COLOR_THEME.BACKGROUND, "320");
-
-	//erase bottom line
-	//RAMN_SPI_DrawRectangle(CONTOUR_WIDTH,SCROLL_WINDOW_HEIGHT-CONTOUR_WIDTH,LCD_WIDTH-2*CONTOUR_WIDTH,CONTOUR_WIDTH,SPI_COLOR_THEME.BACKGROUND);
-
-
 }
 
 #endif

@@ -3,7 +3,7 @@
  ******************************************************************************
  * @attention
  *
- * <h2><center>&copy; Copyright (c) 2024 TOYOTA MOTOR CORPORATION.
+ * <h2><center>&copy; Copyright (c) 2025 TOYOTA MOTOR CORPORATION.
  * ALL RIGHTS RESERVED.</center></h2>
  *
  * This software component is licensed by TOYOTA MOTOR CORPORATION under BSD 3-Clause license,
@@ -14,22 +14,38 @@
  ******************************************************************************
  */
 
-// This module handles whatever is displayed on the screen
+// This module provides functions to help manage screens.
 
 #ifndef INC_RAMN_SCREEN_UTILS_H_
 #define INC_RAMN_SCREEN_UTILS_H_
 
 #include "main.h"
+
+#ifdef ENABLE_SCREEN
+
 #include "ramn_spi.h"
 #include "ramn_dbc.h"
 #include "ramn_joystick.h"
+#include "ramn_sensors.h"
 
-
+// Update configureColorTheme (and potentially RAMN_SCREENUTILS_Init) to add/remove themes.
 #define NUMBER_OF_THEMES 7
 
+// Width of the lines on screen
 #define CONTOUR_WIDTH 2
-#define CONTROL_WINDOW_Y LCD_HEIGHT-34
+// Y coordinate of where the subconsole starts
+#define CONTROL_WINDOW_Y (LCD_HEIGHT-34)
 
+// Typedef of the structure for screen modules.
+typedef struct RAMNScreen {
+    void (*Init)();
+    void (*Update)();
+    void (*Deinit)();
+    RAMN_Bool_t (*UpdateInput)(JoystickEventType event); // Returns True if screen manager should also process the input
+    void (*ProcessRxCANMessage)();
+} RAMNScreen;
+
+// Color theme used by default for all screens
 typedef struct COLOR_THEME_STRUCT {
 	uint16_t BACKGROUND;
 	uint16_t DARK;
@@ -38,24 +54,35 @@ typedef struct COLOR_THEME_STRUCT {
 	uint16_t WHITE;
 } ColorTheme_t ;
 
-extern volatile uint8_t current_theme;
-extern volatile uint8_t theme_change_requested;
-extern volatile ColorTheme_t SPI_COLOR_THEME;
+// Common loop counter for screen loop execution, that can be used by screen modules
+extern uint32_t RAMN_SCREENUTILS_LoopCounter;
 
-extern uint32_t spi_refresh_counter;
+// Set to True to force a redraw of the screen
+extern volatile RAMN_Bool_t RAMN_SCREENUTILS_RequestRedraw;
 
-void RAMN_ScreenUtils_DrawSubconsoleStatic();
+// Current color theme
+extern volatile ColorTheme_t RAMN_SCREENUTILS_COLORTHEME;
 
-void RAMN_ScreenUtils_DrawSubconsoleUpdate();
+// Initializes the module.
+void RAMN_SCREENUTILS_Init(SPI_HandleTypeDef* handler, osThreadId_t* pTask);
 
-void RAMN_ScreenUtils_DrawBase(uint8_t theme);
+// Updates the color theme.
+void RAMN_SCREENUTILS_UpdateTheme(uint8_t new_theme);
 
-//Update the color theme
-void RAMN_ScreenUtils_UpdateTheme(uint8_t new_theme);
+// Selects the next theme in the theme list.
+void RAMN_SCREENUTILS_NextTheme();
 
-void RAMN_ScreenUtils_Init(SPI_HandleTypeDef* handler, osThreadId_t* pTask);
+// Prepares a screen that can be scrolled.
+void RAMN_SCREENUTILS_PrepareScrollScreen();
 
-//Prepare a screen that can be scrolled
-void RAMN_ScreenUtils_PrepareScrollScreen();
+// Draws the base layout for a screen (plain background, contours, etc.).
+void RAMN_SCREENUTILS_DrawBase();
 
+// Draws the static part of the sub console (contour and static letters).
+void RAMN_SCREENUTILS_DrawSubconsoleStatic();
+
+// Draws the dynamic part of the sub console (sensor values).
+void RAMN_SCREENUTILS_DrawSubconsoleUpdate();
+
+#endif
 #endif
