@@ -8,7 +8,7 @@ PCB Ordering
 The design files are complete enough that you can fabricate and/or
 assemble your own RAMN and expansions. But there are two 're-orders' that can
 be made from PCBWay to get your own RAMN: 1) the mainboard and 2) the
-expansions (excluding the debugger expansion). The mainboard is usable for many applications
+expansions (excluding the optional debugger expansion). The mainboard is usable for many applications
 all by itself, but acquiring the expansions is required for changing the
 simulated vehicle state e.g. driving the car in CARLA.
 
@@ -65,7 +65,9 @@ Customers can select the number of PCBs and assembled boards separately when pla
 .. image:: img/0121A.png
    :align: center
 
-
+The more boards you order, the cheaper they become. 
+If you order 5 assembled RAMN sets, the expected cost is approximately 210 USD per full RAMN set (including the external components below, assuming a green soldermask and ENIG surface finish, and without the optional debugger expansion).
+If you order only one set, that cost however becomes 430 USD.
 
 Aditional Parts Needed for Expansions Orders
 --------------------------------------------------
