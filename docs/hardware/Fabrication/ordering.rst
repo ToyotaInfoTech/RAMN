@@ -37,6 +37,21 @@ The bill of materials used in the above orders were tailored to match
 the components that are available from PCBWay, and some parts are
 removed (marked DNP) to reduce costs (e.g. test points).
 
+Parameters
+----------
+
+You should keep most of the default parameters of PCBway: FR4 material, 2 layers, 1.6mm thickness, 1oz (35um) copper.
+
+You should be able to select any surface finish, although we suggest that you stay away from any solution with lead.
+"HASL lead free" is typically the cheapest solution without lead, but may tarnish over time. 
+We typically use "Immersion gold (ENIG)", and haven't tried other surface finishes ourselves.
+
+"Solder Mask" corresponds to the color of the board, and "Silkscreen" corresponds to the color of the text and lines.
+You can select any color you like, although you should ensure enough contrast to read the text (e.g., do not select white soldermask with white silkscreen).
+
+If you select black, white, or matte black soldermask, PCBway may warn you that the soldermask constraints of RAMN cannot be respected (the soldermask spacing between microcontroller pins and USB connector pins is 0.20mm, but PCBway asks for at least 0.22mm).
+If you want to use one of these colors anyway, it is typically OK to ask PCBway to ignore the issue, or to remove problematic soldermask themselves. This will however slightly increase the probability of soldering issues.
+
 
 Ordering Fewer Than a Quantity of Five (5)
 ------------------------------------------
