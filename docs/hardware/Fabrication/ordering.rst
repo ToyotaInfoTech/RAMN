@@ -12,6 +12,8 @@ expansions (excluding the debugger expansion). The mainboard is usable for many 
 all by itself, but acquiring the expansions is required for changing the
 simulated vehicle state e.g. driving the car in CARLA.
 
+Click the buttons below to access the PCBway re-order pages.
+
 .. image:: img/1000015167-mainboard.png
    :align: center
 
