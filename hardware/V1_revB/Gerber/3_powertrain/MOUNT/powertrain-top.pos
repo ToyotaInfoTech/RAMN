@@ -1,20 +1,29 @@
-### Module positions - created on 02/23/21 11:51:41 ###
-### Printed by Pcbnew version pcbnew (5.1.9)-1
+### Footprint positions - created on Wed Jan 29 13:00:29 2025 ###
+### Printed by KiCad version 7.0.9
 ## Unit = mm, Angle = deg.
 ## Side : top
-# Ref     Val       Package                    PosX       PosY       Rot  Side
-C2        100nF     C_0603_1608Metric       30.2260   -36.0680  270.0000  top
-C3        100nF     C_0603_1608Metric       27.6860   -36.0680   90.0000  top
-FID1      Fiducial  Fiducial_1mm_Mask2mm    15.7480   -42.9260    0.0000  top
-FID2      Fiducial  Fiducial_1mm_Mask2mm    15.7480    -6.6040    0.0000  top
-FID3      Fiducial  Fiducial_1mm_Mask2mm    50.2920    -6.6040    0.0000  top
-R1        10k       R_0603_1608Metric       28.4480   -19.5580   90.0000  top
-R2        10k       R_0603_1608Metric       25.9080   -19.5580  270.0000  top
-R3        10k       R_0603_1608Metric       23.3680   -19.5580  270.0000  top
-R4        10k       R_0603_1608Metric       20.8280   -19.5580   90.0000  top
-R5        10k       R_0603_1608Metric       18.2880   -19.5580   90.0000  top
-R6        10k       R_0603_1608Metric       15.7480   -19.5580  270.0000  top
-TVS1      D_TVS     D_SOD-123F              25.6540   -26.4160  270.0000  top
-TVS2      D_TVS     D_SOD-123F              21.8440   -26.4160  270.0000  top
-TVS3      D_TVS     D_SOD-123F              29.4640   -26.4160  270.0000  top
+# Ref     Val            Package                                         PosX       PosY       Rot  Side
+3V3       TestPoint      TestPoint_Loop_D2.54mm_Drill1.5mm_Beaded     24.1300   -36.1950  -90.0000  top
+ACCEL     TestPoint      TestPoint_Loop_D2.54mm_Drill1.5mm_Beaded     17.7800   -31.1150  -90.0000  top
+BRAKE     TestPoint      TestPoint_Loop_D2.54mm_Drill1.5mm_Beaded     17.7800   -26.0350  -90.0000  top
+C2        100nF          C_0603_1608Metric                            29.7180   -36.0680  -90.0000  top
+C3        100nF          C_0603_1608Metric                            27.6860   -36.0680   90.0000  top
+FID1      Fiducial       Fiducial_1mm_Mask2mm                         15.7480   -42.9260    0.0000  top
+FID2      Fiducial       Fiducial_1mm_Mask2mm                         15.7480    -6.6040    0.0000  top
+FID3      Fiducial       Fiducial_1mm_Mask2mm                         50.2920    -6.6040    0.0000  top
+GND       TestPoint      TestPoint_Loop_D2.54mm_Drill1.5mm_Beaded     24.1300   -31.1150  -90.0000  top
+J6        _              PinSocket_2x13_P2.54mm_Vertical              50.1650   -43.1800  -90.0000  top
+R1        10k            R_0603_1608Metric                            28.4480   -19.5580   90.0000  top
+R2        10k            R_0603_1608Metric                            25.9080   -19.5580  -90.0000  top
+R3        10k            R_0603_1608Metric                            23.3680   -19.5580  -90.0000  top
+R4        10k            R_0603_1608Metric                            20.8280   -19.5580   90.0000  top
+R5        10k            R_0603_1608Metric                            18.2880   -19.5580   90.0000  top
+R6        10k            R_0603_1608Metric                            15.7480   -19.5580  -90.0000  top
+RV1       R_POT_TRIM_US  Potentiometer_Bourns_PTA1543_Single_Slide    33.9280   -36.8460   90.0000  top
+RV2       R_POT_TRIM_US  Potentiometer_Bourns_PTA1543_Single_Slide    44.8500   -36.7960   90.0000  top
+SHIFT     TestPoint      TestPoint_Loop_D2.54mm_Drill1.5mm_Beaded     17.7800   -36.1950  -90.0000  top
+SW1       SKRHADE010     SKRHADE010                                   22.3520   -11.6840  135.0000  top
+TVS1      D_TVS          D_SOD-123F                                   25.6540   -26.4160  -90.0000  top
+TVS2      D_TVS          D_SOD-123F                                   21.8440   -26.4160  -90.0000  top
+TVS3      D_TVS          D_SOD-123F                                   29.4640   -26.4160  -90.0000  top
 ## End
