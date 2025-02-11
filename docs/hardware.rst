@@ -95,7 +95,7 @@ Design Rules
 Versions
 --------
 
-The current version of RAMN hardware in active development (on the main branch) is aimed at ease of fabrication and cost. The original version of RAMN is archived and are available in the `misc folder <https://github.com/ToyotaInfoTech/RAMN/tree/main/misc>`_ in file RAMN_V1_reference_PCB.zip.  This archived version uses some parts which are not easy to source from turnkey fabrication services and/or are not cost effective for orders by 'users' of RAMN. We reccomend that, in academic setting, the original archived version of RAMN is used for reference.
+The current version of RAMN hardware in active development (on the main branch) is aimed at ease of fabrication and cost. The original version of RAMN is archived and are available in the `misc folder <https://github.com/ToyotaInfoTech/RAMN/tree/main/misc>`_ in file RAMN_V1_reference_PCB.zip.  This archived version uses some parts which are not easy to source from turnkey fabrication services and/or are not cost effective for orders by 'users' of RAMN. We recommend that, in academic setting, the original archived version of RAMN is used for reference.
 
 Fabrication
 -----------
