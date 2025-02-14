@@ -95,15 +95,10 @@ PCD_HandleTypeDef hpcd_USB_FS;
 
 /* Definitions for RAMN_ReceiveUSB */
 osThreadId_t RAMN_ReceiveUSBHandle;
-uint32_t RAMN_ReceiveUSBFuncBuffer[ 256 ];
-osStaticThreadDef_t RAMN_ReceiveUSBFuncControlBlock;
 const osThreadAttr_t RAMN_ReceiveUSB_attributes = {
 		.name = "RAMN_ReceiveUSB",
-		.stack_mem = &RAMN_ReceiveUSBFuncBuffer[0],
-		.stack_size = sizeof(RAMN_ReceiveUSBFuncBuffer),
-		.cb_mem = &RAMN_ReceiveUSBFuncControlBlock,
-		.cb_size = sizeof(RAMN_ReceiveUSBFuncControlBlock),
 		.priority = (osPriority_t) osPriorityNormal,
+		.stack_size = 256 * 4
 };
 /* Definitions for RAMN_ReceiveCAN */
 osThreadId_t RAMN_ReceiveCANHandle;
@@ -179,15 +174,10 @@ const osThreadAttr_t RAMN_DiagTX_attributes = {
 };
 /* Definitions for RAMN_SendUSB */
 osThreadId_t RAMN_SendUSBHandle;
-uint32_t RAMN_SendUSBBuffer[ 256 ];
-osStaticThreadDef_t RAMN_SendUSBControlBlock;
 const osThreadAttr_t RAMN_SendUSB_attributes = {
 		.name = "RAMN_SendUSB",
-		.stack_mem = &RAMN_SendUSBBuffer[0],
-		.stack_size = sizeof(RAMN_SendUSBBuffer),
-		.cb_mem = &RAMN_SendUSBControlBlock,
-		.cb_size = sizeof(RAMN_SendUSBControlBlock),
 		.priority = (osPriority_t) osPriorityRealtime,
+		.stack_size = 256 * 4
 };
 /* Definitions for RAMN_RxTask2 */
 osThreadId_t RAMN_RxTask2Handle;
