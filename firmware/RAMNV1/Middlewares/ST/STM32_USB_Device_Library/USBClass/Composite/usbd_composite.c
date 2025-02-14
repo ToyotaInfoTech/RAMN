@@ -79,8 +79,8 @@ __ALIGN_BEGIN static uint8_t USBD_Composite_CfgFSDesc[] __ALIGN_END =
 	USBD_MAX_NUM_INTERFACES,              // bNumInterfaces: 6 interface
 	0x01,                                 // bConfigurationValue: Configuration value
 	0x00,                                 // iConfiguration: Index of string descriptor describing the configuration
-	0xC0,                                 // bmAttributes: self powered
-	0x64,                                 // MaxPower 200 mA
+	0x80,                                 // bmAttributes: Bus powered
+	0xFA,                                 // MaxPower 500 mA
 
 #ifdef ENABLE_GSUSB
 	//---------------------------------------------------------------------------
