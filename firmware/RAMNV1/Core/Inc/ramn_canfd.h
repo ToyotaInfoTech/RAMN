@@ -100,7 +100,7 @@ void 			RAMN_FDCAN_Disable(void);
 
 // Update the FDCAN peripheral with specified baudrate (slcan format: '0' to '8'). Not valid until peripheral is reset.
 // Required after baudrate change or mode change (e.g. listen mode).
-RAMN_Result_t 	RAMN_FDCAN_UpdateBaudrate(uint8_t newSelection);
+RAMN_Result_t 	RAMN_FDCAN_UpdateBaudrate(uint32_t newSelection);
 
 // Resets statistics kept of the module. Does NOT reset the filter.
 void 			RAMN_FDCAN_ResetStatistics(void);

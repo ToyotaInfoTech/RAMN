@@ -9,7 +9,7 @@
  *
  * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
  * All rights reserved.</center></h2>
- * <h2><center>&copy; Copyright (c) 2021 TOYOTA MOTOR CORPORATION.
+ * <h2><center>&copy; Copyright (c) 2025 TOYOTA MOTOR CORPORATION.
  * ALL RIGHTS RESERVED.</center></h2>
  *
  * This software component is licensed by ST under Ultimate Liberty license
@@ -22,10 +22,12 @@
 /* USER CODE END Header */
 
 /* Includes ------------------------------------------------------------------*/
-#include "usbd_cdc_if.h"
+#include "ramn_config.h"
+#ifdef ENABLE_USB
+#include "../../USB_CompositeDevice/App/usbd_cdc_if.h"
 
 /* USER CODE BEGIN INCLUDE */
-
+#include "ramn_usb.h"
 /* USER CODE END INCLUDE */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -36,7 +38,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE END PV */
-
+extern RAMN_USB_Status_t RAMN_USB_Config;
 /** @addtogroup STM32_USB_OTG_DEVICE_LIBRARY
   * @brief Usb device library.
   * @{
@@ -114,13 +116,7 @@ __attribute__ ((section (".buffers"))) static uint8_t  recvBuf[USB_COMMAND_BUFFE
   */
 
 extern USBD_HandleTypeDef hUsbDeviceFS;
-
-/* USER CODE BEGIN EXPORTED_VARIABLES */
-void (*USBD_errorCallback_ptr)(USBD_HandleTypeDef* hUsbDeviceFS) = NULL;
-void (*USBD_serialOpenCallback_ptr)(USBD_HandleTypeDef* hUsbDeviceFS) = NULL;
-void (*USBD_serialCloseCallback_ptr)(USBD_HandleTypeDef* hUsbDeviceFS) = NULL;
-/* USER CODE END EXPORTED_VARIABLES */
-
+static USBD_CDC_LineCodingTypeDef lineCoding;
 /**
   * @}
   */
@@ -146,8 +142,8 @@ void RAMN_CDC_Init(StreamBufferHandle_t* pBuffer, osThreadId_t* pRecvTask, osThr
 
 uint8_t RAMN_CDC_GetTXStatus()
 {
-	USBD_CDC_HandleTypeDef *hcdc = (USBD_CDC_HandleTypeDef*)hUsbDeviceFS.pClassData;
-	if (hcdc->TxState != 0)
+	USBD_Composite_HandleTypeDef *hcdc = (USBD_Composite_HandleTypeDef*)hUsbDeviceFS.pClassData;
+	if (hcdc == NULL || hcdc->TxState[0] != 0)
 	{
 		return USBD_BUSY;
 	}
@@ -180,8 +176,8 @@ static int8_t CDC_Init_FS(void)
 {
   /* USER CODE BEGIN 3 */
 	/* Set Application Buffers */
-	USBD_CDC_SetTxBuffer(&hUsbDeviceFS, UserTxBufferFS, 0);
-	USBD_CDC_SetRxBuffer(&hUsbDeviceFS, UserRxBufferFS);
+	USBD_Composite_SetTxBuffer(&hUsbDeviceFS, UserTxBufferFS, 0, 0);
+	USBD_Composite_SetRxBuffer(&hUsbDeviceFS, UserRxBufferFS, 0);
 	return (USBD_OK);
   /* USER CODE END 3 */
 }
@@ -247,23 +243,33 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length)
 		/* 6      | bDataBits  |   1   | Number Data bits (5, 6, 7, 8 or 16).          */
 		/*******************************************************************************/
 	case CDC_SET_LINE_CODING:
-
+		lineCoding.bitrate    = (uint32_t)(pbuf[0] | (pbuf[1] << 8) | (pbuf[2] << 16) | (pbuf[3] << 24));
+		lineCoding.format     = pbuf[4];
+		lineCoding.paritytype = pbuf[5];
+		lineCoding.datatype   = pbuf[6];
 		break;
 
 	case CDC_GET_LINE_CODING:
 
+		pbuf[0] = (uint8_t)(lineCoding.bitrate);
+		pbuf[1] = (uint8_t)(lineCoding.bitrate >> 8);
+		pbuf[2] = (uint8_t)(lineCoding.bitrate >> 16);
+		pbuf[3] = (uint8_t)(lineCoding.bitrate >> 24);
+		pbuf[4] = lineCoding.format;
+		pbuf[5] = lineCoding.paritytype;
+		pbuf[6] = lineCoding.datatype;
 		break;
 
 	case CDC_SET_CONTROL_LINE_STATE:
 		if ((((USBD_SetupReqTypedef *)pbuf)->wValue & 0x0001) != 0U)
 		{
 			//Port has been opened
-			if (USBD_serialOpenCallback_ptr != NULL) (*USBD_serialOpenCallback_ptr)(&hUsbDeviceFS);
+			if (USBD_serialOpenCallback_ptr != NULL) (*USBD_serialOpenCallback_ptr)(&hUsbDeviceFS, 0);
 		}
 		else
 		{
 			//Port has been close
-			if (USBD_serialCloseCallback_ptr != NULL) (*USBD_serialCloseCallback_ptr)(&hUsbDeviceFS);
+			if (USBD_serialCloseCallback_ptr != NULL) (*USBD_serialCloseCallback_ptr)(&hUsbDeviceFS, 0);
 		}
 		break;
 
@@ -297,19 +303,12 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length)
 static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 {
   /* USER CODE BEGIN 6 */
-	USBD_CDC_SetRxBuffer(&hUsbDeviceFS, &Buf[0]);
-	USBD_CDC_ReceivePacket(&hUsbDeviceFS);
+	//USBD_Composite_SetRxBuffer(&hUsbDeviceFS, &Buf[0], 0);
 	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
 	for(uint32_t i=0; i < *Len; i++)
 	{
-		if (currentIndex >= sizeof(recvBuf)) //remove check for USB BOF POC
-		{
-			//no room in buffer, reset
-			currentIndex = 0;
-			if (USBD_errorCallback_ptr != NULL) (*USBD_errorCallback_ptr)(&hUsbDeviceFS);
-		}
-		else if(Buf[i] != '\r') //End of Line, should be treated as command
+		if(Buf[i] != '\r') //End of Line, should be treated as command
 		{
 			recvBuf[currentIndex] = Buf[i];
 			currentIndex++;
@@ -318,22 +317,24 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 		{
 			if ((currentIndex > 0) && (currentIndex <= USB_COMMAND_BUFFER_SIZE)) //Don't forward invalid commands
 			{
-				if(USBD_recvBuffer != NULL){
-
-					if (xStreamBufferSendFromISR(*USBD_recvBuffer,&currentIndex, 2U, NULL ) != 2U)
+				if(USBD_recvBuffer != NULL)
+				{
+					if (xStreamBufferSendFromISR(*USBD_recvBuffer, &currentIndex, 2U, NULL ) != 2U)
 					{
 						//If a callback function has been registered, report issue
-						if (USBD_errorCallback_ptr != NULL) (*USBD_errorCallback_ptr)(&hUsbDeviceFS);
+						//if (USBD_errorCallback_ptr != NULL) (*USBD_errorCallback_ptr)(&hUsbDeviceFS);
+						RAMN_USB_Config.USBErrCnt++;
 					}
 					else
 					{
-						if (xStreamBufferSendFromISR(*USBD_recvBuffer,recvBuf, currentIndex, NULL ) != currentIndex)
+						if (xStreamBufferSendFromISR(*USBD_recvBuffer, recvBuf, currentIndex, NULL ) != currentIndex)
 						{
-							if (USBD_errorCallback_ptr != NULL) (*USBD_errorCallback_ptr)(&hUsbDeviceFS);
+							//if (USBD_errorCallback_ptr != NULL) (*USBD_errorCallback_ptr)(&hUsbDeviceFS);
+							RAMN_USB_Config.USBErrCnt++;
 						}
 						else
 						{
-							vTaskNotifyGiveFromISR(*USBD_recvTask,&xHigherPriorityTaskWoken);
+							vTaskNotifyGiveFromISR(*USBD_recvTask, &xHigherPriorityTaskWoken);
 							portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
 						}
 					}
@@ -343,7 +344,7 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 		}
 
 	}
-
+	USBD_Composite_ReceivePacket(&hUsbDeviceFS, CDC_OUT_EP);
 
 	return (USBD_OK);
   /* USER CODE END 6 */
@@ -362,18 +363,17 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
   */
 uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len)
 {
-  uint8_t result = USBD_OK;
-  /* USER CODE BEGIN 7 */
-	USBD_CDC_HandleTypeDef *hcdc = (USBD_CDC_HandleTypeDef*)hUsbDeviceFS.pClassData;
-	if (hcdc->TxState != 0){
+	uint8_t result = USBD_OK;
+	/* USER CODE BEGIN 7 */
+	if (RAMN_CDC_GetTXStatus() != USBD_OK){
 		return USBD_BUSY;
 	}
 
-	USBD_CDC_SetTxBuffer(&hUsbDeviceFS, Buf, Len);
-	result = USBD_CDC_TransmitPacket(&hUsbDeviceFS);
+	USBD_Composite_SetTxBuffer(&hUsbDeviceFS, Buf, Len, 0);
+	result = USBD_Composite_TransmitPacket(&hUsbDeviceFS, 0);
 
-  /* USER CODE END 7 */
-  return result;
+	/* USER CODE END 7 */
+	return result;
 }
 
 /**
@@ -390,19 +390,19 @@ uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len)
   */
 static int8_t CDC_TransmitCplt_FS(uint8_t *Buf, uint32_t *Len, uint8_t epnum)
 {
-  uint8_t result = USBD_OK;
-  /* USER CODE BEGIN 13 */
+	uint8_t result = USBD_OK;
+	/* USER CODE BEGIN 13 */
 	UNUSED(Buf);
 	UNUSED(Len);
 	UNUSED(epnum);
 	if(USBD_sendTask != NULL)
 	{
 		BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-		vTaskNotifyGiveFromISR(*USBD_sendTask,&xHigherPriorityTaskWoken);
+		vTaskNotifyGiveFromISR(*USBD_sendTask, &xHigherPriorityTaskWoken);
 		portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
 	}
-  /* USER CODE END 13 */
-  return result;
+	/* USER CODE END 13 */
+	return result;
 }
 
 /* USER CODE BEGIN PRIVATE_FUNCTIONS_IMPLEMENTATION */
@@ -416,4 +416,5 @@ static int8_t CDC_TransmitCplt_FS(uint8_t *Buf, uint32_t *Len, uint8_t epnum)
 /**
   * @}
   */
-
+#endif /* ENABLE_USB */
+/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

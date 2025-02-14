@@ -37,6 +37,13 @@ extern "C" {
 #include "ramn_config.h"
 #include "ramn_utils.h"
 #include "ramn_vehicle_specific.h"
+#include "cmsis_os.h"
+#include "queue.h"
+
+#ifdef ENABLE_GSUSB
+#include "gs_usb_fdcan.h"
+#endif
+
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -72,7 +79,11 @@ typedef enum {
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
-
+#ifdef ENABLE_GSUSB
+extern osMessageQueueId_t RAMN_GSUSB_SendQueueHandle;
+extern osMessageQueueId_t RAMN_GSUSB_RecvQueueHandle;
+extern osMessageQueueId_t RAMN_GSUSB_PoolQueueHandle;
+#endif
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/

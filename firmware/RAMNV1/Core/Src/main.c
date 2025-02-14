@@ -23,7 +23,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
-#include "usb_device.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -53,12 +52,14 @@
 #ifdef ENABLE_UART
 #include "ramn_uart.h"
 #endif
+#include "usb_device.h"
+#include "usbd_gsusb_if.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 typedef StaticTask_t osStaticThreadDef_t;
 /* USER CODE BEGIN PTD */
-
+typedef StaticQueue_t osStaticMessageQDef_t;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -90,6 +91,8 @@ RNG_HandleTypeDef hrng;
 SPI_HandleTypeDef hspi2;
 DMA_HandleTypeDef hdma_spi2_tx;
 
+PCD_HandleTypeDef hpcd_USB_FS;
+
 /* Definitions for RAMN_ReceiveUSB */
 osThreadId_t RAMN_ReceiveUSBHandle;
 uint32_t RAMN_ReceiveUSBFuncBuffer[ 256 ];
@@ -116,7 +119,7 @@ const osThreadAttr_t RAMN_ReceiveCAN_attributes = {
 };
 /* Definitions for RAMN_SendCAN */
 osThreadId_t RAMN_SendCANHandle;
-uint32_t RAMN_SendCANBuffer[ 256 ];
+__attribute__ ((section (".buffers"))) uint32_t RAMN_SendCANBuffer[ 256 ];
 osStaticThreadDef_t RAMN_SendCANControlBlock;
 const osThreadAttr_t RAMN_SendCAN_attributes = {
 		.name = "RAMN_SendCAN",
@@ -186,7 +189,57 @@ const osThreadAttr_t RAMN_SendUSB_attributes = {
 		.cb_size = sizeof(RAMN_SendUSBControlBlock),
 		.priority = (osPriority_t) osPriorityRealtime,
 };
+/* Definitions for RAMN_RxTask2 */
+osThreadId_t RAMN_RxTask2Handle;
+const osThreadAttr_t RAMN_RxTask2_attributes = {
+		.name = "RAMN_RxTask2",
+		.priority = (osPriority_t) osPriorityHigh1,
+		.stack_size = 512 * 4
+};
+/* Definitions for RAMN_TxTask2 */
+osThreadId_t RAMN_TxTask2Handle;
+const osThreadAttr_t RAMN_TxTask2_attributes = {
+		.name = "RAMN_TxTask2",
+		.priority = (osPriority_t) osPriorityHigh2,
+		.stack_size = 256 * 4
+};
 /* USER CODE BEGIN PV */
+
+#ifdef ENABLE_GSUSB
+/* Definitions for RAMN_GSUSB_RecvQueue */
+osMessageQueueId_t RAMN_GSUSB_RecvQueueHandle;
+__attribute__ ((section (".buffers"))) uint8_t RAMN_GSUSB_RecvQueueBuffer[ GSUSB_RECV_QUEUE_SIZE * sizeof( uint32_t ) ];
+osStaticMessageQDef_t RAMN_GSUSB_RecvQueueControlBlock;
+const osMessageQueueAttr_t RAMN_GSUSB_RecvQueue_attributes = {
+		.name = "RAMN_GSUSB_RecvQueue",
+		.cb_mem = &RAMN_GSUSB_RecvQueueControlBlock,
+		.cb_size = sizeof(RAMN_GSUSB_RecvQueueControlBlock),
+		.mq_mem = &RAMN_GSUSB_RecvQueueBuffer,
+		.mq_size = sizeof(RAMN_GSUSB_RecvQueueBuffer)
+};
+/* Definitions for RAMN_GSUSB_PoolQueue */
+osMessageQueueId_t RAMN_GSUSB_PoolQueueHandle;
+__attribute__ ((section (".buffers"))) uint8_t RAMN_GSUSB_PoolQueueBuffer[ GSUSB_POOL_QUEUE_SIZE * sizeof( uint32_t ) ];
+osStaticMessageQDef_t RAMN_GSUSB_PoolQueueControlBlock;
+const osMessageQueueAttr_t RAMN_GSUSB_PoolQueue_attributes = {
+		.name = "RAMN_GSUSB_PoolQueue",
+		.cb_mem = &RAMN_GSUSB_PoolQueueControlBlock,
+		.cb_size = sizeof(RAMN_GSUSB_PoolQueueControlBlock),
+		.mq_mem = &RAMN_GSUSB_PoolQueueBuffer,
+		.mq_size = sizeof(RAMN_GSUSB_PoolQueueBuffer)
+};
+/* Definitions for RAMN_GSUSB_SendQueue */
+osMessageQueueId_t RAMN_GSUSB_SendQueueHandle;
+__attribute__ ((section (".buffers"))) uint8_t RAMN_GSUSB_SendQueueBuffer[ GSUSB_SEND_QUEUE_SIZE * sizeof( uint32_t ) ];
+osStaticMessageQDef_t RAMN_GSUSB_SendQueueControlBlock;
+const osMessageQueueAttr_t RAMN_GSUSB_SendQueue_attributes = {
+		.name = "RAMN_GSUSB_SendQueue",
+		.cb_mem = &RAMN_GSUSB_SendQueueControlBlock,
+		.cb_size = sizeof(RAMN_GSUSB_SendQueueControlBlock),
+		.mq_mem = &RAMN_GSUSB_SendQueueBuffer,
+		.mq_size = sizeof(RAMN_GSUSB_SendQueueBuffer)
+};
+#endif
 
 #if defined(ENABLE_USB)
 
@@ -335,6 +388,7 @@ static void MX_IWDG_Init(void);
 static void MX_CRC_Init(void);
 static void MX_I2C2_Init(void);
 static void MX_LPUART1_UART_Init(void);
+static void MX_USB_PCD_Init(void);
 void RAMN_ReceiveUSBFunc(void *argument);
 void RAMN_ReceiveCANFunc(void *argument);
 void RAMN_SendCANFunc(void *argument);
@@ -343,6 +397,8 @@ void RAMN_ErrorTaskFunc(void *argument);
 void RAMN_DiagRXFunc(void *argument);
 void RAMN_DiagTXFunc(void *argument);
 void RAMN_SendUSBFunc(void *argument);
+void RAMN_RxTask2Func(void *argument);
+void RAMN_TxTask2Func(void *argument);
 
 /* USER CODE BEGIN PFP */
 /* USER CODE END PFP */
@@ -445,6 +501,7 @@ int main(void)
 	MX_CRC_Init();
 	MX_I2C2_Init();
 	MX_LPUART1_UART_Init();
+	MX_USB_PCD_Init();
 	/* USER CODE BEGIN 2 */
 
 #ifdef START_IN_CLI_MODE
@@ -557,8 +614,23 @@ int main(void)
 	/* start timers, add new ones, ... */
 	/* USER CODE END RTOS_TIMERS */
 
-	/* USER CODE BEGIN RTOS_QUEUES */
+	/* Create the queue(s) */
 
+	/* USER CODE BEGIN RTOS_QUEUES */
+#ifdef ENABLE_GSUSB
+	/* creation of RAMN_GSUSB_RecvQueue */
+	RAMN_GSUSB_RecvQueueHandle = osMessageQueueNew (GSUSB_RECV_QUEUE_SIZE, sizeof(uint32_t), &RAMN_GSUSB_RecvQueue_attributes);
+
+	/* creation of RAMN_GSUSB_PoolQueue */
+	RAMN_GSUSB_PoolQueueHandle = osMessageQueueNew (GSUSB_POOL_QUEUE_SIZE, sizeof(uint32_t), &RAMN_GSUSB_PoolQueue_attributes);
+
+	/* creation of RAMN_GSUSB_SendQueue */
+	RAMN_GSUSB_SendQueueHandle = osMessageQueueNew (GSUSB_SEND_QUEUE_SIZE, sizeof(uint32_t), &RAMN_GSUSB_SendQueue_attributes);
+#endif
+
+#ifdef ENABLE_USB
+	MX_USB_Device_Init();
+#endif
 	/* USER CODE END RTOS_QUEUES */
 
 	/* Create the thread(s) */
@@ -585,6 +657,12 @@ int main(void)
 
 	/* creation of RAMN_SendUSB */
 	RAMN_SendUSBHandle = osThreadNew(RAMN_SendUSBFunc, NULL, &RAMN_SendUSB_attributes);
+
+	/* creation of RAMN_RxTask2 */
+	RAMN_RxTask2Handle = osThreadNew(RAMN_RxTask2Func, NULL, &RAMN_RxTask2_attributes);
+
+	/* creation of RAMN_TxTask2 */
+	RAMN_TxTask2Handle = osThreadNew(RAMN_TxTask2Func, NULL, &RAMN_TxTask2_attributes);
 
 	/* USER CODE BEGIN RTOS_THREADS */
 
@@ -1062,6 +1140,39 @@ static void MX_SPI2_Init(void)
 }
 
 /**
+ * @brief USB Initialization Function
+ * @param None
+ * @retval None
+ */
+static void MX_USB_PCD_Init(void)
+{
+
+	/* USER CODE BEGIN USB_Init 0 */
+
+	/* USER CODE END USB_Init 0 */
+
+	/* USER CODE BEGIN USB_Init 1 */
+
+	/* USER CODE END USB_Init 1 */
+	hpcd_USB_FS.Instance = USB;
+	hpcd_USB_FS.Init.dev_endpoints = 8;
+	hpcd_USB_FS.Init.speed = PCD_SPEED_FULL;
+	hpcd_USB_FS.Init.phy_itface = PCD_PHY_EMBEDDED;
+	hpcd_USB_FS.Init.Sof_enable = DISABLE;
+	hpcd_USB_FS.Init.low_power_enable = DISABLE;
+	hpcd_USB_FS.Init.lpm_enable = DISABLE;
+	hpcd_USB_FS.Init.battery_charging_enable = DISABLE;
+	if (HAL_PCD_Init(&hpcd_USB_FS) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	/* USER CODE BEGIN USB_Init 2 */
+
+	/* USER CODE END USB_Init 2 */
+
+}
+
+/**
  * Enable DMA controller clock
  */
 static void MX_DMA_Init(void)
@@ -1290,12 +1401,9 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 /* USER CODE END Header_RAMN_ReceiveUSBFunc */
 void RAMN_ReceiveUSBFunc(void *argument)
 {
-	/* init code for USB_Device */
-	MX_USB_Device_Init();
 	/* USER CODE BEGIN 5 */
 #if defined(ENABLE_USB)
 	/* init code for USB_Device */
-	MX_USB_Device_Init();
 
 	FDCAN_TxHeaderTypeDef CANTxHeader;
 	uint8_t CANTxData[64];
@@ -2229,11 +2337,9 @@ void RAMN_ReceiveUSBFunc(void *argument)
 					}
 					else RAMN_USB_SendFromTask((uint8_t*)"\a",1);
 					break;
-
 #endif
 				case 'P':
 				case 'A':
-				case 'X':
 				case 'U':
 				case 'Q':
 				default:
@@ -2409,6 +2515,15 @@ void RAMN_ReceiveCANFunc(void *argument)
 #endif
 				}
 			}
+#ifdef ENABLE_GSUSB
+			if(RAMN_USB_Config.gsusbOpened && GSUSB_IsConnected((USBD_HandleTypeDef*)hpcd_USB_FS.pData))
+			{
+				if(RAMN_USB_ProcessGSUSB_RX(&CANRxHeader, CANRxData) == RAMN_ERROR)
+				{
+					RAMN_USB_Config.queueErrorCnt++;
+				}
+			}
+#endif
 #endif
 
 		}
@@ -2456,7 +2571,7 @@ void RAMN_SendCANFunc(void *argument)
 		// Wait for TX space to be available in FIFO
 		while (HAL_FDCAN_GetTxFifoFreeLevel(&hfdcan1) < 1)
 		{
-			ulTaskNotifyTake( pdTRUE, portMAX_DELAY );
+			ulTaskNotifyTake(pdTRUE, portMAX_DELAY );
 		}
 
 		if (HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan1, &CANTxHeader, CANTxData) != HAL_OK)
@@ -2465,6 +2580,21 @@ void RAMN_SendCANFunc(void *argument)
 			Error_Handler();
 #endif
 		}
+
+#ifdef ENABLE_GSUSB
+		/* echo transmission
+		if(RAMN_USB_Config.gsusbOpened && GSUSB_IsConnected((USBD_HandleTypeDef*)hpcd_USB_FS.pData))
+		{
+			// Wait for queue empty
+			while (uxQueueMessagesWaiting(RAMN_GSUSB_PoolQueueHandle) < FDCAN_GetQueueSize())
+			{
+				ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+			}
+			RAMN_SocketCAN_SendTX(&CANTxHeader, CANTxData);
+		}
+		 */
+#endif
+
 		RAMN_FDCAN_Status.CANTXRequestCnt++;
 
 	}
@@ -2570,6 +2700,7 @@ void RAMN_ErrorTaskFunc(void *argument)
 	/* USER CODE BEGIN RAMN_ErrorTaskFunc */
 	/* Infinite loop */
 #if defined(ENABLE_USB)
+	//TODO: report Errors to GS_USB
 	FDCAN_ErrorCountersTypeDef errorCount;
 	FDCAN_ProtocolStatusTypeDef protocolStatus;
 	RAMN_FDCAN_Status_t gw_freeze;
@@ -2771,11 +2902,11 @@ void RAMN_DiagRXFunc(void *argument)
 						xBytesSent = xStreamBufferSend(XcpTxDataStreamBufferHandle, (void *) &diagTxSize, sizeof(diagTxSize), portMAX_DELAY );
 						xBytesSent += xStreamBufferSend(XcpTxDataStreamBufferHandle, (void *) diagTxbuf, diagTxSize, portMAX_DELAY );
 						if( xBytesSent != (diagTxSize + sizeof(diagTxSize) ))
-							{
+						{
 #ifdef HANG_ON_ERRORS
 							Error_Handler();
 #endif
-							}
+						}
 						xTaskNotifyGive(RAMN_DiagTXHandle);
 					}
 				}
@@ -2905,7 +3036,7 @@ void RAMN_SendUSBFunc(void *argument)
 
 #ifdef ENABLE_USB_AUTODETECT
 	//We expect a notification from the serial close/open detection module
-	ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+	//ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 	while (RAMN_CDC_GetTXStatus() != USBD_OK) osDelay(10U); //Wait for TX to be ready
 #endif
 	/* Infinite loop */
@@ -2942,6 +3073,137 @@ void RAMN_SendUSBFunc(void *argument)
 	vTaskDelete(NULL);
 #endif
 	/* USER CODE END RAMN_SendUSBFunc */
+}
+
+/* USER CODE BEGIN Header_RAMN_RxTask2Func */
+/**
+ * @brief Function implementing the RAMN_RxTask2 thread.
+ * @param argument: Not used
+ * @retval None
+ */
+/* USER CODE END Header_RAMN_RxTask2Func */
+void RAMN_RxTask2Func(void *argument)
+{
+	/* USER CODE BEGIN RAMN_RxTask2Func */
+	/* Infinite loop */
+	// On ECU A, this task is used for gs_usb
+#ifndef ENABLE_GSUSB
+	vTaskDelete(NULL);
+#else
+	BaseType_t            ret;
+	struct gs_host_frame *recvFrame;
+	FDCAN_TxHeaderTypeDef CANTxHeader;
+	uint8_t CANTxData[64];
+
+	/* Infinite loop */
+	for(;;)
+	{
+		ret = xQueueReceive(RAMN_GSUSB_RecvQueueHandle, &recvFrame, portMAX_DELAY);
+		if (ret != pdPASS)
+		{
+			RAMN_USB_Config.queueErrorCnt++;
+		}
+		else
+		{
+
+			// TODO implement CAN-FD
+
+			//recvFrame->echo_id
+			//recvFrame.flags
+			//recvFrame.reserved
+
+
+			CANTxHeader.Identifier = (recvFrame->can_id)&0x1FFFFFFF;
+			CANTxHeader.DataLength  = recvFrame->can_dlc;
+			if (recvFrame->can_id & CAN_RTR_FLAG) CANTxHeader.TxFrameType = FDCAN_REMOTE_FRAME;
+			else CANTxHeader.TxFrameType = FDCAN_DATA_FRAME;
+
+			if (recvFrame->can_id & CAN_EFF_FLAG) CANTxHeader.IdType = FDCAN_EXTENDED_ID;
+			else CANTxHeader.IdType = FDCAN_STANDARD_ID;
+
+			CANTxHeader.BitRateSwitch = FDCAN_BRS_OFF;
+			CANTxHeader.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
+			CANTxHeader.FDFormat = FDCAN_CLASSIC_CAN;
+			CANTxHeader.TxEventFifoControl = FDCAN_NO_TX_EVENTS;
+
+			//CANTxHeader.MessageMarker = 0U;
+
+			if (CANTxHeader.TxFrameType == FDCAN_DATA_FRAME)
+			{
+				RAMN_memcpy(CANTxData, recvFrame->data, DLCtoUINT8(recvFrame->can_dlc));
+			}
+
+			//TODO: implement better error reports
+			if (RAMN_FDCAN_SendMessage(&CANTxHeader,CANTxData) == RAMN_OK)
+			{
+				// for host candump
+				ret = xQueueSendToBack(RAMN_GSUSB_SendQueueHandle, &recvFrame, CAN_QUEUE_TIMEOUT);
+				if (ret != pdPASS)
+				{
+					RAMN_USB_Config.queueErrorCnt++;
+					// Drop frame and return buffer to pool
+					xQueueSendToBack(RAMN_GSUSB_PoolQueueHandle, &recvFrame, portMAX_DELAY);
+				}
+			}
+		}
+	}
+#endif
+	/* USER CODE END RAMN_RxTask2Func */
+}
+
+/* USER CODE BEGIN Header_RAMN_TxTask2Func */
+/**
+ * @brief Function implementing the RAMN_TxTask2 thread.
+ * @param argument: Not used
+ * @retval None
+ */
+/* USER CODE END Header_RAMN_TxTask2Func */
+void RAMN_TxTask2Func(void *argument)
+{
+	/* USER CODE BEGIN RAMN_TxTask2Func */
+	// On ECU A, this task is used for gs_usb
+#ifndef ENABLE_GSUSB
+	vTaskDelete(NULL);
+#else
+	BaseType_t            ret;
+	struct gs_host_frame *frame;
+
+	/* Infinite loop */
+	for(;;)
+	{
+		ret = xQueueReceive(RAMN_GSUSB_SendQueueHandle, &frame, portMAX_DELAY);
+		if(ret != pdPASS)
+		{
+			RAMN_USB_Config.queueErrorCnt++;
+		}
+		else
+		{
+			if (USBD_GSUSB_SendFrame(hpcd_USB_FS.pData, frame) == USBD_OK)
+			{
+				// Return buffer to pool
+				ret = xQueueSendToBack(RAMN_GSUSB_PoolQueueHandle, &frame, portMAX_DELAY);
+				if(ret != pdPASS)
+				{
+					RAMN_USB_Config.queueErrorCnt++;
+				}
+				else if(uxQueueMessagesWaiting(RAMN_GSUSB_PoolQueueHandle) == FDCAN_GetQueueSize())
+				{
+					xTaskNotifyGive(RAMN_SendCANHandle);
+				}
+			}
+			else
+			{
+				// Send frame after
+				ret = xQueueSendToFront(RAMN_GSUSB_SendQueueHandle, &frame, CAN_QUEUE_TIMEOUT);
+				if(ret != pdPASS)
+				{
+					RAMN_USB_Config.queueErrorCnt++;
+				}
+			}
+		}
+	}
+#endif
+	/* USER CODE END RAMN_TxTask2Func */
 }
 
 /**

@@ -351,7 +351,7 @@ void RAMN_FDCAN_Disable(void)
 	HAL_FDCAN_DeInit(hfdcan);
 }
 
-RAMN_Result_t RAMN_FDCAN_UpdateBaudrate(uint8_t newSelection)
+RAMN_Result_t RAMN_FDCAN_UpdateBaudrate(uint32_t newSelection)
 {
 	RAMN_Result_t result = RAMN_OK;
 #ifdef ENABLE_DYNAMIC_BITRATE
@@ -386,11 +386,9 @@ RAMN_Result_t RAMN_FDCAN_UpdateBaudrate(uint8_t newSelection)
 		break;
 
 	default:
-		/*// TODO: refactor to use uint32_t as argument, and accept any bitrate
 		if(newSelection >= FDCAN_BITRATE_MIN && newSelection <= FDCAN_BITRATE_MAX) result = FDCAN_ConfigureBitrate(newSelection);
 		else result = RAMN_ERROR;
 		break;
-		*/
 	}
 #else
 	switch(newSelection)
@@ -492,7 +490,7 @@ RAMN_Result_t RAMN_FDCAN_SendMessage(const FDCAN_TxHeaderTypeDef* header, const 
 
 		if( xBytesSent != messageSize )
 		{
-			//Data overrun happened
+			// Data overrun happened
 			RAMN_FDCAN_Status.slcanFlags |= SLCAN_FLAG_DATA_OVERRUN;
 			result = RAMN_ERROR;
 		}

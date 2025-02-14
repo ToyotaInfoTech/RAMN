@@ -27,7 +27,8 @@
 #include "task.h"
 #include "semphr.h"
 #include "stream_buffer.h"
-#include "usbd_cdc_if.h"
+
+#include "../../USB_CompositeDevice/App/usbd_cdc_if.h"
 
 // Timeout for USB TX Operation.
 #define USB_TX_TIMEOUT_MS 5000U
@@ -43,6 +44,10 @@ typedef struct
 	volatile RAMN_Bool_t addESIFlag; 					// When active, an "i" will be added at the end of received CAN-FD frames that had their ESI flag set.
 	volatile uint32_t 	 USBErrCnt;						// Number of time USB errors (except overflows) were detected
 	volatile uint32_t 	 USBTxOverflowCnt;				// Number of time USB TX Overflows were detected
+#ifdef ENABLE_GSUSB
+	volatile uint32_t    queueErrorCnt;                 // Number of time a queue push/pop errors were detected
+	volatile RAMN_Bool_t gsusbOpened;					// Flag to specify whether the gs_usb feature (CAN<->USB) is active or not
+#endif
 } RAMN_USB_Status_t;
 
 // Current USB configuration (shared with other modules)
@@ -72,13 +77,25 @@ RAMN_Result_t 	RAMN_USB_SendASCIIUint32(uint32_t val);
 // Callback for when USB errors are detected
 void 			RAMM_USB_ErrorCallback(USBD_HandleTypeDef* hUsbDeviceFS);
 
+#ifdef ENABLE_USB_AUTODETECT
+
 // Callback for when USB Serial Port OPEN has been detected
-void 			RAMM_USB_SerialOpenCallback(USBD_HandleTypeDef* hUsbDeviceFS);
+void 			RAMM_USB_SerialOpenCallback(USBD_HandleTypeDef* hUsbDeviceFS, uint8_t index);
 
 // Callback for when USB Serial Port CLOSE has been detected
-void 			RAMN_USB_SerialCloseCallback(USBD_HandleTypeDef* hUsbDeviceFS);
+void 			RAMN_USB_SerialCloseCallback(USBD_HandleTypeDef* hUsbDeviceFS, uint8_t index);
 
+#endif
 
+#ifdef ENABLE_GSUSB
+
+// Forward a CAN message to USB
+RAMN_Result_t 	RAMN_USB_ProcessGSUSB_RX(FDCAN_RxHeaderTypeDef *canRxHeader, uint8_t *canRxData);
+
+// Forward a USB message to CAN
+RAMN_Result_t 	RAMN_USB_ProcessGSUSB_TX(FDCAN_TxHeaderTypeDef *canTxHeader, uint8_t *canRxData);
+
+#endif
 
 
 #endif

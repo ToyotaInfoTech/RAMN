@@ -28,7 +28,7 @@
 #endif
 
 /* Includes ------------------------------------------------------------------*/
-#include "usbd_def.h"
+#include "../../Middlewares/ST/STM32_USB_Device_Library/USBCore/Inc/usbd_def.h"
 
 /* USER CODE BEGIN INCLUDE */
 
@@ -47,12 +47,12 @@
   * @brief Constants.
   * @{
   */
-#define         DEVICE_ID1          (UID_BASE)
-#define         DEVICE_ID2          (UID_BASE + 0x4)
-#define         DEVICE_ID3          (UID_BASE + 0x8)
+#define DEVICE_ID1          (UID_BASE)
+#define DEVICE_ID2          (UID_BASE + 0x4)
+#define DEVICE_ID3          (UID_BASE + 0x8)
 
-#define         USB_SIZ_STRING_SERIAL       0x1A
-
+#define USB_SIZ_STRING_SERIAL       0x1A
+#define USBD_DESC_BUF_SIZE            192
 /* USER CODE BEGIN EXPORTED_CONSTANTS */
 
 /* USER CODE END EXPORTED_CONSTANTS */
@@ -67,7 +67,7 @@
   */
 
 /* USER CODE BEGIN EXPORTED_DEFINES */
-
+ extern uint8_t USBD_DescBuf[USBD_DESC_BUF_SIZE];
 /* USER CODE END EXPORTED_DEFINES */
 
 /**
@@ -105,10 +105,10 @@
   * @{
   */
 
-extern USBD_DescriptorsTypeDef     CDC_Desc;
+extern USBD_DescriptorsTypeDef     MDC_Desc;
 
 /* USER CODE BEGIN EXPORTED_VARIABLES */
-
+extern uint8_t USBD_StrDesc[USBD_MAX_STR_DESC_SIZ];
 /* USER CODE END EXPORTED_VARIABLES */
 
 /**
@@ -142,3 +142,4 @@ extern USBD_DescriptorsTypeDef     CDC_Desc;
 
 #endif /* __USBD_DESC__C__ */
 
+/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

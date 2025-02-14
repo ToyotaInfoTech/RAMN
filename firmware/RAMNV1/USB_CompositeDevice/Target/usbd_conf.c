@@ -22,10 +22,9 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32l5xx.h"
 #include "stm32l5xx_hal.h"
-#include "usbd_def.h"
 #include "usbd_core.h"
-
-#include "usbd_cdc.h"
+#include "usbd_def.h"
+#include "usbd_composite.h"
 
 /* USER CODE BEGIN Includes */
 
@@ -40,7 +39,7 @@
 
 /* USER CODE END PV */
 
-PCD_HandleTypeDef hpcd_USB_FS;
+extern PCD_HandleTypeDef hpcd_USB_FS;
 void Error_Handler(void);
 
 /* USER CODE BEGIN 0 */
@@ -65,75 +64,6 @@ extern void SystemClock_Config(void);
 /*******************************************************************************
                        LL Driver Callbacks (PCD -> USB Device Library)
 *******************************************************************************/
-/* MSP Init */
-
-void HAL_PCD_MspInit(PCD_HandleTypeDef* pcdHandle)
-{
-  GPIO_InitTypeDef GPIO_InitStruct = {0};
-  RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
-  if(pcdHandle->Instance==USB)
-  {
-  /* USER CODE BEGIN USB_MspInit 0 */
-
-  /* USER CODE END USB_MspInit 0 */
-
-  /** Initializes the peripherals clock
-  */
-    PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USB;
-    PeriphClkInit.UsbClockSelection = RCC_USBCLKSOURCE_HSI48;
-    if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
-    {
-      Error_Handler();
-    }
-
-    __HAL_RCC_GPIOA_CLK_ENABLE();
-    /**USB GPIO Configuration
-    PA11     ------> USB_DM
-    PA12     ------> USB_DP
-    */
-    GPIO_InitStruct.Pin = GPIO_PIN_11|GPIO_PIN_12;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-    GPIO_InitStruct.Alternate = GPIO_AF10_USB;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-    /* Peripheral clock enable */
-    __HAL_RCC_USB_CLK_ENABLE();
-
-    /* Peripheral interrupt init */
-    HAL_NVIC_SetPriority(USB_FS_IRQn, 5, 0);
-    HAL_NVIC_EnableIRQ(USB_FS_IRQn);
-  /* USER CODE BEGIN USB_MspInit 1 */
-
-  /* USER CODE END USB_MspInit 1 */
-  }
-}
-
-void HAL_PCD_MspDeInit(PCD_HandleTypeDef* pcdHandle)
-{
-  if(pcdHandle->Instance==USB)
-  {
-  /* USER CODE BEGIN USB_MspDeInit 0 */
-
-  /* USER CODE END USB_MspDeInit 0 */
-    /* Peripheral clock disable */
-    __HAL_RCC_USB_CLK_DISABLE();
-
-    /**USB GPIO Configuration
-    PA11     ------> USB_DM
-    PA12     ------> USB_DP
-    */
-    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_11|GPIO_PIN_12);
-
-    /* Peripheral interrupt Deinit*/
-    HAL_NVIC_DisableIRQ(USB_FS_IRQn);
-
-  /* USER CODE BEGIN USB_MspDeInit 1 */
-
-  /* USER CODE END USB_MspDeInit 1 */
-  }
-}
 
 /**
   * @brief  Setup stage callback
@@ -147,11 +77,38 @@ void HAL_PCD_SetupStageCallback(PCD_HandleTypeDef *hpcd)
 #endif /* USE_HAL_PCD_REGISTER_CALLBACKS */
 {
   /* USER CODE BEGIN HAL_PCD_SetupStageCallback_PreTreatment */
+	USBD_HandleTypeDef *pdev;
 
-  /* USER CODE END  HAL_PCD_SetupStageCallback_PreTreatment */
-  USBD_LL_SetupStage((USBD_HandleTypeDef*)hpcd->pData, (uint8_t *)hpcd->Setup);
-  /* USER CODE BEGIN HAL_PCD_SetupStageCallback_PostTreatment */
+	pdev = (USBD_HandleTypeDef*)hpcd->pData;
+	USBD_ParseSetupRequest((USBD_SetupReqTypedef*)&pdev->request, (uint8_t*)hpcd->Setup);
 
+	// This sequence is used to DFU mode for only candlelight.
+	// SocketCAN not use on Windows and DFU mode provided by STM32L5, so this sequence has been disabled.
+#ifdef ENABLE_GSUSB
+
+	USBD_StatusTypeDef  request_was_handled;
+	request_was_handled = USBD_FAIL;
+	if (pdev->request.bmRequest == 0xC0)
+	{
+		// device request
+		request_was_handled = USBD_GSUSB_CustomDeviceRequest(pdev, &pdev->request);
+	}
+	else if (pdev->request.bmRequest == 0xC1 &&
+	    ((pdev->request.wValue == SC_WINDEX) || (pdev->request.wValue == SC_WINDEX + 1)))
+	{
+		// interface request
+		request_was_handled = USBD_GSUSB_CustomDeviceRequest(pdev, &pdev->request);
+	}
+
+	if (request_was_handled == USBD_FAIL)
+	{
+		/* USER CODE END  HAL_PCD_SetupStageCallback_PreTreatment */
+		USBD_LL_SetupStage((USBD_HandleTypeDef*)hpcd->pData, (uint8_t *)hpcd->Setup);
+		/* USER CODE BEGIN HAL_PCD_SetupStageCallback_PostTreatment */
+	}
+#else
+	USBD_LL_SetupStage((USBD_HandleTypeDef*)hpcd->pData, (uint8_t *)hpcd->Setup);
+#endif
   /* USER CODE END  HAL_PCD_SetupStageCallback_PostTreatment */
 }
 
@@ -405,6 +362,8 @@ void HAL_PCD_DisconnectCallback(PCD_HandleTypeDef *hpcd)
   */
 USBD_StatusTypeDef USBD_LL_Init(USBD_HandleTypeDef *pdev)
 {
+  uint32_t epaddr;
+
   /* Init USB Ip. */
   hpcd_USB_FS.pData = pdev;
   /* Link the driver to the stack. */
@@ -446,14 +405,31 @@ USBD_StatusTypeDef USBD_LL_Init(USBD_HandleTypeDef *pdev)
   /* USER CODE END RegisterCallBackSecondPart */
 #endif /* USE_HAL_PCD_REGISTER_CALLBACKS */
   /* USER CODE BEGIN EndPoint_Configuration */
-  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , 0x00 , PCD_SNG_BUF, 0x18);
-  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , 0x80 , PCD_SNG_BUF, 0x58);
-  /* USER CODE END EndPoint_Configuration */
-  /* USER CODE BEGIN EndPoint_Configuration_CDC */
-  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , 0x81 , PCD_SNG_BUF, 0xC0);
-  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , 0x01 , PCD_SNG_BUF, 0x110);
-  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , 0x82 , PCD_SNG_BUF, 0x100);
+
+  epaddr = 0x50;
+
+  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , 0x00 ,        PCD_SNG_BUF, epaddr);
+  epaddr += 0x40;
+  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , 0x80 ,        PCD_SNG_BUF, epaddr);
+  epaddr += 0x40;
+  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , CDC_IN_EP  ,  PCD_SNG_BUF, epaddr);
+  epaddr += 0x40;
+  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , CDC_OUT_EP ,  PCD_SNG_BUF, epaddr);
+  epaddr += 0x40;
+  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , CDC_CMD_EP ,  PCD_SNG_BUF, epaddr);
+  epaddr += 0x40;
+  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , CDC2_IN_EP  , PCD_SNG_BUF, epaddr);
+  epaddr += 0x40;
+  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , CDC2_OUT_EP , PCD_SNG_BUF, epaddr);
+  epaddr += 0x40;
+  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , CDC2_CMD_EP , PCD_SNG_BUF, epaddr);
+  epaddr += 0x40;
+  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , SC_IN_EP ,    PCD_SNG_BUF, epaddr);
+  epaddr += 0x40;
+  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , SC_OUT_EP ,   PCD_SNG_BUF, epaddr);
+
   /* USER CODE END EndPoint_Configuration_CDC */
+
   return USBD_OK;
 }
 
@@ -706,8 +682,18 @@ void USBD_LL_Delay(uint32_t Delay)
   */
 void *USBD_static_malloc(uint32_t size)
 {
-  UNUSED(size);
-  static uint32_t mem[(sizeof(USBD_CDC_HandleTypeDef)/4)+1];/* On 32-bit boundary */
+  static uint32_t mem[(sizeof(USBD_Composite_HandleTypeDef)/4)+1];/* On 32-bit boundary */
+  return mem;
+}
+
+/**
+  * @brief  Static single allocation.
+  * @param  size: Size of allocated memory
+  * @retval None
+  */
+void *USBD_static_malloc2(uint32_t size)
+{
+  static uint32_t mem[(sizeof(USBD_GS_CAN_HandleTypeDef)/4)+1];/* On 32-bit boundary */
   return mem;
 }
 
@@ -718,7 +704,7 @@ void *USBD_static_malloc(uint32_t size)
   */
 void USBD_static_free(void *p)
 {
-  UNUSED(p);
+
 }
 
 /* USER CODE BEGIN 5 */
@@ -762,3 +748,4 @@ USBD_StatusTypeDef USBD_Get_USB_Status(HAL_StatusTypeDef hal_status)
   }
   return usb_status;
 }
+/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

@@ -9,7 +9,7 @@
   *
   * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
   * All rights reserved.</center></h2>
-  * <h2><center>&copy; Copyright (c) 2021 TOYOTA MOTOR CORPORATION.
+  * <h2><center>&copy; Copyright (c) 2025 TOYOTA MOTOR CORPORATION.
   * ALL RIGHTS RESERVED.</center></h2>
   *
   * This software component is licensed by ST under Ultimate Liberty license
@@ -30,7 +30,7 @@
 #endif
 
 /* Includes ------------------------------------------------------------------*/
-#include "usbd_cdc.h"
+#include "usbd_composite.h"
 
 /* USER CODE BEGIN INCLUDE */
 #include "cmsis_os.h"
@@ -62,6 +62,22 @@
 #define APP_TX_DATA_SIZE  			2048
 
 /* USER CODE END EXPORTED_DEFINES */
+ typedef struct
+ {
+   uint32_t bitrate;
+   uint8_t  format;
+   uint8_t  paritytype;
+   uint8_t  datatype;
+ } USBD_CDC_LineCodingTypeDef;
+
+ typedef struct _USBD_CDC_Itf
+ {
+   int8_t (* Init)(void);
+   int8_t (* DeInit)(void);
+   int8_t (* Control)(uint8_t cmd, uint8_t *pbuf, uint16_t length);
+   int8_t (* Receive)(uint8_t *Buf, uint32_t *Len);
+   int8_t (* TransmitCplt)(uint8_t *Buf, uint32_t *Len, uint8_t epnum);
+ } USBD_CDC_ItfTypeDef;
 
 /**
   * @}
@@ -102,9 +118,6 @@
 extern USBD_CDC_ItfTypeDef USBD_Interface_fops_FS;
 
 /* USER CODE BEGIN EXPORTED_VARIABLES */
-extern void (*USBD_errorCallback_ptr)(USBD_HandleTypeDef* hUsbDeviceFS);
-extern void (*USBD_serialOpenCallback_ptr)(USBD_HandleTypeDef* hUsbDeviceFS);
-extern void (*USBD_serialCloseCallback_ptr)(USBD_HandleTypeDef* hUsbDeviceFS);
 /* USER CODE END EXPORTED_VARIABLES */
 
 /**
@@ -144,3 +157,4 @@ uint8_t RAMN_CDC_GetTXStatus();
 
 #endif /* __USBD_CDC_IF_H__ */
 
+/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

@@ -33,6 +33,7 @@
 #include <string.h>
 #include "stm32l5xx.h"
 #include "stm32l5xx_hal.h"
+#include "ramn_config.h"
 
 /* USER CODE BEGIN INCLUDE */
 
@@ -65,22 +66,39 @@
   * @{
   */
 
+
+#if defined(ENABLE_CDC) && defined(ENABLE_GSUSB)
+#define USBD_MAX_NUM_INTERFACES     	4U
+#define USB_COMPOSITE_CONFIG_DESC_SIZ   116
+#define SC_WINDEX                       0x00   /* gs_usb interface number */
+#define CDC_WINDEX                      0x02   /* CDC interface number */
+#endif
+
+#if defined(ENABLE_CDC) && !defined(ENABLE_GSUSB)
+#define USBD_MAX_NUM_INTERFACES			2U
+#define USB_COMPOSITE_CONFIG_DESC_SIZ   75
+#define CDC_WINDEX                      0x02   /* CDC interface number */
+#endif
+
+
+#if !defined(ENABLE_CDC) && defined(ENABLE_GSUSB)
+#define USBD_MAX_NUM_INTERFACES         2U
+#define USB_COMPOSITE_CONFIG_DESC_SIZ   50
+#define SC_WINDEX                       0x00   /* gs_usb interface number */
+#endif
+
 /*---------- -----------*/
-#define USBD_MAX_NUM_INTERFACES     1U
+#define USBD_MAX_STR_DESC_SIZ       512U
 /*---------- -----------*/
-#define USBD_MAX_NUM_CONFIGURATION     1U
+#define USBD_DEBUG_LEVEL            0U
 /*---------- -----------*/
-#define USBD_MAX_STR_DESC_SIZ     100U
+#define USBD_LPM_ENABLED            0U
 /*---------- -----------*/
-#define USBD_DEBUG_LEVEL     0U
-/*---------- -----------*/
-#define USBD_LPM_ENABLED     0U
-/*---------- -----------*/
-#define USBD_SELF_POWERED     0U
+#define USBD_SELF_POWERED           0U
 
 /****************************************/
 /* #define for FS and HS identification */
-#define DEVICE_FS 		0
+#define DEVICE_FS 		1
 
 /**
   * @}
@@ -94,6 +112,7 @@
 /* Memory management macros */
 /** Alias for memory allocation. */
 #define USBD_malloc         (void *)USBD_static_malloc
+#define USBD_malloc2        (void *)USBD_static_malloc2
 
 /** Alias for memory release. */
 #define USBD_free           USBD_static_free
@@ -113,24 +132,24 @@
                             printf("\n");
 #else
 #define USBD_UsrLog(...)
-#endif /* (USBD_DEBUG_LEVEL > 0U) */
+#endif
 
 #if (USBD_DEBUG_LEVEL > 1)
 
-#define USBD_ErrLog(...)    printf("ERROR: ");\
+#define USBD_ErrLog(...)    printf("ERROR: ") ;\
                             printf(__VA_ARGS__);\
                             printf("\n");
 #else
 #define USBD_ErrLog(...)
-#endif /* (USBD_DEBUG_LEVEL > 1U) */
+#endif
 
 #if (USBD_DEBUG_LEVEL > 2)
-#define USBD_DbgLog(...)    printf("DEBUG : ");\
+#define USBD_DbgLog(...)    printf("DEBUG : ") ;\
                             printf(__VA_ARGS__);\
                             printf("\n");
 #else
 #define USBD_DbgLog(...)
-#endif /* (USBD_DEBUG_LEVEL > 2U) */
+#endif
 
 /**
   * @}
@@ -152,6 +171,7 @@
 
 /* Exported functions -------------------------------------------------------*/
 void *USBD_static_malloc(uint32_t size);
+void *USBD_static_malloc2(uint32_t size);
 void USBD_static_free(void *p);
 
 /**
@@ -172,3 +192,4 @@ void USBD_static_free(void *p);
 
 #endif /* __USBD_CONF__H__ */
 
+/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

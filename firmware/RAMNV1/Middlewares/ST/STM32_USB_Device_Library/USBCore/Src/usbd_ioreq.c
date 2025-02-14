@@ -6,18 +6,19 @@
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2015 STMicroelectronics.
-  * All rights reserved.
+  * <h2><center>&copy; Copyright (c) 2015 STMicroelectronics.
+  * All rights reserved.</center></h2>
   *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
+  * This software component is licensed by ST under Ultimate Liberty license
+  * SLA0044, the "License"; You may not use this file except in compliance with
+  * the License. You may obtain a copy of the License at:
+  *                      www.st.com/SLA0044
   *
   ******************************************************************************
   */
 
 /* Includes ------------------------------------------------------------------*/
-#include "usbd_ioreq.h"
+#include "../../USBCore/Inc/usbd_ioreq.h"
 
 /** @addtogroup STM32_USB_DEVICE_LIBRARY
   * @{
@@ -94,7 +95,7 @@ USBD_StatusTypeDef USBD_CtlSendData(USBD_HandleTypeDef *pdev,
   pdev->ep_in[0].rem_length = 0U;
 #else
   pdev->ep_in[0].rem_length = len;
-#endif /* USBD_AVOID_PACKET_SPLIT_MPS */
+#endif
 
   /* Start the transfer */
   (void)USBD_LL_Transmit(pdev, 0x00U, pbuf, len);
@@ -138,7 +139,7 @@ USBD_StatusTypeDef USBD_CtlPrepareRx(USBD_HandleTypeDef *pdev,
   pdev->ep_out[0].rem_length = 0U;
 #else
   pdev->ep_out[0].rem_length = len;
-#endif /* USBD_AVOID_PACKET_SPLIT_MPS */
+#endif
 
   /* Start the transfer */
   (void)USBD_LL_PrepareReceive(pdev, 0U, pbuf, len);
@@ -222,3 +223,4 @@ uint32_t USBD_GetRxCount(USBD_HandleTypeDef *pdev, uint8_t ep_addr)
   * @}
   */
 
+/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

@@ -33,7 +33,20 @@
 
 #if defined(TARGET_ECUA)
 #define ENABLE_USB
+#define ENABLE_CDC // USB serial (CDC) interface
+
+// Enable this to enable the candlelight interface (gs_usb drivers)
+// Current implementation is experimental:
+// - Error frames are not reported
+// - CAN-FD is not supported
+// - Due to clock differences, bit timings are not respected (but equivalent baudrates are used)
+// You may want to update USBD_VID and USBD_PID in usbd_desc.c to automatically load the drivers on Linux.
+//#define ENABLE_GSUSB
+
+// Enable screen (not restricted to ECU A).
 #define ENABLE_SCREEN
+
+// Enable Chip 8 engine.
 #define ENABLE_CHIP8
 
 // Enable USB MiniCTF challenges.
@@ -84,6 +97,14 @@
 
 // Number of times to retry entering bootloader mode of another ECU before giving up
 #define BOOTLOADER_MAX_ATTEMPTS 20
+
+
+#ifdef ENABLE_GSUSB
+#define GSUSB_RECV_QUEUE_SIZE 512 // Size of the GSUSB receive queue (uint32_t elements)
+#define GSUSB_POOL_QUEUE_SIZE 512 // Size of the GSUSB pool queue (uint32_t elements)
+#define GSUSB_SEND_QUEUE_SIZE 512 // Size of the GSUSB send queue (uint32_t elements)
+#define GS_HOST_FRAME_SIZE     80
+#endif
 
 #endif
 
@@ -240,10 +261,10 @@
 #define JOYSTICK_POOL_SIZE				10
 
 #ifdef TARGET_ECUA
-#define USB_RX_BUFFER_SIZE 				18000
-#define USB_TX_BUFFER_SIZE 				18000
-#define CAN_RX_BUFFER_SIZE 				23000
-#define CAN_TX_BUFFER_SIZE 				18000
+#define USB_RX_BUFFER_SIZE 				15000
+#define USB_TX_BUFFER_SIZE 				15000
+#define CAN_RX_BUFFER_SIZE 				15000
+#define CAN_TX_BUFFER_SIZE 				15000
 #define UDS_ISOTP_RX_BUFFER_SIZE 		0xFFF+2 //Add +2 for buffer-size
 #define UDS_ISOTP_TX_BUFFER_SIZE 		0xFFF+2
 
@@ -282,6 +303,18 @@
 
 #if defined(ENABLE_CHIP8) && !defined(ENABLE_SCREEN)
 #error ENABLE_SCREEN must be defined to define ENABLE_CHIP8
+#endif
+
+#if !defined(ENABLE_USB) && defined(ENABLE_CDC)
+#error Cannot activate CDC without enabling USB
+#endif
+
+#if !defined(ENABLE_USB) && defined(ENABLE_GSUSB)
+#error Cannot activate GSUSB without enabling USB
+#endif
+
+#if defined(ENABLE_USB) && !defined(ENABLE_CDC) && !defined(ENABLE_GSUSB)
+#error At least one USB interface must be active if you enable USB
 #endif
 
 // To use the internal oscillator (instead of the default external 10MHz crystal), You should modify RAMNV1.ioc so that:
