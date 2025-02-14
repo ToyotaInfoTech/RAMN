@@ -116,7 +116,7 @@ void RAMN_DBC_ProcessCANMessage(uint32_t canid, uint32_t dlc, RAMN_CANFrameData_
 #endif
 #ifdef RECEIVE_COMMAND_SHIFT
 		case CAN_SIM_COMMAND_SHIFT_CANID:
-			RAMN_DBC_Handle.command_shift 				= dataframe->ramnData.payload;
+			RAMN_DBC_Handle.command_shift 				= (dataframe->ramnData.payload)&0xFF;
 			break;
 #endif
 #ifdef RECEIVE_COMMAND_HORN

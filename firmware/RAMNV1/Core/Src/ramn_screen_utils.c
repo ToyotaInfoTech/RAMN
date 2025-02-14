@@ -36,7 +36,7 @@ static uint16_t prevBrake;
 static uint8_t  prevSidebrake;
 static uint8_t  prevEnginekey;
 static uint8_t  prevLamp;
-static uint8_t  prevShift;
+static uint8_t  prevJoystick;
 
 // Private functions
 
@@ -188,7 +188,7 @@ void RAMN_SCREENUTILS_DrawSubconsoleStatic()
 	prevSidebrake = 0xFF;
 	prevEnginekey = 0xFF;
 	prevLamp = 0xFF;
-	prevShift = 0xFF;
+	prevJoystick = 0xFF;
 }
 
 void RAMN_SCREENUTILS_DrawSubconsoleUpdate()
@@ -216,9 +216,9 @@ void RAMN_SCREENUTILS_DrawSubconsoleUpdate()
 		RAMN_SPI_RefreshString(122,CONTROL_WINDOW_Y+16,RAMN_SCREENUTILS_COLORTHEME.WHITE,RAMN_SCREENUTILS_COLORTHEME.BACKGROUND,cntStr);
 	}
 
-	if ((RAMN_DBC_Handle.joystick) != prevShift)
+	if ((RAMN_DBC_Handle.joystick) != prevJoystick)
 	{
-		prevShift = (RAMN_DBC_Handle.joystick)&0xFF;
+		prevJoystick = (RAMN_DBC_Handle.joystick)&0xFF;
 		switch(RAMN_DBC_Handle.joystick)
 		{
 		case RAMN_SHIFT_UP:
