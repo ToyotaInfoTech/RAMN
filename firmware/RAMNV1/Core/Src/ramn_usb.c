@@ -140,11 +140,6 @@ RAMN_Result_t RAMN_USB_SendASCIIUint32(uint32_t val)
 	return RAMN_USB_SendFromTask(tmp, 8U);
 }
 
-
-
-
-
-
 void RAMM_USB_ErrorCallback(USBD_HandleTypeDef* hUsbDeviceFS)
 {
 	RAMN_USB_Config.USBErrCnt += 1;
@@ -199,14 +194,18 @@ RAMN_Result_t RAMN_USB_ProcessGSUSB_RX(FDCAN_RxHeaderTypeDef *canRxHeader, uint8
 		}
 
 		frameData->can_id = canRxHeader->Identifier;
+		if (canRxHeader->IdType != FDCAN_STANDARD_ID) frameData->can_id |= CAN_EFF_FLAG;
+		if (canRxHeader->RxFrameType != FDCAN_DATA_FRAME) frameData->can_id |= CAN_RTR_FLAG;
+
 		frameData->echo_id = 0xFFFFFFFF;
 		frameData->channel = 0;
+		frameData->flags = 0;
 		frameData->can_dlc = canRxHeader->DataLength;
 		frameData->timestamp_us = 0;
 
 		if (!(frameData->can_id & CAN_RTR_FLAG)) RAMN_memcpy(frameData->data, canRxData, frameData->can_dlc);
 
-		// send to task
+		// Send to task
 		qret = xQueueSendToBack(RAMN_GSUSB_SendQueueHandle, &frameData, CAN_QUEUE_TIMEOUT);
 		if (qret != pdPASS)
 		{

@@ -454,6 +454,10 @@ static uint8_t USBD_Composite_DataIn(USBD_HandleTypeDef *pdev, uint8_t epnum)
 			hcmp->TxState[0] = 0U;
 			((USBD_CDC_ItfTypeDef *)pdev->pUserData[0])->TransmitCplt(hcmp->TxBuffer[0], &hcmp->TxLength[0], epnum);
 		}
+		else if ((USBD_GSUSB_ItfTypeDef *)pdev->pUserData[1] != NULL && epnum == (GSUSB_IN_EP & 0x7F))
+		{
+			hcmp->TxState[1] = 0U;
+		}
 	}
 
 	return (uint8_t)USBD_OK;
