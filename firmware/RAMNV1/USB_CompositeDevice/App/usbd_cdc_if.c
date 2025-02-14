@@ -308,12 +308,16 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 
 	for(uint32_t i=0; i < *Len; i++)
 	{
-		if(Buf[i] != '\r') //End of Line, should be treated as command
+		if(Buf[i] == '\n')
+		{
+			// newline character, we just ignore it.
+		}
+		else if(Buf[i] != '\r') // Regular character, we add it to the buffer
 		{
 			recvBuf[currentIndex] = Buf[i];
 			currentIndex++;
 		}
-		else
+		else // We reached CR, must send command for processing
 		{
 			if ((currentIndex > 0) && (currentIndex <= USB_COMMAND_BUFFER_SIZE)) //Don't forward invalid commands
 			{
