@@ -91,6 +91,8 @@ RNG_HandleTypeDef hrng;
 SPI_HandleTypeDef hspi2;
 DMA_HandleTypeDef hdma_spi2_tx;
 
+TIM_HandleTypeDef htim7;
+
 PCD_HandleTypeDef hpcd_USB_FS;
 
 /* Definitions for RAMN_ReceiveUSB */
@@ -379,6 +381,7 @@ static void MX_CRC_Init(void);
 static void MX_I2C2_Init(void);
 static void MX_LPUART1_UART_Init(void);
 static void MX_USB_PCD_Init(void);
+static void MX_TIM7_Init(void);
 void RAMN_ReceiveUSBFunc(void *argument);
 void RAMN_ReceiveCANFunc(void *argument);
 void RAMN_SendCANFunc(void *argument);
@@ -425,11 +428,13 @@ static uint16_t reportFIFOStatus_USB(uint8_t* usbSendBuffer)
 #endif
 
 #if defined(GENERATE_RUNTIME_STATS)
+#define MAX_NUMBER_OF_TASKS 16
 volatile unsigned long ulHighFrequencyTimerTicks;
+TaskStatus_t pxTaskStatusArray[MAX_NUMBER_OF_TASKS];
 
 void configureTimerForRunTimeStats(void) {
-	ulHighFrequencyTimerTicks = 0;
-	HAL_TIM_Base_Start_IT(&htim3);
+	ulHighFrequencyTimerTicks = 0U;
+	HAL_TIM_Base_Start_IT(&htim7);
 }
 
 unsigned long getRunTimeCounterValue(void) {
@@ -492,6 +497,7 @@ int main(void)
 	MX_I2C2_Init();
 	MX_LPUART1_UART_Init();
 	MX_USB_PCD_Init();
+	MX_TIM7_Init();
 	/* USER CODE BEGIN 2 */
 
 #ifdef START_IN_CLI_MODE
@@ -1124,6 +1130,44 @@ static void MX_SPI2_Init(void)
 	/* USER CODE BEGIN SPI2_Init 2 */
 
 	/* USER CODE END SPI2_Init 2 */
+
+}
+
+/**
+ * @brief TIM7 Initialization Function
+ * @param None
+ * @retval None
+ */
+static void MX_TIM7_Init(void)
+{
+
+	/* USER CODE BEGIN TIM7_Init 0 */
+#ifdef GENERATE_RUNTIME_STATS
+	/* USER CODE END TIM7_Init 0 */
+
+	TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+	/* USER CODE BEGIN TIM7_Init 1 */
+
+	/* USER CODE END TIM7_Init 1 */
+	htim7.Instance = TIM7;
+	htim7.Init.Prescaler = 0;
+	htim7.Init.CounterMode = TIM_COUNTERMODE_UP;
+	htim7.Init.Period = 799;
+	htim7.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+	if (HAL_TIM_Base_Init(&htim7) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+	sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+	if (HAL_TIMEx_MasterConfigSynchronization(&htim7, &sMasterConfig) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	/* USER CODE BEGIN TIM7_Init 2 */
+#endif
+	/* USER CODE END TIM7_Init 2 */
 
 }
 
@@ -2289,13 +2333,44 @@ void RAMN_ReceiveUSBFunc(void *argument)
 						RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
 					}
 					else RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
+
 					break;
-					//				case 'x': //Get Microcontroller Unique ID Address
-					//					smallResponseBuffer[0U] = USBRxBuffer[0U];
-					//					uint32toASCII((uint32_t)*(HARDWARE_UNIQUE_ID_ADDRESS),&smallResponseBuffer[1]);
-					//					smallResponseBuffer[9U] = '\r';
-					//					RAMN_USB_SendFromTask(smallResponseBuffer,10U);
-					//					break;
+#ifdef GENERATE_RUNTIME_STATS
+				case 'X': // Display FreeRTOS stats
+					if (uxTaskGetNumberOfTasks() > MAX_NUMBER_OF_TASKS) RAMN_USB_SendStringFromTask("Too many tasks\r");
+					else
+					{
+						unsigned long ulTotalRunTime;
+						uint8_t usage;
+
+						uxTaskGetSystemState(pxTaskStatusArray, uxTaskGetNumberOfTasks(), &ulTotalRunTime);
+						RAMN_USB_SendStringFromTask("No\tTask Name\t\t\tState\tUsage\tStackSpace\r");
+
+						for (uint8_t i = 0; i < uxTaskGetNumberOfTasks(); i++)
+						{
+							if (ulTotalRunTime > 0U) usage =  (100U * pxTaskStatusArray[i].ulRunTimeCounter)/ ulTotalRunTime;
+							else usage = 0U;
+
+							sprintf(smallResponseBuffer, "%d", i);
+							RAMN_USB_SendStringFromTask(smallResponseBuffer);
+							sprintf(smallResponseBuffer, ":\t%-15s\t\t\t", pxTaskStatusArray[i].pcTaskName);
+							RAMN_USB_SendStringFromTask(smallResponseBuffer);
+							sprintf(smallResponseBuffer, "%d", pxTaskStatusArray[i].eCurrentState);
+							RAMN_USB_SendStringFromTask(smallResponseBuffer);
+							sprintf(smallResponseBuffer, "\t%d%%", usage);
+							RAMN_USB_SendStringFromTask(smallResponseBuffer);
+							sprintf(smallResponseBuffer, "\t%d\r", pxTaskStatusArray[i].usStackHighWaterMark);
+							RAMN_USB_SendStringFromTask(smallResponseBuffer);
+						}
+					}
+					break;
+#endif
+				case 'x': //Get Microcontroller Unique ID Address
+					smallResponseBuffer[0U] = USBRxBuffer[0U];
+					uint32toASCII((uint32_t)*(HARDWARE_UNIQUE_ID_ADDRESS),&smallResponseBuffer[1]);
+					smallResponseBuffer[9U] = '\r';
+					RAMN_USB_SendFromTask(smallResponseBuffer,10U);
+					break;
 #ifdef ENABLE_UDS
 				case '%': // Diagnostic Message
 					if (commandLength >= 4U)
@@ -3226,6 +3301,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		HAL_IncTick();
 	}
 	/* USER CODE BEGIN Callback 1 */
+#ifdef GENERATE_RUNTIME_STATS
+	if (htim->Instance == TIM7) {
+		ulHighFrequencyTimerTicks++;
+	}
+#endif
 
 	/* USER CODE END Callback 1 */
 }

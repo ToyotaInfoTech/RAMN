@@ -80,7 +80,7 @@
 
 // Enable this flag to enable FreeRTOS runtime stats.
 // This also requires to add "volatile" keyword to static uint32_t ulTotalRunTime = 0UL in tasks.c of FreeRTOS (typically overwritten by STM32CubeIDE code generation).
-// #define GENERATE_RUNTIME_STATS
+#define GENERATE_RUNTIME_STATS
 
 // If this flag is enabled, ECU A will repeat whatever message it accepts over USB.
 // May be useful when multiplexing the serial interface, but should typically not be used.
