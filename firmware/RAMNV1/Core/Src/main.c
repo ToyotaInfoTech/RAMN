@@ -119,7 +119,7 @@ const osThreadAttr_t RAMN_ReceiveCAN_attributes = {
 };
 /* Definitions for RAMN_SendCAN */
 osThreadId_t RAMN_SendCANHandle;
-__attribute__ ((section (".buffers"))) uint32_t RAMN_SendCANBuffer[ 256 ];
+uint32_t RAMN_SendCANBuffer[ 256 ];
 osStaticThreadDef_t RAMN_SendCANControlBlock;
 const osThreadAttr_t RAMN_SendCAN_attributes = {
 		.name = "RAMN_SendCAN",
@@ -613,8 +613,6 @@ int main(void)
 	/* USER CODE BEGIN RTOS_TIMERS */
 	/* start timers, add new ones, ... */
 	/* USER CODE END RTOS_TIMERS */
-
-	/* Create the queue(s) */
 
 	/* USER CODE BEGIN RTOS_QUEUES */
 #ifdef ENABLE_GSUSB
