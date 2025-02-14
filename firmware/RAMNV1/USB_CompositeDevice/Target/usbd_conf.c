@@ -418,15 +418,9 @@ USBD_StatusTypeDef USBD_LL_Init(USBD_HandleTypeDef *pdev)
   epaddr += 0x40;
   HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , CDC_CMD_EP ,  PCD_SNG_BUF, epaddr);
   epaddr += 0x40;
-  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , CDC2_IN_EP  , PCD_SNG_BUF, epaddr);
+  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , GSUSB_IN_EP ,    PCD_SNG_BUF, epaddr);
   epaddr += 0x40;
-  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , CDC2_OUT_EP , PCD_SNG_BUF, epaddr);
-  epaddr += 0x40;
-  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , CDC2_CMD_EP , PCD_SNG_BUF, epaddr);
-  epaddr += 0x40;
-  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , SC_IN_EP ,    PCD_SNG_BUF, epaddr);
-  epaddr += 0x40;
-  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , SC_OUT_EP ,   PCD_SNG_BUF, epaddr);
+  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , GSUSB_OUT_EP ,   PCD_SNG_BUF, epaddr);
 
   /* USER CODE END EndPoint_Configuration_CDC */
 

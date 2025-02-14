@@ -142,7 +142,7 @@ bool FDCAN_SetBittiming(FDCAN_Instance *fdcan_data, uint16_t nbrp, uint8_t phase
  */
 bool FDCAN_SetDataBittiming(FDCAN_Instance *fdcan_data, uint16_t nbrp, uint8_t phase_seg1, uint8_t phase_seg2, uint8_t sjw)
 {
-	const struct gs_device_bt_const *btconst = USBD_SC_Get_Bdconst();
+	const struct gs_device_bt_const *btconst = USBD_GSUSB_Get_Bdconst();
 
 	if ( (phase_seg1 >= btconst->tseg1_min) && (phase_seg1 <= btconst->tseg1_max)
 			&& (phase_seg2 >= btconst->tseg2_min) && (phase_seg2 <= btconst->tseg2_max)

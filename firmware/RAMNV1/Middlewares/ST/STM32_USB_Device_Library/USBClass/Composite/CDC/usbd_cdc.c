@@ -60,31 +60,6 @@ static void cdc_init(USBD_HandleTypeDef *pdev, uint8_t index)
 		((USBD_Composite_HandleTypeDef *)pdev->pClassData)->TxState[0] = 0U;
 		((USBD_Composite_HandleTypeDef *)pdev->pClassData)->RxState[0] = 0U;
 	}
-	else
-	{
-		/* Open EP IN */
-		(void)USBD_LL_OpenEP(pdev, CDC2_IN_EP, USBD_EP_TYPE_BULK, CDC_DATA_FS_IN_PACKET_SIZE);
-		pdev->ep_in[CDC2_IN_EP & 0xFU].is_used = 1U;
-
-		/* Open EP OUT */
-		(void)USBD_LL_OpenEP(pdev, CDC2_OUT_EP, USBD_EP_TYPE_BULK, CDC_DATA_FS_OUT_PACKET_SIZE);
-		pdev->ep_out[CDC2_OUT_EP & 0xFU].is_used = 1U;
-
-		/* Set bInterval for CMD Endpoint */
-		pdev->ep_in[CDC2_CMD_EP & 0xFU].bInterval = CDC_FS_BINTERVAL;
-
-		/* Open Command IN EP */
-		(void)USBD_LL_OpenEP(pdev, CDC2_CMD_EP, USBD_EP_TYPE_INTR, CDC_CMD_PACKET_SIZE);
-		pdev->ep_in[CDC2_CMD_EP & 0xFU].is_used = 1U;
-
-		/* Init  physical Interface components */
-		((USBD_CDC_ItfTypeDef *)pdev->pUserData[2])->Init();
-
-		/* Init Xfer states */
-		((USBD_Composite_HandleTypeDef *)pdev->pClassData)->TxState[2] = 0U;
-		((USBD_Composite_HandleTypeDef *)pdev->pClassData)->RxState[2] = 0U;
-	}
-
 }
 
 /**

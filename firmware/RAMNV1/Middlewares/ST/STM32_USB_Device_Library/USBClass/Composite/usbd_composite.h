@@ -31,8 +31,8 @@ extern "C" {
 /*---------------------------------------------------------------------*/
 /*  Endpoint definitions                                               */
 /*---------------------------------------------------------------------*/
-#define SC_IN_EP                                    0x81U  /* EP1 for gs_usb data IN */
-#define SC_OUT_EP                                   0x02U  /* EP2 for gs_usb data OUT */
+#define GSUSB_IN_EP                                    0x81U  /* EP1 for gs_usb data IN */
+#define GSUSB_OUT_EP                                   0x02U  /* EP2 for gs_usb data OUT */
 
 #define CDC_IN_EP                                   0x84U  /* EP4 for CDC data IN */
 #define CDC_OUT_EP                                  0x04U  /* EP4 for CDC data OUT */

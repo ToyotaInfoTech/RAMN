@@ -237,21 +237,21 @@ USBD_StatusTypeDef USBD_GSUSB_Init(USBD_HandleTypeDef *pdev)
 {
 	USBD_StatusTypeDef ret;
 
-	ret = USBD_LL_OpenEP(pdev, SC_IN_EP, USBD_EP_TYPE_BULK, CAN_DATA_MAX_PACKET_SIZE);
+	ret = USBD_LL_OpenEP(pdev, GSUSB_IN_EP, USBD_EP_TYPE_BULK, CAN_DATA_MAX_PACKET_SIZE);
 	if(ret != USBD_OK)
 	{
 		return ret;
 	}
-	pdev->ep_in[SC_IN_EP & 0xFU].is_used = 1U;
+	pdev->ep_in[GSUSB_IN_EP & 0xFU].is_used = 1U;
 
-	USBD_LL_OpenEP(pdev, SC_OUT_EP, USBD_EP_TYPE_BULK, CAN_DATA_MAX_PACKET_SIZE);
+	USBD_LL_OpenEP(pdev, GSUSB_OUT_EP, USBD_EP_TYPE_BULK, CAN_DATA_MAX_PACKET_SIZE);
 	if(ret != USBD_OK)
 	{
 		return ret;
 	}
-	pdev->ep_out[SC_OUT_EP & 0xFU].is_used = 1U;
+	pdev->ep_out[GSUSB_OUT_EP & 0xFU].is_used = 1U;
 
-	((USBD_SC_ItfTypeDef  *)pdev->pUserData[1])->Init(pdev, RAMN_GSUSB_PoolQueueHandle, RAMN_GSUSB_RecvQueueHandle);
+	((USBD_GSUSB_ItfTypeDef  *)pdev->pUserData[1])->Init(pdev, RAMN_GSUSB_PoolQueueHandle, RAMN_GSUSB_RecvQueueHandle);
 
 	// Initialize can-fd instance for SocketCAN
 	FDCAN_Instance *fdcanIns = FDCAN_GetInstance();
@@ -334,7 +334,7 @@ USBD_StatusTypeDef USBD_GSUSB_Start(USBD_HandleTypeDef *pdev)
 	if (pdev->pClassData)
 	{
 		//xQueueReceiveFromISR(hcan->q_frame_pool, &hcan->from_host_buf, &pxTaskWoken);
-		USBD_Composite_ReceivePacket(pdev, SC_OUT_EP);
+		USBD_Composite_ReceivePacket(pdev, GSUSB_OUT_EP);
 		ret = USBD_OK;
 	}
 	else

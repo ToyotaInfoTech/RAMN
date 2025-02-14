@@ -102,7 +102,7 @@ __ALIGN_BEGIN static uint8_t USBD_Composite_CfgFSDesc[] __ALIGN_END =
 	//---------------------------------------------------------------------------
 	0x07,                                 // bLength
 	USB_DESC_TYPE_ENDPOINT,               // bDescriptorType
-	SC_IN_EP,                             // bEndpointAddress
+	GSUSB_IN_EP,                             // bEndpointAddress
 	0x02,                                 // bmAttributes: bulk
 	LOBYTE(CAN_DATA_MAX_PACKET_SIZE),     // wMaxPacketSize
 	HIBYTE(CAN_DATA_MAX_PACKET_SIZE),
@@ -114,7 +114,7 @@ __ALIGN_BEGIN static uint8_t USBD_Composite_CfgFSDesc[] __ALIGN_END =
 	//---------------------------------------------------------------------------
 	0x07,                                 // bLength
 	USB_DESC_TYPE_ENDPOINT,               // bDescriptorType
-	SC_OUT_EP,                            // bEndpointAddress
+	GSUSB_OUT_EP,                            // bEndpointAddress
 	0x02,                                 // bmAttributes: bulk
 	LOBYTE(CAN_DATA_MAX_PACKET_SIZE),     // wMaxPacketSize
 	HIBYTE(CAN_DATA_MAX_PACKET_SIZE),
@@ -358,12 +358,12 @@ static uint8_t USBD_Composite_DeInit(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
 #endif
 #ifdef ENABLE_GSUSB
 	/* Close EP IN */
-	(void)USBD_LL_CloseEP(pdev, SC_IN_EP);
-	pdev->ep_in[SC_IN_EP & 0xFU].is_used = 0U;
+	(void)USBD_LL_CloseEP(pdev, GSUSB_IN_EP);
+	pdev->ep_in[GSUSB_IN_EP & 0xFU].is_used = 0U;
 
 	/* Close EP OUT */
-	(void)USBD_LL_CloseEP(pdev, SC_OUT_EP);
-	pdev->ep_out[SC_OUT_EP & 0xFU].is_used = 0U;
+	(void)USBD_LL_CloseEP(pdev, GSUSB_OUT_EP);
+	pdev->ep_out[GSUSB_OUT_EP & 0xFU].is_used = 0U;
 #endif
 
 	/* DeInit  physical Interface components */
@@ -373,7 +373,7 @@ static uint8_t USBD_Composite_DeInit(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
 		((USBD_CDC_ItfTypeDef *)pdev->pUserData[0])->DeInit();
 #endif
 #ifdef ENABLE_GSUSB
-		((USBD_SC_ItfTypeDef *)pdev->pUserData[1])->DeInit(pdev);
+		((USBD_GSUSB_ItfTypeDef *)pdev->pUserData[1])->DeInit(pdev);
 #endif
 		(void)USBD_free(pdev->pClassData);
 		pdev->pClassData = NULL;
@@ -454,15 +454,6 @@ static uint8_t USBD_Composite_DataIn(USBD_HandleTypeDef *pdev, uint8_t epnum)
 			hcmp->TxState[0] = 0U;
 			((USBD_CDC_ItfTypeDef *)pdev->pUserData[0])->TransmitCplt(hcmp->TxBuffer[0], &hcmp->TxLength[0], epnum);
 		}
-		else if ((USBD_SC_ItfTypeDef *)pdev->pUserData[1] != NULL && epnum == (SC_IN_EP & 0x7F))
-		{
-			hcmp->TxState[1] = 0U;
-		}
-		else if ((USBD_CDC_ItfTypeDef *)pdev->pUserData[2] != NULL && epnum == (CDC2_IN_EP & 0x7F))
-		{
-			hcmp->TxState[2] = 0U;
-			((USBD_CDC_ItfTypeDef *)pdev->pUserData[2])->TransmitCplt(hcmp->TxBuffer[2], &hcmp->TxLength[2], epnum);
-		}
 	}
 
 	return (uint8_t)USBD_OK;
@@ -488,7 +479,7 @@ static uint8_t USBD_Composite_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum)
 
 	/* Get the received data length */
 	if(epnum == (CDC_OUT_EP & 0x7F)) hcmp->RxLength[0] = USBD_LL_GetRxDataSize(pdev, epnum);
-	else if(epnum == (SC_OUT_EP & 0x7F)) hcmp->RxLength[1] = USBD_LL_GetRxDataSize(pdev, epnum);
+	else if(epnum == (GSUSB_OUT_EP & 0x7F)) hcmp->RxLength[1] = USBD_LL_GetRxDataSize(pdev, epnum);
 	else hcmp->RxLength[2] = USBD_LL_GetRxDataSize(pdev, epnum);
 
 	/* USB data will be immediately processed, this allow next USB traffic being
@@ -497,13 +488,9 @@ static uint8_t USBD_Composite_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum)
 	{
 		((USBD_CDC_ItfTypeDef *)pdev->pUserData[0])->Receive(hcmp->RxBuffer[0], &hcmp->RxLength[0]);
 	}
-	else if((USBD_SC_ItfTypeDef *)pdev->pUserData[1] != NULL && epnum == (SC_OUT_EP & 0x7F))
+	else if((USBD_GSUSB_ItfTypeDef *)pdev->pUserData[1] != NULL && epnum == (GSUSB_OUT_EP & 0x7F))
 	{
-		((USBD_SC_ItfTypeDef *)pdev->pUserData[1])->Receive(pdev, hcmp->RxBuffer[1], &hcmp->RxLength[1]);
-	}
-	else if((USBD_CDC_ItfTypeDef *)pdev->pUserData[2] && epnum == (CDC2_OUT_EP & 0x7F))
-	{
-		((USBD_CDC_ItfTypeDef *)pdev->pUserData[2])->Receive(hcmp->RxBuffer[2], &hcmp->RxLength[2]);
+		((USBD_GSUSB_ItfTypeDef *)pdev->pUserData[1])->Receive(pdev, hcmp->RxBuffer[1], &hcmp->RxLength[1]);
 	}
 
 	return (uint8_t)USBD_OK;
@@ -638,7 +625,7 @@ static uint8_t *USBD_Composite_GetStrdesc(USBD_HandleTypeDef *pdev, uint8_t inde
 
 	switch (index) {
 		case DFU_INTERFACE_STR_INDEX:
-			USBD_GetString(DFU_INTERFACE_STRING_FS, USBD_StrDesc, length);
+			USBD_GetString(GSUSB_DFU_INTERFACE_STRING_FS, USBD_StrDesc, length);
 			return USBD_StrDesc;
 		case 0xEE:
 			*length = sizeof(usbd_gscan_winusb_str);
@@ -750,8 +737,7 @@ uint8_t USBD_Composite_TransmitPacket(USBD_HandleTypeDef *pdev, uint8_t idx)
 
 		/* Update the packet total length */
 		if(idx == 0) pdev->ep_in[CDC_IN_EP & 0xFU].total_length = hcmp->TxLength[idx];
-		else if(idx == 1) pdev->ep_in[SC_IN_EP & 0xFU].total_length = hcmp->TxLength[idx];
-		else pdev->ep_in[CDC2_IN_EP & 0xFU].total_length = hcmp->TxLength[idx];
+		else if(idx == 1) pdev->ep_in[GSUSB_IN_EP & 0xFU].total_length = hcmp->TxLength[idx];
 
 		/* Transmit next packet */
 		if(idx == 0)
@@ -760,11 +746,7 @@ uint8_t USBD_Composite_TransmitPacket(USBD_HandleTypeDef *pdev, uint8_t idx)
 		}
 		else if(idx == 1)
 		{
-			(void)USBD_LL_Transmit(pdev, SC_IN_EP, hcmp->TxBuffer[idx], hcmp->TxLength[idx]);
-		}
-		else if(idx == 2)
-		{
-			(void)USBD_LL_Transmit(pdev, CDC2_IN_EP, hcmp->TxBuffer[idx], hcmp->TxLength[idx]);
+			(void)USBD_LL_Transmit(pdev, GSUSB_IN_EP, hcmp->TxBuffer[idx], hcmp->TxLength[idx]);
 		}
 
 		ret = USBD_OK;
@@ -797,19 +779,12 @@ uint8_t USBD_Composite_ReceivePacket(USBD_HandleTypeDef *pdev, uint32_t epnum)
 		/* Prepare Out endpoint to receive next packet */
 		(void)USBD_LL_PrepareReceive(pdev, epnum, buf, CDC_DATA_FS_OUT_PACKET_SIZE);
 	}
-	else if(epnum == (SC_OUT_EP & 0x7F))
+	else if(epnum == (GSUSB_OUT_EP & 0x7F))
 	{
 		buf = hcmp->RxBuffer[1];
 		/* Prepare Out endpoint to receive next packet */
 		(void)USBD_LL_PrepareReceive(pdev, epnum, buf, sizeof(struct gs_host_frame));
 	}
-	else if(epnum == (CDC2_OUT_EP & 0x7F))
-	{
-		buf = hcmp->RxBuffer[2];
-		/* Prepare Out endpoint to receive next packet */
-		(void)USBD_LL_PrepareReceive(pdev, epnum, buf, CDC_DATA_FS_OUT_PACKET_SIZE);
-	}
-
 
 	return (uint8_t)USBD_OK;
 }

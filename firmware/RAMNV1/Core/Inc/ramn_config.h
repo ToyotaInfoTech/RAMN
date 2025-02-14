@@ -100,11 +100,13 @@
 
 
 #ifdef ENABLE_GSUSB
-#define GSUSB_RECV_QUEUE_SIZE 512 // Size of the GSUSB receive queue (uint32_t elements)
-#define GSUSB_POOL_QUEUE_SIZE 512 // Size of the GSUSB pool queue (uint32_t elements)
-#define GSUSB_SEND_QUEUE_SIZE 512 // Size of the GSUSB send queue (uint32_t elements)
-#define GS_HOST_FRAME_SIZE     80
+#define GSUSB_RECV_QUEUE_SIZE 	512 // Size of the GSUSB receive queue (uint32_t elements)
+#define GSUSB_POOL_QUEUE_SIZE 	512 // Size of the GSUSB pool queue (uint32_t elements)
+#define GSUSB_SEND_QUEUE_SIZE 	512 // Size of the GSUSB send queue (uint32_t elements)
+#define GS_HOST_FRAME_SIZE     	80
+#define CAN_QUEUE_SIZE			512
 #endif
+#define GSUSB_DFU_INTERFACE_STRING_FS		(uint8_t*) "RAMN gs_usb interface"
 
 #endif
 

@@ -98,7 +98,7 @@ void MX_USB_Device_Init(void)
 #endif
 #ifdef ENABLE_GSUSB
   // Set SocketCAN Interface
-  if (USBD_Composite_RegisterInterface(&hUsbDeviceFS, &USBD_Interface_fops_SC, 1) != USBD_OK) {
+  if (USBD_Composite_RegisterInterface(&hUsbDeviceFS, &USBD_Interface_fops_GSUSB, 1) != USBD_OK) {
     Error_Handler();
   }
 #endif
