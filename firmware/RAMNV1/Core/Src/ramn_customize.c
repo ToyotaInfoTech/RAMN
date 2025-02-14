@@ -67,6 +67,55 @@ void RAMN_CUSTOM_Update(uint32_t tick)
 
 }
 
+// The functions below are called by tasks that are started but not used (e.g., USB task when USB is not active).
+// They can be used to implement tasks that will not interfere with the main periodic task.
+// Note that the priority of these tasks is typically higher than the periodic task, therefore they MUST periodically let other tasks execute (e.g. by calling vTaskDelayUntil or osDelay).
+// Alternatively, if you want to execute slow and long code, you may alter the priority of the task.
+// If you do not need these functions, use vTaskDelete(NULL) to delete the task.
+// In all cases, make sure that you only modify the behavior of the targeted ECU, and not all ECUs (e.g., by using #ifdef TARGET_ECUB or #ifndef TARGET_ECUA).
+
+#ifndef ENABLE_CDC
+void RAMN_CUSTOM_CustomTask1(void *argument)
+{
+	//Called by RAMN_ReceiveUSBFunc
+	vTaskDelete(NULL);
+}
+
+void RAMN_CUSTOM_CustomTask2(void *argument)
+{
+	//Called by RAMN_SendUSBFunc
+	vTaskDelete(NULL);
+}
+#endif
+
+#ifndef ENABLE_GSUSB
+void RAMN_CUSTOM_CustomTask3(void *argument)
+{
+	//Called by RAMN_RxTask2Func
+	vTaskDelete(NULL);
+}
+
+void RAMN_CUSTOM_CustomTask4(void *argument)
+{
+	//Called by RAMN_TxTask2Func
+	vTaskDelete(NULL);
+}
+#endif
+
+#ifndef ENABLE_DIAG
+void RAMN_CUSTOM_CustomTask5(void *argument)
+{
+	//RAMN_DiagRXFunc
+	vTaskDelete(NULL);
+}
+
+void RAMN_CUSTOM_CustomTask6(void *argument)
+{
+	//RAMN_DiagTXFunc
+	vTaskDelete(NULL);
+}
+#endif
+
 #ifdef ENABLE_I2C
 void RAMN_CUSTOM_ReceiveI2C(uint8_t buf[], uint16_t buf_size)
 {
@@ -74,7 +123,6 @@ void RAMN_CUSTOM_ReceiveI2C(uint8_t buf[], uint16_t buf_size)
 	// See RAMNV1.ioc for I2C device address (likely 0x77)
 	// Note that by default, buf_size is fixed and equal to I2C_RX_BUFFER_SIZE. Function will NOT be called if fewer bytes are received.
 	// You'll need to modify HAL_I2C_AddrCallback and HAL_I2C_SlaveRxCpltCallback in main.c if you need another behavior.
-
 }
 
 void RAMN_CUSTOM_PrepareTransmitDataI2C(uint8_t buf[], uint16_t buf_size)

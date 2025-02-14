@@ -1390,7 +1390,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 void RAMN_ReceiveUSBFunc(void *argument)
 {
 	/* USER CODE BEGIN 5 */
-#if defined(ENABLE_USB)
+#if defined(ENABLE_CDC)
 	/* init code for USB_Device */
 
 	FDCAN_TxHeaderTypeDef CANTxHeader;
@@ -2380,7 +2380,7 @@ void RAMN_ReceiveUSBFunc(void *argument)
 
 	}
 #else
-	vTaskDelete(NULL);
+	RAMN_CUSTOM_CustomTask1(argument);
 #endif
 	/* USER CODE END 5 */
 }
@@ -2769,7 +2769,7 @@ void RAMN_DiagRXFunc(void *argument)
 	/* USER CODE BEGIN RAMN_DiagRXFunc */
 	/* Infinite loop */
 #if !defined(ENABLE_DIAG)
-	vTaskDelete(NULL);
+	RAMN_CUSTOM_CustomTask5(argument);
 #else
 	uint16_t diagRxSize;
 	uint8_t addressing = 0;
@@ -2934,7 +2934,7 @@ void RAMN_DiagTXFunc(void *argument)
 	/* USER CODE BEGIN RAMN_DiagTXFunc */
 	/* Infinite loop */
 #if !defined(ENABLE_DIAG)
-	vTaskDelete(NULL);
+	RAMN_CUSTOM_CustomTask6(argument);
 #else
 	uint16_t index = 0U;
 	for(;;)
@@ -3033,7 +3033,7 @@ void RAMN_DiagTXFunc(void *argument)
 void RAMN_SendUSBFunc(void *argument)
 {
 	/* USER CODE BEGIN RAMN_SendUSBFunc */
-#if defined(ENABLE_USB)
+#if defined(ENABLE_CDC)
 	RAMN_USB_Init(&USBD_TxStreamBufferHandle,&RAMN_SendUSBHandle);
 	RAMN_CDC_Init(&USBD_RxStreamBufferHandle, &RAMN_ReceiveUSBHandle, &RAMN_SendUSBHandle);
 
@@ -3073,7 +3073,7 @@ void RAMN_SendUSBFunc(void *argument)
 		}
 	}
 #else
-	vTaskDelete(NULL);
+	RAMN_CUSTOM_CustomTask2(argument);
 #endif
 	/* USER CODE END RAMN_SendUSBFunc */
 }
@@ -3091,7 +3091,7 @@ void RAMN_RxTask2Func(void *argument)
 	/* Infinite loop */
 	// On ECU A, this task is used for gs_usb
 #ifndef ENABLE_GSUSB
-	vTaskDelete(NULL);
+	RAMN_CUSTOM_CustomTask3(argument);
 #else
 	BaseType_t            ret;
 	struct gs_host_frame *recvFrame;
@@ -3166,7 +3166,7 @@ void RAMN_TxTask2Func(void *argument)
 	/* USER CODE BEGIN RAMN_TxTask2Func */
 	// On ECU A, this task is used for gs_usb
 #ifndef ENABLE_GSUSB
-	vTaskDelete(NULL);
+	RAMN_CUSTOM_CustomTask4(NULL);
 #else
 	BaseType_t            ret;
 	struct gs_host_frame *frame;

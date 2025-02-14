@@ -29,6 +29,23 @@ void	RAMN_CUSTOM_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, const
 // Function that is called periodically
 void 	RAMN_CUSTOM_Update(uint32_t tick);
 
+// Functions called by different tasks
+
+#ifndef ENABLE_CDC
+void RAMN_CUSTOM_CustomTask1(void *argument);
+void RAMN_CUSTOM_CustomTask2(void *argument);
+#endif
+
+#ifndef ENABLE_GSUSB
+void RAMN_CUSTOM_CustomTask3(void *argument);
+void RAMN_CUSTOM_CustomTask4(void *argument);
+#endif
+
+#ifndef ENABLE_DIAG
+void RAMN_CUSTOM_CustomTask5(void *argument);
+void RAMN_CUSTOM_CustomTask6(void *argument);
+#endif
+
 #ifdef ENABLE_I2C
 // Function (in ISR) that is called when data was received on the I2C2 interface
 void RAMN_CUSTOM_ReceiveI2C(uint8_t buf[], uint16_t buf_size);
