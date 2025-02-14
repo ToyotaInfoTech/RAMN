@@ -93,7 +93,7 @@
 
 // Define this flag to enable the USB debugging module.
 // Note that it also needs to be activated by a slcan command, or by setting RAMN_DEBUG_ENABLE in ramn_debug.c to True.
-#define ENABLE_USB_DEBUG
+// #define ENABLE_USB_DEBUG
 
 // Number of times to retry entering bootloader mode of another ECU before giving up
 #define BOOTLOADER_MAX_ATTEMPTS 20
@@ -170,8 +170,10 @@
 #define UDS_ACCEPT_FUNCTIONAL_ADDRESSING
 
 // Enable dynamic computations of tseg1 and tseg2 to get non-standard baudrate.
+// If you change the clock of the FDCAN peripheral, you'll need to update this too.
 // /!\CURRENTLY UNTESTED
 #define ENABLE_DYNAMIC_BITRATE
+#define FDCAN_PERIPHERAL_CLOCK 40000000
 
 // This flag can be used to automatically reset CAN/CAN-FD peripheral if it enters bus-off mode.
 // #define AUTO_RECOVER_BUSOFF

@@ -1919,12 +1919,27 @@ void RAMN_ReceiveUSBFunc(void *argument)
 					RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
 					break;
 				case 'S': // Set baudrate
-					if (commandLength == 2U)
+					if (commandLength > 1U && commandLength <= 8U)
 					{
-						if (RAMN_FDCAN_UpdateBaudrate(USBRxBuffer[1U]) == RAMN_OK) RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
-						else RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
+						uint32_t baudrate = 0;
+						RAMN_Bool_t valid = True;
+
+						// Convert ASCII string to uint32_t
+						for (uint8_t i = 1U; i < commandLength; i++)
+						{
+							if (USBRxBuffer[i] < '0' || USBRxBuffer[i] > '9') valid = False;
+							baudrate = (baudrate * 10U) + (USBRxBuffer[i] - '0');
+							if (baudrate > FDCAN_BITRATE_MAX) valid = False;
+						}
+
+						if(valid == True)
+						{
+							if (RAMN_FDCAN_UpdateBaudrate(baudrate) == RAMN_OK)  RAMN_USB_SendFromTask((uint8_t*)"\r", 1U);
+							else RAMN_USB_SendFromTask((uint8_t*)"\a", 1U);
+						}
+						else RAMN_USB_SendFromTask((uint8_t*)"\a", 1U);
 					}
-					else RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
+					else RAMN_USB_SendFromTask((uint8_t*)"\a", 1U);
 					break;
 				case 's':
 					if (commandLength == 5U)

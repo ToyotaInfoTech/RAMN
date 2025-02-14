@@ -235,7 +235,7 @@ static RAMN_Result_t FDCAN_ConfigureBitrate(uint32_t bitrate)
 	// Threhsold of 5% of the ideal sample point
 	uint16_t errorThreshold = samplePoint / 20;
 
-	fdcanClock = HAL_RCC_GetSysClockFreq() / (hfdcan->Init.ClockDivider + 1);
+	fdcanClock = FDCAN_PERIPHERAL_CLOCK;
 
 	prescaler = 1;
 	tqsum = fdcanClock / bitrate;
