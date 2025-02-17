@@ -23,14 +23,20 @@
 #ifdef ENABLE_CDC
 
 #include "ramn_usb.h"
-
 #include "ramn_canfd.h"
 #include "ramn_ecucontrol.h"
+#include "ramn_memory.h"
 #ifdef ENABLE_SCREEN
 #include "ramn_screen_manager.h"
 #endif
 #ifdef ENABLE_MINICTF
 #include "ramn_ctf.h"
+#endif
+#ifdef ENABLE_USB_DEBUG
+#include "ramn_debug.h"
+#endif
+#ifdef ENABLE_UDS
+#include "ramn_uds.h"
 #endif
 
 // Processes a CLI (custom line interface) command

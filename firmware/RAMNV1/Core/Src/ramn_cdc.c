@@ -20,9 +20,9 @@
 
 #ifdef ENABLE_UDS
 // Holds currently processed Diag Command from USB.
-__attribute__ ((section (".buffers")))  uint8_t diagRxUSBbuf[0xFFF+2];
+static __attribute__ ((section (".buffers")))  uint8_t diagRxUSBbuf[0xFFF+2];
 // Holds currently processed Diag Command Answer from USB.
-__attribute__ ((section (".buffers")))  uint8_t diagTxUSBbuf[0xFFF+2];
+static __attribute__ ((section (".buffers")))  uint8_t diagTxUSBbuf[0xFFF+2];
 #endif
 
 #ifdef GENERATE_RUNTIME_STATS
@@ -799,7 +799,9 @@ RAMN_Bool_t RAMN_CDC_ProcessSLCANBuffer(uint8_t* USBRxBuffer, uint32_t commandLe
 		case 'E':// Full Error and protocol flags
 			HAL_FDCAN_GetProtocolStatus(&hfdcan1,&protocolStatus);
 			HAL_FDCAN_GetErrorCounters(&hfdcan1, &errorCount);
+#ifdef ENABLE_USB_DEBUG
 			RAMN_DEBUG_DumpCANErrorRegisters(&errorCount, &protocolStatus);
+#endif
 			break;
 		case 'q': // Get status of FIFOs
 			// Reports the status of each Stream Buffer over USB, stores data in provided buffer
@@ -820,9 +822,11 @@ RAMN_Bool_t RAMN_CDC_ProcessSLCANBuffer(uint8_t* USBRxBuffer, uint32_t commandLe
 			RAMN_USB_SendASCIIUint32(xStreamBufferBytesAvailable(CANTxDataStreamBufferHandle));
 			RAMN_USB_SendStringFromTask("\r");
 			break;
+#ifdef ENABLE_USB_DEBUG
 		case 'I':// Send GW Stats information
 			RAMN_DEBUG_ReportCANStats(&RAMN_FDCAN_Status);
 			break;
+#endif
 		case 'D':// Restart in DFU Mode
 			// Note that we do not worry about potential timing analysis as this is not a security feature.
 			if (commandLength == (RAMN_strlen(DFU_COMMAND_STRING)+1U))
