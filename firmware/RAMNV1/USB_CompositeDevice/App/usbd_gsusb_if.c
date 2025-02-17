@@ -179,6 +179,9 @@ static int8_t GSUSB_Receive(USBD_HandleTypeDef *pdev, uint8_t* Buf, uint32_t *Le
 int8_t GSUSB_Transmit(USBD_HandleTypeDef *pdev, uint8_t* Buf, uint16_t Len)
 {
 	USBD_Composite_HandleTypeDef *hcmp = (USBD_Composite_HandleTypeDef *)pdev->pClassData;
+
+	if (hcmp == NULL) return USBD_FAIL;
+
 	if (hcmp->TxState[1] == 0)
 	{
 		hcmp->TxState[1] = 1;

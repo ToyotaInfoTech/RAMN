@@ -41,7 +41,7 @@
 // - CAN-FD is not supported
 // - Due to clock differences, bit timings are not respected (but equivalent baudrates are used)
 // You may want to update USBD_VID and USBD_PID in usbd_desc.c to automatically load the drivers on Linux.
-#define ENABLE_GSUSB
+// #define ENABLE_GSUSB
 
 #define USBD_VID                      	0x483
 #define USBD_PID                    	0x5740
