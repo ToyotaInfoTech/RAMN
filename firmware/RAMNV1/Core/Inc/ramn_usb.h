@@ -87,17 +87,6 @@ void 			RAMN_USB_SerialCloseCallback(USBD_HandleTypeDef* hUsbDeviceFS, uint8_t i
 
 #endif
 
-#ifdef ENABLE_GSUSB
-
-// Forward a CAN message to USB
-RAMN_Result_t 	RAMN_USB_ProcessGSUSB_RX(FDCAN_RxHeaderTypeDef *canRxHeader, uint8_t *canRxData);
-
-// Forward a USB message to CAN
-RAMN_Result_t 	RAMN_USB_ProcessGSUSB_TX(FDCAN_TxHeaderTypeDef *canTxHeader, uint8_t *canRxData);
-
-#endif
-
-
 #endif
 
 #endif /* INC_RAMN_USB_H_ */

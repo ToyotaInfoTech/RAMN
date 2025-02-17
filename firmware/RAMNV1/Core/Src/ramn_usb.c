@@ -16,11 +16,10 @@
 
 #include "ramn_usb.h"
 
-#include "gs_usb_fdcan.h"
+#ifdef ENABLE_USB
+
 #include "usbd_cdc.h"
 #include "ramn_utils.h"
-
-#ifdef ENABLE_USB
 
 // Pointer to buffer that holds outgoing USB data
 static StreamBufferHandle_t* usbTxBuffer;
@@ -169,94 +168,6 @@ void RAMN_USB_SerialCloseCallback(USBD_HandleTypeDef* hUsbDeviceFS, uint8_t inde
 		}
 	}
 }
-#endif
-
-#ifdef ENABLE_GSUSB
-RAMN_Result_t RAMN_USB_ProcessGSUSB_RX(FDCAN_RxHeaderTypeDef *canRxHeader, uint8_t *canRxData)
-{
-	RAMN_Result_t         ret;
-	BaseType_t            qret;
-	struct gs_host_frame *frameData;
-
-	ret = RAMN_OK;
-
-	// Get frame data pointer from pool queue
-	qret = xQueueReceive(RAMN_GSUSB_PoolQueueHandle, &frameData, portMAX_DELAY);
-	if (qret == pdPASS)
-	{
-		// Does not support CAN FD yet
-		if(canRxHeader->FDFormat == FDCAN_FD_CAN)
-		{
-#ifdef HANG_ON_ERRORS
-			Error_Handler();
-#endif
-			return RAMN_ERROR;
-		}
-
-		frameData->can_id = canRxHeader->Identifier;
-		if (canRxHeader->IdType != FDCAN_STANDARD_ID) frameData->can_id |= CAN_EFF_FLAG;
-		if (canRxHeader->RxFrameType != FDCAN_DATA_FRAME) frameData->can_id |= CAN_RTR_FLAG;
-
-		frameData->echo_id = 0xFFFFFFFF;
-		frameData->channel = 0;
-		frameData->flags = 0;
-		frameData->can_dlc = canRxHeader->DataLength;
-		frameData->timestamp_us = 0;
-
-		if (!(frameData->can_id & CAN_RTR_FLAG)) RAMN_memcpy(frameData->data, canRxData, frameData->can_dlc);
-
-		// Send to task
-		qret = xQueueSendToBack(RAMN_GSUSB_SendQueueHandle, &frameData, CAN_QUEUE_TIMEOUT);
-		if (qret != pdPASS)
-		{
-			ret = RAMN_ERROR;
-		}
-	}
-	else ret = RAMN_ERROR;
-
-	return ret;
-}
-
-RAMN_Result_t RAMN_USB_ProcessGSUSB_TX(FDCAN_TxHeaderTypeDef *canTxHeader, uint8_t *canRxData)
-{
-	RAMN_Result_t         ret;
-	BaseType_t            qret;
-	struct gs_host_frame *frameData;
-
-	ret = RAMN_OK;
-
-	// Get frame data pointer from pool queue
-	qret = xQueueReceive(RAMN_GSUSB_PoolQueueHandle, &frameData, CAN_QUEUE_TIMEOUT);
-	if (qret == pdPASS)
-	{
-		// Does not support CAN FD yet
-		if(canTxHeader->FDFormat == FDCAN_FD_CAN)
-		{
-#ifdef HANG_ON_ERRORS
-			Error_Handler();
-#endif
-			return RAMN_ERROR;
-		}
-
-		frameData->can_id = canTxHeader->Identifier;
-		frameData->echo_id = 0xFFFFFFFF;
-		frameData->channel = 0;
-		frameData->can_dlc = canTxHeader->DataLength;
-		frameData->timestamp_us = 0;
-		RAMN_memcpy(frameData->data, canRxData, frameData->can_dlc);
-
-		// Send to task
-		qret = xQueueSendToBack(RAMN_GSUSB_SendQueueHandle, &frameData, CAN_QUEUE_TIMEOUT);
-		if (qret != pdPASS)
-		{
-			ret = RAMN_ERROR;
-		}
-	}
-	else ret = RAMN_ERROR;
-
-	return ret;
-}
-
 #endif
 
 #endif

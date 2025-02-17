@@ -84,6 +84,7 @@ extern osMessageQueueId_t RAMN_GSUSB_SendQueueHandle;
 extern osMessageQueueId_t RAMN_GSUSB_RecvQueueHandle;
 extern osMessageQueueId_t RAMN_GSUSB_PoolQueueHandle;
 #endif
+extern FDCAN_HandleTypeDef hfdcan1;
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/

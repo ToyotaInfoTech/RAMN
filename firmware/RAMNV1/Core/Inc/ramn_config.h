@@ -82,7 +82,7 @@
 // This also requires to add "volatile" keyword to static uint32_t ulTotalRunTime = 0UL in tasks.c of FreeRTOS (typically overwritten by STM32CubeIDE code generation).
 // Increase the frequency of runtime timer (by default, TIM7) to increase stat accuracy at the cost of performances.
 #define GENERATE_RUNTIME_STATS
-
+#define MAX_NUMBER_OF_TASKS 16 // Max number of tasks that can be monitored, if enabled
 // If this flag is enabled, ECU A will repeat whatever message it accepts over USB.
 // May be useful when multiplexing the serial interface, but should typically not be used.
 // CAN_ECHO does not cover ECU A CAN messages not sent from USB (i.e., answer to UDS commands).
