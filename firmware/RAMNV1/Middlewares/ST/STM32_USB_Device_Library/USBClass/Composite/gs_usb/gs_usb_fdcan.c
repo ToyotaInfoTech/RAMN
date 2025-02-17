@@ -176,6 +176,10 @@ void FDCAN_InitQueues(USBD_GS_CAN_HandleTypeDef *hcan)
 		for(i = 0; i < g_frames_list_len; i++)
 		{
 			g_frames_list[i].data = calloc(1, size);
+			if (g_frames_list[i].data == NULL)
+			{
+				Error_Handler();
+			}
 		}
 	}
 	if(uxQueueMessagesWaiting(RAMN_GSUSB_PoolQueueHandle) == 0)

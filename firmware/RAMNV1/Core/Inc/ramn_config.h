@@ -41,7 +41,18 @@
 // - CAN-FD is not supported
 // - Due to clock differences, bit timings are not respected (but equivalent baudrates are used)
 // You may want to update USBD_VID and USBD_PID in usbd_desc.c to automatically load the drivers on Linux.
-//#define ENABLE_GSUSB
+#define ENABLE_GSUSB
+
+#define USBD_VID                      	0x483
+#define USBD_PID                    	0x5740
+// IDs below can be used to automatically load the drivers on Linux
+//#define USBD_VID                      0x1d50
+//#define USBD_PID                      0x606f
+#define USBD_LANGID_STRING            	1033
+#define USBD_MANUFACTURER_STRING      	"Toyota Motor Corporation"
+#define USBD_PRODUCT_STRING           	"RAMN USB Composite Device"
+#define USBD_CONFIGURATION_STRING     	"MDC Config"
+#define USBD_INTERFACE_STRING         	"MDC Interface"
 
 // Enable screen (not restricted to ECU A).
 #define ENABLE_SCREEN

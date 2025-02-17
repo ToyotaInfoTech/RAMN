@@ -32,11 +32,11 @@
 	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE.
-*/
+ */
 
 #include "ramn_config.h"
 
-#ifdef ENABLE_GSUSB
+
 #include "usbd_composite.h"
 #include "usbd_ctlreq.h"
 #include "usbd_gs_usb.h"
@@ -47,127 +47,154 @@ static uint8_t gsusb_vendor_request(USBD_HandleTypeDef *pdev, USBD_SetupReqTyped
 
 // device info
 static const struct gs_device_config gscan_dconf = {
-	0, // reserved 1
-	0, // reserved 2
-	0, // reserved 3
-	0, // interface count (0=1, 1=2..)
-	1, // software version
-	2  // hardware version
+		0, // reserved 1
+		0, // reserved 2
+		0, // reserved 3
+		0, // interface count (0=1, 1=2..)
+		1, // software version
+		2  // hardware version
 };
 
 // bit timing constraints
 const struct gs_device_bt_const gscan_btconst = {
-	GS_CAN_FEATURE_LISTEN_ONLY  // supported features
-	| GS_CAN_FEATURE_LOOP_BACK
-	| GS_CAN_FEATURE_HW_TIMESTAMP
-	| GS_CAN_FEATURE_IDENTIFY
-	| GS_CAN_FEATURE_USER_ID
-	| GS_CAN_FEATURE_PAD_PKTS_TO_MAX_PKT_SIZE,
-	48000000, // can timing base clock
-	1,        // tseg1 min
-	16,       // tseg1 max
-	2,        // tseg2 min
-	8,        // tseg2 max
-	4,        // sjw max
-	1,        // brp min
-	512,      // brp_max
-	1,        // brp increment;
+		GS_CAN_FEATURE_LISTEN_ONLY  // supported features
+		| GS_CAN_FEATURE_LOOP_BACK
+		| GS_CAN_FEATURE_HW_TIMESTAMP
+		| GS_CAN_FEATURE_IDENTIFY
+		| GS_CAN_FEATURE_USER_ID
+		| GS_CAN_FEATURE_PAD_PKTS_TO_MAX_PKT_SIZE,
+		48000000, // can timing base clock
+		1,        // tseg1 min
+		16,       // tseg1 max
+		2,        // tseg2 min
+		8,        // tseg2 max
+		4,        // sjw max
+		1,        // brp min
+		512,      // brp_max
+		1,        // brp increment;
 };
 
 
 /*  Microsoft Compatible ID Feature Descriptor  */
 static const uint8_t USBD_MS_COMP_ID_FEATURE_DESC[] = {
-	0x40, 0x00, 0x00, 0x00, /* length */
-	0x00, 0x01,             /* version 1.0 */
-	0x04, 0x00,             /* descr index (0x0004) */
-	0x02,                   /* number of sections */
-	0x00, 0x00, 0x00, 0x00, /* reserved */
-	0x00, 0x00, 0x00,
-	0x00,                   /* interface number */
-	0x01,                   /* reserved */
-	0x57, 0x49, 0x4E, 0x55, /* compatible ID ("WINUSB\0\0") */
-	0x53, 0x42, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, /* sub-compatible ID */
-	0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, /* reserved */
-	0x00, 0x00,
-	0x01,                   /* interface number */
-	0x01,                   /* reserved */
-	0x57, 0x49, 0x4E, 0x55, /* compatible ID ("WINUSB\0\0") */
-	0x53, 0x42, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, /* sub-compatible ID */
-	0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, /* reserved */
-	0x00, 0x00
+		0x40, 0x00, 0x00, 0x00, /* length */
+		0x00, 0x01,             /* version 1.0 */
+		0x04, 0x00,             /* descr index (0x0004) */
+		0x02,                   /* number of sections */
+		0x00, 0x00, 0x00, 0x00, /* reserved */
+		0x00, 0x00, 0x00,
+		0x00,                   /* interface number */
+		0x01,                   /* reserved */
+		0x57, 0x49, 0x4E, 0x55, /* compatible ID ("WINUSB\0\0") */
+		0x53, 0x42, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, /* sub-compatible ID */
+		0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, /* reserved */
+		0x00, 0x00,
+		0x01,                   /* interface number */
+		0x01,                   /* reserved */
+		0x57, 0x49, 0x4E, 0x55, /* compatible ID ("WINUSB\0\0") */
+		0x53, 0x42, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, /* sub-compatible ID */
+		0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, /* reserved */
+		0x00, 0x00
 };
 
 /* Microsoft Extended Properties Feature Descriptor */
 static const uint8_t USBD_MS_EXT_PROP_FEATURE_DESC[] = {
-	0x92, 0x00, 0x00, 0x00, /* length */
-	0x00, 0x01,				/* version 1.0 */
-	0x05, 0x00,             /* descr index (0x0005) */
-	0x01, 0x00,             /* number of sections */
-	0x88, 0x00, 0x00, 0x00, /* property section size */
-	0x07, 0x00, 0x00, 0x00, /* property data type 7: Unicode REG_MULTI_SZ */
-	0x2a, 0x00,				/* property name length */
+		0x92, 0x00, 0x00, 0x00, /* length */
+		0x00, 0x01,				/* version 1.0 */
+		0x05, 0x00,             /* descr index (0x0005) */
+		0x01, 0x00,             /* number of sections */
+		0x88, 0x00, 0x00, 0x00, /* property section size */
+		0x07, 0x00, 0x00, 0x00, /* property data type 7: Unicode REG_MULTI_SZ */
+		0x2a, 0x00,				/* property name length */
 
-	0x44, 0x00, 0x65, 0x00, /* property name "DeviceInterfaceGUIDs" */
-	0x76, 0x00, 0x69, 0x00,
-	0x63, 0x00, 0x65, 0x00,
-	0x49, 0x00, 0x6e, 0x00,
-	0x74, 0x00, 0x65, 0x00,
-	0x72, 0x00, 0x66, 0x00,
-	0x61, 0x00, 0x63, 0x00,
-	0x65, 0x00, 0x47, 0x00,
-	0x55, 0x00, 0x49, 0x00,
-	0x44, 0x00, 0x73, 0x00,
-	0x00, 0x00,
+		0x44, 0x00, 0x65, 0x00, /* property name "DeviceInterfaceGUIDs" */
+		0x76, 0x00, 0x69, 0x00,
+		0x63, 0x00, 0x65, 0x00,
+		0x49, 0x00, 0x6e, 0x00,
+		0x74, 0x00, 0x65, 0x00,
+		0x72, 0x00, 0x66, 0x00,
+		0x61, 0x00, 0x63, 0x00,
+		0x65, 0x00, 0x47, 0x00,
+		0x55, 0x00, 0x49, 0x00,
+		0x44, 0x00, 0x73, 0x00,
+		0x00, 0x00,
 
-	0x50, 0x00, 0x00, 0x00, /* property data length */
+		0x50, 0x00, 0x00, 0x00, /* property data length */
 
-	0x7b, 0x00, 0x63, 0x00, /* property name: "{c15b4308-04d3-11e6-b3ea-6057189e6443}\0\0" */
-	0x31, 0x00, 0x35, 0x00,
-	0x62, 0x00, 0x34, 0x00,
-	0x33, 0x00, 0x30, 0x00,
-	0x38, 0x00, 0x2d, 0x00,
-	0x30, 0x00, 0x34, 0x00,
-	0x64, 0x00, 0x33, 0x00,
-	0x2d, 0x00, 0x31, 0x00,
-	0x31, 0x00, 0x65, 0x00,
-	0x36, 0x00, 0x2d, 0x00,
-	0x62, 0x00, 0x33, 0x00,
-	0x65, 0x00, 0x61, 0x00,
-	0x2d, 0x00, 0x36, 0x00,
-	0x30, 0x00, 0x35, 0x00,
-	0x37, 0x00, 0x31, 0x00,
-	0x38, 0x00, 0x39, 0x00,
-	0x65, 0x00, 0x36, 0x00,
-	0x34, 0x00, 0x34, 0x00,
-	0x33, 0x00, 0x7d, 0x00,
-	0x00, 0x00, 0x00, 0x00
+		0x7b, 0x00, 0x63, 0x00, /* property name: "{c15b4308-04d3-11e6-b3ea-6057189e6443}\0\0" */
+		0x31, 0x00, 0x35, 0x00,
+		0x62, 0x00, 0x34, 0x00,
+		0x33, 0x00, 0x30, 0x00,
+		0x38, 0x00, 0x2d, 0x00,
+		0x30, 0x00, 0x34, 0x00,
+		0x64, 0x00, 0x33, 0x00,
+		0x2d, 0x00, 0x31, 0x00,
+		0x31, 0x00, 0x65, 0x00,
+		0x36, 0x00, 0x2d, 0x00,
+		0x62, 0x00, 0x33, 0x00,
+		0x65, 0x00, 0x61, 0x00,
+		0x2d, 0x00, 0x36, 0x00,
+		0x30, 0x00, 0x35, 0x00,
+		0x37, 0x00, 0x31, 0x00,
+		0x38, 0x00, 0x39, 0x00,
+		0x65, 0x00, 0x36, 0x00,
+		0x34, 0x00, 0x34, 0x00,
+		0x33, 0x00, 0x7d, 0x00,
+		0x00, 0x00, 0x00, 0x00
 };
+
+// This must be available even when GS_USB is off due to potential caching
+USBD_StatusTypeDef USBD_GSUSB_CustomDeviceRequest(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req)
+{
+	if (req->bRequest == USBD_GS_CAN_VENDOR_CODE)
+	{
+		switch (req->wIndex)
+		{
+		case 0x0004:
+			RAMN_memcpy(USBD_DescBuf, USBD_MS_COMP_ID_FEATURE_DESC, sizeof(USBD_MS_COMP_ID_FEATURE_DESC));
+			USBD_CtlSendData(pdev, USBD_DescBuf, MIN(sizeof(USBD_MS_COMP_ID_FEATURE_DESC), req->wLength));
+			return USBD_OK;
+
+		case 0x0005:
+			if (req->wValue==0) { // only return our GUID for interface #0
+				RAMN_memcpy(USBD_DescBuf, USBD_MS_EXT_PROP_FEATURE_DESC, sizeof(USBD_MS_EXT_PROP_FEATURE_DESC));
+				USBD_CtlSendData(pdev, USBD_DescBuf, MIN(sizeof(USBD_MS_EXT_PROP_FEATURE_DESC), req->wLength));
+				return USBD_OK;
+			}
+			break;
+		}
+	}
+
+	return USBD_FAIL;
+}
+
+#ifdef ENABLE_GSUSB
 
 static uint8_t gsusb_dfu_request(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req)
 {
 	USBD_GS_CAN_HandleTypeDef *hcan = ((USBD_Composite_HandleTypeDef *)pdev->pClassData)->hcan;
 	switch (req->bRequest) {
 
-		case 0: // DETACH request
-			hcan->dfu_detach_requested = true;
-			break;
+	case 0: // DETACH request
+		hcan->dfu_detach_requested = true;
+		break;
 
-		case 3: // GET_STATIS request
-			hcan->ep0_buf[0] = 0x00; // bStatus: 0x00 == OK
-			hcan->ep0_buf[1] = 0x00; // bwPollTimeout
-			hcan->ep0_buf[2] = 0x00;
-			hcan->ep0_buf[3] = 0x00;
-			hcan->ep0_buf[4] = 0x00; // bState: appIDLE
-			hcan->ep0_buf[5] = 0xFF; // status string descriptor index
-			USBD_CtlSendData(pdev, hcan->ep0_buf, 6);
-			break;
+	case 3: // GET_STATIS request
+		hcan->ep0_buf[0] = 0x00; // bStatus: 0x00 == OK
+		hcan->ep0_buf[1] = 0x00; // bwPollTimeout
+		hcan->ep0_buf[2] = 0x00;
+		hcan->ep0_buf[3] = 0x00;
+		hcan->ep0_buf[4] = 0x00; // bState: appIDLE
+		hcan->ep0_buf[5] = 0xFF; // status string descriptor index
+		USBD_CtlSendData(pdev, hcan->ep0_buf, 6);
+		break;
 
-		default:
-			USBD_CtlError(pdev, req);
+	default:
+		USBD_CtlError(pdev, req);
 
 	}
 	return USBD_OK;
@@ -175,8 +202,14 @@ static uint8_t gsusb_dfu_request(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef 
 
 static uint8_t gsusb_config_request(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req)
 {
-	USBD_GS_CAN_HandleTypeDef *hcan = ((USBD_Composite_HandleTypeDef *)pdev->pClassData)->hcan;
+	USBD_GS_CAN_HandleTypeDef *hcan;
 	uint8_t ret = USBD_OK;
+
+	if ((USBD_Composite_HandleTypeDef *)pdev->pClassData == NULL)
+	{
+		return USBD_FAIL;
+	}
+	hcan =  ((USBD_Composite_HandleTypeDef *)pdev->pClassData)->hcan;
 
 	switch (req->bRequest)
 	{
@@ -223,10 +256,10 @@ static uint8_t gsusb_vendor_request(USBD_HandleTypeDef *pdev, USBD_SetupReqTyped
 	uint8_t req_type = (req->bRequest >> 5) & 0x03;
 
 	if (
-		(req_type == 0x01) // class request
-	 && (req_rcpt == 0x01) // recipient: interface
-	 && (req->wIndex == DFU_INTERFACE_NUM)
-	 ) {
+			(req_type == 0x01) // class request
+			&& (req_rcpt == 0x01) // recipient: interface
+			&& (req->wIndex == DFU_INTERFACE_NUM)
+	) {
 		return gsusb_dfu_request(pdev, req);
 	} else {
 		return gsusb_config_request(pdev, req);
@@ -288,9 +321,9 @@ USBD_StatusTypeDef USBD_GSUSB_Setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTyped
 		}
 		break;
 
-	default:
-		ret = USBD_FAIL;
-		break;
+		default:
+			ret = USBD_FAIL;
+			break;
 	}
 
 	return ret;
@@ -300,30 +333,6 @@ USBD_StatusTypeDef USBD_GSUSB_Setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTyped
 const struct gs_device_bt_const *USBD_GSUSB_Get_Bdconst(void)
 {
 	return &gscan_btconst;
-}
-
-USBD_StatusTypeDef USBD_GSUSB_CustomDeviceRequest(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req)
-{
-	if (req->bRequest == USBD_GS_CAN_VENDOR_CODE)
-	{
-		switch (req->wIndex)
-		{
-		case 0x0004:
-			RAMN_memcpy(USBD_DescBuf, USBD_MS_COMP_ID_FEATURE_DESC, sizeof(USBD_MS_COMP_ID_FEATURE_DESC));
-			USBD_CtlSendData(pdev, USBD_DescBuf, MIN(sizeof(USBD_MS_COMP_ID_FEATURE_DESC), req->wLength));
-			return USBD_OK;
-
-		case 0x0005:
-			if (req->wValue==0) { // only return our GUID for interface #0
-				RAMN_memcpy(USBD_DescBuf, USBD_MS_EXT_PROP_FEATURE_DESC, sizeof(USBD_MS_EXT_PROP_FEATURE_DESC));
-				USBD_CtlSendData(pdev, USBD_DescBuf, MIN(sizeof(USBD_MS_EXT_PROP_FEATURE_DESC), req->wLength));
-				return USBD_OK;
-			}
-			break;
-		}
-	}
-
-	return USBD_FAIL;
 }
 
 USBD_StatusTypeDef USBD_GSUSB_Start(USBD_HandleTypeDef *pdev)
