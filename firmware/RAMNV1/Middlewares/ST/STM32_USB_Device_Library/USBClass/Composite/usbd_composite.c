@@ -76,7 +76,7 @@ __ALIGN_BEGIN static uint8_t USBD_Composite_CfgFSDesc[] __ALIGN_END =
 	USB_DESC_TYPE_CONFIGURATION,          // bDescriptorType: Configuration
 	USB_COMPOSITE_CONFIG_DESC_SIZ,        // wTotalLength:no of returned bytes
 	0x00,
-	USBD_MAX_NUM_INTERFACES,              // bNumInterfaces: 6 interface
+	USBD_MAX_NUM_INTERFACES,              // bNumInterfaces: 2 or 4
 	0x01,                                 // bConfigurationValue: Configuration value
 	0x00,                                 // iConfiguration: Index of string descriptor describing the configuration
 	0x80,                                 // bmAttributes: Bus powered
@@ -88,7 +88,7 @@ __ALIGN_BEGIN static uint8_t USBD_Composite_CfgFSDesc[] __ALIGN_END =
 	//---------------------------------------------------------------------------
 	0x09,                                 // bLength
 	USB_DESC_TYPE_INTERFACE,              // bDescriptorType
-	SC_WINDEX,                            // bInterfaceNumber
+	GSUSB_WINDEX,                         // bInterfaceNumber
 	0x00,                                 // bAlternateSetting
 	0x02,                                 // bNumEndpoints
 	0xFF,                                 // bInterfaceClass: Vendor Specific
@@ -126,7 +126,7 @@ __ALIGN_BEGIN static uint8_t USBD_Composite_CfgFSDesc[] __ALIGN_END =
 	//---------------------------------------------------------------------------
 	0x09,                                 // bLength
 	USB_DESC_TYPE_INTERFACE,              // bDescriptorType
-	SC_WINDEX + 1,                        // bInterfaceNumber
+	GSUSB_WINDEX + 1,                        // bInterfaceNumber
 	0x00,                                 // bAlternateSetting
 	0x00,                                 // bNumEndpoints
 	0xFE,                                 // bInterfaceClass: Vendor Specific
@@ -395,10 +395,11 @@ static uint8_t USBD_Composite_Setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTyped
 {
 	USBD_StatusTypeDef            ret = USBD_OK;
 
+	//if(req->wIndex == 4U) req->wIndex = 2;
 	switch(req->wIndex)
 	{
 #ifdef ENABLE_GSUSB
-	case SC_WINDEX:
+	case GSUSB_WINDEX:
 		ret = USBD_GSUSB_Setup(pdev, req);
 		break;
 #endif
@@ -406,8 +407,11 @@ static uint8_t USBD_Composite_Setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTyped
 	case CDC_WINDEX:
 		ret = USBD_CDC_Setup(pdev, req, 0);
 		break;
+//	case 0x04:
+//		ret = USBD_OK; //
 #endif
 	default:
+		//Error_Handler();
 		break;
 	}
 

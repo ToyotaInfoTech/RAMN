@@ -152,7 +152,7 @@ void RAMM_USB_SerialOpenCallback(USBD_HandleTypeDef* hUsbDeviceFS)
 }
 
 // Note that this function  gets called twice when the serial port is closed, and once at startup
-void RAMM_USB_SerialOpenCallback(USBD_HandleTypeDef* hUsbDeviceFS, uint8_t index)
+void RAMN_USB_SerialCloseCallback(USBD_HandleTypeDef* hUsbDeviceFS, uint8_t index)
 {
 	if(index == 0U)
 	{

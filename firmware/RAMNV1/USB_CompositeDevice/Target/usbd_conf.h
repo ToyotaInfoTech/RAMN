@@ -66,25 +66,37 @@
   * @{
   */
 
+// Note there is currently an issue with CDC_WINDEX.
+// Setting CDC_WINDEX to 0x04 when ENABLE_CDC and ENABLE_GSUSB are both active lead to a hardware fault with Linux when load gs_usb
+// Setting CDC_WINDEX to any other value than 0x04 when only ENABLE_CDC is active leads to a delayed start on Windows (USBD_Composite_Setup is called with req->wIndex == 4U regardless of the value of CDC_WINDEX).
+// TODO: fix
 
 #if defined(ENABLE_CDC) && defined(ENABLE_GSUSB)
 #define USBD_MAX_NUM_INTERFACES     	4U
 #define USB_COMPOSITE_CONFIG_DESC_SIZ   116
-#define SC_WINDEX                       0x00   /* gs_usb interface number */
-#define CDC_WINDEX                      0x02   /* CDC interface number */
+#define GSUSB_WINDEX                    0x00   /* gs_usb interface number */
+#define CDC_WINDEX                      0x02   /* CDC interface number */ // Read warning above
 #endif
 
 #if defined(ENABLE_CDC) && !defined(ENABLE_GSUSB)
 #define USBD_MAX_NUM_INTERFACES			2U
 #define USB_COMPOSITE_CONFIG_DESC_SIZ   75
-#define CDC_WINDEX                      0x02   /* CDC interface number */
+#define CDC_WINDEX                      0x04   /* CDC interface number */ // Read warning above
 #endif
 
 
 #if !defined(ENABLE_CDC) && defined(ENABLE_GSUSB)
 #define USBD_MAX_NUM_INTERFACES         2U
 #define USB_COMPOSITE_CONFIG_DESC_SIZ   50
-#define SC_WINDEX                       0x00   /* gs_usb interface number */
+#define GSUSB_WINDEX                    0x00   /* gs_usb interface number */
+#endif
+
+#if defined(ENABLE_CDC) && defined(ENABLE_GSUSB) && (CDC_WINDEX == 0x04)
+#error invalid configuration (see warning above)
+#endif
+
+#if defined(ENABLE_CDC) && !defined(ENABLE_GSUSB) && (CDC_WINDEX != 0x04)
+#error invalid configuration (see warning above)
 #endif
 
 /*---------- -----------*/
