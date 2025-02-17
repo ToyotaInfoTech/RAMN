@@ -403,34 +403,6 @@ void RAMN_TxTask2Func(void *argument);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-#ifdef ENABLE_USB
-
-// Reports the status of each Stream Buffer over USB, stores data in provided buffer
-static uint16_t reportFIFOStatus_USB(uint8_t* usbSendBuffer)
-{
-	uint16_t index = 0U;
-
-	usbSendBuffer[index++] = 'q';
-
-	// RX FIFO Fill Level
-	index += uint32toASCII(HAL_FDCAN_GetRxFifoFillLevel(&hfdcan1,FDCAN_RX_FIFO0),&usbSendBuffer[index]);
-
-	// TX FIFO Free Level
-	index += uint32toASCII(HAL_FDCAN_GetTxFifoFreeLevel(&hfdcan1),&usbSendBuffer[index]);
-
-	// CAN RX Stream Buffer levels
-	index += uint32toASCII(xStreamBufferSpacesAvailable(CANRxDataStreamBufferHandle),&usbSendBuffer[index]);
-	index += uint32toASCII(xStreamBufferBytesAvailable(CANRxDataStreamBufferHandle),&usbSendBuffer[index]);
-
-	// CAN TX Stream Buffer levels
-	index += uint32toASCII(xStreamBufferSpacesAvailable(CANTxDataStreamBufferHandle),&usbSendBuffer[index]);
-	index += uint32toASCII(xStreamBufferBytesAvailable(CANTxDataStreamBufferHandle),&usbSendBuffer[index]);
-
-	usbSendBuffer[index++] = '\r';
-	return index;
-}
-#endif
-
 #if defined(GENERATE_RUNTIME_STATS)
 #define MAX_NUMBER_OF_TASKS 16
 volatile unsigned long ulHighFrequencyTimerTicks;
@@ -2287,8 +2259,23 @@ void RAMN_ReceiveUSBFunc(void *argument)
 					RAMN_DEBUG_DumpCANErrorRegisters(&errorCount, &protocolStatus);
 					break;
 				case 'q': // Get status of FIFOs
-					offset = reportFIFOStatus_USB(smallResponseBuffer);
-					RAMN_USB_SendFromTask(smallResponseBuffer,offset);
+					// Reports the status of each Stream Buffer over USB, stores data in provided buffer
+					RAMN_USB_SendStringFromTask("q");
+
+					// RX FIFO Fill Level
+					RAMN_USB_SendASCIIUint32(HAL_FDCAN_GetRxFifoFillLevel(&hfdcan1,FDCAN_RX_FIFO0));
+
+					// TX FIFO Free Level
+					RAMN_USB_SendASCIIUint32(HAL_FDCAN_GetTxFifoFreeLevel(&hfdcan1));
+
+					// CAN RX Stream Buffer levels
+					RAMN_USB_SendASCIIUint32(xStreamBufferSpacesAvailable(CANRxDataStreamBufferHandle));
+					RAMN_USB_SendASCIIUint32(xStreamBufferBytesAvailable(CANRxDataStreamBufferHandle));
+
+					// CAN TX Stream Buffer levels
+					RAMN_USB_SendASCIIUint32(xStreamBufferSpacesAvailable(CANTxDataStreamBufferHandle));
+					RAMN_USB_SendASCIIUint32(xStreamBufferBytesAvailable(CANTxDataStreamBufferHandle));
+					RAMN_USB_SendStringFromTask("\r");
 					break;
 				case 'I':// Send GW Stats information
 					RAMN_DEBUG_ReportCANStats(&RAMN_FDCAN_Status);
