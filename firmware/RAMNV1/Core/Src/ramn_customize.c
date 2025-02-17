@@ -20,13 +20,18 @@
 #include "ramn_uart.h"
 #endif
 
+// Loop counter for RAMN_CUSTOM_Update
 static uint32_t loopCounter = 0;
+
+// Number of time RAMN_CUSTOM_TIM6ISR has been called (by default, time in s from boot)
+static volatile uint32_t tim6val = 0;
 
 void 	RAMN_CUSTOM_Init(uint32_t tick)
 {
 	loopCounter = 0;
 }
 
+// Called when a CAN message is received (Hardware filters should be configured separately)
 void	RAMN_CUSTOM_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, const uint8_t* data, uint32_t tick)
 {
 	// Fields that you may want to use:
@@ -41,6 +46,7 @@ void	RAMN_CUSTOM_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, const
 	// See FilterIndex and IsFilterMatchingFrame for additional fields.
 }
 
+// Called periodically from main task
 void RAMN_CUSTOM_Update(uint32_t tick)
 {
 	// This function is called by a dedicated periodic task, which means code can here won't block other functionalities (such as receiving CAN messages).
@@ -64,8 +70,30 @@ void RAMN_CUSTOM_Update(uint32_t tick)
 	}
 
 	loopCounter += 1; 	//You may want to add a check for integer overflow.
-
 }
+
+/* TIMERS */
+
+// TIM16 is configured as a free running timer (e.g., to use for accurate timing measurements). Default: 1MHz counter.
+// TIM6  is configured as a trigger periodically calling an ISR. Default: every 1s.
+
+// To reset TIM16 (e.g., to start a measurement), use:
+// __HAL_TIM_SET_COUNTER(&htim16, 0);
+// To read the value of TIM16 (to get your timing measurement), use:
+// __HAL_TIM_GET_COUNTER(&htim16);  (should return uint16_t)
+
+
+// Function periodically called by timer (not depending on freeRTOS)
+void RAMN_CUSTOM_TIM6ISR(TIM_HandleTypeDef *htim)
+{
+	// WARNING: THIS FUNCTION IS CALLED BY AN ISR AND SHOULD RETURN QUICKLY.
+	// You can only use freeRTOS features that end with "FromISR"
+
+	tim6val++;
+}
+
+
+/* TASK HOOKS */
 
 // The functions below are called by tasks that are started but not used (e.g., USB task when USB is not active).
 // They can be used to implement tasks that will not interfere with the main periodic task.
@@ -115,6 +143,9 @@ void RAMN_CUSTOM_CustomTask6(void *argument)
 	vTaskDelete(NULL);
 }
 #endif
+
+
+/* HARDWARE INTERFACE HOOKS */
 
 #ifdef ENABLE_I2C
 void RAMN_CUSTOM_ReceiveI2C(uint8_t buf[], uint16_t buf_size)

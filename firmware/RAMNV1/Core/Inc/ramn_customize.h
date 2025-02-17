@@ -29,6 +29,10 @@ void	RAMN_CUSTOM_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, const
 // Function that is called periodically
 void 	RAMN_CUSTOM_Update(uint32_t tick);
 
+// Function called periodically by a timer (default: every 1 second).
+// Can be modified to execute something periodically with an accurate, arbitrary timer (Update TIM6 settings).
+void 	RAMN_CUSTOM_TIM6ISR(TIM_HandleTypeDef *htim);
+
 // Functions called by different tasks
 
 #ifndef ENABLE_CDC

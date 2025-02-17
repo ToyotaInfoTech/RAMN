@@ -91,7 +91,9 @@ RNG_HandleTypeDef hrng;
 SPI_HandleTypeDef hspi2;
 DMA_HandleTypeDef hdma_spi2_tx;
 
+TIM_HandleTypeDef htim6;
 TIM_HandleTypeDef htim7;
+TIM_HandleTypeDef htim16;
 
 PCD_HandleTypeDef hpcd_USB_FS;
 
@@ -382,6 +384,8 @@ static void MX_I2C2_Init(void);
 static void MX_LPUART1_UART_Init(void);
 static void MX_USB_PCD_Init(void);
 static void MX_TIM7_Init(void);
+static void MX_TIM6_Init(void);
+static void MX_TIM16_Init(void);
 void RAMN_ReceiveUSBFunc(void *argument);
 void RAMN_ReceiveCANFunc(void *argument);
 void RAMN_SendCANFunc(void *argument);
@@ -498,6 +502,8 @@ int main(void)
 	MX_LPUART1_UART_Init();
 	MX_USB_PCD_Init();
 	MX_TIM7_Init();
+	MX_TIM6_Init();
+	MX_TIM16_Init();
 	/* USER CODE BEGIN 2 */
 
 #ifdef START_IN_CLI_MODE
@@ -1134,6 +1140,44 @@ static void MX_SPI2_Init(void)
 }
 
 /**
+ * @brief TIM6 Initialization Function
+ * @param None
+ * @retval None
+ */
+static void MX_TIM6_Init(void)
+{
+
+	/* USER CODE BEGIN TIM6_Init 0 */
+
+	/* USER CODE END TIM6_Init 0 */
+
+	TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+	/* USER CODE BEGIN TIM6_Init 1 */
+
+	/* USER CODE END TIM6_Init 1 */
+	htim6.Instance = TIM6;
+	htim6.Init.Prescaler = 9999;
+	htim6.Init.CounterMode = TIM_COUNTERMODE_UP;
+	htim6.Init.Period = 7999;
+	htim6.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+	if (HAL_TIM_Base_Init(&htim6) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+	sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+	if (HAL_TIMEx_MasterConfigSynchronization(&htim6, &sMasterConfig) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	/* USER CODE BEGIN TIM6_Init 2 */
+
+	/* USER CODE END TIM6_Init 2 */
+
+}
+
+/**
  * @brief TIM7 Initialization Function
  * @param None
  * @retval None
@@ -1153,7 +1197,7 @@ static void MX_TIM7_Init(void)
 	htim7.Instance = TIM7;
 	htim7.Init.Prescaler = 0;
 	htim7.Init.CounterMode = TIM_COUNTERMODE_UP;
-	htim7.Init.Period = 799;
+	htim7.Init.Period = 7999;
 	htim7.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
 	if (HAL_TIM_Base_Init(&htim7) != HAL_OK)
 	{
@@ -1168,6 +1212,38 @@ static void MX_TIM7_Init(void)
 	/* USER CODE BEGIN TIM7_Init 2 */
 #endif
 	/* USER CODE END TIM7_Init 2 */
+
+}
+
+/**
+ * @brief TIM16 Initialization Function
+ * @param None
+ * @retval None
+ */
+static void MX_TIM16_Init(void)
+{
+
+	/* USER CODE BEGIN TIM16_Init 0 */
+
+	/* USER CODE END TIM16_Init 0 */
+
+	/* USER CODE BEGIN TIM16_Init 1 */
+
+	/* USER CODE END TIM16_Init 1 */
+	htim16.Instance = TIM16;
+	htim16.Init.Prescaler = 79;
+	htim16.Init.CounterMode = TIM_COUNTERMODE_UP;
+	htim16.Init.Period = 65535;
+	htim16.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+	htim16.Init.RepetitionCounter = 0;
+	htim16.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+	if (HAL_TIM_Base_Init(&htim16) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	/* USER CODE BEGIN TIM16_Init 2 */
+
+	/* USER CODE END TIM16_Init 2 */
 
 }
 
@@ -2343,24 +2419,54 @@ void RAMN_ReceiveUSBFunc(void *argument)
 						unsigned long ulTotalRunTime;
 						uint8_t usage;
 
+						RAMN_USB_SendStringFromTask("Stats computed from boot state. Use rightmost values to compute deltas.\r");
 						uxTaskGetSystemState(pxTaskStatusArray, uxTaskGetNumberOfTasks(), &ulTotalRunTime);
-						RAMN_USB_SendStringFromTask("No\tTask Name\t\t\tState\tUsage\tStackSpace\r");
+						RAMN_USB_SendStringFromTask("No\tTask Name\tState\tUsage\tStack\t");
+						uintToBCD(ulTotalRunTime, (char*)smallResponseBuffer);
+						RAMN_USB_SendStringFromTask((char*)smallResponseBuffer);
+						RAMN_USB_SendStringFromTask(" (ulTotalRunTime)\r");
 
 						for (uint8_t i = 0; i < uxTaskGetNumberOfTasks(); i++)
 						{
-							if (ulTotalRunTime > 0U) usage =  (100U * pxTaskStatusArray[i].ulRunTimeCounter)/ ulTotalRunTime;
+							if (ulTotalRunTime > 0U) usage =  (100U * pxTaskStatusArray[i].ulRunTimeCounter) / ulTotalRunTime;
 							else usage = 0U;
 
-							sprintf(smallResponseBuffer, "%d", i);
-							RAMN_USB_SendStringFromTask(smallResponseBuffer);
-							sprintf(smallResponseBuffer, ":\t%-15s\t\t\t", pxTaskStatusArray[i].pcTaskName);
-							RAMN_USB_SendStringFromTask(smallResponseBuffer);
-							sprintf(smallResponseBuffer, "%d", pxTaskStatusArray[i].eCurrentState);
-							RAMN_USB_SendStringFromTask(smallResponseBuffer);
-							sprintf(smallResponseBuffer, "\t%d%%", usage);
-							RAMN_USB_SendStringFromTask(smallResponseBuffer);
-							sprintf(smallResponseBuffer, "\t%d\r", pxTaskStatusArray[i].usStackHighWaterMark);
-							RAMN_USB_SendStringFromTask(smallResponseBuffer);
+
+
+							uintToBCD(i, (char*)smallResponseBuffer);
+							RAMN_USB_SendStringFromTask((char*)smallResponseBuffer);
+							RAMN_USB_SendStringFromTask(":\t");
+							RAMN_USB_SendStringFromTask(pxTaskStatusArray[i].pcTaskName);
+							if(strlen(pxTaskStatusArray[i].pcTaskName) < 8) RAMN_USB_SendStringFromTask("\t\t");
+							else RAMN_USB_SendStringFromTask("\t");
+
+							// Send task state
+							const char *stateStr = "?????";
+							switch(pxTaskStatusArray[i].eCurrentState) {
+							case eRunning:   stateStr = "Running"; break;
+							case eReady:     stateStr = "Ready"; break;
+							case eBlocked:   stateStr = "Block"; break;
+							case eSuspended: stateStr = "Suspend"; break;
+							case eDeleted:   stateStr = "Deleted"; break;
+							case eInvalid:   stateStr = "Invalid"; break;
+							}
+							RAMN_USB_SendStringFromTask(stateStr);
+
+							// Send Usage
+							uintToBCD(usage, (char*)smallResponseBuffer);
+							RAMN_USB_SendStringFromTask("\t");
+							RAMN_USB_SendStringFromTask((char*)smallResponseBuffer);
+							RAMN_USB_SendStringFromTask("%");
+
+							// Convert stack high water mark to a string and send
+							uintToBCD(pxTaskStatusArray[i].usStackHighWaterMark, (char*)smallResponseBuffer);
+							RAMN_USB_SendStringFromTask("\t");
+							RAMN_USB_SendStringFromTask((char*)smallResponseBuffer);
+
+							RAMN_USB_SendStringFromTask("\t");
+							uintToBCD(pxTaskStatusArray[i].ulRunTimeCounter, (char*)smallResponseBuffer);
+							RAMN_USB_SendStringFromTask((char*)smallResponseBuffer);
+							RAMN_USB_SendStringFromTask("\r");
 						}
 					}
 					break;
@@ -2710,6 +2816,8 @@ void RAMN_PeriodicTaskFunc(void *argument)
 	RAMN_CTF_Init(xTaskGetTickCount());
 #endif
 	RAMN_CUSTOM_Init(xTaskGetTickCount());
+	HAL_TIM_Base_Start_IT(&htim6); 	// Enable custom function timer
+	HAL_TIM_Base_Start(&htim16); 	// Enable custom measurement timer
 
 #if defined(ENABLE_SCREEN)
 	RAMN_SCREENMANAGER_Init(&hspi2, &RAMN_PeriodicHandle);
@@ -3295,17 +3403,22 @@ void RAMN_TxTask2Func(void *argument)
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
 	/* USER CODE BEGIN Callback 0 */
-
-	/* USER CODE END Callback 0 */
-	if (htim->Instance == TIM1) {
-		HAL_IncTick();
-	}
-	/* USER CODE BEGIN Callback 1 */
 #ifdef GENERATE_RUNTIME_STATS
-	if (htim->Instance == TIM7) {
+	if (htim->Instance == TIM7)
+	{
 		ulHighFrequencyTimerTicks++;
 	}
+	else
 #endif
+		/* USER CODE END Callback 0 */
+		if (htim->Instance == TIM1) {
+			HAL_IncTick();
+		}
+	/* USER CODE BEGIN Callback 1 */
+		else if (htim->Instance == TIM6)
+		{
+			RAMN_CUSTOM_TIM6ISR(htim);
+		}
 
 	/* USER CODE END Callback 1 */
 }
