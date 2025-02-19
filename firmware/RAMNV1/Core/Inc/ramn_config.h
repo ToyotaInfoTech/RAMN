@@ -29,19 +29,26 @@
 
 // See comments at the end of file if you want to use the internal oscillator instead of the external crystal.
 
+// Enable the flag below if you want to disable features that may impact security (e.g., ReadMemoryByAddress UDS service, etc.).
+// This can be used to put RAMN in a state ready to be customized for Capture The Flag applications.
+// By default, this will generate compile errors that you will need to address by removing relevant defines or commenting out the #error lines.
+// Note that the USB CLI will be active but not accessible unless you make the "#" command available again (by editing ramn_cdc.c).
+// UDS over USB (slcan command "%" is accessible by default, but you may want to remove it (also by editing ramn_cdc.c) to further limit attack surfaces.
+//#define HARDENING
+
 // CONFIGURATION OF ECU A ------------------------------------------------------
 
 #if defined(TARGET_ECUA)
 #define ENABLE_USB
 #define ENABLE_CDC // USB serial (CDC) interface
 
-// Enable this to enable the candlelight interface (gs_usb drivers)
+// Enable this flag to enable the candlelight interface (gs_usb drivers)
 // Current implementation is experimental:
 // - Error frames are not reported
 // - CAN-FD is not supported
 // - Due to clock differences, bit timings are not respected (but equivalent baudrates are used)
 // You may want to update USBD_VID and USBD_PID in usbd_desc.c to automatically load the drivers on Linux.
-// #define ENABLE_GSUSB
+//#define ENABLE_GSUSB
 
 #define USBD_VID                      	0x483
 #define USBD_PID                    	0x5740
@@ -87,17 +94,8 @@
 // #define ENABLE_USB_AUTODETECT
 
 // Will start the usb serial interface in CLI mode instead of slcan if enabled.
+// If used with HARDENING, make sure you make the "#" slcan command available again.
 //#define START_IN_CLI_MODE
-
-// Enable this flag to enable FreeRTOS runtime stats.
-// This also requires to add "volatile" keyword to static uint32_t ulTotalRunTime = 0UL in tasks.c of FreeRTOS (typically overwritten by STM32CubeIDE code generation).
-// Increase the frequency of runtime timer (by default, TIM7) to increase stat accuracy at the cost of performances.
-#define GENERATE_RUNTIME_STATS
-#define MAX_NUMBER_OF_TASKS 16 // Max number of tasks that can be monitored, if enabled
-// If this flag is enabled, ECU A will repeat whatever message it accepts over USB.
-// May be useful when multiplexing the serial interface, but should typically not be used.
-// CAN_ECHO does not cover ECU A CAN messages not sent from USB (i.e., answer to UDS commands).
-//#define CAN_ECHO
 
 // Define this flag to let ECU A process slcan message that it receives as regular RX messages (and update their value on screen, for example).
 // This is useful to demonstrate the impact of CAN fuzzing on ECU A's screen when using ECU A's slcan interface, even though ECU A did not actually receive the fuzzed CAN message (since it was the transmitter).
@@ -187,6 +185,16 @@
 #define ENABLE_DYNAMIC_BITRATE
 #define FDCAN_PERIPHERAL_CLOCK 40000000
 
+// Enable this flag to enable FreeRTOS runtime stats.
+// This also requires to add "volatile" keyword to static uint32_t ulTotalRunTime = 0UL in tasks.c of FreeRTOS (typically overwritten by STM32CubeIDE code generation).
+// Increase the frequency of runtime timer (by default, TIM7) to increase stat accuracy at the cost of performances.
+#define GENERATE_RUNTIME_STATS
+#define MAX_NUMBER_OF_TASKS 16 // Max number of tasks that can be monitored, if enabled
+// If this flag is enabled, ECU A will repeat whatever message it accepts over USB.
+// May be useful when multiplexing the serial interface, but should typically not be used.
+// CAN_ECHO does not cover ECU A CAN messages not sent from USB (i.e., answer to UDS commands).
+//#define CAN_ECHO
+
 // This flag can be used to automatically reset CAN/CAN-FD peripheral if it enters bus-off mode.
 // #define AUTO_RECOVER_BUSOFF
 
@@ -228,6 +236,10 @@
 // If this is defined, the TRNG module will fill a stream buffer with random bytes instead of calling the HAL library.
 //#define USE_TRNG_BUFFER
 
+// TRNG pool settings (if used)
+#define TRNG_POOL_SIZE 	   				256
+#define JOYSTICK_POOL_SIZE				10
+
 #ifdef ENABLE_I2C
 #define I2C_RX_BUFFER_SIZE				(16)
 #define I2C_TX_BUFFER_SIZE				(4)
@@ -261,10 +273,6 @@
 #define UDS_DRAW_BUFFER_SIZE 0x1000
 #endif
 #endif
-
-// TRNG pool settings (if used)
-#define TRNG_POOL_SIZE 	   				256
-#define JOYSTICK_POOL_SIZE				10
 
 #if defined(ENABLE_UDS) || defined(ENABLE_KWP)
 #define ENABLE_ISOTP
@@ -350,6 +358,37 @@
 #if defined(ENABLE_USB) && !defined(ENABLE_CDC) && !defined(ENABLE_GSUSB)
 #error At least one USB interface must be active if you enable USB
 #endif
+
+#ifdef HARDENING
+#ifdef ENABLE_GSUSB
+#error "It is preferable to turn off GS_USB to limit attack surfaces. Comment out this line to enable anyway."
+#endif
+#ifdef ENABLE_KWP
+#error "It is preferable to turn off KWP2000 to limit attack surfaces. Comment out this line to enable anyway."
+#endif
+#ifdef ENABLE_XCP
+#error "It is preferable to turn off XCP to limit attack surfaces. Comment out this line to enable anyway (You'll need to update RAMN_MEMORY_CheckAreaReadable and/or XCP_COMMAND_UPLOAD)."
+#endif
+#ifdef ENABLE_USB_DEBUG
+#error "It is preferable to turn off USB debug to limit attack surfaces. Comment out this line to enable anyway."
+#endif
+#ifdef ENABLE_CHIP8
+#error "It is preferable to turn off CHIP8 engine to limit attack surfaces. Comment out this line to enable anyway."
+#endif
+#ifdef ENABLE_MINICTF
+#error "You may want to disable the mini-ctf to avoid conflicts. Comment out this line to enable anyway."
+#endif
+#ifdef ENABLE_REPROGRAMMING
+#error "You may want to disable reprogramming to avoid accidental firmware erasure. Comment out this line to enable anyway."
+#endif
+#ifdef GENERATE_RUNTIME_STATS
+#error "You may want to disable runtime stats to limit accessible information. Comment out this line to enable anyway."
+#endif
+#ifdef ENABLE_EEPROM_EMULATION
+#error "You may want to disable EEPROM to limit potential memory issues. Comment out this line to enable anyway."
+#endif
+#endif
+
 
 // To use the internal oscillator (instead of the default external 10MHz crystal), You should modify RAMNV1.ioc so that:
 // - PLL Source Mux uses HSI with *N = X 10

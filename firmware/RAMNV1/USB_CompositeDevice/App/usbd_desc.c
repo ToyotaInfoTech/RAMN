@@ -22,6 +22,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "../../USB_CompositeDevice/App/usbd_desc.h"
 
+#ifdef ENABLE_USB
+
 #include "../../Middlewares/ST/STM32_USB_Device_Library/USBCore/Inc/usbd_core.h"
 
 #include "../../USB_CompositeDevice/Target/usbd_conf.h"
@@ -390,5 +392,5 @@ static void IntToUnicode(uint32_t value, uint8_t * pbuf, uint8_t len)
 /**
  * @}
  */
-
+#endif
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

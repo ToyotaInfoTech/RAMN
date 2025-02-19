@@ -445,6 +445,7 @@ static void RAMN_UDS_ReadDataByIdentifier(uint8_t* data, uint16_t size)
 		uint8_t answer[32+4];
 		uint8_t answer_size = 0;
 		EE_Status result = EE_OK;
+#ifdef ENABLE_EEPROM_EMULATION
 		if ((index >= 0x200) && (index < 0x400))
 		{
 			// This range can be read/written with arbitrary 32-bit values
@@ -463,6 +464,7 @@ static void RAMN_UDS_ReadDataByIdentifier(uint8_t* data, uint16_t size)
 			}
 		}
 		else
+#endif
 		{
 			switch (index)
 			{
@@ -508,6 +510,7 @@ static void RAMN_UDS_ReadDataByIdentifier(uint8_t* data, uint16_t size)
 				RAMN_memcpy((uint8_t*)&(answer[3]),(uint8_t*)DEVICE_HARDWARE_ID_ADDRESS,12);
 				answer_size = 12+3;
 				break;
+#ifdef ENABLE_EEPROM_EMULATION
 			case 0xF190: // VIN
 				result |= RAMN_EEPROM_Read32(VIN_BYTES1_4_INDEX,val);
 				result |= RAMN_EEPROM_Read32(VIN_BYTES5_8_INDEX,&(val[1]));
@@ -517,6 +520,7 @@ static void RAMN_UDS_ReadDataByIdentifier(uint8_t* data, uint16_t size)
 				RAMN_memcpy((uint8_t*)&(answer[3]),(uint8_t*)val,17);
 				answer_size = 17+3;
 				break;
+#endif
 			default:
 				result = EE_INVALID_VIRTUALADDRESS; //not a positive response
 				break;
@@ -1265,6 +1269,7 @@ static void RAMN_UDS_RequestUpload(const uint8_t* data, uint16_t size)
 
 static void RAMN_UDS_TransferData(const uint8_t* data, uint16_t size)
 {
+#if defined(ENABLE_REPROGRAMMING) || !defined(HARDENING)
 	if( size < 2U )
 	{
 		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
@@ -1362,10 +1367,14 @@ static void RAMN_UDS_TransferData(const uint8_t* data, uint16_t size)
 			RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_RSE);
 		}
 	}
+#else
+	RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SNS);
+#endif
 }
 
 static void RAMN_UDS_RequestTransferExit(const uint8_t* data, uint16_t size)
 {
+#if defined(ENABLE_REPROGRAMMING) || !defined(HARDENING)
 	if( size != 1U )
 	{
 		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
@@ -1382,6 +1391,9 @@ static void RAMN_UDS_RequestTransferExit(const uint8_t* data, uint16_t size)
 			RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_RSE);
 		}
 	}
+#else
+	RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SNS);
+#endif
 }
 
 static void RAMN_UDS_RequestFileTransfer(const uint8_t* data, uint16_t size)
@@ -1746,15 +1758,18 @@ void RAMN_UDS_ProcessDiagPayload(uint32_t tick, uint8_t* data, uint16_t size, ui
 			case 0x11: // ECU RESET
 				RAMN_UDS_ECUReset(data, size);
 				break;
+#ifndef HARDENING
 			case 0x14: // CLEAR DIAGNOSTIC INFORMATION
 				RAMN_UDS_ClearDTC(data, size);
 				break;
 			case 0x19: // READ DTC INFORMATION
 				RAMN_UDS_ReadDTC(data, size);
 				break;
+#endif
 			case 0x22: // READ DATA BY IDENTIFIER
 				RAMN_UDS_ReadDataByIdentifier(data, size);
 				break;
+#ifndef HARDENING
 			case 0x23: // READ MEMORY BY ADDRESS
 				RAMN_UDS_ReadMemoryByAddress(data, size);
 				break;
@@ -1785,32 +1800,37 @@ void RAMN_UDS_ProcessDiagPayload(uint32_t tick, uint8_t* data, uint16_t size, ui
 			case 0x31: // ROUTINE CONTROL
 				RAMN_UDS_RoutineControl(data, size);
 				break;
+#endif
 			case 0x34: // REQUEST DOWNLOAD
 				RAMN_UDS_RequestDownload(data, size);
 				break;
+#ifndef HARDENING
 			case 0x35: // REQUEST UPLOAD
 				RAMN_UDS_RequestUpload(data, size);
 				break;
+#endif
 			case 0x36: // TRANSFER DATA
 				RAMN_UDS_TransferData(data, size);
 				break;
 			case 0x37: // REQUEST TRANSFER EXIT
 				RAMN_UDS_RequestTransferExit(data, size);
 				break;
+#ifndef HARDENING
 			case 0x38: // REQUEST FILE TRANSFER
 				RAMN_UDS_RequestFileTransfer(data, size);
 				break;
 			case 0x3D: // WRITE MEMORY BY ADDRESS
 				RAMN_UDS_WriteMemoryByAddress(data, size);
 				break;
+#endif
 			case 0x3E: // TESTER PRESENT
 				RAMN_UDS_TesterPresent(data, size);
 				break;
-#ifdef ENABLE_SCREEN
+#if defined(ENABLE_SCREEN) && !defined(HARDENING)
 			case 0x41: // Custom service to display pixels on screen
 				displayPixels(data, size);
 				break;
-#ifdef ENABLE_CHIP8
+#if defined(ENABLE_CHIP8)
 			case 0x42: // Custom service to load chip-8 games
 				loadChip8Game(data, size);
 				break;
@@ -1821,6 +1841,7 @@ void RAMN_UDS_ProcessDiagPayload(uint32_t tick, uint8_t* data, uint16_t size, ui
 				processCustomServiceFlag(data,size);
 				break;
 #endif
+#ifndef HARDENING
 			case 0x83: // ACCESS TIMING PARAMETERS
 				RAMN_UDS_AccessTimingParameters(data, size);
 				break;
@@ -1836,6 +1857,7 @@ void RAMN_UDS_ProcessDiagPayload(uint32_t tick, uint8_t* data, uint16_t size, ui
 			case 0x87: // LINK CONTROL
 				RAMN_UDS_LinkControl(data, size);
 				break;
+#endif
 			default:  // UNSUPPORTED SERVICES
 				RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SNS);
 				break;
@@ -1874,21 +1896,25 @@ void RAMN_UDS_ProcessDiagPayloadFunctional(uint32_t tick, uint8_t* data, uint16_
 			case 0x11: // ECU RESET
 				RAMN_UDS_ECUReset(data, size);
 				break;
+#ifndef HARDENING
 			case 0x14: // CLEAR DIAGNOSTIC INFORMATION
 				RAMN_UDS_ClearDTC(data, size);
 				break;
 			case 0x27: // SECURITY ACCESS
 				RAMN_UDS_SecurityAccess(data, size);
 				break;
+#endif
 			case 0x3E: // TESTER PRESENT
 				RAMN_UDS_TesterPresent(data, size);
 				break;
+#ifndef HARDENING
 			case 0x85: // CONTROL DTC SETTINGS
 				RAMN_UDS_ControlDTCSettings(data, size);
 				break;
 			case 0x87: // LINK CONTROL
 				RAMN_UDS_LinkControl(data, size);
 				break;
+#endif
 			default:  // UNSUPPORTED SERVICES
 				RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SNS);
 				break;

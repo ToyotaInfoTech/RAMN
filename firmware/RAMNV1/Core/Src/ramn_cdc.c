@@ -187,7 +187,7 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 						RAMN_USB_SendStringFromTask("\r");
 						RAMN_USB_SendStringFromTask("This interface allows you to interact with various RAMN functions and control the device's operations through a set of commands.\rType 'b' to go back to slcan mode.");
 						RAMN_USB_SendStringFromTask("\r");
-						RAMN_USB_SendStringFromTask("Public Commands:\r");
+						RAMN_USB_SendStringFromTask("Commands:\r");
 						RAMN_USB_SendStringFromTask("    - clear: Clears your serial terminal.\r");
 						RAMN_USB_SendStringFromTask("    - disable: Disable the power supply for another ECU. Usage: disable <ECU>.\r");
 						RAMN_USB_SendStringFromTask("    - enable: Enable the power supply for another ECU. Usage: enable <ECU>.\r");
@@ -198,8 +198,10 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 						RAMN_USB_SendStringFromTask("    - reset: Reset the device. Usage: reset.\r");
 						RAMN_USB_SendStringFromTask("    - slcan: Alias for the \"exit\" command.\r");
 						RAMN_USB_SendStringFromTask("    - theme: Set the color theme for ECU A's LCD screen. Usage: theme <theme number>.\r");
+#ifdef ENABLE_CHIP8
 						RAMN_USB_SendStringFromTask("    - play: Play a game on ECU A's LCD screen. Usage: play <game number>.\r");
 						RAMN_USB_SendStringFromTask("    - stop: Stop any ongoing game. Usage: stop.\r");
+#endif
 						RAMN_USB_SendStringFromTask("\r");
 						RAMN_USB_SendStringFromTask("Commands are case sensitive.\r");
 						RAMN_USB_SendStringFromTask("-------------------------------------------------------------\r");
@@ -725,6 +727,7 @@ RAMN_Bool_t RAMN_CDC_ProcessSLCANBuffer(uint8_t* USBRxBuffer, uint32_t commandLe
 				RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
 			}
 			break;
+#ifndef HARDENING
 		case '@': //Select auto report of errors
 			if (commandLength == 2U)
 			{
@@ -734,6 +737,8 @@ RAMN_Bool_t RAMN_CDC_ProcessSLCANBuffer(uint8_t* USBRxBuffer, uint32_t commandLe
 			}
 			else RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
 			break;
+#endif
+#ifndef HARDENING // Remove this check to reenable CLI mode in Hardening.
 		case '#': //Enable CLI
 			if (commandLength == 1U)
 			{
@@ -742,6 +747,7 @@ RAMN_Bool_t RAMN_CDC_ProcessSLCANBuffer(uint8_t* USBRxBuffer, uint32_t commandLe
 			}
 			else RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
 			break;
+#endif
 #if defined(ENABLE_USB) && defined(ENABLE_USB_DEBUG)
 		case 'd': // Enable/Disable debug reports
 			if (commandLength == 2U)
@@ -1005,13 +1011,16 @@ RAMN_Bool_t RAMN_CDC_ProcessSLCANBuffer(uint8_t* USBRxBuffer, uint32_t commandLe
 			}
 			break;
 #endif
+#ifndef HARDENING
 		case 'x': //Get Microcontroller Unique ID Address
 			smallResponseBuffer[0U] = USBRxBuffer[0U];
 			uint32toASCII((uint32_t)*(HARDWARE_UNIQUE_ID_ADDRESS),&smallResponseBuffer[1]);
 			smallResponseBuffer[9U] = '\r';
 			RAMN_USB_SendFromTask(smallResponseBuffer,10U);
 			break;
+#endif
 #ifdef ENABLE_UDS
+//#ifndef HARDENING   // Uncomment this to disable UDS over USB when HARDENING flag is active.
 		case '%': // Diagnostic Message
 			if (commandLength >= 4U)
 			{
@@ -1032,8 +1041,9 @@ RAMN_Bool_t RAMN_CDC_ProcessSLCANBuffer(uint8_t* USBRxBuffer, uint32_t commandLe
 				else RAMN_USB_SendFromTask((uint8_t*)"\a",1);
 			}
 			else RAMN_USB_SendFromTask((uint8_t*)"\a",1);
-#endif
 			break;
+//#endif
+#endif
 		case 'b': // Already in slcan mode, just say yes
 			RAMN_USB_SendFromTask((uint8_t*)"\r",1);
 			break;

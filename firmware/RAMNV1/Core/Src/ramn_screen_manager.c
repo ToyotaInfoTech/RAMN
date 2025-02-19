@@ -32,7 +32,7 @@ static RAMNScreen* screens[] = {
 #ifdef ENABLE_CHIP8
 		&ScreenChip8,
 #endif
-#ifdef ENABLE_UDS
+#if defined(ENABLE_UDS) && !defined(HARDENING)
 		&ScreenUDS
 #endif
 }; //TODO: move to flash (?)
