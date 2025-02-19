@@ -66,8 +66,8 @@ Customers can select the number of PCBs and assembled boards separately when pla
    :align: center
 
 The more boards you order, the cheaper they become.
-If you order 5 assembled RAMN sets, the expected cost is approximately 210 USD per full RAMN set (including the external components below, assuming a green soldermask and ENIG surface finish, and without the optional debugger expansion).
-If you order only one set, that cost however becomes 430 USD.
+If you order 5 assembled RAMN sets, the expected cost is approximately 210 USD per full RAMN set (assuming a green soldermask and ENIG surface finish, and without the optional debugger expansion).
+If you order only one set, that cost however becomes 430 USD. If you order 100 sets, it becomes about 140 USD.
 
 
 Production notes
