@@ -1842,6 +1842,11 @@ void RAMN_UDS_ProcessDiagPayload(uint32_t tick, uint8_t* data, uint16_t size, ui
 			}
 		}
 	}
+	else
+	{
+		data[0] = 0U;
+		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
+	}
 }
 
 
@@ -1889,6 +1894,11 @@ void RAMN_UDS_ProcessDiagPayloadFunctional(uint32_t tick, uint8_t* data, uint16_
 				break;
 			}
 		}
+	}
+	else
+	{
+		data[0] = 0U;
+		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
 	}
 }
 

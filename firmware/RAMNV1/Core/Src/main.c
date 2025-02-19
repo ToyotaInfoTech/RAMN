@@ -1937,9 +1937,12 @@ void RAMN_DiagRXFunc(void *argument)
 						if (diagRxSize <= 0xFFF)
 						{
 							index = 0;
-							while (index != diagRxSize)
+							if (diagRxSize > 0U)
 							{
-								index += xStreamBufferReceive(UdsRxDataStreamBufferHandle, (void *)diagRxbuf+index,diagRxSize-index, portMAX_DELAY);
+								while (index != diagRxSize)
+								{
+									index += xStreamBufferReceive(UdsRxDataStreamBufferHandle, (void *)&diagRxbuf[index],diagRxSize-index, portMAX_DELAY);
+								}
 							}
 
 							if (addressing == 0U)
