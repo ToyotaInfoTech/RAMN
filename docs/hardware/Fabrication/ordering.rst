@@ -32,7 +32,7 @@ Click the buttons below to access the PCBway re-order pages.
     :color: secondary
     :expand:
 
-    Expansions Panel from PCBWay (⚠️you must order additional parts yourself, see below⚠️)
+    Expansions Panel from PCBWay
 
 
 The bill of materials used in the above orders were tailored to match
@@ -45,7 +45,7 @@ Parameters
 You should keep most of the default parameters of PCBway: FR4 material, 2 layers, 1.6mm thickness, 1oz (35um) copper.
 
 You should be able to select any surface finish, although we suggest that you stay away from any solution with lead.
-"HASL lead free" is typically the cheapest solution without lead, but may tarnish over time. 
+"HASL lead free" is typically the cheapest solution without lead, but may tarnish over time.
 We typically use "Immersion gold (ENIG)", and haven't tried other surface finishes ourselves.
 
 "Solder Mask" corresponds to the color of the board, and "Silkscreen" corresponds to the color of the text and lines.
@@ -65,35 +65,9 @@ Customers can select the number of PCBs and assembled boards separately when pla
 .. image:: img/0121A.png
    :align: center
 
-The more boards you order, the cheaper they become. 
+The more boards you order, the cheaper they become.
 If you order 5 assembled RAMN sets, the expected cost is approximately 210 USD per full RAMN set (including the external components below, assuming a green soldermask and ENIG surface finish, and without the optional debugger expansion).
 If you order only one set, that cost however becomes 430 USD.
-
-Aditional Parts Needed for Expansions Orders
---------------------------------------------------
-
-The RAMN mainboard assembly can be ordered completely from PCBWay.
-PCBWAy is not able to obtain all the parts required for RAMN expansions;
-therefore, the following parts must be acquired from other sources (e.g.
-digikey, mouser) and installed (soldered) by yourself -- don't worry
-these are easy to solder!
-
-+----------------------+----------------------+----------------------+
-| Manufacturer Name    | Manufacturer Part    | Description          |
-|                      | Number               |                      |
-+======================+======================+======================+
-| Adafruit Industries  | 4313                 | 1.3" 240X240 WIDE    |
-| LLC                  |                      | ANGLE TFT LCD        |
-+----------------------+----------------------+----------------------+
-| NKK Switches         | NR01104ANG13-2A      | Rotary Switch 4      |
-|                      |                      | Position SP4T 0.4VA  |
-|                      |                      | (AC/DC) 28 VAC       |
-|                      |                      | Through Hole 4POS    |
-|                      |                      | 0.4VA 28V            |
-+----------------------+----------------------+----------------------+
-| NKK Switches         | SK14EG13             | SWITCH KEYLK 3POS    |
-|                      |                      | SP3T 0.4VA 28V       |
-+----------------------+----------------------+----------------------+
 
 
 Production notes
