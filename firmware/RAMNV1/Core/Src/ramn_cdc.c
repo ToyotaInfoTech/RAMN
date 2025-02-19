@@ -571,6 +571,7 @@ RAMN_Bool_t RAMN_CDC_ProcessSLCANBuffer(uint8_t* USBRxBuffer, uint32_t commandLe
 		case 's':
 			if (commandLength == 5U)
 			{
+				hfdcan1.Init.NominalPrescaler = 1; // Reset the prescaler in case it was modified by another function.
 				hfdcan1.Init.NominalTimeSeg1 = ASCIItoUint8(&USBRxBuffer[1U]);
 				hfdcan1.Init.NominalTimeSeg2 = ASCIItoUint8(&USBRxBuffer[3U]);
 				RAMN_FDCAN_ResetPeripheral();
