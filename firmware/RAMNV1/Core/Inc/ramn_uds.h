@@ -66,19 +66,6 @@
 #define UDS_NRC_SNSIAS 	0x7F	//Service not supported in active session
 #define UDS_NRC_VSTH    0x88    //Vehicle Speed too High
 
-
-// Timeout of diagnostic session
-#define UDS_SESSION_TIMEOUT_MS 				3600000
-
-// Maximum RPM that will allow a transition to diagnostic sessions
-#define UDS_MAXIMUM_RPM_ACCEPTABLE 			0xFFF
-
-// Delay before accepting a new security Access Attempt
-#define SECURITY_ACCESS_RETRY_TIMEOUT_MS 	10
-
-// Maximum Security access attempts before locking device
-#define SECURITY_ACCESS_MAX_ATTEMPTS 		5
-
 // Maximum Blocksize for Transfer Data function
 #define TRANSFER_DATA_BLOCKSIZE 			0xFF0
 

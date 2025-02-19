@@ -262,6 +262,10 @@
 #endif
 #endif
 
+// TRNG pool settings (if used)
+#define TRNG_POOL_SIZE 	   				256
+#define JOYSTICK_POOL_SIZE				10
+
 #if defined(ENABLE_UDS) || defined(ENABLE_KWP)
 #define ENABLE_ISOTP
 #endif
@@ -270,11 +274,25 @@
 #define ISOTP_TXBUFFER_SIZE 			4096
 #define ISOTP_CONSECUTIVE_BLOCK_SIZE 	0
 #define ISOTP_CONSECUTIVE_ST 			0
-#define ISOTP_RX_TIMEOUT_MS 			200000
-#define ISOTP_TX_TIMEOUT_MS 			2000
 
-#define TRNG_POOL_SIZE 	   				256
-#define JOYSTICK_POOL_SIZE				10
+// ISO-TP Timeout values. Both should be set to 1000 to mimic real ECUs.
+#define ISOTP_RX_TIMEOUT_MS 			200000
+#define ISOTP_TX_TIMEOUT_MS 			10000
+
+// Timeout for extended diagnostic session.
+// By default, other session types do not time out, although they would on real ECUs.
+#define UDS_SESSION_TIMEOUT_MS 				5000
+
+// Maximum RPM that will allow a transition to diagnostic sessions.
+// Can be used to emulate a "Conditions not correct" error when the vehicle is running in Carla.
+#define UDS_MAXIMUM_RPM_ACCEPTABLE 			0xFFF
+
+// Delay before accepting a new security access attempt.
+// This delay also applies to minimum time between ECU boot and first attempt.
+#define SECURITY_ACCESS_RETRY_TIMEOUT_MS 	10
+
+// Maximum Security access attempts before locking device.
+#define SECURITY_ACCESS_MAX_ATTEMPTS 		5
 
 #ifdef TARGET_ECUA
 #define USB_RX_BUFFER_SIZE 				15000
