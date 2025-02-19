@@ -398,9 +398,8 @@ RAMN_Result_t RAMN_ISOTP_RequestTx(RAMN_ISOTPHandler_t* handler, uint32_t tick)
 	{
 		if (handler->txStatus != ISOTP_TX_IDLE)
 		{
-#ifdef HANG_ON_ERRORS
-			Error_Handler();
-#endif
+			// New request even though ongoing transfer wasn't over
+			report_Error(handler, ISOTP_TX, N_TIMEOUT_A);
 		}
 		handler->txIndex = 0U;
 		handler->txFrameCount = 0U;

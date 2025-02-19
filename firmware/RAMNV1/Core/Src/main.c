@@ -2102,6 +2102,13 @@ void RAMN_DiagTXFunc(void *argument)
 					{
 						while (RAMN_UDS_Continue_TX(xTaskGetTickCount()) != True)
 						{
+							if (xStreamBufferBytesAvailable(UdsTxDataStreamBufferHandle) >= sizeof(RAMN_UDS_ISOTPHandler.txSize))
+							{
+								// We received another TX request even though the ongoing transfer isn't over.
+								// User may be manually sending ISO-TP requests and forgot the FLOW CONTROL frames.
+								// Consider the transfer over and move to next request.
+								break;
+							}
 							osDelay(RAMN_DBC_RequestSilence ? RAMN_UDS_ISOTPHandler.targetST : SIM_LOOP_CLOCK_MS);
 						}
 					}
@@ -2128,6 +2135,13 @@ void RAMN_DiagTXFunc(void *argument)
 					{
 						while (RAMN_KWP_Continue_TX(xTaskGetTickCount()) != True)
 						{
+							if (xStreamBufferBytesAvailable(KwpTxDataStreamBufferHandle) >= sizeof(RAMN_UDS_ISOTPHandler.txSize))
+							{
+								// We received another TX request even though the ongoing transfer isn't over.
+								// User may be manually sending ISO-TP requests and forgot the FLOW CONTROL frames.
+								// Consider the transfer over and move to next request.
+								break;
+							}
 							osDelay(RAMN_DBC_RequestSilence ? RAMN_KWP_ISOTPHandler.targetST : SIM_LOOP_CLOCK_MS);
 						}
 					}
