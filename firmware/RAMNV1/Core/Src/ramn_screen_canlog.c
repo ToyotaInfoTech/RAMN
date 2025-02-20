@@ -61,6 +61,9 @@ static uint32_t dispIndex = 0U;
 // Whether the screen is active or not
 static RAMN_Bool_t active = True;
 
+// Set to true if module had to give up writing on screen because it was slowing down RX processing
+static RAMN_Bool_t overflowed = False;
+
 // Semaphore to enable access from different tasks
 static SemaphoreHandle_t CANLOG_SEMAPHORE = 0U;
 static StaticSemaphore_t CANLOG_SEMAPHORE_STRUCT;
@@ -70,34 +73,25 @@ static void SCREENCANLOG_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeade
 	volatile CAN_Message *message;
 
 	if (CANLOG_SEMAPHORE == 0U) return; // Module is not initialized yet
-
-	if (xStreamBufferBytesAvailable(CANRxDataStreamBufferHandle) > MAX_BUFFER_BYTES)
-	{
-		// Too many CAN messages waiting (would be immediately overwritten, do nothing)
-	}
 	else if ((pHeader->IdType == FDCAN_STANDARD_ID) && (pHeader->FDFormat == FDCAN_CLASSIC_CAN) && (pHeader->RxFrameType == FDCAN_DATA_FRAME) && (pHeader->DataLength <= 8))
 	{
 		// Check filter
 		if ((pHeader->Identifier & FILTER_MASK_LIST[filterIndex]) != (FILTER_ID_LIST[filterIndex] & FILTER_MASK_LIST[filterIndex])) return;
 
-		// Try to take semaphore, but do not block indefinitely
-		if(xSemaphoreTake(CANLOG_SEMAPHORE, 50U) == pdTRUE)
-		{
-			// Check that we are not too far behind processing the buffer
-			if (xStreamBufferBytesAvailable(CANRxDataStreamBufferHandle) <= MAX_BUFFER_BYTES)
-			{
-				message = &canMessageBuffer.messages[canMessageBuffer.head];
-				message->identifier = pHeader->Identifier;
-				message->payload_size = pHeader->DataLength;
-				RAMN_memcpy(message->data, data, pHeader->DataLength);
+		// Take semaphore
+		while(xSemaphoreTake(CANLOG_SEMAPHORE, portMAX_DELAY) != pdTRUE);
 
-				// Update the buffer head and count
-				canMessageBuffer.head = (canMessageBuffer.head + 1) % CAN_MESSAGE_BUFFER_SIZE;
-				if (canMessageBuffer.count < CAN_MESSAGE_BUFFER_SIZE) canMessageBuffer.count++;
-			}
-			// Give back Semaphore
-			xSemaphoreGive(CANLOG_SEMAPHORE);
-		}
+		message = &canMessageBuffer.messages[canMessageBuffer.head];
+		message->identifier = pHeader->Identifier;
+		message->payload_size = pHeader->DataLength;
+		RAMN_memcpy(message->data, data, pHeader->DataLength);
+
+		// Update the buffer head and count
+		canMessageBuffer.head = (canMessageBuffer.head + 1) % CAN_MESSAGE_BUFFER_SIZE;
+		if (canMessageBuffer.count < CAN_MESSAGE_BUFFER_SIZE) canMessageBuffer.count++;
+
+		// Give back Semaphore
+		xSemaphoreGive(CANLOG_SEMAPHORE);
 	}
 }
 
@@ -129,13 +123,28 @@ static void SCREENCANLOG_Init()
 
 static void SCREENCANLOG_Update(uint32_t tick)
 {
+	if (overflowed)
+	{
+		if (dispIndex < CAN_MESSAGE_BUFFER_SIZE)
+		{
+			RAMN_SPI_RefreshString(9, CANVAS_OFFSET+(16*(dispIndex)), RAMN_SCREENUTILS_COLORTHEME.WHITE, RAMN_SCREENUTILS_COLORTHEME.BACKGROUND, "Overflow            ");
+		}
+		else
+		{
+			RAMN_SPI_ScrollUp(16);
+			RAMN_SPI_RefreshString(9, CANVAS_OFFSET+(16*(dispIndex%SCREEN_BUFFER_MESSAGE_COUNT)), RAMN_SCREENUTILS_COLORTHEME.WHITE, RAMN_SCREENUTILS_COLORTHEME.BACKGROUND, "Overflow            ");
+		}
+		dispIndex += 1;
+		overflowed = False;
+	}
 	if (xStreamBufferBytesAvailable(CANRxDataStreamBufferHandle) > MAX_BUFFER_BYTES)
 	{
-		// Too many CAN messages available (would be immediately overwritten, skip)
+		// CAN messages available (skip until the buffer is empty)
 		return;
 	}
 	if (RAMN_SCREENUTILS_LoopCounter % 5U == 0U)
 	{
+		// Too many messages received while drawing, write error and stop processing
 		while (xSemaphoreTake(CANLOG_SEMAPHORE, portMAX_DELAY) != pdTRUE);
 
 		if (active && (canMessageBuffer.count != 0U))
@@ -146,6 +155,13 @@ static void SCREENCANLOG_Update(uint32_t tick)
 				uint32_t index = (start_index + i) % CAN_MESSAGE_BUFFER_SIZE;
 				CAN_Message *message = &canMessageBuffer.messages[index];
 				uint8_t tmp[21];
+
+				if(xStreamBufferBytesAvailable(CANRxDataStreamBufferHandle) > MAX_BUFFER_BYTES)
+				{
+					overflowed = True;
+					break;
+				}
+
 
 				tmp[20] = 0;
 				uint12toASCII(message->identifier, tmp);

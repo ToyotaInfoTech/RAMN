@@ -113,6 +113,33 @@ uint32_t uint4toASCII(uint8_t src, uint8_t* dst)
 	return 1U;
 }
 
+uint8_t uintToBCD(uint64_t val, char *dst)
+{
+    char *ptr = dst;
+    char *start = dst;
+    uint8_t result;
+
+    if (val == 0) {
+        *ptr++ = '0';
+    } else {
+        while (val > 0) {
+            *ptr++ = (val % 10) + '0';
+            val /= 10;
+        }
+    }
+    result = ptr - dst;
+    *ptr = '\0';
+
+    // Reverse the string in place
+    ptr--;
+    while (start < ptr) {
+        char temp = *start;
+        *start++ = *ptr;
+        *ptr-- = temp;
+    }
+    return result;
+}
+
 void ASCIItoRaw(uint8_t* dst, const uint8_t* src, uint32_t raw_size)
 {
 	for (uint32_t i = 0; i < raw_size; i++)

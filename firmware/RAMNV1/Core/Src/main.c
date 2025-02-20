@@ -23,14 +23,20 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
-#include "usb_device.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "queue.h"
 #include "stm32l5xx_hal_rng.h" // contains RNG peripheral error codes
 #include "ramn_debug.h"
+#ifdef ENABLE_USB
 #include "ramn_usb.h"
+#endif
+
+#ifdef ENABLE_CDC
+#include "ramn_cdc.h"
+#endif
+
 #include "ramn_spi.h"
 #include "ramn_canfd.h"
 #include "ramn_trng.h"
@@ -53,12 +59,14 @@
 #ifdef ENABLE_UART
 #include "ramn_uart.h"
 #endif
+#include "usb_device.h"
+#include "usbd_gsusb_if.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 typedef StaticTask_t osStaticThreadDef_t;
 /* USER CODE BEGIN PTD */
-
+typedef StaticQueue_t osStaticMessageQDef_t;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -90,17 +98,18 @@ RNG_HandleTypeDef hrng;
 SPI_HandleTypeDef hspi2;
 DMA_HandleTypeDef hdma_spi2_tx;
 
+TIM_HandleTypeDef htim6;
+TIM_HandleTypeDef htim7;
+TIM_HandleTypeDef htim16;
+
+PCD_HandleTypeDef hpcd_USB_FS;
+
 /* Definitions for RAMN_ReceiveUSB */
 osThreadId_t RAMN_ReceiveUSBHandle;
-uint32_t RAMN_ReceiveUSBFuncBuffer[ 256 ];
-osStaticThreadDef_t RAMN_ReceiveUSBFuncControlBlock;
 const osThreadAttr_t RAMN_ReceiveUSB_attributes = {
 		.name = "RAMN_ReceiveUSB",
-		.stack_mem = &RAMN_ReceiveUSBFuncBuffer[0],
-		.stack_size = sizeof(RAMN_ReceiveUSBFuncBuffer),
-		.cb_mem = &RAMN_ReceiveUSBFuncControlBlock,
-		.cb_size = sizeof(RAMN_ReceiveUSBFuncControlBlock),
 		.priority = (osPriority_t) osPriorityNormal,
+		.stack_size = 256 * 4
 };
 /* Definitions for RAMN_ReceiveCAN */
 osThreadId_t RAMN_ReceiveCANHandle;
@@ -176,19 +185,64 @@ const osThreadAttr_t RAMN_DiagTX_attributes = {
 };
 /* Definitions for RAMN_SendUSB */
 osThreadId_t RAMN_SendUSBHandle;
-uint32_t RAMN_SendUSBBuffer[ 256 ];
-osStaticThreadDef_t RAMN_SendUSBControlBlock;
 const osThreadAttr_t RAMN_SendUSB_attributes = {
 		.name = "RAMN_SendUSB",
-		.stack_mem = &RAMN_SendUSBBuffer[0],
-		.stack_size = sizeof(RAMN_SendUSBBuffer),
-		.cb_mem = &RAMN_SendUSBControlBlock,
-		.cb_size = sizeof(RAMN_SendUSBControlBlock),
 		.priority = (osPriority_t) osPriorityRealtime,
+		.stack_size = 256 * 4
+};
+/* Definitions for RAMN_RxTask2 */
+osThreadId_t RAMN_RxTask2Handle;
+const osThreadAttr_t RAMN_RxTask2_attributes = {
+		.name = "RAMN_RxTask2",
+		.priority = (osPriority_t) osPriorityHigh1,
+		.stack_size = 512 * 4
+};
+/* Definitions for RAMN_TxTask2 */
+osThreadId_t RAMN_TxTask2Handle;
+const osThreadAttr_t RAMN_TxTask2_attributes = {
+		.name = "RAMN_TxTask2",
+		.priority = (osPriority_t) osPriorityHigh2,
+		.stack_size = 256 * 4
 };
 /* USER CODE BEGIN PV */
 
-#if defined(ENABLE_USB)
+#ifdef ENABLE_GSUSB
+/* Definitions for RAMN_GSUSB_RecvQueue */
+osMessageQueueId_t RAMN_GSUSB_RecvQueueHandle;
+__attribute__ ((section (".buffers"))) uint8_t RAMN_GSUSB_RecvQueueBuffer[ GSUSB_RECV_QUEUE_SIZE * sizeof( uint32_t ) ];
+osStaticMessageQDef_t RAMN_GSUSB_RecvQueueControlBlock;
+const osMessageQueueAttr_t RAMN_GSUSB_RecvQueue_attributes = {
+		.name = "RAMN_GSUSB_RecvQueue",
+		.cb_mem = &RAMN_GSUSB_RecvQueueControlBlock,
+		.cb_size = sizeof(RAMN_GSUSB_RecvQueueControlBlock),
+		.mq_mem = &RAMN_GSUSB_RecvQueueBuffer,
+		.mq_size = sizeof(RAMN_GSUSB_RecvQueueBuffer)
+};
+/* Definitions for RAMN_GSUSB_PoolQueue */
+osMessageQueueId_t RAMN_GSUSB_PoolQueueHandle;
+__attribute__ ((section (".buffers"))) uint8_t RAMN_GSUSB_PoolQueueBuffer[ GSUSB_POOL_QUEUE_SIZE * sizeof( uint32_t ) ];
+osStaticMessageQDef_t RAMN_GSUSB_PoolQueueControlBlock;
+const osMessageQueueAttr_t RAMN_GSUSB_PoolQueue_attributes = {
+		.name = "RAMN_GSUSB_PoolQueue",
+		.cb_mem = &RAMN_GSUSB_PoolQueueControlBlock,
+		.cb_size = sizeof(RAMN_GSUSB_PoolQueueControlBlock),
+		.mq_mem = &RAMN_GSUSB_PoolQueueBuffer,
+		.mq_size = sizeof(RAMN_GSUSB_PoolQueueBuffer)
+};
+/* Definitions for RAMN_GSUSB_SendQueue */
+osMessageQueueId_t RAMN_GSUSB_SendQueueHandle;
+__attribute__ ((section (".buffers"))) uint8_t RAMN_GSUSB_SendQueueBuffer[ GSUSB_SEND_QUEUE_SIZE * sizeof( uint32_t ) ];
+osStaticMessageQDef_t RAMN_GSUSB_SendQueueControlBlock;
+const osMessageQueueAttr_t RAMN_GSUSB_SendQueue_attributes = {
+		.name = "RAMN_GSUSB_SendQueue",
+		.cb_mem = &RAMN_GSUSB_SendQueueControlBlock,
+		.cb_size = sizeof(RAMN_GSUSB_SendQueueControlBlock),
+		.mq_mem = &RAMN_GSUSB_SendQueueBuffer,
+		.mq_size = sizeof(RAMN_GSUSB_SendQueueBuffer)
+};
+#endif
+
+#if defined(ENABLE_CDC)
 
 // Stream buffer for USB RX data, filled by ISR and emptied by receiving task.
 static StaticStreamBuffer_t USB_RX_BUFFER_STRUCT;
@@ -240,7 +294,7 @@ static uint16_t uart_current_index = 0;
 
 #endif
 
-static uint8_t USB_CLI_ENABLE;
+static RAMN_Bool_t USB_CLI_ENABLE;
 
 #if defined(ENABLE_I2C)
 __attribute__ ((section (".buffers"))) uint8_t i2c_rxBuf[I2C_RX_BUFFER_SIZE];
@@ -254,15 +308,6 @@ __attribute__ ((section (".buffers"))) uint8_t i2c_txBuf[I2C_TX_BUFFER_SIZE] = {
 __attribute__ ((section (".buffers"), aligned(4)))  uint8_t diagRxbuf[0xFFF+2];
 // Holds currently generated Diag Command Answer for CAN.
 __attribute__ ((section (".buffers")))  uint8_t diagTxbuf[0xFFF];
-
-#if defined(ENABLE_USB)
-
-// Holds currently processed Diag Command from USB.
-__attribute__ ((section (".buffers")))  uint8_t diagRxUSBbuf[0xFFF+2];
-// Holds currently processed Diag Command Answer from USB.
-__attribute__ ((section (".buffers")))  uint8_t diagTxUSBbuf[0xFFF+2];
-
-#endif
 
 #endif
 
@@ -335,6 +380,10 @@ static void MX_IWDG_Init(void);
 static void MX_CRC_Init(void);
 static void MX_I2C2_Init(void);
 static void MX_LPUART1_UART_Init(void);
+static void MX_USB_PCD_Init(void);
+static void MX_TIM7_Init(void);
+static void MX_TIM6_Init(void);
+static void MX_TIM16_Init(void);
 void RAMN_ReceiveUSBFunc(void *argument);
 void RAMN_ReceiveCANFunc(void *argument);
 void RAMN_SendCANFunc(void *argument);
@@ -343,6 +392,8 @@ void RAMN_ErrorTaskFunc(void *argument);
 void RAMN_DiagRXFunc(void *argument);
 void RAMN_DiagTXFunc(void *argument);
 void RAMN_SendUSBFunc(void *argument);
+void RAMN_RxTask2Func(void *argument);
+void RAMN_TxTask2Func(void *argument);
 
 /* USER CODE BEGIN PFP */
 /* USER CODE END PFP */
@@ -350,40 +401,12 @@ void RAMN_SendUSBFunc(void *argument);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-#ifdef ENABLE_USB
-
-// Reports the status of each Stream Buffer over USB, stores data in provided buffer
-static uint16_t reportFIFOStatus_USB(uint8_t* usbSendBuffer)
-{
-	uint16_t index = 0U;
-
-	usbSendBuffer[index++] = 'q';
-
-	// RX FIFO Fill Level
-	index += uint32toASCII(HAL_FDCAN_GetRxFifoFillLevel(&hfdcan1,FDCAN_RX_FIFO0),&usbSendBuffer[index]);
-
-	// TX FIFO Free Level
-	index += uint32toASCII(HAL_FDCAN_GetTxFifoFreeLevel(&hfdcan1),&usbSendBuffer[index]);
-
-	// CAN RX Stream Buffer levels
-	index += uint32toASCII(xStreamBufferSpacesAvailable(CANRxDataStreamBufferHandle),&usbSendBuffer[index]);
-	index += uint32toASCII(xStreamBufferBytesAvailable(CANRxDataStreamBufferHandle),&usbSendBuffer[index]);
-
-	// CAN TX Stream Buffer levels
-	index += uint32toASCII(xStreamBufferSpacesAvailable(CANTxDataStreamBufferHandle),&usbSendBuffer[index]);
-	index += uint32toASCII(xStreamBufferBytesAvailable(CANTxDataStreamBufferHandle),&usbSendBuffer[index]);
-
-	usbSendBuffer[index++] = '\r';
-	return index;
-}
-#endif
-
 #if defined(GENERATE_RUNTIME_STATS)
 volatile unsigned long ulHighFrequencyTimerTicks;
 
 void configureTimerForRunTimeStats(void) {
-	ulHighFrequencyTimerTicks = 0;
-	HAL_TIM_Base_Start_IT(&htim3);
+	ulHighFrequencyTimerTicks = 0U;
+	HAL_TIM_Base_Start_IT(&htim7);
 }
 
 unsigned long getRunTimeCounterValue(void) {
@@ -445,6 +468,10 @@ int main(void)
 	MX_CRC_Init();
 	MX_I2C2_Init();
 	MX_LPUART1_UART_Init();
+	MX_USB_PCD_Init();
+	MX_TIM7_Init();
+	MX_TIM6_Init();
+	MX_TIM16_Init();
 	/* USER CODE BEGIN 2 */
 
 #ifdef START_IN_CLI_MODE
@@ -453,7 +480,7 @@ int main(void)
 	USB_CLI_ENABLE = 0U;
 #endif
 
-#if defined(ENABLE_USB)
+#if defined(ENABLE_CDC)
 	USBD_RxStreamBufferHandle   = xStreamBufferCreateStatic(USB_RX_BUFFER_SIZE,sizeof(uint8_t),USB_RX_BUFFER,&USB_RX_BUFFER_STRUCT);
 	USBD_TxStreamBufferHandle   = xStreamBufferCreateStatic(USB_TX_BUFFER_SIZE,sizeof(uint8_t),USB_TX_BUFFER,&USB_TX_BUFFER_STRUCT);
 #endif
@@ -558,7 +585,20 @@ int main(void)
 	/* USER CODE END RTOS_TIMERS */
 
 	/* USER CODE BEGIN RTOS_QUEUES */
+#ifdef ENABLE_GSUSB
+	/* creation of RAMN_GSUSB_RecvQueue */
+	RAMN_GSUSB_RecvQueueHandle = osMessageQueueNew (GSUSB_RECV_QUEUE_SIZE, sizeof(uint32_t), &RAMN_GSUSB_RecvQueue_attributes);
 
+	/* creation of RAMN_GSUSB_PoolQueue */
+	RAMN_GSUSB_PoolQueueHandle = osMessageQueueNew (GSUSB_POOL_QUEUE_SIZE, sizeof(uint32_t), &RAMN_GSUSB_PoolQueue_attributes);
+
+	/* creation of RAMN_GSUSB_SendQueue */
+	RAMN_GSUSB_SendQueueHandle = osMessageQueueNew (GSUSB_SEND_QUEUE_SIZE, sizeof(uint32_t), &RAMN_GSUSB_SendQueue_attributes);
+#endif
+
+#ifdef ENABLE_USB
+	MX_USB_Device_Init();
+#endif
 	/* USER CODE END RTOS_QUEUES */
 
 	/* Create the thread(s) */
@@ -585,6 +625,12 @@ int main(void)
 
 	/* creation of RAMN_SendUSB */
 	RAMN_SendUSBHandle = osThreadNew(RAMN_SendUSBFunc, NULL, &RAMN_SendUSB_attributes);
+
+	/* creation of RAMN_RxTask2 */
+	RAMN_RxTask2Handle = osThreadNew(RAMN_RxTask2Func, NULL, &RAMN_RxTask2_attributes);
+
+	/* creation of RAMN_TxTask2 */
+	RAMN_TxTask2Handle = osThreadNew(RAMN_TxTask2Func, NULL, &RAMN_TxTask2_attributes);
 
 	/* USER CODE BEGIN RTOS_THREADS */
 
@@ -1062,6 +1108,147 @@ static void MX_SPI2_Init(void)
 }
 
 /**
+ * @brief TIM6 Initialization Function
+ * @param None
+ * @retval None
+ */
+static void MX_TIM6_Init(void)
+{
+
+	/* USER CODE BEGIN TIM6_Init 0 */
+
+	/* USER CODE END TIM6_Init 0 */
+
+	TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+	/* USER CODE BEGIN TIM6_Init 1 */
+
+	/* USER CODE END TIM6_Init 1 */
+	htim6.Instance = TIM6;
+	htim6.Init.Prescaler = 9999;
+	htim6.Init.CounterMode = TIM_COUNTERMODE_UP;
+	htim6.Init.Period = 7999;
+	htim6.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+	if (HAL_TIM_Base_Init(&htim6) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+	sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+	if (HAL_TIMEx_MasterConfigSynchronization(&htim6, &sMasterConfig) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	/* USER CODE BEGIN TIM6_Init 2 */
+
+	/* USER CODE END TIM6_Init 2 */
+
+}
+
+/**
+ * @brief TIM7 Initialization Function
+ * @param None
+ * @retval None
+ */
+static void MX_TIM7_Init(void)
+{
+
+	/* USER CODE BEGIN TIM7_Init 0 */
+#ifdef GENERATE_RUNTIME_STATS
+	/* USER CODE END TIM7_Init 0 */
+
+	TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+	/* USER CODE BEGIN TIM7_Init 1 */
+
+	/* USER CODE END TIM7_Init 1 */
+	htim7.Instance = TIM7;
+	htim7.Init.Prescaler = 0;
+	htim7.Init.CounterMode = TIM_COUNTERMODE_UP;
+	htim7.Init.Period = 7999;
+	htim7.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+	if (HAL_TIM_Base_Init(&htim7) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+	sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+	if (HAL_TIMEx_MasterConfigSynchronization(&htim7, &sMasterConfig) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	/* USER CODE BEGIN TIM7_Init 2 */
+#endif
+	/* USER CODE END TIM7_Init 2 */
+
+}
+
+/**
+ * @brief TIM16 Initialization Function
+ * @param None
+ * @retval None
+ */
+static void MX_TIM16_Init(void)
+{
+
+	/* USER CODE BEGIN TIM16_Init 0 */
+
+	/* USER CODE END TIM16_Init 0 */
+
+	/* USER CODE BEGIN TIM16_Init 1 */
+
+	/* USER CODE END TIM16_Init 1 */
+	htim16.Instance = TIM16;
+	htim16.Init.Prescaler = 79;
+	htim16.Init.CounterMode = TIM_COUNTERMODE_UP;
+	htim16.Init.Period = 65535;
+	htim16.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+	htim16.Init.RepetitionCounter = 0;
+	htim16.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+	if (HAL_TIM_Base_Init(&htim16) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	/* USER CODE BEGIN TIM16_Init 2 */
+
+	/* USER CODE END TIM16_Init 2 */
+
+}
+
+/**
+ * @brief USB Initialization Function
+ * @param None
+ * @retval None
+ */
+static void MX_USB_PCD_Init(void)
+{
+
+	/* USER CODE BEGIN USB_Init 0 */
+
+	/* USER CODE END USB_Init 0 */
+
+	/* USER CODE BEGIN USB_Init 1 */
+
+	/* USER CODE END USB_Init 1 */
+	hpcd_USB_FS.Instance = USB;
+	hpcd_USB_FS.Init.dev_endpoints = 8;
+	hpcd_USB_FS.Init.speed = PCD_SPEED_FULL;
+	hpcd_USB_FS.Init.phy_itface = PCD_PHY_EMBEDDED;
+	hpcd_USB_FS.Init.Sof_enable = DISABLE;
+	hpcd_USB_FS.Init.low_power_enable = DISABLE;
+	hpcd_USB_FS.Init.lpm_enable = DISABLE;
+	hpcd_USB_FS.Init.battery_charging_enable = DISABLE;
+	if (HAL_PCD_Init(&hpcd_USB_FS) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	/* USER CODE BEGIN USB_Init 2 */
+
+	/* USER CODE END USB_Init 2 */
+
+}
+
+/**
  * Enable DMA controller clock
  */
 static void MX_DMA_Init(void)
@@ -1143,21 +1330,6 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-
-static int countElements(char* buffer, int length) {
-	int count = 0;
-	int inWord = 0;
-
-	for (int i = 0; i < length; i++) {
-		if (buffer[i] == ' ') {
-			inWord = 0;  // Not in a word
-		} else if (inWord == 0) {
-			inWord = 1;  // Start of a new word
-			count++;
-		}
-	}
-	return count;
-}
 
 #ifdef ENABLE_I2C
 
@@ -1290,25 +1462,13 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 /* USER CODE END Header_RAMN_ReceiveUSBFunc */
 void RAMN_ReceiveUSBFunc(void *argument)
 {
-	/* init code for USB_Device */
-	MX_USB_Device_Init();
 	/* USER CODE BEGIN 5 */
-#if defined(ENABLE_USB)
+#if defined(ENABLE_CDC)
 	/* init code for USB_Device */
-	MX_USB_Device_Init();
-
-	FDCAN_TxHeaderTypeDef CANTxHeader;
-	uint8_t CANTxData[64];
-	FDCAN_ProtocolStatusTypeDef protocolStatus;
-	FDCAN_ErrorCountersTypeDef errorCount;
-
 	for(;;)
 	{
 		uint16_t commandLength;
 		size_t xBytesReceived;
-		uint8_t dlc;
-		uint8_t offset = 0U; //TODO: remove use of offset by using pointers and dedicated functions
-		uint8_t smallResponseBuffer[50U]; // Buffer for small responses
 		RAMN_Bool_t invalidBuffer = False;
 
 		xBytesReceived = xStreamBufferReceive(USBD_RxStreamBufferHandle, (void *)&commandLength, 2U, portMAX_DELAY);
@@ -1322,927 +1482,19 @@ void RAMN_ReceiveUSBFunc(void *argument)
 		if (invalidBuffer == True)
 		{
 			// Error counter should already have been increased by CDC_Receive_FS
-			if (USB_CLI_ENABLE != 0U) RAMN_USB_SendStringFromTask("Error processing USB Buffer.\r");
+			if (USB_CLI_ENABLE == True) RAMN_USB_SendStringFromTask("Error processing USB Buffer.\r");
 			else RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
 			continue;
 		}
 
-		if (USB_CLI_ENABLE != 0U)
+		if (USB_CLI_ENABLE == True)
 		{
-			// Command is in USBRxBuffer, length is in commandLength. There is no endline in buffer.
-			// Zero terminate the USB command buffer
-
-			USBRxBuffer[commandLength] = '\0';
-
-			if (commandLength >= USB_COMMAND_BUFFER_SIZE) RAMN_USB_SendStringFromTask("Command too long.\r");
-			else
-			{
-				// Must remove backspace
-				uint32_t processedLength = 0;
-				uint32_t elementCount = 0;
-
-				for (uint32_t k = 0; k < commandLength; k++)
-				{
-					if (USBRxBuffer[k] == '\b')
-					{
-						if (processedLength > 0)
-						{
-							processedLength--; // Remove previous character
-						}
-					}
-					else if (USBRxBuffer[k] != '\n')
-					{
-						USBRxBuffer[processedLength] = USBRxBuffer[k];
-						processedLength++;
-					}
-				}
-
-				// Null-terminate the processed command
-				USBRxBuffer[processedLength] = '\0';
-				commandLength = processedLength;
-
-				elementCount = countElements((char*)USBRxBuffer, commandLength);
-
-				if (elementCount == 0U && commandLength == 0U) RAMN_USB_SendStringFromTask("\r>\r");
-				else
-				{
-					char *token;
-
-					token = strtok((char*)USBRxBuffer, " ");
-
-					if (token == NULL) {
-						RAMN_USB_SendStringFromTask("No command found. Type \"help\" for help.\r");
-					}
-					else
-					{
-						// Compare the command to a set of possible commands
-						if (strcmp(token, "help") == 0 || strcmp(token, "Help") == 0 || strcmp(token, "HELP") == 0 || strcmp(token, "man") == 0) {
-
-							if (elementCount >= 2)
-							{
-								token = strtok(NULL, " ");
-								if (strcmp(token, "theme") == 0) {
-									RAMN_USB_SendStringFromTask("-------------------------------------------------------------\r");
-									RAMN_USB_SendStringFromTask("                      RAMN Command Help\r");
-									RAMN_USB_SendStringFromTask("-------------------------------------------------------------\r");
-									RAMN_USB_SendStringFromTask("\r");
-									RAMN_USB_SendStringFromTask("Command: theme\r");
-									RAMN_USB_SendStringFromTask("\r");
-									RAMN_USB_SendStringFromTask("Description:\r");
-									RAMN_USB_SendStringFromTask("    Set the color theme for the device LCD screen.\r");
-									RAMN_USB_SendStringFromTask("\r");
-									RAMN_USB_SendStringFromTask("Usage:\r");
-									RAMN_USB_SendStringFromTask("    theme <theme_number>\r");
-									RAMN_USB_SendStringFromTask("\r");
-									RAMN_USB_SendStringFromTask("Options:\r");
-									RAMN_USB_SendStringFromTask("    <theme_number>   The theme number to be set, ranging from 1 to 7.\r");
-									RAMN_USB_SendStringFromTask("\r");
-									RAMN_USB_SendStringFromTask("Examples:\r");
-									RAMN_USB_SendStringFromTask("    - To set the device LCD screen theme to theme number 3, enter:\r");
-									RAMN_USB_SendStringFromTask("      theme 3\r");
-									RAMN_USB_SendStringFromTask("\r");
-									RAMN_USB_SendStringFromTask("-------------------------------------------------------------\r");
-								}
-								else if (strcmp(token, "enable") == 0) {
-									RAMN_USB_SendStringFromTask("-------------------------------------------------------------\r");
-									RAMN_USB_SendStringFromTask("                      RAMN Command Help\r");
-									RAMN_USB_SendStringFromTask("-------------------------------------------------------------\r");
-									RAMN_USB_SendStringFromTask("\r");
-									RAMN_USB_SendStringFromTask("Command: enable\r");
-									RAMN_USB_SendStringFromTask("\r");
-									RAMN_USB_SendStringFromTask("Description:\r");
-									RAMN_USB_SendStringFromTask("    Enable the power supply of another ECU (B, C, or D).\r");
-									RAMN_USB_SendStringFromTask("\r");
-									RAMN_USB_SendStringFromTask("Usage:\r");
-									RAMN_USB_SendStringFromTask("    enable <ECU>\r");
-									RAMN_USB_SendStringFromTask("\r");
-									RAMN_USB_SendStringFromTask("Options:\r");
-									RAMN_USB_SendStringFromTask("    <ECU>   The ECU to be enabled, identified by a letter (B, C, or D).\r");
-									RAMN_USB_SendStringFromTask("\r");
-									RAMN_USB_SendStringFromTask("Examples:\r");
-									RAMN_USB_SendStringFromTask("    - To enable ECU B, use:\r");
-									RAMN_USB_SendStringFromTask("      enable B\r");
-									RAMN_USB_SendStringFromTask("    - To enable ECU C, use:\r");
-									RAMN_USB_SendStringFromTask("      enable C\r");
-									RAMN_USB_SendStringFromTask("    - To enable ECU D, use:\r");
-									RAMN_USB_SendStringFromTask("      enable D\r");
-									RAMN_USB_SendStringFromTask("\r");
-									RAMN_USB_SendStringFromTask("-------------------------------------------------------------\r");
-								}
-								else if (strcmp(token, "disable") == 0) {
-									RAMN_USB_SendStringFromTask("-------------------------------------------------------------\r");
-									RAMN_USB_SendStringFromTask("                      RAMN Command Help\r");
-									RAMN_USB_SendStringFromTask("-------------------------------------------------------------\r");
-									RAMN_USB_SendStringFromTask("\r");
-									RAMN_USB_SendStringFromTask("Command: disable\r");
-									RAMN_USB_SendStringFromTask("\r");
-									RAMN_USB_SendStringFromTask("Description:\r");
-									RAMN_USB_SendStringFromTask("    Disable the power supply of another ECU (B, C, or D).\r");
-									RAMN_USB_SendStringFromTask("\r");
-									RAMN_USB_SendStringFromTask("Usage:\r");
-									RAMN_USB_SendStringFromTask("    disable <ECU>\r");
-									RAMN_USB_SendStringFromTask("\r");
-									RAMN_USB_SendStringFromTask("Options:\r");
-									RAMN_USB_SendStringFromTask("    <ECU>   The ECU to be disabled, identified by a letter (B, C, or D).\r");
-									RAMN_USB_SendStringFromTask("\r");
-									RAMN_USB_SendStringFromTask("Examples:\r");
-									RAMN_USB_SendStringFromTask("    - To disable ECU B, use:\r");
-									RAMN_USB_SendStringFromTask("      disable B\r");
-									RAMN_USB_SendStringFromTask("    - To disable ECU C, use:\r");
-									RAMN_USB_SendStringFromTask("      disable C\r");
-									RAMN_USB_SendStringFromTask("    - To disable ECU D, use:\r");
-									RAMN_USB_SendStringFromTask("      disable D\r");
-									RAMN_USB_SendStringFromTask("\r");
-									RAMN_USB_SendStringFromTask("-------------------------------------------------------------\r");
-								}
-								else
-								{
-									RAMN_USB_SendStringFromTask("No help page found for this command.\r");
-								}
-								RAMN_USB_SendStringFromTask("End of command help page. Type \"help\" without argument for the general help page.\r");
-							}
-							else
-							{
-								RAMN_USB_SendStringFromTask("-------------------------------------------------------------\r");
-								RAMN_USB_SendStringFromTask("                      RAMN Command Help\r");
-								RAMN_USB_SendStringFromTask("-------------------------------------------------------------\r");
-								RAMN_USB_SendStringFromTask("\r");
-								RAMN_USB_SendStringFromTask("This interface allows you to interact with various RAMN functions and control the device's operations through a set of commands.\rType 'b' to go back to slcan mode.");
-								RAMN_USB_SendStringFromTask("\r");
-								RAMN_USB_SendStringFromTask("Public Commands:\r");
-								RAMN_USB_SendStringFromTask("    - clear: Clears your serial terminal.\r");
-								RAMN_USB_SendStringFromTask("    - disable: Disable the power supply for another ECU. Usage: disable <ECU>.\r");
-								RAMN_USB_SendStringFromTask("    - enable: Enable the power supply for another ECU. Usage: enable <ECU>.\r");
-								RAMN_USB_SendStringFromTask("    - exit: Exit this debug interface and revert to slcan mode. Usage: exit.\r");
-								RAMN_USB_SendStringFromTask("    - help: Display general help, or help for a specific command when available. Usage: help <command>.\r");
-								RAMN_USB_SendStringFromTask("    - b: Alias for the \"exit\" command.\r");
-								RAMN_USB_SendStringFromTask("    - quit: Alias for the \"exit\" command.\r");
-								RAMN_USB_SendStringFromTask("    - reset: Reset the device. Usage: reset.\r");
-								RAMN_USB_SendStringFromTask("    - slcan: Alias for the \"exit\" command.\r");
-								RAMN_USB_SendStringFromTask("    - theme: Set the color theme for ECU A's LCD screen. Usage: theme <theme number>.\r");
-								RAMN_USB_SendStringFromTask("    - play: Play a game on ECU A's LCD screen. Usage: play <game number>.\r");
-								RAMN_USB_SendStringFromTask("    - stop: Stop any ongoing game. Usage: stop.\r");
-								RAMN_USB_SendStringFromTask("\r");
-								RAMN_USB_SendStringFromTask("Commands are case sensitive.\r");
-								RAMN_USB_SendStringFromTask("-------------------------------------------------------------\r");
-							}
-						}
-						else if ( strcmp(token, "disable") == 0) {
-							if (elementCount != 2)
-							{
-								RAMN_USB_SendStringFromTask("Invalid number of arguments. Type \"help disable\" for help using this command.\r");
-							}
-							else
-							{
-								token = strtok(NULL, " ");
-								if (strcmp(token, "A") == 0) {
-									RAMN_USB_SendStringFromTask("Cannot disable ECU A. Type \"reset\" if reset it.\r");
-								} else if (strcmp(token, "B") == 0)
-								{
-									RAMN_USB_SendStringFromTask("Setting ECU B power supply to OFF.\r");
-									RAMN_ECU_SetEnable('B',GPIO_PIN_RESET);
-								} else if (strcmp(token, "C") == 0)
-								{
-									RAMN_USB_SendStringFromTask("Setting ECU C power supply to OFF.\r");
-									RAMN_ECU_SetEnable('C',GPIO_PIN_RESET);
-								}
-								else if (strcmp(token, "D") == 0)
-								{
-									RAMN_USB_SendStringFromTask("Setting ECU D power supply to OFF.\r");
-									RAMN_ECU_SetEnable('D',GPIO_PIN_RESET);
-								}
-								else
-								{
-									RAMN_USB_SendStringFromTask("Invalid ECU. Must be B, C, or D.\r");
-
-								}
-							}
-						}
-						else if ( strcmp(token, "enable") == 0) {
-							if (elementCount != 2)
-							{
-								RAMN_USB_SendStringFromTask("Invalid number of arguments. Type \"help enable\" for help using this command.\r");
-							}
-							else
-							{
-								token = strtok(NULL, " ");
-								if (strcmp(token, "A") == 0) {
-									RAMN_USB_SendStringFromTask("ECU A is always enabled.\r");
-								}
-								else if (strcmp(token, "B") == 0)
-								{
-									RAMN_USB_SendStringFromTask("Setting ECU B power supply to ON.\r");
-									RAMN_ECU_SetEnable('B',GPIO_PIN_SET);
-								} else if (strcmp(token, "C") == 0)
-								{
-									RAMN_USB_SendStringFromTask("Setting ECU C power supply to ON.\r");
-									RAMN_ECU_SetEnable('C',GPIO_PIN_SET);
-								}
-								else if (strcmp(token, "D") == 0)
-								{
-									RAMN_USB_SendStringFromTask("Setting ECU D power supply to ON.\r");
-									RAMN_ECU_SetEnable('D',GPIO_PIN_SET);
-								}
-								else
-								{
-									RAMN_USB_SendStringFromTask("Invalid ECU. Must be B, C, or D.\r");
-								}
-							}
-
-						}
-#ifdef ENABLE_SCREEN
-						else if ( strcmp(token, "theme") == 0) {
-							if (elementCount != 2)
-							{
-								RAMN_USB_SendStringFromTask("Invalid number of arguments. Type \"help theme\" for help using this command.\r");
-							}
-							else
-							{
-								token = strtok(NULL, " ");
-								if (strcmp(token, "1") == 0) {  RAMN_SCREENUTILS_UpdateTheme(1); RAMN_USB_SendStringFromTask("Updated.\r");
-								} else if (strcmp(token, "2") == 0) {  RAMN_SCREENUTILS_UpdateTheme(2); RAMN_USB_SendStringFromTask("Updated.\r");
-								} else if (strcmp(token, "3") == 0) {  RAMN_SCREENUTILS_UpdateTheme(3); RAMN_USB_SendStringFromTask("Updated.\r");
-								} else if (strcmp(token, "4") == 0) {  RAMN_SCREENUTILS_UpdateTheme(4); RAMN_USB_SendStringFromTask("Updated.\r");
-								} else if (strcmp(token, "5") == 0) {  RAMN_SCREENUTILS_UpdateTheme(5); RAMN_USB_SendStringFromTask("Updated.\r");
-								} else if (strcmp(token, "6") == 0) {  RAMN_SCREENUTILS_UpdateTheme(6); RAMN_USB_SendStringFromTask("Updated.\r");
-								} else if (strcmp(token, "7") == 0) {  RAMN_SCREENUTILS_UpdateTheme(7); RAMN_USB_SendStringFromTask("Updated.\r");
-
-								}
-								else
-								{
-									RAMN_USB_SendStringFromTask("Theme number not found. Try between 1 and 7.\r");
-								}
-							}
-						}
-#endif
-						else if (strcmp(token, "b") == 0  || strcmp(token, "exit") == 0 || strcmp(token, "quit") == 0 || strcmp(token, "slcan") == 0) {
-							USB_CLI_ENABLE = 0U;
-						}
-
-						else if (strcmp(token, "reset") == 0) {
-
-#ifdef START_IN_CLI_MODE
-							RAMN_USB_SendStringFromTask("Resetting...\r\r>");
-#else
-							RAMN_USB_SendStringFromTask("Resetting. Remember to first send the \"#\" command to reenter this interface.\r");
-#endif
-							osDelay(200);
-							HAL_NVIC_SystemReset();
-						}
-						else if (strcmp(token, "clear") == 0) {
-							RAMN_USB_SendStringFromTask("\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r");
-						}
-#if defined(ENABLE_SCREEN) && defined(ENABLE_CHIP8)
-						else if (strcmp(token, "play") == 0)
-						{
-							if (elementCount != 2)
-							{
-								RAMN_USB_SendStringFromTask("Invalid number of arguments.\r");
-							}
-							else
-							{
-								token = strtok(NULL, " ");
-								if (strcmp(token, "1") == 0) {  RAMN_SCREENMANAGER_StartGameFromIndex(1); RAMN_USB_SendStringFromTask("Starting game 1.\r");
-								} else if (strcmp(token, "2") == 0) {  RAMN_SCREENMANAGER_StartGameFromIndex(2); RAMN_USB_SendStringFromTask("Starting game 2.\r");
-								} else if (strcmp(token, "3") == 0) {  RAMN_SCREENMANAGER_StartGameFromIndex(3); RAMN_USB_SendStringFromTask("Starting game 3.\r");
-								}
-								else
-								{
-									RAMN_USB_SendStringFromTask("Game number not found. Try between 1 and 3.\r");
-								}
-							}
-
-						}
-						else if (strcmp(token, "stop") == 0U)
-						{
-							if (RAMN_CHIP8_IsGameActive() != False)
-							{
-								RAMN_USB_SendStringFromTask("Stopping game.\r");
-								RAMN_CHIP8_StopGame(1);
-							}
-							else
-							{
-								RAMN_USB_SendStringFromTask("No ongoing game.\r");
-							}
-						}
-#endif
-						else {
-							// Handle unknown commands
-							RAMN_USB_SendStringFromTask("Unknown command: ");
-							RAMN_USB_SendStringFromTask(token);
-							RAMN_USB_SendStringFromTask("\rType \"help\" for help. Remember the interface is case sensitive.\r");
-						}
-
-					}
-				}
-
-			}
-			if (USB_CLI_ENABLE != 0U)  RAMN_USB_SendStringFromTask("\r>");
-
+			if (RAMN_CDC_ProcessCLIBuffer(USBRxBuffer, commandLength) == True) USB_CLI_ENABLE = !USB_CLI_ENABLE;
 		}
 		else
 		{
-
-			if ((USBRxBuffer[0U] == '0') || (USBRxBuffer[0U] == '1'))
-			{
-				// Prefix to announce FD CAN Frames
-				CANTxHeader.FDFormat = FDCAN_FD_CAN;
-				if (USBRxBuffer[1U] == '0') CANTxHeader.BitRateSwitch = FDCAN_BRS_OFF;
-				else CANTxHeader.BitRateSwitch = FDCAN_BRS_ON;
-				offset = 1U;
-			}
-			else
-			{
-				CANTxHeader.FDFormat = FDCAN_CLASSIC_CAN;
-				CANTxHeader.BitRateSwitch = FDCAN_BRS_OFF;
-				offset = 0U;
-			}
-			// Parse the 'i' suffix if it was added to alter the Error State Indicator
-			if (RAMN_USB_Config.addESIFlag == True)
-			{
-				if(USBRxBuffer[commandLength-1] == 'i')
-				{
-					CANTxHeader.ErrorStateIndicator = FDCAN_ESI_PASSIVE;
-					commandLength--;
-				}
-				else CANTxHeader.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
-			}
-			else CANTxHeader.ErrorStateIndicator = RAMN_FDCAN_Status.ErrorStateIndicator;
-
-			CANTxHeader.TxEventFifoControl = FDCAN_NO_TX_EVENTS;
-			CANTxHeader.MessageMarker = 0U;
-
-			// Sending and Receiving are the most likely commands, so check for them first
-
-			// Most common commands are treated first
-			if(USBRxBuffer[0U] == 'u')
-			{
-				// Format is u<brake12><accel12><rpm12><steer12><shift8><horn8><handbrake8>
-				// e.g., "u{:03x}{:03x}{:03x}{:03x}{:02x}{:02x}{:02x}\r"
-				if (commandLength == 19U) RAMN_DBC_ProcessUSBBuffer(USBRxBuffer);
-			}
-			else if ( ((USBRxBuffer[0U+offset] == 't') || (USBRxBuffer[0U+offset] == 'r')))
-			{
-				// 't' : Transmit Standard ID DATA
-				// 'r' : Transmit Standard ID RTR
-				if (((commandLength - offset) >= 5U))
-				{
-					CANTxHeader.IdType = FDCAN_STANDARD_ID;
-					CANTxHeader.TxFrameType = FDCAN_DATA_FRAME;
-					//CANTxHeader.Identifier = (ascii_hashmap[commandBuffer[1+offset]] << 8) + (ascii_hashmap[commandBuffer[2+offset]] << 4) + (ascii_hashmap[commandBuffer[3+offset]]);
-					CANTxHeader.Identifier = ASCIItoUint12(&USBRxBuffer[1U+offset]);
-
-					dlc = ASCIItoUint4(&USBRxBuffer[4U+offset]);
-					CANTxHeader.DataLength = (dlc);
-
-					if (USBRxBuffer[0+offset] == 'r')
-					{
-						CANTxHeader.TxFrameType = FDCAN_REMOTE_FRAME;
-						// For remote frames, no need to copy CANTxData.
-						dlc = 0U;
-					}
-
-					if ((commandLength - offset) == (5 + 2*DLCtoUINT8(dlc)))
-					{
-						uint8_t i = 0U;
-
-						offset += 5U;
-						while (offset < (commandLength-1) )
-						{
-							CANTxData[i++] = ASCIItoUint8(&USBRxBuffer[offset]);
-							offset += 2U;
-						}
-
-						while (RAMN_FDCAN_SendMessage(&CANTxHeader,CANTxData) == RAMN_TRY_LATER)
-						{
-							// Buffer is Full, Try later
-							osDelay(10U);
-						}
-
-						RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
-
-#if defined(CAN_ECHO)
-						RAMN_USB_SendFromTask(USBRxBuffer,commandLength);
-#endif
-
-#if defined(PROCESS_SLCAN_BY_DBC)
-						RAMN_DBC_ProcessCANMessage(CANTxHeader.Identifier,DLCtoUINT8(dlc),(RAMN_CANFrameData_t*)CANTxData);
-#endif
-					}
-					else RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
-				}
-				else RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
-			}
-			else if (((USBRxBuffer[0U+offset] == 'R') || (USBRxBuffer[0U+offset] == 'T')))
-			{
-				// 'T' : Transmit Extended ID DATA
-				// 'R' : Transmit Extended ID RTR
-				if ( (commandLength - offset) >= 10U)
-				{
-					CANTxHeader.IdType = FDCAN_EXTENDED_ID;
-					CANTxHeader.TxFrameType = FDCAN_DATA_FRAME;
-					CANTxHeader.Identifier =  ASCIItoUint32(&USBRxBuffer[1U+offset]);
-					dlc = ASCIItoUint4(&USBRxBuffer[9U+offset]);
-					CANTxHeader.DataLength = ((dlc));
-
-					if (USBRxBuffer[0+offset] == 'R')
-					{
-						CANTxHeader.TxFrameType = FDCAN_REMOTE_FRAME;
-						// For remote frames, no need to copy payload
-						dlc = 0;
-					}
-
-					if ((commandLength - offset) == (10 + 2*DLCtoUINT8(dlc)))
-					{
-
-						offset += 10U;
-						uint8_t i = 0U;
-						while (offset < (commandLength-1) )
-						{
-							CANTxData[i++] = ASCIItoUint8(&USBRxBuffer[offset]);
-							offset += 2U;
-						}
-
-						while (RAMN_FDCAN_SendMessage(&CANTxHeader,CANTxData) == RAMN_TRY_LATER) osDelay(10U);
-						RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
-#if defined(CAN_ECHO)
-						RAMN_USB_SendFromTask(USBRxBuffer,commandLength);
-#endif
-
-#if defined(PROCESS_SLCAN_BY_DBC)
-						RAMN_DBC_ProcessCANMessage(CANTxHeader.Identifier,DLCtoUINT8(dlc),(RAMN_CANFrameData_t*)CANTxData);
-#endif
-					}
-					else RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
-				}
-				else RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
-			}
-			else
-			{
-				switch(USBRxBuffer[0U]){
-				case 'O': // Open the channel
-					RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
-					hfdcan1.Init.Mode = FDCAN_MODE_NORMAL;
-					RAMN_USB_Config.slcanOpened = True;
-					RAMN_FDCAN_ResetPeripheral();
-					break;
-				case 'C': // Close the channel
-					RAMN_USB_Config.slcanOpened = False;
-					RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
-					break;
-				case 'L': // Open in listening mode
-					RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
-					hfdcan1.Init.Mode = FDCAN_MODE_BUS_MONITORING;
-					RAMN_USB_Config.slcanOpened = True;
-					RAMN_FDCAN_ResetPeripheral();
-					break;
-				case 'V': // Return SW version
-					RAMN_USB_SendFromTask((uint8_t*)"V1 SLCAN RAMN (",15U);
-					RAMN_USB_SendFromTask((uint8_t*)__DATE__,sizeof(__DATE__));
-					RAMN_USB_SendFromTask((uint8_t*)" ",1U);
-					RAMN_USB_SendFromTask((uint8_t*)__TIME__,sizeof(__TIME__));
-					RAMN_USB_SendFromTask((uint8_t*)")\r",2U);
-					break;
-				case 'N': // Return serial number
-					smallResponseBuffer[0U] = 'N';
-					for(uint8_t k = 0; k <12U; k++)
-					{
-						uint8toASCII(*((uint8_t*)(HARDWARE_UNIQUE_ID_ADDRESS+k)),&smallResponseBuffer[1U+2*k]);
-					}
-					RAMN_USB_SendFromTask(smallResponseBuffer, 25U);
-					RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
-					break;
-				case 'S': // Set baudrate
-					if (commandLength == 2U)
-					{
-						if (RAMN_FDCAN_UpdateBaudrate(USBRxBuffer[1U]) == RAMN_OK) RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
-						else RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
-					}
-					else RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
-					break;
-				case 's':
-					if (commandLength == 5U)
-					{
-						hfdcan1.Init.NominalTimeSeg1 = ASCIItoUint8(&USBRxBuffer[1U]);
-						hfdcan1.Init.NominalTimeSeg2 = ASCIItoUint8(&USBRxBuffer[3U]);
-						RAMN_FDCAN_ResetPeripheral();
-						RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
-					}
-					else RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
-					break;
-				case 'F':
-					smallResponseBuffer[0U] = USBRxBuffer[0U];
-					uint8toASCII(RAMN_FDCAN_Status.slcanFlags,&smallResponseBuffer[1U]);
-					smallResponseBuffer[3U] = '\r';
-					RAMN_USB_SendFromTask(smallResponseBuffer,4U);
-					break;
-				case 'W': // Set filter mode
-					if (commandLength == 2U)
-					{
-						switch (USBRxBuffer[1U])
-						{
-						case '0':
-							RAMN_FDCAN_Status.sFilterStdConfig.FilterType = FDCAN_FILTER_RANGE;
-							RAMN_FDCAN_Status.sFilterExtConfig.FilterType = FDCAN_FILTER_RANGE;
-							RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
-							break;
-						case '1':
-							RAMN_FDCAN_Status.sFilterStdConfig.FilterType = FDCAN_FILTER_DUAL;
-							RAMN_FDCAN_Status.sFilterExtConfig.FilterType = FDCAN_FILTER_DUAL;
-							RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
-							break;
-						case '2':
-							RAMN_FDCAN_Status.sFilterStdConfig.FilterType = FDCAN_FILTER_MASK; //Single Filter mask (Classic filter)
-							RAMN_FDCAN_Status.sFilterExtConfig.FilterType = FDCAN_FILTER_MASK; //Single Filter mask (Classic filter)
-							RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
-							break;
-						case '3':
-							RAMN_FDCAN_Status.sFilterStdConfig.FilterType = FDCAN_FILTER_RANGE_NO_EIDM;
-							RAMN_FDCAN_Status.sFilterExtConfig.FilterType = FDCAN_FILTER_RANGE_NO_EIDM;
-							RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
-							break;
-						default:
-							RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
-							break;
-						}
-					}
-					else RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
-					break;
-				case 'M': // Set "Acceptance Code" Register (filter)
-					if (commandLength == 4U)
-					{
-						RAMN_FDCAN_Status.sFilterStdConfig.FilterID1 = ASCIItoUint12(&USBRxBuffer[1])&0x7FF;
-						RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
-					}
-					else if (commandLength == 9U)
-					{
-						RAMN_FDCAN_Status.sFilterExtConfig.FilterID1 = ASCIItoUint32(&USBRxBuffer[1])&0x7FFFFFFF;
-						RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
-					}
-					else RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
-					break;
-				case 'm': // Set "Acceptance Mask" Register (mask)
-					if (commandLength == 4U)
-					{
-						RAMN_FDCAN_Status.sFilterStdConfig.FilterID2 = ASCIItoUint12(&USBRxBuffer[1])&0x7FF;
-						RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
-					}
-					else if (commandLength == 9U)
-					{
-						RAMN_FDCAN_Status.sFilterExtConfig.FilterID2 = ASCIItoUint32(&USBRxBuffer[1])&0x7FFFFFFF;
-						RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
-					}
-					else RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
-					break;
-				case 'Z': // Enable time stamp
-					if (commandLength == 2U)
-					{
-						if (USBRxBuffer[1U] == '0') RAMN_USB_Config.slcan_enableTimestamp = False;
-						else RAMN_USB_Config.slcan_enableTimestamp = True;
-						RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
-					}
-					else RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
-					break;
-
-					/* BELOW ARE RAMN SPECIFIC COMMANDS */
-
-				case 'w': // Update CAN controller settings
-					RAMN_FDCAN_ResetPeripheral();
-					RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
-					break;
-				case 'i': // Enable/Disable ISO mode
-					if (commandLength == 2U)
-					{
-						if (USBRxBuffer[1U] == '0') HAL_FDCAN_DisableISOMode(&hfdcan1);
-						else HAL_FDCAN_EnableISOMode(&hfdcan1);
-						RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
-					}
-					else RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
-					break;
-					//				case 'e': //Enable/Disable edge filtering
-					//					if (USBRxBuffer[1U] == '0') HAL_FDCAN_DisableEdgeFiltering(&hfdcan1);
-					//					else HAL_FDCAN_EnableEdgeFiltering(&hfdcan1);
-					//					RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
-					//					break;
-					//				case 'g': //Enable/Disable TX Compensation
-					//					if (USBRxBuffer[1U] == '0') HAL_FDCAN_DisableTxDelayCompensation(&hfdcan1);
-					//					else HAL_FDCAN_EnableTxDelayCompensation(&hfdcan1);
-					//					RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
-					//					break;
-				case 'G': // Set Nominal and Data SJW
-					if ((commandLength == 3U) || (commandLength == 5U))
-					{
-						hfdcan1.Init.NominalSyncJumpWidth = ASCIItoUint8(&USBRxBuffer[1U]);
-						if(commandLength == 5U)
-						{
-							hfdcan1.Init.DataSyncJumpWidth = ASCIItoUint8(&USBRxBuffer[3U]);
-						}
-						RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
-					}
-					else
-					{
-						RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
-					}
-
-					break;
-				case 'a': // Enable/Disable TX auto retransmission
-					if (commandLength == 2U)
-					{
-						if (USBRxBuffer[1U] == '0') hfdcan1.Init.AutoRetransmission = DISABLE;
-						else hfdcan1.Init.AutoRetransmission = ENABLE;
-						RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
-					}
-					else RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
-					break;
-				case 'f': // Select Frame mode
-					if (commandLength == 2U)
-					{
-						if (USBRxBuffer[1U] == '0') hfdcan1.Init.FrameFormat = FDCAN_FRAME_CLASSIC;
-						else if (USBRxBuffer[1U] == '1') hfdcan1.Init.FrameFormat = FDCAN_FRAME_FD_NO_BRS;
-						else hfdcan1.Init.FrameFormat = FDCAN_FRAME_FD_BRS;
-						RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
-					}
-					else
-					{
-						RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
-					}
-					break;
-				case 'v': // Add a "i" to frames with the ESI flag set
-					if (commandLength == 2U)
-					{
-						if (USBRxBuffer[1U] == '0') RAMN_USB_Config.addESIFlag = False;
-						else RAMN_USB_Config.addESIFlag = True;
-						RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
-					}
-					else
-					{
-						RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
-					}
-					break;
-				case '@': //Select auto report of errors
-					if (commandLength == 2U)
-					{
-						if (USBRxBuffer[1U] == '0') RAMN_USB_Config.autoreportErrors = False;
-						else if (USBRxBuffer[1U] == '1') RAMN_USB_Config.autoreportErrors = True;
-						RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
-					}
-					else RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
-					break;
-				case '#': //Enable CLI
-					if (commandLength == 1U)
-					{
-						USB_CLI_ENABLE = 1U;
-						RAMN_USB_SendStringFromTask("Welcome to RAMN CLI. Type 'help' for help.\r>");
-					}
-					else RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
-					break;
-#if defined(ENABLE_USB) && defined(ENABLE_USB_DEBUG)
-				case 'd': // Enable/Disable debug reports
-					if (commandLength == 2U)
-					{
-						if (USBRxBuffer[1U] == '0') RAMN_DEBUG_SetStatus(False);
-						else if (USBRxBuffer[1U] == '1')RAMN_DEBUG_SetStatus(True);
-						RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
-					}
-					else RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
-					break;
-#endif
-				case 'k': // Configure "Nominal (arbitration) phase" bit rate
-					if (commandLength == 9U)
-					{
-						hfdcan1.Init.NominalPrescaler = ASCIItoUint16(&USBRxBuffer[1]); //16-bit prescaler
-						hfdcan1.Init.NominalTimeSeg1 = ASCIItoUint8(&USBRxBuffer[5]);
-						hfdcan1.Init.NominalTimeSeg2 = ASCIItoUint8(&USBRxBuffer[7]);
-						RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
-					}
-					else RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
-					break;
-				case 'K': // Configure "Data phase" bit rate
-					if (commandLength == 7U)
-					{
-						hfdcan1.Init.DataPrescaler = ASCIItoUint8(&USBRxBuffer[1]); //8-bit prescaler
-						hfdcan1.Init.DataTimeSeg1 = ASCIItoUint8(&USBRxBuffer[3]);
-						hfdcan1.Init.DataTimeSeg2 = ASCIItoUint8(&USBRxBuffer[5]);
-						RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
-					}
-					else RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
-					break;
-				case 'j': // Return Random byte
-					smallResponseBuffer[0U] = USBRxBuffer[0U];
-					uint8toASCII(RAMN_RNG_Pop8()&0xFF,&smallResponseBuffer[1U]);
-					smallResponseBuffer[3U] = '\r';
-					RAMN_USB_SendFromTask(smallResponseBuffer,4U);
-					break;
-				case 'J': // Return Random Integer
-					smallResponseBuffer[0U] = USBRxBuffer[0U];
-					uint32toASCII(RAMN_RNG_Pop32(),&smallResponseBuffer[1]);
-					smallResponseBuffer[9U] = '\r';
-					RAMN_USB_SendFromTask(smallResponseBuffer,10U);
-					break;
-				case '?':
-				case 'h':
-				case 'H':
-					RAMN_USB_SendFromTask((uint8_t*)"https://ramn.rtfd.io/\r",22U);
-					break;
-				case 'l': // Open in restricted mode
-					RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
-					hfdcan1.Init.Mode = FDCAN_MODE_RESTRICTED_OPERATION;
-					RAMN_USB_Config.slcanOpened = True;
-					RAMN_FDCAN_ResetPeripheral();
-					break;
-				case 'E':// Full Error and protocol flags
-					HAL_FDCAN_GetProtocolStatus(&hfdcan1,&protocolStatus);
-					HAL_FDCAN_GetErrorCounters(&hfdcan1, &errorCount);
-					RAMN_DEBUG_DumpCANErrorRegisters(&errorCount, &protocolStatus);
-					break;
-				case 'q': // Get status of FIFOs
-					offset = reportFIFOStatus_USB(smallResponseBuffer);
-					RAMN_USB_SendFromTask(smallResponseBuffer,offset);
-					break;
-				case 'I':// Send GW Stats information
-					RAMN_DEBUG_ReportCANStats(&RAMN_FDCAN_Status);
-					break;
-				case 'D':// Restart in DFU Mode
-					// Note that we do not worry about potential timing analysis as this is not a security feature.
-					if (commandLength == (RAMN_strlen(DFU_COMMAND_STRING)+1U))
-					{
-						if(strncmp((char*)&USBRxBuffer[1],DFU_COMMAND_STRING, RAMN_strlen(DFU_COMMAND_STRING)) == 0U)
-						{
-							RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
-							osDelay(200);
-							if(RAMN_FLASH_isMemoryProtected() == False) RAMN_FLASH_ConfigureOptionBytesBootloaderMode();
-							else RAMN_FLASH_RemoveMemoryProtection();
-						}
-					}
-					// Board should reset automatically, if we reach here there was an error
-					RAMN_USB_SendFromTask((uint8_t*)"\a",1);
-					break;
-				case 'p':// Program ECU over CAN
-					if (commandLength == 2U)
-					{
-						if( (USBRxBuffer[1U] == 'B') || (USBRxBuffer[1U] == 'C') || (USBRxBuffer[1U] == 'D'))
-						{
-							RAMN_USB_Config.simulatorActive = False; //Turn off simulator
-							RAMN_USB_Config.slcanOpened = False; //Turn off slcan to prevent forwarding bootloader test commands
-							CANTxHeader.BitRateSwitch = FDCAN_BRS_ON;
-							CANTxHeader.DataLength = 0U;
-							CANTxHeader.FDFormat = FDCAN_FD_CAN;
-							CANTxHeader.IdType = FDCAN_STANDARD_ID;
-							CANTxHeader.Identifier = 0x181;
-							for(uint8_t j = 0; j < BOOTLOADER_MAX_ATTEMPTS; j++)
-							{
-								RAMN_ECU_SetEnableAll(0U);
-								RAMN_FDCAN_SetupForSTBootloader();
-								RAMN_FDCAN_ResetPeripheral();
-								osDelay(100U); // wait for power supply disable to be effective
-								RAMN_ECU_SetBoot0(USBRxBuffer[1U],GPIO_PIN_SET);
-								RAMN_ECU_SetEnable(USBRxBuffer[1U],GPIO_PIN_SET);
-								osDelay(20U + j*20U); //add increasingly long delay if bootloader transition failed
-								while (RAMN_FDCAN_SendMessage(&CANTxHeader,CANTxData) == RAMN_TRY_LATER)
-								{
-									//Buffer is Full, Try later
-									osDelay(10U);
-								}
-								osDelay(50U); //leave time to send message and receive responses
-								if (RAMN_FDCAN_Status.CANRXCnt > 0U)
-								{
-									//received an answer, assume it is from bootloader
-									break;
-								}
-							}
-							if (RAMN_FDCAN_Status.CANRXCnt == 0U)
-							{
-								RAMN_USB_SendFromTask((uint8_t*)"\a",1U); //all bootloader transitions failed
-							}
-							else
-							{
-								RAMN_USB_Config.slcanOpened = True; //make sure slcan is opened for following commands
-								RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
-							}
-						}
-						else RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
-					}
-					else RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
-					break;
-				case 'Y': // Set ENABLE of all ECUs
-					if (commandLength == 2U)
-					{
-						if (USBRxBuffer[1U] == '0') RAMN_ECU_SetEnableAll(GPIO_PIN_RESET);
-						else RAMN_ECU_SetEnableAll(GPIO_PIN_SET);
-						RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
-					}
-					else RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
-					break;
-				case 'y': // Set ENABLE of one ECU
-					if (commandLength == 3U)
-					{
-						if( (USBRxBuffer[1U] == 'B') || (USBRxBuffer[1U] == 'C') || (USBRxBuffer[1U] == 'D'))
-						{
-							if (USBRxBuffer[2U] == '0') RAMN_ECU_SetEnable(USBRxBuffer[1U],GPIO_PIN_RESET);
-							else RAMN_ECU_SetEnable(USBRxBuffer[1U],GPIO_PIN_SET);
-							RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
-						}
-						else RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
-					}
-					else RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
-					break;
-				case 'n':// Reset whole board (used to leave programming mode)
-					if (commandLength == 1U)
-					{
-						RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
-#ifdef ENABLE_USB_DEBUG
-						RAMN_DEBUG_Log("d Resetting\r");
-#endif
-						RAMN_ECU_SetEnableAll(GPIO_PIN_RESET);
-						RAMN_ECU_SetBoot0All(GPIO_PIN_RESET);
-						osDelay(100);
-						HAL_NVIC_SystemReset();
-					} else RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
-					break; // Should not reach here
-				case 'c': // Connection to computer
-					if (commandLength == 2U)
-					{
-						if (USBRxBuffer[1U] == '0')
-						{
-							RAMN_DBC_RequestSilence = True;
-							RAMN_USB_Config.simulatorActive = False;
-						}
-						else
-						{
-							hfdcan1.Init.Mode = FDCAN_MODE_NORMAL;
-							RAMN_USB_Config.slcanOpened = False; //close slcan mode by default
-							RAMN_FDCAN_ResetPeripheral(); //reset in case settings have changed or port has never been opened
-							RAMN_USB_Config.simulatorActive = True;
-							RAMN_DBC_RequestSilence = False;
-						}
-						RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
-					}
-					else RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
-					break;
-					//				case 'x': //Get Microcontroller Unique ID Address
-					//					smallResponseBuffer[0U] = USBRxBuffer[0U];
-					//					uint32toASCII((uint32_t)*(HARDWARE_UNIQUE_ID_ADDRESS),&smallResponseBuffer[1]);
-					//					smallResponseBuffer[9U] = '\r';
-					//					RAMN_USB_SendFromTask(smallResponseBuffer,10U);
-					//					break;
-#ifdef ENABLE_UDS
-				case '%': // Diagnostic Message
-					if (commandLength >= 4U)
-					{
-						uint16_t reqSize = (commandLength-4)/2; // Remove command byte and payload size
-						if (reqSize == ASCIItoUint12(&USBRxBuffer[1U]))
-						{
-							uint16_t ansSize;
-							ASCIItoRaw(diagRxUSBbuf,&USBRxBuffer[4U],reqSize);
-							RAMN_UDS_ProcessDiagPayload(xTaskGetTickCount(), diagRxUSBbuf, reqSize, diagTxUSBbuf, &ansSize);
-							// We do not need the USB RX buffer anymore, so we use it so save the answer
-							uint12toASCII(ansSize, &USBRxBuffer[1U]);
-							rawtoASCII(&USBRxBuffer[4U],diagTxUSBbuf,ansSize);
-							USBRxBuffer[ansSize*2U+4U] = '\r';
-							// Add 1 for %, 1 for \r
-							RAMN_USB_SendFromTask(USBRxBuffer,(ansSize*2U)+5U);
-							RAMN_UDS_PerformPostAnswerActions(xTaskGetTickCount(), diagRxUSBbuf, reqSize, diagTxUSBbuf, &ansSize);
-						}
-						else RAMN_USB_SendFromTask((uint8_t*)"\a",1);
-					}
-					else RAMN_USB_SendFromTask((uint8_t*)"\a",1);
-#endif
-					break;
-				case 'b': // Make sure that CLI is disabled.
-					USB_CLI_ENABLE = 0U;
-					RAMN_USB_SendFromTask((uint8_t*)"\r",1);
-					break;
-#if defined(ENABLE_MINICTF) && defined(TARGET_ECUA)
-				case '^':
-					RAMN_USB_SendStringFromTask(FLAG_USB_1);
-					RAMN_USB_SendFromTask((uint8_t*)"\r",1);
-					break;
-				case '&':
-					if (commandLength == 6)
-					{
-						if (memcmp(&USBRxBuffer[1],"27762",5) == 0)
-						{
-							RAMN_USB_SendStringFromTask(FLAG_USB_2);
-							RAMN_USB_SendFromTask((uint8_t*)"\r",1);
-						}
-						else RAMN_USB_SendStringFromTask("Wrong Password\r");
-					}
-					else RAMN_USB_SendFromTask((uint8_t*)"\a",1);
-					break;
-
-#endif
-				case 'P':
-				case 'A':
-				case 'X':
-				case 'U':
-				case 'Q':
-				default:
-					RAMN_USB_SendFromTask((uint8_t*)"\a",1);
-					break;
-				}
-			}
+			if (RAMN_CDC_ProcessSLCANBuffer(USBRxBuffer, commandLength) == True) USB_CLI_ENABLE = !USB_CLI_ENABLE;
 		}
-
 	}
 #elif defined(ENABLE_UART)
 	HAL_UART_Receive_IT(&hlpuart1, &uart_rx_data, 1); // Start receiving characters, one by one by default (slow)
@@ -2271,7 +1523,7 @@ void RAMN_ReceiveUSBFunc(void *argument)
 
 	}
 #else
-	vTaskDelete(NULL);
+	RAMN_CUSTOM_CustomTask1(argument);
 #endif
 	/* USER CODE END 5 */
 }
@@ -2337,7 +1589,7 @@ void RAMN_ReceiveCANFunc(void *argument)
 #endif
 			RAMN_CUSTOM_ProcessRxCANMessage(&CANRxHeader, CANRxData, xTaskGetTickCount());
 
-#if defined(ENABLE_USB)
+#if defined(ENABLE_CDC)
 			if (RAMN_USB_Config.slcanOpened)
 			{
 				uint8_t index = 0;
@@ -2409,6 +1661,15 @@ void RAMN_ReceiveCANFunc(void *argument)
 #endif
 				}
 			}
+#ifdef ENABLE_GSUSB
+			if(RAMN_USB_Config.gsusbOpened && GSUSB_IsConnected((USBD_HandleTypeDef*)hpcd_USB_FS.pData))
+			{
+				if(RAMN_GSUSB_ProcessRX(&CANRxHeader, CANRxData) == RAMN_ERROR)
+				{
+					RAMN_USB_Config.queueErrorCnt++;
+				}
+			}
+#endif
 #endif
 
 		}
@@ -2456,7 +1717,7 @@ void RAMN_SendCANFunc(void *argument)
 		// Wait for TX space to be available in FIFO
 		while (HAL_FDCAN_GetTxFifoFreeLevel(&hfdcan1) < 1)
 		{
-			ulTaskNotifyTake( pdTRUE, portMAX_DELAY );
+			ulTaskNotifyTake(pdTRUE, portMAX_DELAY );
 		}
 
 		if (HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan1, &CANTxHeader, CANTxData) != HAL_OK)
@@ -2465,6 +1726,21 @@ void RAMN_SendCANFunc(void *argument)
 			Error_Handler();
 #endif
 		}
+
+#ifdef ENABLE_GSUSB
+		/* echo transmission
+		if(RAMN_USB_Config.gsusbOpened && GSUSB_IsConnected((USBD_HandleTypeDef*)hpcd_USB_FS.pData))
+		{
+			// Wait for queue empty
+			while (uxQueueMessagesWaiting(RAMN_GSUSB_PoolQueueHandle) < FDCAN_GetQueueSize())
+			{
+				ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+			}
+			RAMN_SocketCAN_SendTX(&CANTxHeader, CANTxData);
+		}
+		 */
+#endif
+
 		RAMN_FDCAN_Status.CANTXRequestCnt++;
 
 	}
@@ -2502,6 +1778,8 @@ void RAMN_PeriodicTaskFunc(void *argument)
 	RAMN_CTF_Init(xTaskGetTickCount());
 #endif
 	RAMN_CUSTOM_Init(xTaskGetTickCount());
+	HAL_TIM_Base_Start_IT(&htim6); 	// Enable custom function timer
+	HAL_TIM_Base_Start(&htim16); 	// Enable custom measurement timer
 
 #if defined(ENABLE_SCREEN)
 	RAMN_SCREENMANAGER_Init(&hspi2, &RAMN_PeriodicHandle);
@@ -2570,6 +1848,7 @@ void RAMN_ErrorTaskFunc(void *argument)
 	/* USER CODE BEGIN RAMN_ErrorTaskFunc */
 	/* Infinite loop */
 #if defined(ENABLE_USB)
+	//TODO: report Errors to GS_USB
 	FDCAN_ErrorCountersTypeDef errorCount;
 	FDCAN_ProtocolStatusTypeDef protocolStatus;
 	RAMN_FDCAN_Status_t gw_freeze;
@@ -2635,7 +1914,7 @@ void RAMN_DiagRXFunc(void *argument)
 	/* USER CODE BEGIN RAMN_DiagRXFunc */
 	/* Infinite loop */
 #if !defined(ENABLE_DIAG)
-	vTaskDelete(NULL);
+	RAMN_CUSTOM_CustomTask5(argument);
 #else
 	uint16_t diagRxSize;
 	uint8_t addressing = 0;
@@ -2658,9 +1937,12 @@ void RAMN_DiagRXFunc(void *argument)
 						if (diagRxSize <= 0xFFF)
 						{
 							index = 0;
-							while (index != diagRxSize)
+							if (diagRxSize > 0U)
 							{
-								index += xStreamBufferReceive(UdsRxDataStreamBufferHandle, (void *)diagRxbuf+index,diagRxSize-index, portMAX_DELAY);
+								while (index != diagRxSize)
+								{
+									index += xStreamBufferReceive(UdsRxDataStreamBufferHandle, (void *)&diagRxbuf[index],diagRxSize-index, portMAX_DELAY);
+								}
 							}
 
 							if (addressing == 0U)
@@ -2771,11 +2053,11 @@ void RAMN_DiagRXFunc(void *argument)
 						xBytesSent = xStreamBufferSend(XcpTxDataStreamBufferHandle, (void *) &diagTxSize, sizeof(diagTxSize), portMAX_DELAY );
 						xBytesSent += xStreamBufferSend(XcpTxDataStreamBufferHandle, (void *) diagTxbuf, diagTxSize, portMAX_DELAY );
 						if( xBytesSent != (diagTxSize + sizeof(diagTxSize) ))
-							{
+						{
 #ifdef HANG_ON_ERRORS
 							Error_Handler();
 #endif
-							}
+						}
 						xTaskNotifyGive(RAMN_DiagTXHandle);
 					}
 				}
@@ -2800,7 +2082,7 @@ void RAMN_DiagTXFunc(void *argument)
 	/* USER CODE BEGIN RAMN_DiagTXFunc */
 	/* Infinite loop */
 #if !defined(ENABLE_DIAG)
-	vTaskDelete(NULL);
+	RAMN_CUSTOM_CustomTask6(argument);
 #else
 	uint16_t index = 0U;
 	for(;;)
@@ -2823,6 +2105,13 @@ void RAMN_DiagTXFunc(void *argument)
 					{
 						while (RAMN_UDS_Continue_TX(xTaskGetTickCount()) != True)
 						{
+							if (xStreamBufferBytesAvailable(UdsTxDataStreamBufferHandle) >= sizeof(RAMN_UDS_ISOTPHandler.txSize))
+							{
+								// We received another TX request even though the ongoing transfer isn't over.
+								// User may be manually sending ISO-TP requests and forgot the FLOW CONTROL frames.
+								// Consider the transfer over and move to next request.
+								break;
+							}
 							osDelay(RAMN_DBC_RequestSilence ? RAMN_UDS_ISOTPHandler.targetST : SIM_LOOP_CLOCK_MS);
 						}
 					}
@@ -2849,6 +2138,13 @@ void RAMN_DiagTXFunc(void *argument)
 					{
 						while (RAMN_KWP_Continue_TX(xTaskGetTickCount()) != True)
 						{
+							if (xStreamBufferBytesAvailable(KwpTxDataStreamBufferHandle) >= sizeof(RAMN_UDS_ISOTPHandler.txSize))
+							{
+								// We received another TX request even though the ongoing transfer isn't over.
+								// User may be manually sending ISO-TP requests and forgot the FLOW CONTROL frames.
+								// Consider the transfer over and move to next request.
+								break;
+							}
 							osDelay(RAMN_DBC_RequestSilence ? RAMN_KWP_ISOTPHandler.targetST : SIM_LOOP_CLOCK_MS);
 						}
 					}
@@ -2899,13 +2195,13 @@ void RAMN_DiagTXFunc(void *argument)
 void RAMN_SendUSBFunc(void *argument)
 {
 	/* USER CODE BEGIN RAMN_SendUSBFunc */
-#if defined(ENABLE_USB)
+#if defined(ENABLE_CDC)
 	RAMN_USB_Init(&USBD_TxStreamBufferHandle,&RAMN_SendUSBHandle);
 	RAMN_CDC_Init(&USBD_RxStreamBufferHandle, &RAMN_ReceiveUSBHandle, &RAMN_SendUSBHandle);
 
 #ifdef ENABLE_USB_AUTODETECT
 	//We expect a notification from the serial close/open detection module
-	ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+	//ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 	while (RAMN_CDC_GetTXStatus() != USBD_OK) osDelay(10U); //Wait for TX to be ready
 #endif
 	/* Infinite loop */
@@ -2939,9 +2235,140 @@ void RAMN_SendUSBFunc(void *argument)
 		}
 	}
 #else
-	vTaskDelete(NULL);
+	RAMN_CUSTOM_CustomTask2(argument);
 #endif
 	/* USER CODE END RAMN_SendUSBFunc */
+}
+
+/* USER CODE BEGIN Header_RAMN_RxTask2Func */
+/**
+ * @brief Function implementing the RAMN_RxTask2 thread.
+ * @param argument: Not used
+ * @retval None
+ */
+/* USER CODE END Header_RAMN_RxTask2Func */
+void RAMN_RxTask2Func(void *argument)
+{
+	/* USER CODE BEGIN RAMN_RxTask2Func */
+	/* Infinite loop */
+	// On ECU A, this task is used for gs_usb
+#ifndef ENABLE_GSUSB
+	RAMN_CUSTOM_CustomTask3(argument);
+#else
+	BaseType_t            ret;
+	struct gs_host_frame *recvFrame;
+	FDCAN_TxHeaderTypeDef CANTxHeader;
+	uint8_t CANTxData[64];
+
+	/* Infinite loop */
+	for(;;)
+	{
+		ret = xQueueReceive(RAMN_GSUSB_RecvQueueHandle, &recvFrame, portMAX_DELAY);
+		if (ret != pdPASS)
+		{
+			RAMN_USB_Config.queueErrorCnt++;
+		}
+		else
+		{
+
+			// TODO implement CAN-FD
+
+			//recvFrame->echo_id
+			//recvFrame.flags
+			//recvFrame.reserved
+
+
+			CANTxHeader.Identifier = (recvFrame->can_id)&0x1FFFFFFF;
+			CANTxHeader.DataLength  = recvFrame->can_dlc;
+			if (recvFrame->can_id & CAN_RTR_FLAG) CANTxHeader.TxFrameType = FDCAN_REMOTE_FRAME;
+			else CANTxHeader.TxFrameType = FDCAN_DATA_FRAME;
+
+			if (recvFrame->can_id & CAN_EFF_FLAG) CANTxHeader.IdType = FDCAN_EXTENDED_ID;
+			else CANTxHeader.IdType = FDCAN_STANDARD_ID;
+
+			CANTxHeader.BitRateSwitch = FDCAN_BRS_OFF;
+			CANTxHeader.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
+			CANTxHeader.FDFormat = FDCAN_CLASSIC_CAN;
+			CANTxHeader.TxEventFifoControl = FDCAN_NO_TX_EVENTS;
+
+			//CANTxHeader.MessageMarker = 0U;
+
+			if (CANTxHeader.TxFrameType == FDCAN_DATA_FRAME)
+			{
+				RAMN_memcpy(CANTxData, recvFrame->data, DLCtoUINT8(recvFrame->can_dlc));
+			}
+
+			//TODO: implement better error reports
+			if (RAMN_FDCAN_SendMessage(&CANTxHeader,CANTxData) == RAMN_OK)
+			{
+				// for host candump
+				ret = xQueueSendToBack(RAMN_GSUSB_SendQueueHandle, &recvFrame, CAN_QUEUE_TIMEOUT);
+				if (ret != pdPASS)
+				{
+					RAMN_USB_Config.queueErrorCnt++;
+					// Drop frame and return buffer to pool
+					xQueueSendToBack(RAMN_GSUSB_PoolQueueHandle, &recvFrame, portMAX_DELAY);
+				}
+			}
+		}
+	}
+#endif
+	/* USER CODE END RAMN_RxTask2Func */
+}
+
+/* USER CODE BEGIN Header_RAMN_TxTask2Func */
+/**
+ * @brief Function implementing the RAMN_TxTask2 thread.
+ * @param argument: Not used
+ * @retval None
+ */
+/* USER CODE END Header_RAMN_TxTask2Func */
+void RAMN_TxTask2Func(void *argument)
+{
+	/* USER CODE BEGIN RAMN_TxTask2Func */
+	// On ECU A, this task is used for gs_usb
+#ifndef ENABLE_GSUSB
+	RAMN_CUSTOM_CustomTask4(NULL);
+#else
+	BaseType_t            ret;
+	struct gs_host_frame *frame;
+
+	/* Infinite loop */
+	for(;;)
+	{
+		ret = xQueueReceive(RAMN_GSUSB_SendQueueHandle, &frame, portMAX_DELAY);
+		if(ret != pdPASS)
+		{
+			RAMN_USB_Config.queueErrorCnt++;
+		}
+		else
+		{
+			if (USBD_GSUSB_SendFrame(hpcd_USB_FS.pData, frame) == USBD_OK)
+			{
+				// Return buffer to pool
+				ret = xQueueSendToBack(RAMN_GSUSB_PoolQueueHandle, &frame, portMAX_DELAY);
+				if(ret != pdPASS)
+				{
+					RAMN_USB_Config.queueErrorCnt++;
+				}
+				else if(uxQueueMessagesWaiting(RAMN_GSUSB_PoolQueueHandle) == FDCAN_GetQueueSize())
+				{
+					xTaskNotifyGive(RAMN_SendCANHandle);
+				}
+			}
+			else
+			{
+				// Send frame after
+				ret = xQueueSendToFront(RAMN_GSUSB_SendQueueHandle, &frame, CAN_QUEUE_TIMEOUT);
+				if(ret != pdPASS)
+				{
+					RAMN_USB_Config.queueErrorCnt++;
+				}
+			}
+		}
+	}
+#endif
+	/* USER CODE END RAMN_TxTask2Func */
 }
 
 /**
@@ -2955,12 +2382,22 @@ void RAMN_SendUSBFunc(void *argument)
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
 	/* USER CODE BEGIN Callback 0 */
-
-	/* USER CODE END Callback 0 */
-	if (htim->Instance == TIM1) {
-		HAL_IncTick();
+#ifdef GENERATE_RUNTIME_STATS
+	if (htim->Instance == TIM7)
+	{
+		ulHighFrequencyTimerTicks++;
 	}
+	else
+#endif
+		/* USER CODE END Callback 0 */
+		if (htim->Instance == TIM1) {
+			HAL_IncTick();
+		}
 	/* USER CODE BEGIN Callback 1 */
+		else if (htim->Instance == TIM6)
+		{
+			RAMN_CUSTOM_TIM6ISR(htim);
+		}
 
 	/* USER CODE END Callback 1 */
 }

@@ -3,7 +3,7 @@
  ******************************************************************************
  * @attention
  *
- * <h2><center>&copy; Copyright (c) 2021 TOYOTA MOTOR CORPORATION.
+ * <h2><center>&copy; Copyright (c) 2025 TOYOTA MOTOR CORPORATION.
  * ALL RIGHTS RESERVED.</center></h2>
  *
  * This software component is licensed by TOYOTA MOTOR CORPORATION under BSD 3-Clause license,
@@ -17,7 +17,6 @@
 #include "ramn_diag.h"
 
 #if defined(ENABLE_DIAG)
-
 
 static osThreadId_t* pTaskToNotify;
 static StreamBufferHandle_t* udsbuf;
@@ -64,19 +63,19 @@ RAMN_Result_t RAMN_DIAG_Update(uint32_t tick)
 void RAMN_DIAG_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, const uint8_t* data, uint32_t tick)
 {
 #if defined(ENABLE_UDS)
-	if (RAMN_UDS_ProcessRxCANMessage(pHeader,data,tick,udsbuf) == True)
+	if (RAMN_UDS_ProcessRxCANMessage(pHeader, data, tick, udsbuf) == True)
 	{
 		xTaskNotifyGive(*pTaskToNotify);
 	}
 #endif
 #if defined(ENABLE_KWP)
-	if (RAMN_KWP_ProcessRxCANMessage(pHeader,data,tick,kwpbuf) == True)
+	if (RAMN_KWP_ProcessRxCANMessage(pHeader, data, tick, kwpbuf) == True)
 	{
 		xTaskNotifyGive(*pTaskToNotify);
 	}
 #endif
 #if defined(ENABLE_XCP)
-	if (RAMN_XCP_ProcessRxCANMessage(pHeader,data,tick,xcpbuf) == True)
+	if (RAMN_XCP_ProcessRxCANMessage(pHeader, data, tick, xcpbuf) == True)
 	{
 		xTaskNotifyGive(*pTaskToNotify);
 	}

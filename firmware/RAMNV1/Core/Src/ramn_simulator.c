@@ -64,8 +64,10 @@ void RAMN_SIM_UpdatePeriodic(uint32_t tick)
 	}
 	else
 	{
-		RAMN_DBC_Handle.control_shift 			= RAMN_DBC_Handle.command_shift;
+		RAMN_DBC_Handle.control_shift 			= (RAMN_DBC_Handle.command_shift)&0xFF;
 	}
+	// Note that we do not allow overriding the joystick, only gear status.
+	// It can be implemented by looking at the second byte of command_shift (declared as uint16_t).
 	RAMN_DBC_Handle.joystick 				= (uint8_t) RAMN_SENSORS_POWERTRAIN.shiftJoystick;
 	RAMN_DBC_Handle.command_horn 			= RAMN_SENSORS_POWERTRAIN.hornRequest;
 	RAMN_DBC_Handle.command_turnindicator 	= RAMN_SENSORS_POWERTRAIN.turnIndicatorRequest;

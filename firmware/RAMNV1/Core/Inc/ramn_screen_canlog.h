@@ -27,7 +27,7 @@
 
 #define SCREEN_BUFFER_MESSAGE_COUNT 18
 #define CAN_MESSAGE_BUFFER_SIZE 13
-#define MAX_BUFFER_BYTES (CAN_RX_BUFFER_SIZE/10) // Won't attempt to display CAN if the receive buffer is above this threshold (message would immediately be overwritten by another message)
+#define MAX_BUFFER_BYTES (CAN_RX_BUFFER_SIZE/2) // Screen will display "overflow" and give up displaying if CAN RX buffer goes above this threshold
 #define CANVAS_OFFSET SCREEN_HEADER_SIZE
 
 // Struct to save a CAN message in the screen memory (using less size than HAL library)

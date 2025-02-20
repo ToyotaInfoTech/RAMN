@@ -18,6 +18,9 @@
 
 #ifdef ENABLE_USB
 
+#include "usbd_cdc.h"
+#include "ramn_utils.h"
+
 // Pointer to buffer that holds outgoing USB data
 static StreamBufferHandle_t* usbTxBuffer;
 
@@ -43,6 +46,9 @@ RAMN_USB_Status_t RAMN_USB_Config =
 		.addESIFlag 			= False,
 		.USBErrCnt 				= 0U,
 		.USBTxOverflowCnt 		= 0U,
+#ifdef ENABLE_GSUSB
+		.queueErrorCnt          = 0U
+#endif
 };
 
 void RAMN_USB_Init(StreamBufferHandle_t* buffer,  osThreadId_t* pSendTask)
@@ -64,7 +70,11 @@ void RAMN_USB_SendFromTask_Blocking(uint8_t* data, uint32_t length)
 	{
 		// Should not Happen if serial is still opened
 #ifdef ENABLE_USB_AUTODETECT
-		if (RAMN_USB_Config.serialOpened == True) RAMN_USB_Config.USBTxOverflowCnt++;
+		if (RAMN_USB_Config.serialOpened == True)
+		{
+			RAMN_USB_Config.USBTxOverflowCnt++;
+			RAMN_USB_Config.serialOpened = False;
+		}
 #else
 		RAMN_USB_Config.USBTxOverflowCnt++;
 #endif
@@ -73,7 +83,11 @@ void RAMN_USB_SendFromTask_Blocking(uint8_t* data, uint32_t length)
 	{
 		// Timeout Occurred, report if serial port is still opened
 #ifdef ENABLE_USB_AUTODETECT
-		if (RAMN_USB_Config.serialOpened == True) RAMN_USB_Config.USBErrCnt++;
+		if (RAMN_USB_Config.serialOpened == True)
+		{
+			RAMN_USB_Config.USBErrCnt++;
+			RAMN_USB_Config.serialOpened = False;
+		}
 #else
 		RAMN_USB_Config.USBErrCnt++;
 #endif
@@ -130,32 +144,31 @@ void RAMM_USB_ErrorCallback(USBD_HandleTypeDef* hUsbDeviceFS)
 	RAMN_USB_Config.USBErrCnt += 1;
 }
 
+#ifdef ENABLE_USB_AUTODETECT
 void RAMM_USB_SerialOpenCallback(USBD_HandleTypeDef* hUsbDeviceFS)
 {
-#ifdef ENABLE_USB_AUTODETECT
 	RAMN_USB_Config.serialOpened = True;
-#endif
 }
 
 // Note that this function  gets called twice when the serial port is closed, and once at startup
-void RAMN_USB_SerialCloseCallback(USBD_HandleTypeDef* hUsbDeviceFS)
+void RAMN_USB_SerialCloseCallback(USBD_HandleTypeDef* hUsbDeviceFS, uint8_t index)
 {
-#ifdef ENABLE_USB_AUTODETECT
-	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-	RAMN_USB_Config.serialOpened = False;
-	RAMN_USB_Config.slcanOpened = False;
-	if (sendTask != NULL)
+	if(index == 0U)
 	{
-		//Empty the buffer and let the sending task leave the notify waiting phase
-		vTaskNotifyGiveFromISR(*sendTask,&xHigherPriorityTaskWoken); //TODO: from ISR or regular ?
+		BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+		RAMN_USB_Config.serialOpened = False;
+		RAMN_USB_Config.slcanOpened = False;
+		if (sendTask != NULL)
+		{
+			// Empty the buffer and let the sending task leave the notify waiting phase
+			vTaskNotifyGiveFromISR(*sendTask,&xHigherPriorityTaskWoken); //TODO: from ISR or regular ?
 
-		portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
-		//Note that we do not use the "BufferReset" API because it requires tasks to not be blocked on receiving/sending, which we cannot 100% guarantee
+			portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
+			// Note that we do not use the "BufferReset" API because it requires tasks to not be blocked on receiving/sending, which we cannot 100% guarantee
+		}
 	}
-#endif
 }
-
-
+#endif
 
 #endif
 

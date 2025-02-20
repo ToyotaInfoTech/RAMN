@@ -43,6 +43,10 @@ uint32_t  uint12toASCII(uint16_t src, uint8_t* dst);
 uint32_t  uint8toASCII(uint8_t src, uint8_t* dst);
 uint32_t  uint4toASCII(uint8_t src, uint8_t* dst);
 
+// Converts an integer to BCD representation, with null terminator. May write up to 21 bytes.
+// Returns the number of characters written, excluding null terminator.
+uint8_t uintToBCD(uint64_t val, char *dst);
+
 // Functions to convert from ASCII to uint
 void     ASCIItoRaw(uint8_t* dst, const uint8_t* src, uint32_t raw_size);
 uint8_t  ASCIItoUint4 (const uint8_t* src);

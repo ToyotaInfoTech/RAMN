@@ -3,7 +3,7 @@
  ******************************************************************************
  * @attention
  *
- * <h2><center>&copy; Copyright (c) 2021 TOYOTA MOTOR CORPORATION.
+ * <h2><center>&copy; Copyright (c) 2025 TOYOTA MOTOR CORPORATION.
  * ALL RIGHTS RESERVED.</center></h2>
  *
  * This software component is licensed by TOYOTA MOTOR CORPORATION under BSD 3-Clause license,
@@ -19,13 +19,13 @@
 #if defined(ENABLE_UDS)
 
 
-//UDS Session Definitions
-#define UDS_SESSION_DS	  0x01 //Default Session
-#define UDS_SESSION_PRGS  0x02 //Programming Session
-#define UDS_SESSION_EXTDS 0x03 //Extended Diagnostic Session
-#define UDS_SESSION_SSDS  0x04 //Safety System Diagnostic Session
+// UDS Session Definitions
+#define UDS_SESSION_DS	  0x01 // Default Session
+#define UDS_SESSION_PRGS  0x02 // Programming Session
+#define UDS_SESSION_EXTDS 0x03 // Extended Diagnostic Session
+#define UDS_SESSION_SSDS  0x04 // Safety System Diagnostic Session
 
-//UDS Reset Types
+// UDS Reset Types
 #define RESET_HARD_RESET    0x01
 #define RESET_KEYOFFONRESET 0x02
 #define RESET_SOFT_RESET    0x03
@@ -37,8 +37,8 @@ typedef enum
 	TRANSFER_IDLE = 0U,
 	TRANSFER_DOWNLOADING,
 	TRANSFER_UPLOADING,
-	TRANSFER_FINISHED, //After last bit has been received/sent
-	TRANSFER_VALIDATED,//After TransferExit has been called
+	TRANSFER_FINISHED, // After last bit has been received/sent
+	TRANSFER_VALIDATED,// After TransferExit has been called
 } TransferManagerState_t;
 
 struct {
@@ -53,7 +53,7 @@ struct {
 	uint8_t newSettings;
 } linkControlManager;
 
-//Common pointer to avoid passing answer data as argument each sub-function
+// Common pointer to avoid passing answer data as argument each sub-function
 static uint8_t* uds_answerData;
 static uint16_t* uds_answerSize;
 
@@ -118,7 +118,7 @@ static void RAMN_UDS_FormatAnswer(const uint8_t* data, uint16_t size)
 	*uds_answerSize = size;
 }
 
-//Formats a negative response based on provided error code
+// Formats a negative response based on provided error code
 static void RAMN_UDS_FormatNegativeResponse(const uint8_t* data, uint8_t errCode)
 {
 	uds_answerData[0] = 0x7F;
@@ -127,7 +127,7 @@ static void RAMN_UDS_FormatNegativeResponse(const uint8_t* data, uint8_t errCode
 	*uds_answerSize = 3U;
 }
 
-//Sends a positive response with provided size
+// Sends a positive response with provided size
 static void RAMN_UDS_FormatPositiveResponseEcho(const uint8_t* data, uint16_t size)
 {
 	uds_answerData[0] = data[0] + 0x40;
@@ -138,13 +138,13 @@ static void RAMN_UDS_FormatPositiveResponseEcho(const uint8_t* data, uint16_t si
 	*uds_answerSize = size;
 }
 
-//check whether the current session is authenticated or not
+// Check whether the current session is authenticated or not
 static RAMN_Bool_t checkAuthenticated()
 {
 	return (udsSessionHandler.defaultSAhandler.status == SECURITY_ACCESS_SUCCESS);
 }
 
-//Resets the security handler
+// Resets the security handler
 static void resetSAHandler(securityAccessHandler_t* sa)
 {
 	sa->currentSeed = 0;
@@ -154,7 +154,7 @@ static void resetSAHandler(securityAccessHandler_t* sa)
 	sa->attemptNumber = 0;
 }
 
-//This function check if session/authentication status allows for reprogramming
+// This function check if session/authentication status allows for reprogramming
 static uint8_t checkProgrammingOK(RAMN_Bool_t isSubfunction)
 {
 	uint8_t result = 0U;
@@ -169,7 +169,7 @@ static uint8_t checkProgrammingOK(RAMN_Bool_t isSubfunction)
 	return result;
 }
 
-//resets the UDS session
+// Resets the UDS session
 static void resetSession(uint32_t tick)
 {
 	udsSessionHandler.currentSession = UDS_SESSION_DS;
@@ -199,7 +199,7 @@ static void RAMN_UDS_DiagnosticSessionControl(const uint8_t* data, uint16_t size
 			if ((data[1]&0x80) == 0) RAMN_UDS_FormatAnswer(answer, 2);
 			break;
 		case UDS_SESSION_EXTDS:
-			//Check vehicle speed and only accept if stopped
+			// Check vehicle speed and only accept if stopped
 			if (RAMN_DBC_Handle.status_rpm > UDS_MAXIMUM_RPM_ACCEPTABLE) RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_VSTH);
 			else
 			{
@@ -210,7 +210,7 @@ static void RAMN_UDS_DiagnosticSessionControl(const uint8_t* data, uint16_t size
 			}
 			break;
 		case UDS_SESSION_PRGS:
-			//Check vehicle speed and only accept if stopped
+			// Check vehicle speed and only accept if stopped
 			if (RAMN_DBC_Handle.status_rpm > UDS_MAXIMUM_RPM_ACCEPTABLE) RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_CNC);
 			else
 			{
@@ -244,7 +244,7 @@ static void RAMN_UDS_ECUReset(const uint8_t* data, uint16_t size)
 		{
 		case RESET_HARD_RESET:
 			RAMN_UDS_FormatPositiveResponseEcho(data, size);
-			//Note that actual reset is performed after sending the answer, if necessary
+			// Note that actual reset is performed after sending the answer, if necessary
 			if ((data[1]&0x80) != 0U) HAL_NVIC_SystemReset(); //no need to answer, reset immediately
 			break;
 		default:
@@ -256,7 +256,7 @@ static void RAMN_UDS_ECUReset(const uint8_t* data, uint16_t size)
 
 static void RAMN_UDS_ClearDTC(const uint8_t* data, uint16_t size)
 {
-	//Only 0xFFFFFF (clear all) supported
+	// Only 0xFFFFFF (clear all) supported
 	if (size != 4)
 	{
 		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
@@ -293,11 +293,11 @@ static void RAMN_UDS_ReadDTC(const uint8_t* data, uint16_t size)
 		uds_answerData[2] = 0x04;
 		switch(data[1]&0x7F)
 		{
-		case 0x01: //reportNumberOfDTCByStatusMask
+		case 0x01: // reportNumberOfDTCByStatusMask
 			if (size != 3) RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
 			else
 			{
-				//Masks not supported yet
+				// Masks not supported yet
 				uds_answerData[3] = DTC_FORMAT_IDENTIFIER;
 				if (RAMN_DTC_GetNumberOfDTC(&numDTC) != RAMN_OK)
 				{
@@ -311,11 +311,11 @@ static void RAMN_UDS_ReadDTC(const uint8_t* data, uint16_t size)
 				}
 			}
 			break;
-		case 0x02: //reportDTCByStatusMask
+		case 0x02: // reportDTCByStatusMask
 			if (size != 3) RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
 			else
 			{
-				//Masks not supported yet
+				// Masks not supported yet
 				uds_answerData[3] = DTC_FORMAT_IDENTIFIER;
 				if (RAMN_DTC_GetNumberOfDTC(&numDTC) != RAMN_OK)
 				{
@@ -363,18 +363,18 @@ static void RAMN_UDS_ReadDTC(const uint8_t* data, uint16_t size)
 #endif
 }
 
-//Note that bank alias are NOT accounted for (if bank swap is activated, the virtual addresses will be read)
+// Note that bank alias are NOT accounted for (if bank swap is activated, the virtual addresses will be read)
 static void RAMN_UDS_ReadMemoryByAddress(const uint8_t* data, uint16_t size)
 {
 	if( size < 2 )
 	{
 		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
 	}
-	else if ((data[1]&0x0F) != 0x04) //only accept 32-bit addressing
+	else if ((data[1]&0x0F) != 0x04) // Only accept 32-bit addressing
 	{
 		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SFNS);
 	}
-	else if ((data[1]&0xF0) > 0x40) //only accept sizes below 32 bits
+	else if ((data[1]&0xF0) > 0x40) // Only accept sizes below 32 bits
 	{
 		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SFNS);
 	}
@@ -405,8 +405,7 @@ static void RAMN_UDS_ReadMemoryByAddress(const uint8_t* data, uint16_t size)
 			}
 			else if ((RAMN_MEMORY_CheckAreaReadable(addr, (addr + (uint32_t)memsize)) != 0U) && (memsize < 0xFFF))
 			{
-				//use rx buffer to copy
-				uds_answerData[0] = data[0] + 0x40; //positive response
+				uds_answerData[0] = data[0] + 0x40; // Positive response
 				for(uint32_t i = 0; i < memsize; i++ )
 				{
 					uds_answerData[i+1] = (volatile uint8_t)*((volatile uint8_t*)(addr+i));
@@ -416,7 +415,7 @@ static void RAMN_UDS_ReadMemoryByAddress(const uint8_t* data, uint16_t size)
 #if defined(ENABLE_MINICTF) && defined(TARGET_ECUD)
 			else if ((addr == 0x01234567) && memsize <= (sizeof(FLAG_UDS_4)-1))
 			{
-				uds_answerData[0] = data[0] + 0x40; //positive response
+				uds_answerData[0] = data[0] + 0x40; // Positive response
 				for(uint32_t i = 0; i < memsize; i++ )
 				{
 					uds_answerData[i+1] = (volatile uint8_t)*((volatile uint8_t*)(FLAG_UDS_4+i));
@@ -446,9 +445,10 @@ static void RAMN_UDS_ReadDataByIdentifier(uint8_t* data, uint16_t size)
 		uint8_t answer[32+4];
 		uint8_t answer_size = 0;
 		EE_Status result = EE_OK;
+#ifdef ENABLE_EEPROM_EMULATION
 		if ((index >= 0x200) && (index < 0x400))
 		{
-			//This range can be read/written with arbitrary 32-bit values
+			// This range can be read/written with arbitrary 32-bit values
 			result = RAMN_EEPROM_Read32(index,val);
 			if (result == EE_OK)
 			{
@@ -464,6 +464,7 @@ static void RAMN_UDS_ReadDataByIdentifier(uint8_t* data, uint16_t size)
 			}
 		}
 		else
+#endif
 		{
 			switch (index)
 			{
@@ -480,7 +481,7 @@ static void RAMN_UDS_ReadDataByIdentifier(uint8_t* data, uint16_t size)
 				}
 				else
 				{
-					data[0] = 0x3F; //will become 0x7F
+					data[0] = 0x3F; // Will become 0x7F
 					data[1] = 0x22;
 					data[2] = UDS_NRC_SAD;
 					answer_size = 3;
@@ -491,25 +492,26 @@ static void RAMN_UDS_ReadDataByIdentifier(uint8_t* data, uint16_t size)
 				answer_size = 3+(sizeof(FLAG_UDS_2)-1);
 				break;
 #endif
-			case 0xF184: //compile Date and Time
+			case 0xF184: // Compile Date and Time
 				RAMN_memcpy(&(answer[3]),(uint8_t*)__DATE__,sizeof(__DATE__));
 				answer[3+sizeof(__DATE__)] = ' ';
 				RAMN_memcpy(&(answer[3+1+sizeof(__DATE__)]),(uint8_t*)__TIME__,sizeof(__TIME__));
 				answer_size = 3 + 1 + sizeof(__DATE__) + sizeof(__TIME__);
 				break;
-			case 0xF186: //active Session
+			case 0xF186: // Active Session
 				answer[3] = udsSessionHandler.currentSession;
 				answer_size = 1+3;
 				break;
-			case 0xF187: //Spare part
+			case 0xF187: // Spare part
 				RAMN_memcpy(&(answer[3]),(uint8_t*)"RAMN",4U);
 				answer_size = 4+3;
 				break;
-			case 0xF18C: //ECU Serial Hardware
+			case 0xF18C: // ECU Serial Hardware
 				RAMN_memcpy((uint8_t*)&(answer[3]),(uint8_t*)DEVICE_HARDWARE_ID_ADDRESS,12);
 				answer_size = 12+3;
 				break;
-			case 0xF190: //VIN
+#ifdef ENABLE_EEPROM_EMULATION
+			case 0xF190: // VIN
 				result |= RAMN_EEPROM_Read32(VIN_BYTES1_4_INDEX,val);
 				result |= RAMN_EEPROM_Read32(VIN_BYTES5_8_INDEX,&(val[1]));
 				result |= RAMN_EEPROM_Read32(VIN_BYTES9_12_INDEX,&(val[2]));
@@ -518,6 +520,7 @@ static void RAMN_UDS_ReadDataByIdentifier(uint8_t* data, uint16_t size)
 				RAMN_memcpy((uint8_t*)&(answer[3]),(uint8_t*)val,17);
 				answer_size = 17+3;
 				break;
+#endif
 			default:
 				result = EE_INVALID_VIRTUALADDRESS; //not a positive response
 				break;
@@ -662,12 +665,12 @@ static void RAMN_UDS_WriteDataByIdentifier(const uint8_t* data, uint16_t size)
 			}
 			else
 			{
-				if (index != 0xF190) //NOT VIN
+				if (index != 0xF190) // NOT VIN
 				{
 					uint32_t val = (data[3] << 24) + (data[4] << 16) + (data[5] << 8) + (data[6]);
 					result = RAMN_EEPROM_Write32(index,val);
 				}
-				else //VIN
+				else // VIN
 				{
 					result |= RAMN_EEPROM_Write32(VIN_BYTES1_4_INDEX,(data[6] << 24) + (data[5] << 16) + (data[4] << 8) + (data[3]));
 					result |= RAMN_EEPROM_Write32(VIN_BYTES5_8_INDEX,(data[10] << 24) + (data[9] << 16) + (data[8] << 8) + (data[7]));
@@ -701,7 +704,7 @@ static void RAMN_UDS_InputOutputControlByIdentifier(const uint8_t* data, uint16_
 	RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SNS);
 }
 
-//Routine Control to ask the ECU to erase the alternative firmware
+// Routine Control to ask the ECU to erase the alternative firmware
 static void RAMN_UDS_RoutineControlEraseAlternativeFirmware(const uint8_t* data, uint16_t size)
 {
 	uint8_t errCode;
@@ -711,7 +714,7 @@ static void RAMN_UDS_RoutineControlEraseAlternativeFirmware(const uint8_t* data,
 	}
 	else {
 		switch (data[1]){
-		case 0x01://Start
+		case 0x01:// Start
 			errCode = checkProgrammingOK(True);
 			if (errCode == 0U)
 			{
@@ -723,16 +726,16 @@ static void RAMN_UDS_RoutineControlEraseAlternativeFirmware(const uint8_t* data,
 				RAMN_UDS_FormatNegativeResponse(data, errCode);
 			}
 			break;
-		case 0x02://Stop
-		case 0x03://Read Results
-		default: //Invalid
+		case 0x02:// Stop
+		case 0x03:// Read Results
+		default: // Invalid
 			RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SFNS);
 			break;
 		}
 	}
 }
 
-//Routine control to request the ECU to validate a firmware update
+// Routine control to request the ECU to validate a firmware update
 static void RAMN_UDS_RoutineControlValidateMemory(const uint8_t* data, uint16_t size)
 {
 	uint8_t errCode;
@@ -742,7 +745,7 @@ static void RAMN_UDS_RoutineControlValidateMemory(const uint8_t* data, uint16_t 
 	}
 	else{
 		switch (data[1]){
-		case 0x01://Start
+		case 0x01:// Start
 			errCode = checkProgrammingOK(True);
 			if (errCode == 0U)
 			{
@@ -767,9 +770,9 @@ static void RAMN_UDS_RoutineControlValidateMemory(const uint8_t* data, uint16_t 
 				RAMN_UDS_FormatNegativeResponse(data, errCode);
 			}
 			break;
-		case 0x02://Stop
-		case 0x03://Read Results
-		default: //Invalid
+		case 0x02:// Stop
+		case 0x03:// Read Results
+		default: // Invalid
 			RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SFNS);
 			break;
 		}
@@ -785,25 +788,25 @@ static void RAMN_UDS_RoutineControlRequestSilence(const uint8_t* data, uint16_t 
 	}
 	else{
 		switch (data[1]){
-		case 0x01://Start
+		case 0x01:// Start
 			RAMN_DBC_RequestSilence = True;
 			RAMN_UDS_FormatPositiveResponseEcho(data, size);
 			break;
-		case 0x02://Stop
+		case 0x02:// Stop
 			RAMN_DBC_RequestSilence = False;
 			RAMN_UDS_FormatPositiveResponseEcho(data, size);
 			break;
-		case 0x03://Read Results
-		default: //Invalid
+		case 0x03:// Read Results
+		default: // Invalid
 			RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SFNS);
 			break;
 		}
 	}
 }
 
-//Emergency Routine to reset BOOT0 option bytes
-//Used to salvage a board on which the wrong firmware was flashed, that refuses to go to bootloader mode
-//Note that this command should reset board automatically, so it should not answer
+// Emergency Routine to reset BOOT0 option bytes
+// Used to salvage a board on which the wrong firmware was flashed, that refuses to go to bootloader mode
+// Note that this command should reset board automatically, so it should not answer
 static void RAMN_UDS_RoutineControlResetBootOptionBytes(const uint8_t* data, uint16_t size)
 {
 	if( size != 4U )
@@ -821,7 +824,7 @@ static void RAMN_UDS_RoutineControlResetBootOptionBytes(const uint8_t* data, uin
 		{
 			RAMN_Result_t result = RAMN_OK;
 			switch (data[1]){
-			case 0x01://Start
+			case 0x01:// Start
 				if(RAMN_FLASH_isMemoryProtected() == False)
 				{
 					result = RAMN_FLASH_ConfigureOptionBytesBootloaderMode();
@@ -839,7 +842,7 @@ static void RAMN_UDS_RoutineControlResetBootOptionBytes(const uint8_t* data, uin
 					RAMN_UDS_FormatPositiveResponseEcho(data, size);
 				}
 				break;
-			default: //Invalid
+			default: // Invalid
 				RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SFNS);
 				break;
 			}
@@ -847,9 +850,9 @@ static void RAMN_UDS_RoutineControlResetBootOptionBytes(const uint8_t* data, uin
 	}
 }
 
-//Emergency Routine to force an ECU to swap its memory banks.
-//This can be used to revert to a previous firmware (WITHOUT ANY CHECK) and fix issues when STM32 embedded bootloader/STM32CubeProgrammer/STM32CubeIDE do not work well with bank swaps.
-//Do not use unless you know what you are doing.
+// Emergency Routine to force an ECU to swap its memory banks.
+// This can be used to revert to a previous firmware (WITHOUT ANY CHECK) and fix issues when STM32 embedded bootloader/STM32CubeProgrammer/STM32CubeIDE do not work well with bank swaps.
+// Do not use unless you know what you are doing.
 static void RAMN_UDS_RoutineControlForceMemorySwap(const uint8_t* data, uint16_t size)
 {
 	if( size != 4U )
@@ -865,7 +868,7 @@ static void RAMN_UDS_RoutineControlForceMemorySwap(const uint8_t* data, uint16_t
 		else
 		{
 			switch (data[1]){
-			case 0x01://Start
+			case 0x01:// Start
 				if (RAMN_FLASH_SwitchActiveBank() != RAMN_OK)
 				{
 					RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_GPF);
@@ -875,7 +878,7 @@ static void RAMN_UDS_RoutineControlForceMemorySwap(const uint8_t* data, uint16_t
 					RAMN_UDS_FormatPositiveResponseEcho(data, size);
 				}
 				break;
-			default: //Invalid
+			default: // Invalid
 				RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SFNS);
 				break;
 			}
@@ -885,7 +888,7 @@ static void RAMN_UDS_RoutineControlForceMemorySwap(const uint8_t* data, uint16_t
 
 
 
-//Routine Control that returns the CRC for specified area
+// Routine Control that returns the CRC for specified area
 static void RAMN_UDS_RoutineControlComputeCRC(const uint8_t* data, uint16_t size)
 {
 	if (size < 12)
@@ -904,7 +907,7 @@ static void RAMN_UDS_RoutineControlComputeCRC(const uint8_t* data, uint16_t size
 		else
 		{
 			uint32_t result = RAMN_CRC_SoftCalculate((uint8_t*)startaddr,memsize);
-			uds_answerData[0] = data[0] + 0x40; //positive response
+			uds_answerData[0] = data[0] + 0x40; // Positive response
 			uds_answerData[1] = data[1];
 			uds_answerData[2] = data[2];
 			uds_answerData[3] = data[3];
@@ -929,16 +932,16 @@ static void RAMN_UDS_RoutineControlAutopilot(const uint8_t* data, uint16_t size)
 	}
 	else{
 		switch (data[1]){
-		case 0x01://Start
+		case 0x01:// Start
 			RAMN_SIM_AutopilotEnabled = True;
 			RAMN_UDS_FormatPositiveResponseEcho(data, size);
 			break;
-		case 0x02://Stop
+		case 0x02:// Stop
 			RAMN_SIM_AutopilotEnabled = False;
 			RAMN_UDS_FormatPositiveResponseEcho(data, size);
 			break;
-		case 0x03://Read Results
-		default: //Invalid
+		case 0x03:// Read Results
+		default: // Invalid
 			RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SFNS);
 			break;
 		}
@@ -947,7 +950,7 @@ static void RAMN_UDS_RoutineControlAutopilot(const uint8_t* data, uint16_t size)
 #endif
 
 #ifdef ENABLE_EEPROM_EMULATION
-//Routine to add an arbitrary DTC entry
+// Routine to add an arbitrary DTC entry
 static void RAMN_UDS_RoutineControlAddDTCEntry(const uint8_t* data, uint16_t size)
 {
 	if( size != 8U )
@@ -956,7 +959,7 @@ static void RAMN_UDS_RoutineControlAddDTCEntry(const uint8_t* data, uint16_t siz
 	}
 	else{
 		switch (data[1]){
-		case 0x01://Start
+		case 0x01:		// Start
 			if (data[7] != 0x04)
 			{
 				RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_ROOR);
@@ -974,9 +977,9 @@ static void RAMN_UDS_RoutineControlAddDTCEntry(const uint8_t* data, uint16_t siz
 				}
 			}
 			break;
-		case 0x02://Stop
-		case 0x03://Read Results
-		default: //Invalid
+		case 0x02:  	// Stop
+		case 0x03: 		// Read Results
+		default:  	 	// Invalid
 			RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SFNS);
 			break;
 		}
@@ -1009,9 +1012,9 @@ static void loadChip8Game(const uint8_t* data, uint16_t size)
 		else
 		{
 			RAMN_CHIP8_StopGame();
-			osDelay(200); //leave some time to quit the game (TODO optimize this)
+			osDelay(200); // Leave some time to quit the game.
 			RAMN_SCREENMANAGER_RequestGame(&data[3], game_size);
-			uds_answerData[0] = data[0] + 0x40; //positive response
+			uds_answerData[0] = data[0] + 0x40; // Positive response
 			*uds_answerSize = 1;
 		}
 	}
@@ -1060,7 +1063,7 @@ static void displayPixels(const uint8_t* data, uint16_t size)
 
 typedef void (*exec_func_t)(void);
 
-//Routine to execute arbitrary code (e.g., to test ARM shellcode)
+// Routine to execute arbitrary code (e.g., to test ARM shellcode)
 static void RAMN_UDS_RoutineControlExecuteArbitraryCode(const uint8_t* data, uint16_t size)
 {
 	if (checkAuthenticated() == True)
@@ -1074,22 +1077,22 @@ static void RAMN_UDS_RoutineControlExecuteArbitraryCode(const uint8_t* data, uin
 	else RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SAD);
 }
 
-//0000 to 00FF ISO Reserved
-//0100 to 01FF Tachograph
-//0200 to 0DFF Manufacturer Specific
-//0E00 to E1FF OBD Test IDs
-//E200 Deploy Loop Routine ID
-//E201 to E2FF Safety System Routine IDs
-//E300 to EFFF ISO Reserved
-//F000 to FEFF System Supplier Specific
-//FF00 Erase Memory
-//FF01 Check Programming Dependencies
-//FF02 Erase Mirror DTCs
-//FF03 to FFFF ISO Reserved
+// 0000 to 00FF ISO Reserved
+// 0100 to 01FF Tachograph
+// 0200 to 0DFF Manufacturer Specific
+// 0E00 to E1FF OBD Test IDs
+// E200 Deploy Loop Routine ID
+// E201 to E2FF Safety System Routine IDs
+// E300 to EFFF ISO Reserved
+// F000 to FEFF System Supplier Specific
+// FF00 Erase Memory
+// FF01 Check Programming Dependencies
+// FF02 Erase Mirror DTCs
+// FF03 to FFFF ISO Reserved
 
-//0200 To Disable Periodic Sending of messages
-//0201 To Erase the EEPROM
-//0202 To Copy current values in EEPROM to alternative EEPROM
+// 0200 To Disable Periodic Sending of messages
+// 0201 To Erase the EEPROM
+// 0202 To Copy current values in EEPROM to alternative EEPROM
 static void RAMN_UDS_RoutineControl(uint8_t* data, uint16_t size)
 {
 	if( size < 4U )
@@ -1104,31 +1107,31 @@ static void RAMN_UDS_RoutineControl(uint8_t* data, uint16_t size)
 			supprPositiveResponse = 1U;
 			data[1] = data[1]&0x7F;
 		}
-		switch( ((data[2] << 8 ) | data[3])){ //subroutine (2 bytes)
-		case 0xFF00: //Erase Memory
+		switch( ((data[2] << 8 ) | data[3])){ // subroutine (2 bytes)
+		case 0xFF00: // Erase Memory
 			RAMN_UDS_RoutineControlEraseAlternativeFirmware(data, size);
 			break;
-		case 0xFF01: //Validate Memory and Swap Banks
+		case 0xFF01: // Validate Memory and Swap Banks
 			RAMN_UDS_RoutineControlValidateMemory(data, size);
 			break;
-		case 0x0200: //Request Silence
+		case 0x0200: // Request Silence
 			RAMN_UDS_RoutineControlRequestSilence(data, size);
 			break;
-		case 0x0201: //Erase EEPROM
+		case 0x0201: // Erase EEPROM
 			if (RAMN_FLASH_EraseActiveEEPROM() == RAMN_OK) RAMN_UDS_FormatPositiveResponseEcho(data, size);
 			else RAMN_UDS_FormatNegativeResponse(data,UDS_NRC_GPF);
 			break;
-		case 0x0202: //Copy Current EEPROM to alternative firmware:
+		case 0x0202: // Copy Current EEPROM to alternative firmware:
 			if (RAMN_FLASH_CopyEEPROMToInactiveBank() == RAMN_OK) RAMN_UDS_FormatPositiveResponseEcho(data, size);
 			else RAMN_UDS_FormatNegativeResponse(data,UDS_NRC_GPF);
 			break;
-		case 0x0203: //Echo Message (full Message)
+		case 0x0203: // Echo Message (full Message)
 			RAMN_UDS_FormatPositiveResponseEcho(data,size);
 			break;
-		case 0x0204: //Echo Message (4 bytes only)
+		case 0x0204: // Echo Message (4 bytes only)
 			RAMN_UDS_FormatPositiveResponseEcho(data,4U);
 			break;
-		case 0x0205: //Fixed Echo with specified size (Full Buffer)
+		case 0x0205: // Fixed Echo with specified size (Full Buffer)
 			if (size == 6U)
 			{
 				uint16_t memsize = (uint16_t)(data[4] << 8) + data[5];
@@ -1150,26 +1153,26 @@ static void RAMN_UDS_RoutineControl(uint8_t* data, uint16_t size)
 			}
 			else RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
 			break;
-		case 0x0206: //Compute CRC
+		case 0x0206: // Compute CRC
 			RAMN_UDS_RoutineControlComputeCRC(data,size);
 			break;
 #if defined(TARGET_ECUB) || defined(TARGET_ECUC) || defined(TARGET_ECUD)
-		case 0x0207: //Enable/Disable Autopilot features:
+		case 0x0207: // Enable/Disable Autopilot features:
 			RAMN_UDS_RoutineControlAutopilot(data,size);
 			break;
 #endif
 #if defined(ENABLE_EEPROM_EMULATION)
-		case 0x0208: //Add DTC Entry:
+		case 0x0208: // Add DTC Entry:
 			RAMN_UDS_RoutineControlAddDTCEntry(data,size);
 			break;
 #endif
-		case 0x0209: //Execute Arbitrary code
+		case 0x0209: // Execute Arbitrary code
 			RAMN_UDS_RoutineControlExecuteArbitraryCode(data,size);
 			break;
-		case 0x0210: //Reset Option Bytes:
+		case 0x0210: // Reset Option Bytes:
 			RAMN_UDS_RoutineControlResetBootOptionBytes(data,size);
 			break;
-		case 0x0211: //Force Memory Swap:
+		case 0x0211: // Force Memory Swap:
 			RAMN_UDS_RoutineControlForceMemorySwap(data,size);
 			break;
 		default:
@@ -1213,9 +1216,9 @@ static void RAMN_UDS_RequestDownloadUpload(const uint8_t* data, uint16_t size, T
 				{
 					if ((transferManager.size % 8) != 0)
 					{
-						//Only writeable in 64 bytes by bytes
+						// Only writeable in 64 bytes by bytes
 						RAMN_UDS_FormatNegativeResponse(data,UDS_NRC_UDNA);
-						//TODO: pad internally ?
+						// TODO: pad internally ?
 					}
 					uint8_t answer[4];
 					answer[0] = data[0] + 0x40;
@@ -1266,6 +1269,7 @@ static void RAMN_UDS_RequestUpload(const uint8_t* data, uint16_t size)
 
 static void RAMN_UDS_TransferData(const uint8_t* data, uint16_t size)
 {
+#if defined(ENABLE_REPROGRAMMING) || !defined(HARDENING)
 	if( size < 2U )
 	{
 		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
@@ -1276,7 +1280,7 @@ static void RAMN_UDS_TransferData(const uint8_t* data, uint16_t size)
 		{
 			uint16_t payloadSize = size -2;
 			RAMN_Result_t result = RAMN_OK;
-			//Memory must be 64-bit aligned, without overflowing
+			// Memory must be 64-bit aligned, without overflowing
 			if (((payloadSize % 8) == 0U) && ((transferManager.index + payloadSize) <= transferManager.size))
 			{
 				if (data[1] == transferManager.seq)
@@ -1295,7 +1299,7 @@ static void RAMN_UDS_TransferData(const uint8_t* data, uint16_t size)
 
 					if(transferManager.index >= transferManager.size)
 					{
-						//Download succeeded
+						// Download succeeded
 						transferManager.status = TRANSFER_FINISHED;
 					}
 
@@ -1344,7 +1348,7 @@ static void RAMN_UDS_TransferData(const uint8_t* data, uint16_t size)
 
 					if(transferManager.index >= transferManager.size)
 					{
-						//Download succeeded
+						// Download succeeded
 						transferManager.status = TRANSFER_FINISHED;
 					}
 				}
@@ -1363,10 +1367,14 @@ static void RAMN_UDS_TransferData(const uint8_t* data, uint16_t size)
 			RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_RSE);
 		}
 	}
+#else
+	RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SNS);
+#endif
 }
 
 static void RAMN_UDS_RequestTransferExit(const uint8_t* data, uint16_t size)
 {
+#if defined(ENABLE_REPROGRAMMING) || !defined(HARDENING)
 	if( size != 1U )
 	{
 		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
@@ -1383,6 +1391,9 @@ static void RAMN_UDS_RequestTransferExit(const uint8_t* data, uint16_t size)
 			RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_RSE);
 		}
 	}
+#else
+	RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SNS);
+#endif
 }
 
 static void RAMN_UDS_RequestFileTransfer(const uint8_t* data, uint16_t size)
@@ -1396,11 +1407,11 @@ static void RAMN_UDS_WriteMemoryByAddress(const uint8_t* data, uint16_t size)
 	{
 		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
 	}
-	else if ((data[1]&0x0F) != 0x04) //only accept 32-bit addressing
+	else if ((data[1]&0x0F) != 0x04) // Only accept 32-bit addressing
 	{
 		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SFNS);
 	}
-	else if ((data[1]&0xF0) > 0x40) //only accept sizes below 32 bits
+	else if ((data[1]&0xF0) > 0x40) // Only accept sizes below 32 bits
 	{
 		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SFNS);
 	}
@@ -1443,19 +1454,19 @@ static void RAMN_UDS_WriteMemoryByAddress(const uint8_t* data, uint16_t size)
 					}
 					else
 					{
-						if (writeSize == 2U) //Write short all at once
+						if (writeSize == 2U) // Write short all at once
 						{
 							*(volatile uint16_t*)(startaddr) = (uint16_t)(((uint16_t)data[8]<<8) + (uint16_t)data[9]);
 						}
-						else if (writeSize == 4U) //Write integer all at once
+						else if (writeSize == 4U) // Write integer all at once
 						{
 							*(volatile uint32_t*)(startaddr) = (uint32_t)(((uint32_t)data[8] << 24) + ((uint32_t)data[9] << 16) + ((uint32_t)data[10] << 8) + ((uint32_t)data[11]));
 						}
-						else if (writeSize == 8U) //Write long all at once
+						else if (writeSize == 8U) // Write long all at once
 						{
 							*(volatile uint64_t*)(startaddr) = (uint64_t)(((uint64_t)data[8] << 56) + ((uint64_t)data[9] << 48) + ((uint64_t)data[10] << 40) + ((uint64_t)data[11] << 32) + ((uint64_t)data[12] << 24) + ((uint64_t)data[13] << 16) + ((uint64_t)data[14] << 8) + ((uint64_t)data[15]));
 						}
-						else //Write byte by byte
+						else // Write byte by byte
 						{
 							for (uint32_t i = 0U; i < (uint32_t)writeSize; i++)
 								*(volatile uint8_t*)(startaddr) = (uint8_t)data[8+i];
@@ -1482,7 +1493,7 @@ static void RAMN_UDS_TesterPresent(const uint8_t* data, uint16_t size)
 			RAMN_UDS_FormatPositiveResponseEcho(data, size);
 			break;
 		case 0x80:
-			//No answer, as requested
+			// No answer, as requested
 			break;
 		default:
 			RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SFNS);
@@ -1533,16 +1544,16 @@ static void RAMN_UDS_ResponseOnEvent(const uint8_t* data, uint16_t size)
 
 static void performLinkControlUpdate()
 {
-	//Request Silence
+	// Request Silence
 	uint8_t tmp = RAMN_DBC_RequestSilence;
 	RAMN_DBC_RequestSilence = 1U;
 	RAMN_FDCAN_Disable();
-	//Delay to let other ECU adapt to new baudrate
+	// Delay to let other ECU adapt to new baudrate
 	osDelay(1000);
-	//Authorize communication again
+	// Authorize communication again
 	RAMN_FDCAN_UpdateBaudrate(linkControlManager.newSettings);
 	RAMN_FDCAN_ResetPeripheral();
-	//Restore original settings
+	// Restore original settings
 	RAMN_DBC_RequestSilence = tmp;
 }
 
@@ -1559,38 +1570,38 @@ static void RAMN_UDS_LinkControl(const uint8_t* data, uint16_t size)
 			return;
 		}
 		switch (data[2]) {
-		case 0x10: //125000
+		case 0x10: // 125000
 			linkControlManager.newSettings = '4';
 			break;
-		case 0x11: //250000
+		case 0x11: // 250000
 			linkControlManager.newSettings = '5';
 			break;
-		case 0x12: //500000
+		case 0x12: // 500000
 			linkControlManager.newSettings = '6';
 			break;
-		case 0x13: //1000000
+		case 0x13: // 1000000
 			linkControlManager.newSettings = '8';
 			break;
-		case 0x01: //9600
-		case 0x02: //19200
-		case 0x03: //38400
-		case 0x04: //57600
-		case 0x05: //115200
-		case 0x20: //ProgrammingSetup
+		case 0x01: // 9600
+		case 0x02: // 19200
+		case 0x03: // 38400
+		case 0x04: // 57600
+		case 0x05: // 115200
+		case 0x20: // ProgrammingSetup
 		default:
 			linkControlManager.newSettings = 0U;
 			break;
 		}
 		if (linkControlManager.newSettings != 0U) {
 			if ((data[1] & 0x80) == 0U) {
-				//Send response if required
+				// Send response if required
 				RAMN_UDS_FormatPositiveResponseEcho(data, 2U);
 			}
 		} else {
 			RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_ROOR);
 		}
 		break;
-		case 0x83: //suppressPosRspMsgIndicationBit
+		case 0x83: // suppressPosRspMsgIndicationBit
 		case 0x03:
 			if (size < 2U) {
 				RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
@@ -1601,13 +1612,13 @@ static void RAMN_UDS_LinkControl(const uint8_t* data, uint16_t size)
 			} else {
 
 				if ((data[1] & 0x80) == 0U) {
-					//Send response if required
+					// Send response if required
 					RAMN_UDS_FormatPositiveResponseEcho(data, 2U);
-					//actual update performed after answer is sent
+					// Actual update performed after answer is sent
 				}
 				else
 				{
-					//If no answer requested, perform action now
+					// If no answer requested, perform action now
 					performLinkControlUpdate();
 				}
 			}
@@ -1662,7 +1673,7 @@ RAMN_Result_t RAMN_UDS_Init(uint32_t tick)
 
 RAMN_Result_t RAMN_UDS_Update(uint32_t tick)
 {
-	//Only timeout for extended diagnostics, not for programming (?)
+	// Only timeout for extended diagnostics, not for programming (?)
 	if (udsSessionHandler.currentSession == UDS_SESSION_EXTDS)
 	{
 		if ((tick - udsSessionHandler.lastMessageTimestamp) > UDS_SESSION_TIMEOUT_MS) resetSession(tick);
@@ -1685,7 +1696,7 @@ RAMN_Bool_t RAMN_UDS_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, c
 	{
 		RAMN_ISOTP_ProcessRxMsg(&RAMN_UDS_ISOTPHandler,DLCtoUINT8(pHeader->DataLength),data, tick);
 
-		//If a ISO-TP has been received, copy it to buffer
+		// If a ISO-TP has been received, copy it to buffer
 		if (RAMN_UDS_ISOTPHandler.rxStatus == ISOTP_RX_FINISHED)
 		{
 			functionalAddressing = 0U;
@@ -1706,7 +1717,7 @@ RAMN_Bool_t RAMN_UDS_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, c
 			{
 				if (((data[0]&0xF) > 0) && ((data[0]&0xF) <= 7U) && ((data[0]&0xF) <= (DLCtoUINT8(pHeader->DataLength)-1U)))
 				{
-					//Valid frame
+					// Valid frame
 					functionalAddressing = 1U;
 					requestSize = DLCtoUINT8(pHeader->DataLength)-1U;
 					xBytesSent = xStreamBufferSend(*strbuf, (void *) &(functionalAddressing), sizeof(functionalAddressing), portMAX_DELAY );
@@ -1723,96 +1734,104 @@ RAMN_Bool_t RAMN_UDS_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, c
 	return result;
 }
 
-void RAMN_UDS_ProcessDiagPayload(uint32_t tick, const uint8_t* data, uint16_t size, uint8_t* answerData, uint16_t* answerSize)
+void RAMN_UDS_ProcessDiagPayload(uint32_t tick, uint8_t* data, uint16_t size, uint8_t* answerData, uint16_t* answerSize)
 {
 	uds_answerData = answerData;
 	uds_answerSize = answerSize;
 
-	*uds_answerSize = 0U; //Empty Response by default
+	*uds_answerSize = 0U; // Empty Response by default
 
 	udsSessionHandler.lastMessageTimestamp = tick;
 	if (size > 0U)
 	{
 		if (data[0] < 0x10)
 		{
-			//J1979 command
+			// J1979 command
 			RAMN_J1979_ProcessMessage(data, size, answerData, answerSize);
 		}
-		else //ISO14229 command
+		else // ISO14229 command
 		{
 			switch (data[0]) {
-			case 0x10: //DIAGNOSTIC SESSION CONTROL:
+			case 0x10: // DIAGNOSTIC SESSION CONTROL:
 				RAMN_UDS_DiagnosticSessionControl(data, size);
 				break;
-			case 0x11: //ECU RESET
+			case 0x11: // ECU RESET
 				RAMN_UDS_ECUReset(data, size);
 				break;
-			case 0x14: //CLEAR DIAGNOSTIC INFORMATION
+#ifndef HARDENING
+			case 0x14: // CLEAR DIAGNOSTIC INFORMATION
 				RAMN_UDS_ClearDTC(data, size);
 				break;
-			case 0x19: //READ DTC INFORMATION
+			case 0x19: // READ DTC INFORMATION
 				RAMN_UDS_ReadDTC(data, size);
 				break;
-			case 0x22: //READ DATA BY IDENTIFIER
+#endif
+			case 0x22: // READ DATA BY IDENTIFIER
 				RAMN_UDS_ReadDataByIdentifier(data, size);
 				break;
-			case 0x23: //READ MEMORY BY ADDRESS
+#ifndef HARDENING
+			case 0x23: // READ MEMORY BY ADDRESS
 				RAMN_UDS_ReadMemoryByAddress(data, size);
 				break;
-			case 0x24: //READ SCALING DATA BY IDENTIFIER
+			case 0x24: // READ SCALING DATA BY IDENTIFIER
 				RAMN_UDS_ReadScalingDataByIdentifier(data, size);
 				break;
-			case 0x27: //SECURITY ACCESS
+			case 0x27: // SECURITY ACCESS
 				RAMN_UDS_SecurityAccess(data, size);
 				break;
-			case 0x28: //COMMUNICATION CONTROL
+			case 0x28: // COMMUNICATION CONTROL
 				RAMN_UDS_CommunicationControl(data, size);
 				break;
-			case 0x29: //AUTHENTICATION
+			case 0x29: // AUTHENTICATION
 				RAMN_UDS_Authentication(data, size);
 				break;
-			case 0x2A: //READ DATA BY IDENTIFIER PERIODIC
+			case 0x2A: // READ DATA BY IDENTIFIER PERIODIC
 				RAMN_UDS_ReadDataByIdentifierPeriodic(data, size);
 				break;
-			case 0x2C: //DYNAMICALLY DEFINE DATA IDENTIFIER
+			case 0x2C: // DYNAMICALLY DEFINE DATA IDENTIFIER
 				RAMN_UDS_DynamicallyDefineDataIdentifier(data, size);
 				break;
-			case 0x2E: //WRITE DATA BY IDENTIFIER
+			case 0x2E: // WRITE DATA BY IDENTIFIER
 				RAMN_UDS_WriteDataByIdentifier(data, size);
 				break;
-			case 0x2F: //INPUT OUTPUT CONTROL BY IDENTIFIER
+			case 0x2F: // INPUT OUTPUT CONTROL BY IDENTIFIER
 				RAMN_UDS_InputOutputControlByIdentifier(data, size);
 				break;
-			case 0x31: //ROUTINE CONTROL
+			case 0x31: // ROUTINE CONTROL
 				RAMN_UDS_RoutineControl(data, size);
 				break;
-			case 0x34: //REQUEST DOWNLOAD
+#endif
+			case 0x34: // REQUEST DOWNLOAD
 				RAMN_UDS_RequestDownload(data, size);
 				break;
-			case 0x35: //REQUEST UPLOAD
+#ifndef HARDENING
+			case 0x35: // REQUEST UPLOAD
 				RAMN_UDS_RequestUpload(data, size);
 				break;
-			case 0x36: //TRANSFER DATA
+#endif
+			case 0x36: // TRANSFER DATA
 				RAMN_UDS_TransferData(data, size);
 				break;
-			case 0x37: //REQUEST TRANSFER EXIT
+			case 0x37: // REQUEST TRANSFER EXIT
 				RAMN_UDS_RequestTransferExit(data, size);
 				break;
-			case 0x38: //REQUEST FILE TRANSFER
+#ifndef HARDENING
+			case 0x38: // REQUEST FILE TRANSFER
 				RAMN_UDS_RequestFileTransfer(data, size);
 				break;
-			case 0x3D: //WRITE MEMORY BY ADDRESS
+			case 0x3D: // WRITE MEMORY BY ADDRESS
 				RAMN_UDS_WriteMemoryByAddress(data, size);
 				break;
-			case 0x3E: //TESTER PRESENT
+#endif
+			case 0x3E: // TESTER PRESENT
 				RAMN_UDS_TesterPresent(data, size);
 				break;
-#ifdef ENABLE_SCREEN
-			case 0x41: //custom service to display pixels on screen
+#if defined(ENABLE_SCREEN) && !defined(HARDENING)
+			case 0x41: // Custom service to display pixels on screen
 				displayPixels(data, size);
 				break;
-#ifdef ENABLE_CHIP8
-			case 0x42: //custom service to load chip-8 games
+#if defined(ENABLE_CHIP8)
+			case 0x42: // Custom service to load chip-8 games
 				loadChip8Game(data, size);
 				break;
 #endif
@@ -1822,74 +1841,90 @@ void RAMN_UDS_ProcessDiagPayload(uint32_t tick, const uint8_t* data, uint16_t si
 				processCustomServiceFlag(data,size);
 				break;
 #endif
-			case 0x83: //ACCESS TIMING PARAMETERS
+#ifndef HARDENING
+			case 0x83: // ACCESS TIMING PARAMETERS
 				RAMN_UDS_AccessTimingParameters(data, size);
 				break;
-			case 0x84: //SECURED DATA TRANSMISSION
+			case 0x84: // SECURED DATA TRANSMISSION
 				RAMN_UDS_SecuredDataTransmission(data, size);
 				break;
-			case 0x85: //CONTROL DTC SETTINGS
+			case 0x85: // CONTROL DTC SETTINGS
 				RAMN_UDS_ControlDTCSettings(data, size);
 				break;
-			case 0x86: //RESPONSE ON EVENT
+			case 0x86: // RESPONSE ON EVENT
 				RAMN_UDS_ResponseOnEvent(data, size);
 				break;
-			case 0x87: //LINK CONTROL
+			case 0x87: // LINK CONTROL
 				RAMN_UDS_LinkControl(data, size);
 				break;
+#endif
 			default:  // UNSUPPORTED SERVICES
 				RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SNS);
 				break;
 			}
 		}
 	}
+	else
+	{
+		data[0] = 0U;
+		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
+	}
 }
 
 
-void RAMN_UDS_ProcessDiagPayloadFunctional(uint32_t tick, const uint8_t* data, uint16_t size, uint8_t* answerData, uint16_t* answerSize)
+void RAMN_UDS_ProcessDiagPayloadFunctional(uint32_t tick, uint8_t* data, uint16_t size, uint8_t* answerData, uint16_t* answerSize)
 {
 	uds_answerData = answerData;
 	uds_answerSize = answerSize;
 
-	*uds_answerSize = 0U; //Empty Response by default
+	*uds_answerSize = 0U; // Empty Response by default
 
 	udsSessionHandler.lastMessageTimestamp = tick;
 	if (size > 0U)
 	{
 		if (data[0] < 0x10)
 		{
-			//J1979 command
+			// J1979 command
 			RAMN_J1979_ProcessMessage(data, size, answerData, answerSize);
 		}
-		else //ISO14229 command
+		else // ISO14229 command
 		{
 			switch (data[0]) {
-			case 0x10: //DIAGNOSTIC SESSION CONTROL:
+			case 0x10: // DIAGNOSTIC SESSION CONTROL:
 				RAMN_UDS_DiagnosticSessionControl(data, size);
 				break;
-			case 0x11: //ECU RESET
+			case 0x11: // ECU RESET
 				RAMN_UDS_ECUReset(data, size);
 				break;
-			case 0x14: //CLEAR DIAGNOSTIC INFORMATION
+#ifndef HARDENING
+			case 0x14: // CLEAR DIAGNOSTIC INFORMATION
 				RAMN_UDS_ClearDTC(data, size);
 				break;
-			case 0x27: //SECURITY ACCESS
+			case 0x27: // SECURITY ACCESS
 				RAMN_UDS_SecurityAccess(data, size);
 				break;
-			case 0x3E: //TESTER PRESENT
+#endif
+			case 0x3E: // TESTER PRESENT
 				RAMN_UDS_TesterPresent(data, size);
 				break;
-			case 0x85: //CONTROL DTC SETTINGS
+#ifndef HARDENING
+			case 0x85: // CONTROL DTC SETTINGS
 				RAMN_UDS_ControlDTCSettings(data, size);
 				break;
-			case 0x87: //LINK CONTROL
+			case 0x87: // LINK CONTROL
 				RAMN_UDS_LinkControl(data, size);
 				break;
+#endif
 			default:  // UNSUPPORTED SERVICES
 				RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SNS);
 				break;
 			}
 		}
+	}
+	else
+	{
+		data[0] = 0U;
+		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
 	}
 }
 
@@ -1899,12 +1934,12 @@ void RAMN_UDS_PerformPostAnswerActions(uint32_t tick, const uint8_t* data, uint1
 		switch (answerData[0])
 		{
 		case 0x51:
-			//Reset was accepted
+			// Reset was accepted
 			osDelay(500);
 			HAL_NVIC_SystemReset();
 			break;
 		case 0xC7:
-			//Link Control update was accepted
+			// Link Control update was accepted
 			if (*answerSize > 1)
 			{
 				if (answerData[1] == 0x03)

@@ -29,11 +29,42 @@
 
 // See comments at the end of file if you want to use the internal oscillator instead of the external crystal.
 
+// Enable the flag below if you want to disable features that may impact security (e.g., ReadMemoryByAddress UDS service, etc.).
+// This can be used to put RAMN in a state ready to be customized for Capture The Flag applications.
+// By default, this will generate compile errors that you will need to address by removing relevant defines or commenting out the #error lines.
+// Note that the USB CLI will be active but not accessible unless you make the "#" command available again (by editing ramn_cdc.c).
+// UDS over USB (slcan command "%" is accessible by default, but you may want to remove it (also by editing ramn_cdc.c) to further limit attack surfaces.
+//#define HARDENING
+
 // CONFIGURATION OF ECU A ------------------------------------------------------
 
 #if defined(TARGET_ECUA)
 #define ENABLE_USB
+#define ENABLE_CDC // USB serial (CDC) interface
+
+// Enable this flag to enable the candlelight interface (gs_usb drivers)
+// Current implementation is experimental:
+// - Error frames are not reported
+// - CAN-FD is not supported
+// - Due to clock differences, bit timings are not respected (but equivalent baudrates are used)
+// You may want to update USBD_VID and USBD_PID in usbd_desc.c to automatically load the drivers on Linux.
+//#define ENABLE_GSUSB
+
+#define USBD_VID                      	0x483
+#define USBD_PID                    	0x5740
+// IDs below can be used to automatically load the drivers on Linux
+//#define USBD_VID                      0x1d50
+//#define USBD_PID                      0x606f
+#define USBD_LANGID_STRING            	1033
+#define USBD_MANUFACTURER_STRING      	"Toyota Motor Corporation"
+#define USBD_PRODUCT_STRING           	"RAMN USB Composite Device"
+#define USBD_CONFIGURATION_STRING     	"MDC Config"
+#define USBD_INTERFACE_STRING         	"MDC Interface"
+
+// Enable screen (not restricted to ECU A).
 #define ENABLE_SCREEN
+
+// Enable Chip 8 engine.
 #define ENABLE_CHIP8
 
 // Enable USB MiniCTF challenges.
@@ -63,16 +94,8 @@
 // #define ENABLE_USB_AUTODETECT
 
 // Will start the usb serial interface in CLI mode instead of slcan if enabled.
+// If used with HARDENING, make sure you make the "#" slcan command available again.
 //#define START_IN_CLI_MODE
-
-// Enable this flag to enable FreeRTOS runtime stats.
-// This also requires to add "volatile" keyword to static uint32_t ulTotalRunTime = 0UL in tasks.c of FreeRTOS (typically overwritten by STM32CubeIDE code generation).
-// #define GENERATE_RUNTIME_STATS
-
-// If this flag is enabled, ECU A will repeat whatever message it accepts over USB.
-// May be useful when multiplexing the serial interface, but should typically not be used.
-// CAN_ECHO does not cover ECU A CAN messages not sent from USB (i.e., answer to UDS commands).
-//#define CAN_ECHO
 
 // Define this flag to let ECU A process slcan message that it receives as regular RX messages (and update their value on screen, for example).
 // This is useful to demonstrate the impact of CAN fuzzing on ECU A's screen when using ECU A's slcan interface, even though ECU A did not actually receive the fuzzed CAN message (since it was the transmitter).
@@ -80,10 +103,20 @@
 
 // Define this flag to enable the USB debugging module.
 // Note that it also needs to be activated by a slcan command, or by setting RAMN_DEBUG_ENABLE in ramn_debug.c to True.
-#define ENABLE_USB_DEBUG
+// #define ENABLE_USB_DEBUG
 
 // Number of times to retry entering bootloader mode of another ECU before giving up
 #define BOOTLOADER_MAX_ATTEMPTS 20
+
+
+#ifdef ENABLE_GSUSB
+#define GSUSB_RECV_QUEUE_SIZE 	512 // Size of the GSUSB receive queue (uint32_t elements)
+#define GSUSB_POOL_QUEUE_SIZE 	512 // Size of the GSUSB pool queue (uint32_t elements)
+#define GSUSB_SEND_QUEUE_SIZE 	512 // Size of the GSUSB send queue (uint32_t elements)
+#define GS_HOST_FRAME_SIZE     	80
+#define CAN_QUEUE_SIZE			512
+#endif
+#define GSUSB_DFU_INTERFACE_STRING_FS		(uint8_t*) "RAMN gs_usb interface"
 
 #endif
 
@@ -147,8 +180,20 @@
 #define UDS_ACCEPT_FUNCTIONAL_ADDRESSING
 
 // Enable dynamic computations of tseg1 and tseg2 to get non-standard baudrate.
+// If you change the clock of the FDCAN peripheral, you'll need to update this too.
 // /!\CURRENTLY UNTESTED
 #define ENABLE_DYNAMIC_BITRATE
+#define FDCAN_PERIPHERAL_CLOCK 40000000
+
+// Enable this flag to enable FreeRTOS runtime stats.
+// This also requires to add "volatile" keyword to static uint32_t ulTotalRunTime = 0UL in tasks.c of FreeRTOS (typically overwritten by STM32CubeIDE code generation).
+// Increase the frequency of runtime timer (by default, TIM7) to increase stat accuracy at the cost of performances.
+#define GENERATE_RUNTIME_STATS
+#define MAX_NUMBER_OF_TASKS 16 // Max number of tasks that can be monitored, if enabled
+// If this flag is enabled, ECU A will repeat whatever message it accepts over USB.
+// May be useful when multiplexing the serial interface, but should typically not be used.
+// CAN_ECHO does not cover ECU A CAN messages not sent from USB (i.e., answer to UDS commands).
+//#define CAN_ECHO
 
 // This flag can be used to automatically reset CAN/CAN-FD peripheral if it enters bus-off mode.
 // #define AUTO_RECOVER_BUSOFF
@@ -177,7 +222,7 @@
 // #define ENABLE_UART
 
 // Enable this flag to force code to while(1) when encountering errors that could typically be ignored.
-// #define HANG_ON_ERRORS
+//#define HANG_ON_ERRORS
 
 // Enable this flag to automatically enable memory protection at startup. Once activated, it can only be removed by bootloader/usb commands.
 // Avoid using if you are not sure what you are doing.
@@ -190,6 +235,10 @@
 
 // If this is defined, the TRNG module will fill a stream buffer with random bytes instead of calling the HAL library.
 //#define USE_TRNG_BUFFER
+
+// TRNG pool settings (if used)
+#define TRNG_POOL_SIZE 	   				256
+#define JOYSTICK_POOL_SIZE				10
 
 #ifdef ENABLE_I2C
 #define I2C_RX_BUFFER_SIZE				(16)
@@ -233,17 +282,37 @@
 #define ISOTP_TXBUFFER_SIZE 			4096
 #define ISOTP_CONSECUTIVE_BLOCK_SIZE 	0
 #define ISOTP_CONSECUTIVE_ST 			0
-#define ISOTP_RX_TIMEOUT_MS 			200000
-#define ISOTP_TX_TIMEOUT_MS 			2000
 
-#define TRNG_POOL_SIZE 	   				256
-#define JOYSTICK_POOL_SIZE				10
+// ISO-TP Timeout values. Both should be set to 1000 to mimic real ECUs.
+#define ISOTP_RX_TIMEOUT_MS 			200000
+#define ISOTP_TX_TIMEOUT_MS 			10000
+
+// Timeout for extended diagnostic session.
+// By default, other session types do not time out, although they would on real ECUs.
+#define UDS_SESSION_TIMEOUT_MS 				5000
+
+// Maximum RPM that will allow a transition to diagnostic sessions.
+// Can be used to emulate a "Conditions not correct" error when the vehicle is running in Carla.
+#define UDS_MAXIMUM_RPM_ACCEPTABLE 			0xFFF
+
+// Delay before accepting a new security access attempt.
+// This delay also applies to minimum time between ECU boot and first attempt.
+#define SECURITY_ACCESS_RETRY_TIMEOUT_MS 	10
+
+// Maximum Security access attempts before locking device.
+#define SECURITY_ACCESS_MAX_ATTEMPTS 		5
+
+#ifdef ENABLE_CDC
+#define APP_RX_DATA_SIZE  2048
+#define APP_TX_DATA_SIZE  2048
+#define USB_COMMAND_BUFFER_SIZE		(8195)
+#endif
 
 #ifdef TARGET_ECUA
-#define USB_RX_BUFFER_SIZE 				18000
-#define USB_TX_BUFFER_SIZE 				18000
-#define CAN_RX_BUFFER_SIZE 				23000
-#define CAN_TX_BUFFER_SIZE 				18000
+#define USB_RX_BUFFER_SIZE 				15000
+#define USB_TX_BUFFER_SIZE 				15000
+#define CAN_RX_BUFFER_SIZE 				15000
+#define CAN_TX_BUFFER_SIZE 				15000
 #define UDS_ISOTP_RX_BUFFER_SIZE 		0xFFF+2 //Add +2 for buffer-size
 #define UDS_ISOTP_TX_BUFFER_SIZE 		0xFFF+2
 
@@ -267,15 +336,23 @@
 #define CTF_STANDARD_ID_4 0x458
 #endif
 
+
+
 // Check for bad configurations --------------------------------------
+
+#ifdef ENABLE_CDC
+#if USB_RX_BUFFER_SIZE < (USB_COMMAND_BUFFER_SIZE+2)
+#error define a larger USB_RX_BUFFER_SIZE
+#endif
+#endif
 
 #if defined(TARGET_ECUA) + defined(TARGET_ECUB) + defined(TARGET_ECUC) + defined(TARGET_ECUD) != 1
     #error "You must define only one of TARGET_ECUA, TARGET_ECUB, TARGET_ECUC, and TARGET_ECUD."
 #endif
 
-#if defined(ENABLE_UART) && defined(ENABLE_USB)
-#error Default code does not support UART and USB at the same time. See comments for details.
-// UART uses USB task by default, and therefore USB and UART cannot be used at the same time.
+#if defined(ENABLE_UART) && defined(ENABLE_CDC)
+#error Default code does not support UART and CDC (USB Serial) at the same time. See comments for details.
+// UART uses CDC task by default, and therefore CDC and UART cannot be used at the same time.
 // You can enable both simultaneously by creating new receive/transmit tasks for UART, and move the UART code (between #define ENABLE_UART) in RAMN_ReceiveUSBFunc and RAMN_SendUSBFunc there.
 // You should then modify HAL_UART_TxCpltCallback and HAL_UART_RxCpltCallback to notify these tasks instead.
 #endif
@@ -283,6 +360,49 @@
 #if defined(ENABLE_CHIP8) && !defined(ENABLE_SCREEN)
 #error ENABLE_SCREEN must be defined to define ENABLE_CHIP8
 #endif
+
+#if !defined(ENABLE_USB) && defined(ENABLE_CDC)
+#error Cannot activate CDC without enabling USB
+#endif
+
+#if !defined(ENABLE_USB) && defined(ENABLE_GSUSB)
+#error Cannot activate GSUSB without enabling USB
+#endif
+
+#if defined(ENABLE_USB) && !defined(ENABLE_CDC) && !defined(ENABLE_GSUSB)
+#error At least one USB interface must be active if you enable USB
+#endif
+
+#ifdef HARDENING
+#ifdef ENABLE_GSUSB
+#error "It is preferable to turn off GS_USB to limit attack surfaces. Comment out this line to enable anyway."
+#endif
+#ifdef ENABLE_KWP
+#error "It is preferable to turn off KWP2000 to limit attack surfaces. Comment out this line to enable anyway."
+#endif
+#ifdef ENABLE_XCP
+#error "It is preferable to turn off XCP to limit attack surfaces. Comment out this line to enable anyway (You'll need to update RAMN_MEMORY_CheckAreaReadable and/or XCP_COMMAND_UPLOAD)."
+#endif
+#ifdef ENABLE_USB_DEBUG
+#error "It is preferable to turn off USB debug to limit attack surfaces. Comment out this line to enable anyway."
+#endif
+#ifdef ENABLE_CHIP8
+#error "It is preferable to turn off CHIP8 engine to limit attack surfaces. Comment out this line to enable anyway."
+#endif
+#ifdef ENABLE_MINICTF
+#error "You may want to disable the mini-ctf to avoid conflicts. Comment out this line to enable anyway."
+#endif
+#ifdef ENABLE_REPROGRAMMING
+#error "You may want to disable reprogramming to avoid accidental firmware erasure. Comment out this line to enable anyway."
+#endif
+#ifdef GENERATE_RUNTIME_STATS
+#error "You may want to disable runtime stats to limit accessible information. Comment out this line to enable anyway."
+#endif
+#ifdef ENABLE_EEPROM_EMULATION
+#error "You may want to disable EEPROM to limit potential memory issues. Comment out this line to enable anyway."
+#endif
+#endif
+
 
 // To use the internal oscillator (instead of the default external 10MHz crystal), You should modify RAMNV1.ioc so that:
 // - PLL Source Mux uses HSI with *N = X 10
