@@ -242,7 +242,7 @@ const osMessageQueueAttr_t RAMN_GSUSB_SendQueue_attributes = {
 };
 #endif
 
-#if defined(ENABLE_USB)
+#if defined(ENABLE_CDC)
 
 // Stream buffer for USB RX data, filled by ISR and emptied by receiving task.
 static StaticStreamBuffer_t USB_RX_BUFFER_STRUCT;
@@ -480,7 +480,7 @@ int main(void)
 	USB_CLI_ENABLE = 0U;
 #endif
 
-#if defined(ENABLE_USB)
+#if defined(ENABLE_CDC)
 	USBD_RxStreamBufferHandle   = xStreamBufferCreateStatic(USB_RX_BUFFER_SIZE,sizeof(uint8_t),USB_RX_BUFFER,&USB_RX_BUFFER_STRUCT);
 	USBD_TxStreamBufferHandle   = xStreamBufferCreateStatic(USB_TX_BUFFER_SIZE,sizeof(uint8_t),USB_TX_BUFFER,&USB_TX_BUFFER_STRUCT);
 #endif
@@ -1589,7 +1589,7 @@ void RAMN_ReceiveCANFunc(void *argument)
 #endif
 			RAMN_CUSTOM_ProcessRxCANMessage(&CANRxHeader, CANRxData, xTaskGetTickCount());
 
-#if defined(ENABLE_USB)
+#if defined(ENABLE_CDC)
 			if (RAMN_USB_Config.slcanOpened)
 			{
 				uint8_t index = 0;

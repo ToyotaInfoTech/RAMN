@@ -16,7 +16,7 @@
 
 #include "ramn_cdc.h"
 
-#ifdef ENABLE_USB
+#ifdef ENABLE_CDC
 
 #ifdef ENABLE_UDS
 // Holds currently processed Diag Command from USB.
@@ -820,6 +820,7 @@ RAMN_Bool_t RAMN_CDC_ProcessSLCANBuffer(uint8_t* USBRxBuffer, uint32_t commandLe
 			// TX FIFO Free Level
 			RAMN_USB_SendASCIIUint32(HAL_FDCAN_GetTxFifoFreeLevel(&hfdcan1));
 
+#ifdef ENABLE_CDC
 			// CAN RX Stream Buffer levels
 			RAMN_USB_SendASCIIUint32(xStreamBufferSpacesAvailable(CANRxDataStreamBufferHandle));
 			RAMN_USB_SendASCIIUint32(xStreamBufferBytesAvailable(CANRxDataStreamBufferHandle));
@@ -827,6 +828,7 @@ RAMN_Bool_t RAMN_CDC_ProcessSLCANBuffer(uint8_t* USBRxBuffer, uint32_t commandLe
 			// CAN TX Stream Buffer levels
 			RAMN_USB_SendASCIIUint32(xStreamBufferSpacesAvailable(CANTxDataStreamBufferHandle));
 			RAMN_USB_SendASCIIUint32(xStreamBufferBytesAvailable(CANTxDataStreamBufferHandle));
+#endif
 			RAMN_USB_SendStringFromTask("\r");
 			break;
 #ifdef ENABLE_USB_DEBUG

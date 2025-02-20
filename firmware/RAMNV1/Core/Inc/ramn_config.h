@@ -222,7 +222,7 @@
 // #define ENABLE_UART
 
 // Enable this flag to force code to while(1) when encountering errors that could typically be ignored.
-// #define HANG_ON_ERRORS
+//#define HANG_ON_ERRORS
 
 // Enable this flag to automatically enable memory protection at startup. Once activated, it can only be removed by bootloader/usb commands.
 // Avoid using if you are not sure what you are doing.
@@ -302,6 +302,12 @@
 // Maximum Security access attempts before locking device.
 #define SECURITY_ACCESS_MAX_ATTEMPTS 		5
 
+#ifdef ENABLE_CDC
+#define APP_RX_DATA_SIZE  2048
+#define APP_TX_DATA_SIZE  2048
+#define USB_COMMAND_BUFFER_SIZE		(8195)
+#endif
+
 #ifdef TARGET_ECUA
 #define USB_RX_BUFFER_SIZE 				15000
 #define USB_TX_BUFFER_SIZE 				15000
@@ -330,7 +336,15 @@
 #define CTF_STANDARD_ID_4 0x458
 #endif
 
+
+
 // Check for bad configurations --------------------------------------
+
+#ifdef ENABLE_CDC
+#if USB_RX_BUFFER_SIZE < (USB_COMMAND_BUFFER_SIZE+2)
+#error define a larger USB_RX_BUFFER_SIZE
+#endif
+#endif
 
 #if defined(TARGET_ECUA) + defined(TARGET_ECUB) + defined(TARGET_ECUC) + defined(TARGET_ECUD) != 1
     #error "You must define only one of TARGET_ECUA, TARGET_ECUB, TARGET_ECUC, and TARGET_ECUD."

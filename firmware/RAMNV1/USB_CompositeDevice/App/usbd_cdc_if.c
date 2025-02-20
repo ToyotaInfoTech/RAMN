@@ -23,7 +23,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "ramn_config.h"
-#ifdef ENABLE_USB
+#ifdef ENABLE_CDC
 #include "../../USB_CompositeDevice/App/usbd_cdc_if.h"
 
 /* USER CODE BEGIN INCLUDE */
@@ -40,56 +40,56 @@
 /* USER CODE END PV */
 extern RAMN_USB_Status_t RAMN_USB_Config;
 /** @addtogroup STM32_USB_OTG_DEVICE_LIBRARY
-  * @brief Usb device library.
-  * @{
-  */
+ * @brief Usb device library.
+ * @{
+ */
 
 /** @addtogroup USBD_CDC_IF
-  * @{
-  */
+ * @{
+ */
 
 /** @defgroup USBD_CDC_IF_Private_TypesDefinitions USBD_CDC_IF_Private_TypesDefinitions
-  * @brief Private types.
-  * @{
-  */
+ * @brief Private types.
+ * @{
+ */
 
 /* USER CODE BEGIN PRIVATE_TYPES */
 
 /* USER CODE END PRIVATE_TYPES */
 
 /**
-  * @}
-  */
+ * @}
+ */
 
 /** @defgroup USBD_CDC_IF_Private_Defines USBD_CDC_IF_Private_Defines
-  * @brief Private defines.
-  * @{
-  */
+ * @brief Private defines.
+ * @{
+ */
 
 /* USER CODE BEGIN PRIVATE_DEFINES */
 /* USER CODE END PRIVATE_DEFINES */
 
 /**
-  * @}
-  */
+ * @}
+ */
 
 /** @defgroup USBD_CDC_IF_Private_Macros USBD_CDC_IF_Private_Macros
-  * @brief Private macros.
-  * @{
-  */
+ * @brief Private macros.
+ * @{
+ */
 
 /* USER CODE BEGIN PRIVATE_MACRO */
 
 /* USER CODE END PRIVATE_MACRO */
 
 /**
-  * @}
-  */
+ * @}
+ */
 
 /** @defgroup USBD_CDC_IF_Private_Variables USBD_CDC_IF_Private_Variables
-  * @brief Private variables.
-  * @{
-  */
+ * @brief Private variables.
+ * @{
+ */
 /* Create buffer for reception and transmission           */
 /* It's up to user to redefine and/or remove those define */
 /** Received data over USB are stored in this buffer      */
@@ -107,24 +107,24 @@ __attribute__ ((section (".buffers"))) static uint8_t  recvBuf[USB_COMMAND_BUFFE
 /* USER CODE END PRIVATE_VARIABLES */
 
 /**
-  * @}
-  */
+ * @}
+ */
 
 /** @defgroup USBD_CDC_IF_Exported_Variables USBD_CDC_IF_Exported_Variables
-  * @brief Public variables.
-  * @{
-  */
+ * @brief Public variables.
+ * @{
+ */
 
 extern USBD_HandleTypeDef hUsbDeviceFS;
 static USBD_CDC_LineCodingTypeDef lineCoding;
 /**
-  * @}
-  */
+ * @}
+ */
 
 /** @defgroup USBD_CDC_IF_Private_FunctionPrototypes USBD_CDC_IF_Private_FunctionPrototypes
-  * @brief Private functions declaration.
-  * @{
-  */
+ * @brief Private functions declaration.
+ * @{
+ */
 
 static int8_t CDC_Init_FS(void);
 static int8_t CDC_DeInit_FS(void);
@@ -155,54 +155,54 @@ uint8_t RAMN_CDC_GetTXStatus()
 /* USER CODE END PRIVATE_FUNCTIONS_DECLARATION */
 
 /**
-  * @}
-  */
+ * @}
+ */
 
 USBD_CDC_ItfTypeDef USBD_Interface_fops_FS =
 {
-  CDC_Init_FS,
-  CDC_DeInit_FS,
-  CDC_Control_FS,
-  CDC_Receive_FS,
-  CDC_TransmitCplt_FS
+		CDC_Init_FS,
+		CDC_DeInit_FS,
+		CDC_Control_FS,
+		CDC_Receive_FS,
+		CDC_TransmitCplt_FS
 };
 
 /* Private functions ---------------------------------------------------------*/
 /**
-  * @brief  Initializes the CDC media low layer over the FS USB IP
-  * @retval USBD_OK if all operations are OK else USBD_FAIL
-  */
+ * @brief  Initializes the CDC media low layer over the FS USB IP
+ * @retval USBD_OK if all operations are OK else USBD_FAIL
+ */
 static int8_t CDC_Init_FS(void)
 {
-  /* USER CODE BEGIN 3 */
+	/* USER CODE BEGIN 3 */
 	/* Set Application Buffers */
-	USBD_Composite_SetTxBuffer(&hUsbDeviceFS, UserTxBufferFS, 0, 0);
+	USBD_Composite_SetTxBuffer(&hUsbDeviceFS, UserTxBufferFS, APP_TX_DATA_SIZE, 0);
 	USBD_Composite_SetRxBuffer(&hUsbDeviceFS, UserRxBufferFS, 0);
 	return (USBD_OK);
-  /* USER CODE END 3 */
+	/* USER CODE END 3 */
 }
 
 /**
-  * @brief  DeInitializes the CDC media low layer
-  * @retval USBD_OK if all operations are OK else USBD_FAIL
-  */
+ * @brief  DeInitializes the CDC media low layer
+ * @retval USBD_OK if all operations are OK else USBD_FAIL
+ */
 static int8_t CDC_DeInit_FS(void)
 {
-  /* USER CODE BEGIN 4 */
+	/* USER CODE BEGIN 4 */
 	return (USBD_OK);
-  /* USER CODE END 4 */
+	/* USER CODE END 4 */
 }
 
 /**
-  * @brief  Manage the CDC class requests
-  * @param  cmd: Command code
-  * @param  pbuf: Buffer containing command data (request parameters)
-  * @param  length: Number of data to be sent (in bytes)
-  * @retval Result of the operation: USBD_OK if all operations are OK else USBD_FAIL
-  */
+ * @brief  Manage the CDC class requests
+ * @param  cmd: Command code
+ * @param  pbuf: Buffer containing command data (request parameters)
+ * @param  length: Number of data to be sent (in bytes)
+ * @retval Result of the operation: USBD_OK if all operations are OK else USBD_FAIL
+ */
 static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length)
 {
-  /* USER CODE BEGIN 5 */
+	/* USER CODE BEGIN 5 */
 	switch(cmd)
 	{
 	case CDC_SEND_ENCAPSULATED_COMMAND:
@@ -282,89 +282,97 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length)
 	}
 
 	return (USBD_OK);
-  /* USER CODE END 5 */
+	/* USER CODE END 5 */
 }
 
 /**
-  * @brief  Data received over USB OUT endpoint are sent over CDC interface
-  *         through this function.
-  *
-  *         @note
-  *         This function will issue a NAK packet on any OUT packet received on
-  *         USB endpoint until exiting this function. If you exit this function
-  *         before transfer is complete on CDC interface (ie. using DMA controller)
-  *         it will result in receiving more data while previous ones are still
-  *         not sent.
-  *
-  * @param  Buf: Buffer of data to be received
-  * @param  Len: Number of data received (in bytes)
-  * @retval Result of the operation: USBD_OK if all operations are OK else USBD_FAIL
-  */
+ * @brief  Data received over USB OUT endpoint are sent over CDC interface
+ *         through this function.
+ *
+ *         @note
+ *         This function will issue a NAK packet on any OUT packet received on
+ *         USB endpoint until exiting this function. If you exit this function
+ *         before transfer is complete on CDC interface (ie. using DMA controller)
+ *         it will result in receiving more data while previous ones are still
+ *         not sent.
+ *
+ * @param  Buf: Buffer of data to be received
+ * @param  Len: Number of data received (in bytes)
+ * @retval Result of the operation: USBD_OK if all operations are OK else USBD_FAIL
+ */
 static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 {
-  /* USER CODE BEGIN 6 */
+	/* USER CODE BEGIN 6 */
 	//USBD_Composite_SetRxBuffer(&hUsbDeviceFS, &Buf[0], 0);
 	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
 	for(uint32_t i=0; i < *Len; i++)
 	{
-		if(Buf[i] == '\n')
+		if (currentIndex >= sizeof(recvBuf))
 		{
-			// newline character, we just ignore it.
+			// No room in buffer, reset
+			currentIndex = 0;
+			if (USBD_errorCallback_ptr != NULL) (*USBD_errorCallback_ptr)(&hUsbDeviceFS);
 		}
-		else if(Buf[i] != '\r') // Regular character, we add it to the buffer
+		else
 		{
-			recvBuf[currentIndex] = Buf[i];
-			currentIndex++;
-		}
-		else // We reached CR, must send command for processing
-		{
-			if ((currentIndex > 0) && (currentIndex <= USB_COMMAND_BUFFER_SIZE)) //Don't forward invalid commands
+			if(Buf[i] == '\n')
 			{
-				if(USBD_recvBuffer != NULL)
+				// newline character, we just ignore it.
+			}
+			else if(Buf[i] != '\r') // Regular character, we add it to the buffer
+			{
+				recvBuf[currentIndex] = Buf[i];
+				currentIndex++;
+			}
+			else // We reached CR, must send command for processing
+			{
+				if ((currentIndex > 0) && (currentIndex <= USB_COMMAND_BUFFER_SIZE)) //Don't forward invalid commands
 				{
-					if (xStreamBufferSendFromISR(*USBD_recvBuffer, &currentIndex, 2U, NULL ) != 2U)
+					if(USBD_recvBuffer != NULL)
 					{
-						//If a callback function has been registered, report issue
-						//if (USBD_errorCallback_ptr != NULL) (*USBD_errorCallback_ptr)(&hUsbDeviceFS);
-						RAMN_USB_Config.USBErrCnt++;
-					}
-					else
-					{
-						if (xStreamBufferSendFromISR(*USBD_recvBuffer, recvBuf, currentIndex, NULL ) != currentIndex)
+						if (xStreamBufferSendFromISR(*USBD_recvBuffer, &currentIndex, 2U, NULL ) != 2U)
 						{
+							//If a callback function has been registered, report issue
 							//if (USBD_errorCallback_ptr != NULL) (*USBD_errorCallback_ptr)(&hUsbDeviceFS);
 							RAMN_USB_Config.USBErrCnt++;
 						}
 						else
 						{
-							vTaskNotifyGiveFromISR(*USBD_recvTask, &xHigherPriorityTaskWoken);
-							portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
+							if (xStreamBufferSendFromISR(*USBD_recvBuffer, recvBuf, currentIndex, NULL ) != currentIndex)
+							{
+								//if (USBD_errorCallback_ptr != NULL) (*USBD_errorCallback_ptr)(&hUsbDeviceFS);
+								RAMN_USB_Config.USBErrCnt++;
+							}
+							else
+							{
+								vTaskNotifyGiveFromISR(*USBD_recvTask, &xHigherPriorityTaskWoken);
+								portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
+							}
 						}
 					}
 				}
+				currentIndex = 0;
 			}
-			currentIndex = 0;
 		}
-
 	}
 	USBD_Composite_ReceivePacket(&hUsbDeviceFS, CDC_OUT_EP);
 
 	return (USBD_OK);
-  /* USER CODE END 6 */
+	/* USER CODE END 6 */
 }
 
 /**
-  * @brief  CDC_Transmit_FS
-  *         Data to send over USB IN endpoint are sent over CDC interface
-  *         through this function.
-  *         @note
-  *
-  *
-  * @param  Buf: Buffer of data to be sent
-  * @param  Len: Number of data to be sent (in bytes)
-  * @retval USBD_OK if all operations are OK else USBD_FAIL or USBD_BUSY
-  */
+ * @brief  CDC_Transmit_FS
+ *         Data to send over USB IN endpoint are sent over CDC interface
+ *         through this function.
+ *         @note
+ *
+ *
+ * @param  Buf: Buffer of data to be sent
+ * @param  Len: Number of data to be sent (in bytes)
+ * @retval USBD_OK if all operations are OK else USBD_FAIL or USBD_BUSY
+ */
 uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len)
 {
 	uint8_t result = USBD_OK;
@@ -381,17 +389,17 @@ uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len)
 }
 
 /**
-  * @brief  CDC_TransmitCplt_FS
-  *         Data transmitted callback
-  *
-  *         @note
-  *         This function is IN transfer complete callback used to inform user that
-  *         the submitted Data is successfully sent over USB.
-  *
-  * @param  Buf: Buffer of data to be received
-  * @param  Len: Number of data received (in bytes)
-  * @retval Result of the operation: USBD_OK if all operations are OK else USBD_FAIL
-  */
+ * @brief  CDC_TransmitCplt_FS
+ *         Data transmitted callback
+ *
+ *         @note
+ *         This function is IN transfer complete callback used to inform user that
+ *         the submitted Data is successfully sent over USB.
+ *
+ * @param  Buf: Buffer of data to be received
+ * @param  Len: Number of data received (in bytes)
+ * @retval Result of the operation: USBD_OK if all operations are OK else USBD_FAIL
+ */
 static int8_t CDC_TransmitCplt_FS(uint8_t *Buf, uint32_t *Len, uint8_t epnum)
 {
 	uint8_t result = USBD_OK;
@@ -414,11 +422,11 @@ static int8_t CDC_TransmitCplt_FS(uint8_t *Buf, uint32_t *Len, uint8_t epnum)
 /* USER CODE END PRIVATE_FUNCTIONS_IMPLEMENTATION */
 
 /**
-  * @}
-  */
+ * @}
+ */
 
 /**
-  * @}
-  */
+ * @}
+ */
 #endif /* ENABLE_USB */
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
