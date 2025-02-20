@@ -28,6 +28,11 @@ def autoDetectRAMNPort():
     for port in serial.tools.list_ports.comports():
         if (port.vid == 0x483) and (port.pid == 0x5740):
             result = port.device
+    if result is None:
+        for port in serial.tools.list_ports.comports():
+            if (port.vid == 0x1d50) and (port.pid == 0x606f):
+                result = port.device
+                print("Attempting to use gs_usb device as RAMN")
     return result
     
 #Class to read settings from a .ini file and make those settings easily available to other modules

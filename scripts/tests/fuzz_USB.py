@@ -17,12 +17,12 @@ from utils.RAMN_Diag_Main import *
              
        
 NUMBER_OF_REPEATS                   = 100            
-FUZZ_COMMAND_MAX_SIZE               = 1000  
+FUZZ_COMMAND_MAX_SIZE               = 8195  
 
 LOCAL_USB_COMMAND_BUFFER_SIZE       = 0x200     # For CLI commands
 USB_APP_RX_DATA_SIZE                = 2048      # APP_RX_DATA_SIZE
-USB_COMMAND_BUFFER_SIZE             = (8195+2)  # Expected size of USB command buffer
-USB_RX_BUFFER_SIZE                  = 18000     # Expected RX buffer size 
+USB_COMMAND_BUFFER_SIZE             = (8195)  # Expected size of USB command buffer
+USB_RX_BUFFER_SIZE                  = 15000     # Expected RX buffer size 
 LARGE_COMMAND_SIZE                  = 0x10000   # Max size to test
 
            
@@ -40,19 +40,25 @@ if __name__ == '__main__':
     #Test conditions close to important buffer sizes
     
     for i in range(10,-10,-1):
+        log("Testing USB CDC payload size 0x{:x}".format(LOCAL_USB_COMMAND_BUFFER_SIZE-i), LOG_DEBUG)
         ramn.sendCommand("A"*(LOCAL_USB_COMMAND_BUFFER_SIZE-i) + "\r")
     
     for i in range(10,-10,-1):
+        log("Testing USB CDC payload size 0x{:x}".format(USB_APP_RX_DATA_SIZE-i), LOG_DEBUG)
         ramn.sendCommand("A"*(USB_APP_RX_DATA_SIZE-i) + "\r")
+         
     
     for i in range(10,-10,-1):
+        log("Testing USB CDC payload size 0x{:x}".format(USB_COMMAND_BUFFER_SIZE-i), LOG_DEBUG)
         ramn.sendCommand("A"*(USB_COMMAND_BUFFER_SIZE-i) + "\r")
     
-    for i in range(10,-10,-1):
-        ramn.sendCommand("A"*(USB_RX_BUFFER_SIZE-i) + "\r")
-        
-    ramn.sendCommand("A"*LARGE_COMMAND_SIZE + "\r")
     
+    for i in range(10,-10,-1):
+        log("Testing USB CDC payload size 0x{:x}".format(USB_RX_BUFFER_SIZE-i), LOG_DEBUG)
+        ramn.sendCommand("A"*(USB_RX_BUFFER_SIZE-i) + "\r")
+    
+    log("Testing USB CDC payload size 0x{:x}".format(LARGE_COMMAND_SIZE), LOG_DEBUG)
+    ramn.sendCommand("A"*LARGE_COMMAND_SIZE + "\r")
     
     for i in range(NUMBER_OF_REPEATS):
         command = secrets.token_bytes(random.randint(1, FUZZ_COMMAND_MAX_SIZE))
@@ -92,11 +98,18 @@ if __name__ == '__main__':
         
     ramn.sendCommand("A"*LARGE_COMMAND_SIZE + "\r")
 
-
+    log("testing random commands of random lengths", LOG_DEBUG)
     for i in range(NUMBER_OF_REPEATS):
         command = secrets.token_bytes(random.randint(1, FUZZ_COMMAND_MAX_SIZE))
         log("testing: {}".format(command), LOG_DEBUG) 
         ramn.sendCommand(command)
+        
+    log("testing large commands", LOG_OUTPUT)
+    
+    for i in range(NUMBER_OF_REPEATS):
+        command = secrets.token_bytes(FUZZ_COMMAND_MAX_SIZE)
+        log("testing: {}".format(command), LOG_DEBUG) 
+        ramn.sendCommand(command)    
     
     log("Empyting buffer...", LOG_OUTPUT)
     time.sleep(2)
