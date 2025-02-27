@@ -75,7 +75,7 @@
 #define ENABLE_MINICTF
 
 // Note that UDS programming does not work on microcontrollers with only 256 kb memory (e.g., reference ending with CCT6).
-#define ENABLE_REPROGRAMMING
+#define ENABLE_UDS_REPROGRAMMING
 #define ENABLE_UDS
 //#define ENABLE_KWP
 //#define ENABLE_XCP
@@ -138,7 +138,7 @@
 #define CHASSIS_LOGARITHMIC_POTENTIOMETER
 #endif
 
-#define ENABLE_REPROGRAMMING
+#define ENABLE_UDS_REPROGRAMMING
 #define ENABLE_UDS
 //#define ENABLE_KWP
 #define ENABLE_XCP
@@ -151,7 +151,7 @@
 //#define ENABLE_SCREEN
 #define ENABLE_ADC
 #define EXPANSION_POWERTRAIN
-#define ENABLE_REPROGRAMMING
+#define ENABLE_UDS_REPROGRAMMING
 #define ENABLE_UDS
 //#define ENABLE_KWP
 #define ENABLE_XCP
@@ -169,7 +169,7 @@
 // Enable SPI (for LED control)
 #define ENABLE_SPI
 
-#define ENABLE_REPROGRAMMING
+#define ENABLE_UDS_REPROGRAMMING
 #define ENABLE_UDS
 //#define ENABLE_KWP
 #define ENABLE_XCP
@@ -404,7 +404,7 @@
 #ifdef ENABLE_MINICTF
 #error "You may want to disable the mini-ctf to avoid conflicts. Comment out this line to enable anyway."
 #endif
-#ifdef ENABLE_REPROGRAMMING
+#ifdef ENABLE_UDS_REPROGRAMMING
 #error "You may want to disable reprogramming to avoid accidental firmware erasure. Comment out this line to enable anyway."
 #endif
 #ifdef GENERATE_RUNTIME_STATS
