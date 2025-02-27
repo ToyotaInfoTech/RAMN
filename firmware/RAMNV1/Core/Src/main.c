@@ -733,7 +733,7 @@ static void MX_ADC1_Init(void)
 {
 
   /* USER CODE BEGIN ADC1_Init 0 */
-#if defined(EXPANSION_CHASSIS) || defined(EXPANSION_POWERTRAIN) || defined(EXPANSION_BODY)
+#ifdef ENABLE_ADC
   /* USER CODE END ADC1_Init 0 */
 
   ADC_MultiModeTypeDef multimode = {0};
@@ -1768,7 +1768,7 @@ void RAMN_PeriodicTaskFunc(void *argument)
 	if (HAL_I2C_EnableListen_IT(&hi2c2) != HAL_OK) Error_Handler();
 #endif
 
-#if defined(EXPANSION_CHASSIS) || defined(EXPANSION_POWERTRAIN) || defined(EXPANSION_BODY)
+#ifdef ENABLE_ADC
 	HAL_ADC_Start_DMA(&hadc1, (uint32_t*)RAMN_SENSORS_ADCValues, NUMBER_OF_ADC);
 	RAMN_SENSORS_Init();
 #endif

@@ -105,7 +105,7 @@ extern RAMN_SENSORS_BodySensors_t RAMN_SENSORS_BODY;
 extern RAMN_SENSORS_BodySensors_t RAMN_SENSORS_BODY_PREVIOUS;
 #endif
 
-#if defined(EXPANSION_CHASSIS) || defined(EXPANSION_POWERTRAIN) || defined(EXPANSION_BODY)
+#ifdef ENABLE_ADC
 // Values to save ADC inputs - filled automatically by DMA
 extern uint16_t RAMN_SENSORS_ADCValues[NUMBER_OF_ADC];
 #endif

@@ -19,7 +19,7 @@
 // Public --------------------------------------------
 
 // Array directly accessed by DMA
-#if defined(EXPANSION_CHASSIS) || defined(EXPANSION_POWERTRAIN) || defined(EXPANSION_BODY)
+#ifdef ENABLE_ADC
 uint16_t RAMN_SENSORS_ADCValues[NUMBER_OF_ADC] = {0,0,0};
 #endif
 

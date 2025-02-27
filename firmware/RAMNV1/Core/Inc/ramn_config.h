@@ -39,6 +39,7 @@
 // CONFIGURATION OF ECU A ------------------------------------------------------
 
 #if defined(TARGET_ECUA)
+//#define ENABLE_ADC
 #define ENABLE_USB
 #define ENABLE_CDC // USB serial (CDC) interface
 
@@ -124,6 +125,7 @@
 
 #if defined(TARGET_ECUB)
 //#define ENABLE_SCREEN
+#define ENABLE_ADC
 #define EXPANSION_CHASSIS
 
 // Define flag below to indicate that the steering wheel potentiometer is of the logarithmic type.
@@ -144,6 +146,7 @@
 
 #if defined(TARGET_ECUC)
 //#define ENABLE_SCREEN
+#define ENABLE_ADC
 #define EXPANSION_POWERTRAIN
 #define ENABLE_REPROGRAMMING
 #define ENABLE_UDS
@@ -156,6 +159,7 @@
 
 #if defined(TARGET_ECUD)
 #define ENABLE_MINICTF
+#define ENABLE_ADC
 #define EXPANSION_BODY
 #define ENABLE_REPROGRAMMING
 #define ENABLE_UDS
@@ -173,7 +177,7 @@
 #define SIM_LOOP_CLOCK_MS 10
 
 // Enable watchdogs - Application needs to kick it every 1s.
-// #define WATCHDOG_ENABLE
+//#define WATCHDOG_ENABLE
 
 // Will make ECU accept broadcasted UDS commands.
 // CAN ID must be defined in ramn_vehicle_specific.h.
