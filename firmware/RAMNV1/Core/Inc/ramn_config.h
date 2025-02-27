@@ -289,7 +289,7 @@
 
 // ISO-TP Timeout values. Both should be set to 1000 to mimic real ECUs.
 #define ISOTP_RX_TIMEOUT_MS 			200000
-#define ISOTP_TX_TIMEOUT_MS 			10000
+#define ISOTP_TX_TIMEOUT_MS 			200000
 
 // Timeout for extended diagnostic session.
 // By default, other session types do not time out, although they would on real ECUs.
