@@ -62,47 +62,31 @@ void RAMN_DBC_ProcessCANMessage(uint32_t canid, uint32_t dlc, RAMN_CANFrameData_
 	dataframe->ramnData.payload = dataframe->ramnData.payload&0xFFFF;
 	if (dlc <= 1U) dataframe->ramnData.payload = dataframe->ramnData.payload&0xFF; //TODO: reject dlc == 2U message instead of casting them?
 
-	// To avoid overloading the ECU with processing of incoming messages, only expected messages are included in the switch/case
 	if (dlc != 0U)
 	{
 		switch(canid)
 		{
-#ifdef RECEIVE_CONTROL_BRAKE
 		case CAN_SIM_CONTROL_BRAKE_CANID:
 			RAMN_DBC_Handle.control_brake 				= applyEndian16(dataframe->ramnData.payload);
 			break;
-#endif
-#ifdef RECEIVE_COMMAND_BRAKE
 		case CAN_SIM_COMMAND_BRAKE_CANID:
 			RAMN_DBC_Handle.command_brake 				= applyEndian16(dataframe->ramnData.payload);
 			break;
-#endif
-#ifdef RECEIVE_CONTROL_ACCEL
 		case CAN_SIM_CONTROL_ACCEL_CANID:
 			RAMN_DBC_Handle.control_accel 				= applyEndian16(dataframe->ramnData.payload);
 			break;
-#endif
-#ifdef RECEIVE_COMMAND_ACCEL
 		case CAN_SIM_COMMAND_ACCEL_CANID:
 			RAMN_DBC_Handle.command_accel 				= applyEndian16(dataframe->ramnData.payload);
 			break;
-#endif
-#ifdef RECEIVE_STATUS_RPM
 		case CAN_SIM_STATUS_RPM_CANID:
 			RAMN_DBC_Handle.status_rpm  				= applyEndian16(dataframe->ramnData.payload);
 			break;
-#endif
-#ifdef RECEIVE_CONTROL_STEERING
 		case CAN_SIM_CONTROL_STEERING_CANID:
 			RAMN_DBC_Handle.control_steer 				= applyEndian16(dataframe->ramnData.payload);
 			break;
-#endif
-#ifdef RECEIVE_COMMAND_STEERING
 		case CAN_SIM_COMMAND_STEERING_CANID:
 			RAMN_DBC_Handle.command_steer 				= applyEndian16(dataframe->ramnData.payload);
 			break;
-#endif
-#ifdef RECEIVE_CONTROL_SHIFT
 		case CAN_SIM_CONTROL_SHIFT_CANID:
 			RAMN_DBC_Handle.control_shift				=  dataframe->ramnData.payload&0xFF;
 			if (dlc >= 2U)
@@ -113,52 +97,33 @@ void RAMN_DBC_ProcessCANMessage(uint32_t canid, uint32_t dlc, RAMN_CANFrameData_
 			#endif
 			}
 			break;
-#endif
-#ifdef RECEIVE_COMMAND_SHIFT
 		case CAN_SIM_COMMAND_SHIFT_CANID:
 			RAMN_DBC_Handle.command_shift 				= (dataframe->ramnData.payload)&0xFF;
 			break;
-#endif
-#ifdef RECEIVE_COMMAND_HORN
 		case CAN_SIM_COMMAND_HORN_CANID:
 			RAMN_DBC_Handle.command_horn 				= (dataframe->ramnData.payload)&0xFF;
 			break;
-#endif
-#ifdef RECEIVE_CONTROL_HORN
 		case CAN_SIM_CONTROL_HORN_CANID:
 			RAMN_DBC_Handle.control_horn 				= dataframe->ramnData.payload&0xFF;
 			break;
-#endif
-#ifdef RECEIVE_CONTROL_SIDEBRAKE
 		case CAN_SIM_CONTROL_SIDEBRAKE_CANID:
 			RAMN_DBC_Handle.control_sidebrake 			= dataframe->ramnData.payload&0xFF;
 			break;
-#endif
-#ifdef RECEIVE_COMMAND_SIDEBRAKE
 		case CAN_SIM_COMMAND_SIDEBRAKE_CANID:
 			RAMN_DBC_Handle.command_sidebrake 			= dataframe->ramnData.payload;
 			break;
-#endif
-#ifdef RECEIVE_COMMAND_TURNINDICATOR
 		case CAN_SIM_COMMAND_TURNINDICATOR_CANID:
 			RAMN_DBC_Handle.command_turnindicator		= dataframe->ramnData.payload;
 			break;
-#endif
-#ifdef RECEIVE_CONTROL_ENGINEKEY
 		case CAN_SIM_CONTROL_ENGINEKEY_CANID:
 			RAMN_DBC_Handle.control_enginekey 			= dataframe->ramnData.payload&0xFF;
 			break;
-#endif
-#ifdef RECEIVE_COMMAND_LIGHTS
 		case CAN_SIM_COMMAND_LIGHTS_CANID:
 			RAMN_DBC_Handle.command_lights 				= dataframe->ramnData.payload&0xFFFF;
 			break;
-#endif
-#ifdef RECEIVE_CONTROL_LIGHTS
 		case CAN_SIM_CONTROL_LIGHTS_CANID:
 			RAMN_DBC_Handle.control_lights 				= dataframe->ramnData.payload&0xFF;
 			break;
-#endif
 		default:
 			break;
 		}
