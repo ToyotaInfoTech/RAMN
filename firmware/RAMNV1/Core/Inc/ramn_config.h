@@ -62,6 +62,9 @@
 #define USBD_CONFIGURATION_STRING     	"MDC Config"
 #define USBD_INTERFACE_STRING         	"MDC Interface"
 
+// Enable SPI (for screen control)
+#define ENABLE_SPI
+
 // Enable screen (not restricted to ECU A).
 #define ENABLE_SCREEN
 
@@ -155,12 +158,17 @@
 #define RTR_DEMO_ID 0x702
 #endif
 
+
 // CONFIGURATION OF ECU D ------------------------------------------------------
 
 #if defined(TARGET_ECUD)
 #define ENABLE_MINICTF
 #define ENABLE_ADC
 #define EXPANSION_BODY
+
+// Enable SPI (for LED control)
+#define ENABLE_SPI
+
 #define ENABLE_REPROGRAMMING
 #define ENABLE_UDS
 //#define ENABLE_KWP

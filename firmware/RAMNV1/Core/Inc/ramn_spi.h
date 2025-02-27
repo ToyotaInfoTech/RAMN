@@ -61,7 +61,7 @@
 
 #endif
 
-#if defined(ENABLE_SCREEN) || defined(EXPANSION_BODY)
+#ifdef ENABLE_SPI
 
 // Initializes the Module.
 void 	RAMN_SPI_Init(SPI_HandleTypeDef* handler, osThreadId_t* pTask);

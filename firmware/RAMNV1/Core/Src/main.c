@@ -513,7 +513,7 @@ int main(void)
 	RAMN_ECU_SetBoot0All(0U);
 #endif
 
-#if defined(EXPANSION_BODY)
+#if defined(ENABLE_SPI) && !defined(ENABLE_SCREEN) //if screen is enabled, we initialize it in the screen module.
 	RAMN_SPI_Init(&hspi2, &RAMN_PeriodicHandle);
 #endif
 
@@ -1076,7 +1076,7 @@ static void MX_SPI2_Init(void)
 {
 
   /* USER CODE BEGIN SPI2_Init 0 */
-
+#ifdef ENABLE_SPI
   /* USER CODE END SPI2_Init 0 */
 
   /* USER CODE BEGIN SPI2_Init 1 */
@@ -1102,7 +1102,7 @@ static void MX_SPI2_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN SPI2_Init 2 */
-
+#endif
   /* USER CODE END SPI2_Init 2 */
 
 }

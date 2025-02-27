@@ -16,7 +16,7 @@
 
 #include "ramn_spi.h"
 
-#if defined(ENABLE_SCREEN) || defined(EXPANSION_BODY)
+#ifdef ENABLE_SPI
 static SPI_HandleTypeDef* hspi;
 osThreadId_t* pSPITask;
 #endif
@@ -26,7 +26,7 @@ __attribute__ ((section (".buffers"))) static uint16_t spiTxBuffer[16*16];
 static uint16_t currentScroll = SCREEN_HEADER_SIZE;
 #endif
 
-#if defined(ENABLE_SCREEN) || defined(EXPANSION_BODY)
+#ifdef ENABLE_SPI
 void RAMN_SPI_Init(SPI_HandleTypeDef* handler, osThreadId_t* pTask)
 {
 	hspi = handler;
@@ -34,7 +34,7 @@ void RAMN_SPI_Init(SPI_HandleTypeDef* handler, osThreadId_t* pTask)
 }
 #endif
 
-#if defined(ENABLE_SCREEN)
+#if defined(ENABLE_SPI)
 
 // Callback for End of SPI transmission
 void HAL_SPI_TxCpltCallback (SPI_HandleTypeDef * hspi)
@@ -84,6 +84,10 @@ static HAL_StatusTypeDef SPI_WriteDataUint32_DMA(uint32_t data)
 	HAL_GPIO_WritePin(LCD_nCS_GPIO_Port, LCD_nCS_Pin, GPIO_PIN_SET);
 	return result;
 }
+
+#endif
+
+#ifdef ENABLE_SCREEN
 
 static void SPI_SetAddrWindow(uint16_t x, uint16_t y, uint16_t w, uint16_t h)
 {
