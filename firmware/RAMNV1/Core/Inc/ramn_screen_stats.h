@@ -25,7 +25,7 @@
 
 #include "ramn_screen_utils.h"
 
-extern RAMNScreen ScreenStats;
+extern RAMNScreen_t ScreenStats;
 
 #endif
 

@@ -44,7 +44,7 @@ typedef struct {
     uint8_t count;
 } CAN_MessageBuffer;
 
-extern RAMNScreen ScreenCANLog;
+extern RAMNScreen_t ScreenCANLog;
 
 void RAMN_ScreenCANLog_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, const uint8_t* data, uint32_t tick);
 

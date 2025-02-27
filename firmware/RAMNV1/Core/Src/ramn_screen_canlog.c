@@ -227,7 +227,7 @@ static RAMN_Bool_t SCREENCANLOG_UpdateInput(JoystickEventType event)
 	return True;
 }
 
-RAMNScreen ScreenCANLog = {
+RAMNScreen_t ScreenCANLog = {
 		.Init = SCREENCANLOG_Init,
 		.Update = SCREENCANLOG_Update,
 		.Deinit = SCREENCANLOG_Deinit,

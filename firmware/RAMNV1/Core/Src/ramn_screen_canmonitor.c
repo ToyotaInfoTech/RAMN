@@ -271,7 +271,7 @@ static void SCREENCANMONITOR_Deinit()
 	freeCANMessageList();
 }
 
-RAMNScreen ScreenCANMonitor = {
+RAMNScreen_t ScreenCANMonitor = {
 		.Init = SCREENCANMONITOR_Init,
 		.Update = SCREENCANMONITOR_Update,
 		.Deinit = SCREENCANMONITOR_Deinit,

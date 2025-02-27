@@ -55,7 +55,7 @@ static void SCREENUDS_Update(uint32_t tick)
 	if (RAMN_SCREENUTILS_LoopCounter % 5U == 0U) RAMN_SCREENUTILS_DrawSubconsoleUpdate();
 }
 
-RAMNScreen ScreenUDS =
+RAMNScreen_t ScreenUDS =
 {
 		.Init = SCREENUDS_Init,
 		.Update = SCREENUDS_Update,

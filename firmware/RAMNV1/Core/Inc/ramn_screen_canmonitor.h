@@ -42,7 +42,7 @@ typedef struct CANMessageNode {
 
 #define MAX_CANMONITOR_IDS 10 //Max number of IDs to display on screen
 
-extern RAMNScreen ScreenCANMonitor;
+extern RAMNScreen_t ScreenCANMonitor;
 
 void RAMN_ScreenCANMonitor_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, const uint8_t* data, uint32_t tick);
 

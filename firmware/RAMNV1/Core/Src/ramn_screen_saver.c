@@ -59,7 +59,7 @@ static RAMN_Bool_t SCREENSAVER_UpdateInput(JoystickEventType event)
 
 }
 
-RAMNScreen ScreenSaver =
+RAMNScreen_t ScreenSaver =
 {
 		.Init = SCREENSAVER_Init,
 		.Update = SCREENSAVER_Update,

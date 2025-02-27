@@ -122,7 +122,7 @@ static RAMN_Bool_t SCREENCHIP8_UpdateInput(JoystickEventType event)
 	else return False; // Game is ongoing, ask screen manager to not process inputs
 }
 
-RAMNScreen ScreenChip8 = {
+RAMNScreen_t ScreenChip8 = {
 		.Init = SCREENCHIP8_Init,
 		.Update = SCREENCHIP8_Update,
 		.Deinit = 0U,

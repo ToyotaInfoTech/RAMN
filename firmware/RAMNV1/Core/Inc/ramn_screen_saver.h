@@ -25,7 +25,7 @@
 
 #include "ramn_screen_utils.h"
 
-extern RAMNScreen ScreenSaver;
+extern RAMNScreen_t ScreenSaver;
 
 #endif
 

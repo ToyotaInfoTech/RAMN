@@ -21,10 +21,10 @@
 // Private variables ---------------------
 
 // Current screen
-static RAMNScreen *currentScreen = NULL;
+static RAMNScreen_t *currentScreen = NULL;
 
 // Array of all possible screens
-static RAMNScreen* screens[] = {
+static RAMNScreen_t* screens[] = {
 		&ScreenSaver,
 		&ScreenCANMonitor,
 		&ScreenCANLog,
@@ -40,7 +40,7 @@ static RAMNScreen* screens[] = {
 // Private functions ---------------------
 
 // Ends current screen and starts the one provided as argument.
-void switchScreen(RAMNScreen* newScreen)
+void switchScreen(RAMNScreen_t* newScreen)
 {
 	if (currentScreen != NULL) {
 		if (currentScreen->Deinit != NULL) currentScreen->Deinit();

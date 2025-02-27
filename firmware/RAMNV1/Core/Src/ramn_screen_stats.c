@@ -69,7 +69,7 @@ static void SCREENSTATS_Update(uint32_t tick)
 	}
 }
 
-RAMNScreen ScreenStats = {
+RAMNScreen_t ScreenStats = {
 		.Init = SCREENSTATS_Init,
 		.Update = SCREENSTATS_Update,
 		.Deinit = 0U,

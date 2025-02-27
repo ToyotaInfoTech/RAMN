@@ -25,7 +25,7 @@
 #include "ramn_screen_utils.h"
 #include "ramn_chip8.h"
 
-extern RAMNScreen ScreenChip8;
+extern RAMNScreen_t ScreenChip8;
 
 // Request to start a game
 void RAMN_SCREENCHIP8_RequestGame(const uint8_t* game_to_load, uint16_t game_size);

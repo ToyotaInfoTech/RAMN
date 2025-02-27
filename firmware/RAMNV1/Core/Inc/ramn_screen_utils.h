@@ -43,7 +43,7 @@ typedef struct RAMNScreen {
     void (*Deinit)();
     RAMN_Bool_t (*UpdateInput)(JoystickEventType event); // Returns True if screen manager should also process the input
     void (*ProcessRxCANMessage)();
-} RAMNScreen;
+} RAMNScreen_t;
 
 // Color theme used by default for all screens
 typedef struct COLOR_THEME_STRUCT {

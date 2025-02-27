@@ -29,7 +29,7 @@ extern RAMN_Bool_t RAMN_SCREENUDS_RedrawNeeded;
 
 void RAMN_SCREENUDS_RequestDrawImage(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const uint8_t* image);
 
-extern RAMNScreen ScreenUDS;
+extern RAMNScreen_t ScreenUDS;
 
 #endif
 
