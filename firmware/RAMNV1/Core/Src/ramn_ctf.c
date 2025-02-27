@@ -50,7 +50,7 @@ static void sendFlagOverCAN(uint16_t can_id, char* flag)
 		else dlc = (uint8_t) (size - offset);
 
 		CTFTxHeader.DataLength = UINT8toDLC(dlc);
-		RAMN_memcpy((uint8_t*)CTFTxData,(uint8_t*)&flag[offset],dlc); // Copy 8 last bytes of ECU hardware ID
+		RAMN_memcpy((uint8_t*)CTFTxData,(uint8_t*)&flag[offset],dlc);
 		RAMN_FDCAN_SendMessage(&CTFTxHeader,CTFTxData);
 		offset += dlc;
 	}

@@ -15,6 +15,9 @@
  */
 
 #include "ramn_customize.h"
+#include "ramn_canfd.h"
+#include "ramn_sensors.h"
+#include "ramn_dbc.h"
 
 #ifdef ENABLE_UART
 #include "ramn_uart.h"
@@ -31,7 +34,8 @@ void 	RAMN_CUSTOM_Init(uint32_t tick)
 	loopCounter = 0;
 }
 
-// Called when a CAN message is received (Hardware filters should be configured separately)
+// Called when a CAN message is received (Hardware filters should be configured separately in ramn_canfd.c; with recvStdCANIDList and recvExtCANIDList)
+// Note that by default, ECU A has no filter.
 void	RAMN_CUSTOM_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, const uint8_t* data, uint32_t tick)
 {
 	// Fields that you may want to use:
@@ -67,6 +71,47 @@ void RAMN_CUSTOM_Update(uint32_t tick)
 #ifdef ENABLE_UART
 		RAMN_UART_SendStringFromTask("Hello from RAMN\r");
 #endif
+
+		// Example: Send CAN message every second (payload size 8)
+		/*
+		FDCAN_TxHeaderTypeDef header;
+		uint8_t data[8U];
+
+		header.BitRateSwitch = FDCAN_BRS_OFF;	// Bitrate switching OFF (only needed for CAN-FD, but set anyway); other option is FDCAN_BRS_ON.
+		header.FDFormat = FDCAN_CLASSIC_CAN; 	// Classic CAN; other option is FDCAN_FD_CAN.
+		header.TxFrameType = FDCAN_DATA_FRAME;	// Data frame; other option is FDCAN_REMOTE_FRAME, only for classic CAN.
+		header.IdType = FDCAN_STANDARD_ID;		// Standard identifer; other optin is FDCAN_EXTENDED_ID for extended.
+		header.Identifier = 0x123; 				// Identifier.
+		header.DataLength = 8U;  				// DLC (Payload size).
+
+		// Decide CAN message payload content
+		RAMN_memset(data, 0x77, 8U); // write 0x77 8 times
+
+		// Send message
+		RAMN_FDCAN_SendMessage(&header,data);
+		*/
+
+
+		// Example: Execute every second, only if joystick is currently pressed down; only from ECU C (which is in charge of the sensor)
+		// This is based on physical sensor data (ramn_sensors.h)
+		/*
+		if (RAMN_SENSORS_POWERTRAIN.shiftJoystick == RAMN_SHIFT_PUSH)
+		{
+			// Do something
+		}
+		*/
+
+		// Example: Execute every second, only if joystick is currently pressed down; from ANOTHER ECU (other than ECU C)
+		// This is based on the latest joystick CAN message received (ramn_dbc.h)
+		// You need to make sure that the joystick CAN message is processed by adding #define RECEIVE_CONTROL_SHIFT in vehicle_specific.h
+		/*
+		if (RAMN_DBC_Handle.joystick == RAMN_SHIFT_PUSH)
+		{
+			// Do something
+		}
+		*/
+
+
 	}
 
 	loopCounter += 1; 	//You may want to add a check for integer overflow.
