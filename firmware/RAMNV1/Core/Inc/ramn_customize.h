@@ -26,6 +26,11 @@ void 	RAMN_CUSTOM_Init(uint32_t tick);
 // Function (from a dedicated task and not an ISR) that is called when a CAN message is received
 void	RAMN_CUSTOM_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, const uint8_t* data, uint32_t tick);
 
+#ifdef ENABLE_CDC
+// Function (from a dedicated task and not an ISR) that is called when a USB serial (CDC) line is received
+RAMN_Bool_t RAMN_CUSTOM_ProcessCDCLine(uint8_t* buffer, uint32_t size);
+#endif
+
 // Function that is called periodically
 void 	RAMN_CUSTOM_Update(uint32_t tick);
 

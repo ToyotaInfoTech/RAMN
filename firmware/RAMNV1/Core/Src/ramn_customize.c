@@ -19,6 +19,10 @@
 #include "ramn_sensors.h"
 #include "ramn_dbc.h"
 
+#ifdef ENABLE_CDC
+#include "ramn_cdc.h"
+#endif
+
 #ifdef ENABLE_UART
 #include "ramn_uart.h"
 #endif
@@ -49,6 +53,22 @@ void	RAMN_CUSTOM_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, const
 	// pHeader->RxTimestamp: 16-bit value for RX timestamp, MAY NOT BE CONFIGURED CORRECTLY
 	// See FilterIndex and IsFilterMatchingFrame for additional fields.
 }
+
+#ifdef ENABLE_CDC
+// This function is called when a USB serial (CDC) line is received (terminated by \r, which is not included in the buffer).
+// if you need another type of line terminator, modify CDC_Receive_FS in usbd_cdc_if.c.
+// Return True to ask the ECU to skip this line, return False to continue processing as usual.
+RAMN_Bool_t RAMN_CUSTOM_ProcessCDCLine(uint8_t* buffer, uint32_t size)
+{
+	// If you return True, you can entirely override USB communications, meaning that ECU A will lose the ability to forward slcan commands.
+	// This means that you will lose the ability to use RAMN scripts (including reflashing over USB DFU).
+	// Only return True if that is the behavior that you expect, and have another method for ECU A reflashing.
+	// If you want to make sure that you (at least) keep the option to reprogram ECU A, uncomment the line below and keep it at the beginning.
+	// if (size > 0U && buffer[1] == 'D') return False;
+
+	return False; // WARNING read comments above before editing
+}
+#endif
 
 // Called periodically from main task
 void RAMN_CUSTOM_Update(uint32_t tick)
