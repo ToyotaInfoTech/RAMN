@@ -64,7 +64,7 @@ RAMN_Bool_t RAMN_CUSTOM_ProcessCDCLine(uint8_t* buffer, uint32_t size)
 	// This means that you will lose the ability to use RAMN scripts (including reflashing over USB DFU).
 	// Only return True if that is the behavior that you expect, and have another method for ECU A reflashing.
 	// If you want to make sure that you (at least) keep the option to reprogram ECU A, uncomment the line below and keep it at the beginning.
-	// if (size > 0U && buffer[1] == 'D') return False;
+	// if (size > 0U && buffer[0] == 'D') return False;
 
 	return False; // WARNING read comments above before editing
 }
