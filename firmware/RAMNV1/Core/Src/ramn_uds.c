@@ -1161,15 +1161,18 @@ static void RAMN_UDS_RoutineControl(uint8_t* data, uint16_t size)
 			data[1] = data[1]&0x7F;
 		}
 		switch( ((data[2] << 8 ) | data[3])){ // subroutine (2 bytes)
+#ifdef ENABLE_UDS_REPROGRAMMING
 		case 0xFF00: // Erase Memory
 			RAMN_UDS_RoutineControlEraseAlternativeFirmware(data, size);
 			break;
 		case 0xFF01: // Validate Memory and Swap Banks
 			RAMN_UDS_RoutineControlValidateMemory(data, size);
 			break;
+#endif
 		case 0x0200: // Request Silence
 			RAMN_UDS_RoutineControlRequestSilence(data, size);
 			break;
+#ifdef ENABLE_UDS_REPROGRAMMING
 		case 0x0201: // Erase EEPROM
 			if (RAMN_FLASH_EraseActiveEEPROM() == RAMN_OK) RAMN_UDS_FormatPositiveResponseEcho(data, size);
 			else RAMN_UDS_FormatNegativeResponse(data,UDS_NRC_GPF);
@@ -1178,6 +1181,7 @@ static void RAMN_UDS_RoutineControl(uint8_t* data, uint16_t size)
 			if (RAMN_FLASH_CopyEEPROMToInactiveBank() == RAMN_OK) RAMN_UDS_FormatPositiveResponseEcho(data, size);
 			else RAMN_UDS_FormatNegativeResponse(data,UDS_NRC_GPF);
 			break;
+#endif
 		case 0x0203: // Echo Message (full Message)
 			RAMN_UDS_FormatPositiveResponseEcho(data,size);
 			break;
@@ -1206,9 +1210,11 @@ static void RAMN_UDS_RoutineControl(uint8_t* data, uint16_t size)
 			}
 			else RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
 			break;
+#ifdef ENABLE_UDS_REPROGRAMMING
 		case 0x0206: // Compute CRC
 			RAMN_UDS_RoutineControlComputeCRC(data,size);
 			break;
+#endif
 #if defined(TARGET_ECUB) || defined(TARGET_ECUC) || defined(TARGET_ECUD)
 		case 0x0207: // Enable/Disable Autopilot features:
 			RAMN_UDS_RoutineControlAutopilot(data,size);
@@ -1232,12 +1238,14 @@ static void RAMN_UDS_RoutineControl(uint8_t* data, uint16_t size)
 			break;
 #endif
 #endif // HARDENING
+#ifdef ENABLE_UDS_REPROGRAMMING
 		case 0x0210: // Reset Option Bytes:
 			RAMN_UDS_RoutineControlResetBootOptionBytes(data,size);
 			break;
 		case 0x0211: // Force Memory Swap:
 			RAMN_UDS_RoutineControlForceMemorySwap(data,size);
 			break;
+#endif
 		default:
 			RAMN_UDS_FormatNegativeResponse(data,UDS_NRC_ROOR);
 			break;
