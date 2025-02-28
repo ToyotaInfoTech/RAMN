@@ -254,6 +254,7 @@ static void RAMN_UDS_ECUReset(const uint8_t* data, uint16_t size)
 	}
 }
 
+#ifndef HARDENING
 static void RAMN_UDS_ClearDTC(const uint8_t* data, uint16_t size)
 {
 	// Only 0xFFFFFF (clear all) supported
@@ -430,6 +431,8 @@ static void RAMN_UDS_ReadMemoryByAddress(const uint8_t* data, uint16_t size)
 		}
 	}
 }
+#endif // HARDENING
+
 
 static void RAMN_UDS_ReadDataByIdentifier(uint8_t* data, uint16_t size)
 {
@@ -543,6 +546,8 @@ static void RAMN_UDS_ReadDataByIdentifier(uint8_t* data, uint16_t size)
 #endif
 }
 
+#ifndef HARDENING
+
 static void RAMN_UDS_ReadScalingDataByIdentifier(const uint8_t* data, uint16_t size)
 {
 	RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SNS);
@@ -616,6 +621,7 @@ static void RAMN_UDS_SecurityAccess(const uint8_t* data, uint16_t size)
 		}
 	}
 }
+
 
 static void RAMN_UDS_CommunicationControl(const uint8_t* data, uint16_t size)
 {
@@ -703,6 +709,8 @@ static void RAMN_UDS_InputOutputControlByIdentifier(const uint8_t* data, uint16_
 {
 	RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SNS);
 }
+
+#endif //HARDENING
 
 // Routine Control to ask the ECU to erase the alternative firmware
 static void RAMN_UDS_RoutineControlEraseAlternativeFirmware(const uint8_t* data, uint16_t size)
@@ -887,7 +895,6 @@ static void RAMN_UDS_RoutineControlForceMemorySwap(const uint8_t* data, uint16_t
 }
 
 
-
 // Routine Control that returns the CRC for specified area
 static void RAMN_UDS_RoutineControlComputeCRC(const uint8_t* data, uint16_t size)
 {
@@ -949,6 +956,7 @@ static void RAMN_UDS_RoutineControlAutopilot(const uint8_t* data, uint16_t size)
 }
 #endif
 
+#ifndef HARDENING
 #ifdef ENABLE_EEPROM_EMULATION
 // Routine to add an arbitrary DTC entry
 static void RAMN_UDS_RoutineControlAddDTCEntry(const uint8_t* data, uint16_t size)
@@ -986,7 +994,6 @@ static void RAMN_UDS_RoutineControlAddDTCEntry(const uint8_t* data, uint16_t siz
 	}
 }
 #endif
-
 
 #ifdef ENABLE_SCREEN
 
@@ -1060,9 +1067,12 @@ static void displayPixels(const uint8_t* data, uint16_t size)
 	}
 }
 #endif
+#endif // HARDENING
+
+
+#ifndef HARDENING // Double-check to make sure these do not end up in hardened code.
 
 typedef void (*exec_func_t)(void);
-
 // Routine to execute arbitrary code (e.g., to test ARM shellcode)
 static void RAMN_UDS_RoutineControlExecuteArbitraryCode(const uint8_t* data, uint16_t size)
 {
@@ -1077,7 +1087,6 @@ static void RAMN_UDS_RoutineControlExecuteArbitraryCode(const uint8_t* data, uin
 	else RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SAD);
 }
 
-#ifndef HARDENING // Double-check to make sure these do not end up in hardened code.
 #ifdef ENABLE_MINICTF
 const char expected_password[] = "VULNERABILITY";
 
@@ -1205,12 +1214,12 @@ static void RAMN_UDS_RoutineControl(uint8_t* data, uint16_t size)
 			RAMN_UDS_RoutineControlAutopilot(data,size);
 			break;
 #endif
+#ifndef HARDENING
 #if defined(ENABLE_EEPROM_EMULATION)
 		case 0x0208: // Add DTC Entry:
 			RAMN_UDS_RoutineControlAddDTCEntry(data,size);
 			break;
 #endif
-#ifndef HARDENING // double check to be sure these do not get enabled by other user changes.
 		case 0x0209: // Execute Arbitrary code
 			RAMN_UDS_RoutineControlExecuteArbitraryCode(data,size);
 			break;
@@ -1222,7 +1231,7 @@ static void RAMN_UDS_RoutineControl(uint8_t* data, uint16_t size)
 			RAMN_UDS_RoutineControlVulnerabilityExample2(data,size);
 			break;
 #endif
-#endif
+#endif // HARDENING
 		case 0x0210: // Reset Option Bytes:
 			RAMN_UDS_RoutineControlResetBootOptionBytes(data,size);
 			break;
@@ -1301,7 +1310,7 @@ static void RAMN_UDS_RequestDownloadUpload(const uint8_t* data, uint16_t size, T
 
 static void RAMN_UDS_RequestDownload(const uint8_t* data, uint16_t size)
 {
-#if defined(ENABLE_REPROGRAMMING)
+#if defined(ENABLE_UDS_REPROGRAMMING)
 	uint16_t memsize = *(const uint16_t*)FLASHSIZE_BASE;
 	if (memsize == 512)
 	{
@@ -1316,14 +1325,16 @@ static void RAMN_UDS_RequestDownload(const uint8_t* data, uint16_t size)
 #endif
 }
 
+#ifndef HARDENING
 static void RAMN_UDS_RequestUpload(const uint8_t* data, uint16_t size)
 {
 	RAMN_UDS_RequestDownloadUpload(data, size,TRANSFER_UPLOADING);
 }
+#endif
 
 static void RAMN_UDS_TransferData(const uint8_t* data, uint16_t size)
 {
-#if defined(ENABLE_REPROGRAMMING) || !defined(HARDENING)
+#if defined(ENABLE_UDS_REPROGRAMMING)
 	if( size < 2U )
 	{
 		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
@@ -1428,7 +1439,7 @@ static void RAMN_UDS_TransferData(const uint8_t* data, uint16_t size)
 
 static void RAMN_UDS_RequestTransferExit(const uint8_t* data, uint16_t size)
 {
-#if defined(ENABLE_REPROGRAMMING) || !defined(HARDENING)
+#if defined(ENABLE_UDS_REPROGRAMMING)
 	if( size != 1U )
 	{
 		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
@@ -1450,6 +1461,7 @@ static void RAMN_UDS_RequestTransferExit(const uint8_t* data, uint16_t size)
 #endif
 }
 
+#ifndef HARDENING
 static void RAMN_UDS_RequestFileTransfer(const uint8_t* data, uint16_t size)
 {
 	RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SNS);
@@ -1532,6 +1544,7 @@ static void RAMN_UDS_WriteMemoryByAddress(const uint8_t* data, uint16_t size)
 		}
 	}
 }
+#endif
 
 static void RAMN_UDS_TesterPresent(const uint8_t* data, uint16_t size)
 {
@@ -1556,6 +1569,7 @@ static void RAMN_UDS_TesterPresent(const uint8_t* data, uint16_t size)
 	}
 }
 
+#ifndef HARDENING
 static void RAMN_UDS_AccessTimingParameters(const uint8_t* data, uint16_t size)
 {
 	RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SNS);
@@ -1595,6 +1609,7 @@ static void RAMN_UDS_ResponseOnEvent(const uint8_t* data, uint16_t size)
 {
 	RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SNS);
 }
+#endif
 
 static void performLinkControlUpdate()
 {
@@ -1851,10 +1866,10 @@ void RAMN_UDS_ProcessDiagPayload(uint32_t tick, uint8_t* data, uint16_t size, ui
 			case 0x2F: // INPUT OUTPUT CONTROL BY IDENTIFIER
 				RAMN_UDS_InputOutputControlByIdentifier(data, size);
 				break;
-			case 0x31: // ROUTINE CONTROL
+#endif
+			case 0x31:
 				RAMN_UDS_RoutineControl(data, size);
 				break;
-#endif
 			case 0x34: // REQUEST DOWNLOAD
 				RAMN_UDS_RequestDownload(data, size);
 				break;
@@ -1908,10 +1923,10 @@ void RAMN_UDS_ProcessDiagPayload(uint32_t tick, uint8_t* data, uint16_t size, ui
 			case 0x86: // RESPONSE ON EVENT
 				RAMN_UDS_ResponseOnEvent(data, size);
 				break;
+#endif
 			case 0x87: // LINK CONTROL
 				RAMN_UDS_LinkControl(data, size);
 				break;
-#endif
 			default:  // UNSUPPORTED SERVICES
 				RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SNS);
 				break;
@@ -1965,10 +1980,10 @@ void RAMN_UDS_ProcessDiagPayloadFunctional(uint32_t tick, uint8_t* data, uint16_
 			case 0x85: // CONTROL DTC SETTINGS
 				RAMN_UDS_ControlDTCSettings(data, size);
 				break;
+#endif
 			case 0x87: // LINK CONTROL
 				RAMN_UDS_LinkControl(data, size);
 				break;
-#endif
 			default:  // UNSUPPORTED SERVICES
 				RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SNS);
 				break;
