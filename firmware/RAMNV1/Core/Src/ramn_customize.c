@@ -40,6 +40,7 @@ void 	RAMN_CUSTOM_Init(uint32_t tick)
 
 // Called when a CAN message is received (Hardware filters should be configured separately in ramn_canfd.c; with recvStdCANIDList and recvExtCANIDList)
 // Note that by default, ECU A has no filter.
+// This function is called from a task using an intermediary CAN buffer, so it does not need to return quickly.
 void	RAMN_CUSTOM_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, const uint8_t* data, uint32_t tick)
 {
 	// Fields that you may want to use:
@@ -58,6 +59,7 @@ void	RAMN_CUSTOM_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, const
 // This function is called when a USB serial (CDC) line is received (terminated by \r, which is not included in the buffer).
 // if you need another type of line terminator, modify CDC_Receive_FS in usbd_cdc_if.c.
 // Return True to ask the ECU to skip this line, return False to continue processing as usual.
+// This function is called from a task using an intermediary USB buffer, so it does not need to return quickly.
 RAMN_Bool_t RAMN_CUSTOM_ProcessCDCLine(uint8_t* buffer, uint32_t size)
 {
 	// If you return True, you can entirely override USB communications, meaning that ECU A will lose the ability to forward slcan commands.
@@ -70,7 +72,7 @@ RAMN_Bool_t RAMN_CUSTOM_ProcessCDCLine(uint8_t* buffer, uint32_t size)
 }
 #endif
 
-// Called periodically from main task
+// Called periodically from main task (does not need to return quickly)
 void RAMN_CUSTOM_Update(uint32_t tick)
 {
 	// This function is called by a dedicated periodic task, which means code can here won't block other functionalities (such as receiving CAN messages).
@@ -139,21 +141,17 @@ void RAMN_CUSTOM_Update(uint32_t tick)
 
 /* TIMERS */
 
-// TIM16 is configured as a free running timer (e.g., to use for accurate timing measurements). Default: 1MHz counter.
-// TIM6  is configured as a trigger periodically calling an ISR. Default: every 1s.
-
+// TIM16 is configured as a free running timer (e.g., to use for accurate timing measurements). Default: 1MHz counter (you can modify it without impacting other features).
 // To reset TIM16 (e.g., to start a measurement), use:
 // __HAL_TIM_SET_COUNTER(&htim16, 0);
 // To read the value of TIM16 (to get your timing measurement), use:
 // __HAL_TIM_GET_COUNTER(&htim16);  (should return uint16_t)
 
+// TIM6  is configured as a trigger periodically calling the function below. Default: every 1s (you can modify it without impacting other features)
 
-// Function periodically called by timer (not depending on freeRTOS)
+// Warning: This function is called within an ISR. It should not use freeRTOS functions not available to ISRs, and should return quickly.
 void RAMN_CUSTOM_TIM6ISR(TIM_HandleTypeDef *htim)
 {
-	// WARNING: THIS FUNCTION IS CALLED BY AN ISR AND SHOULD RETURN QUICKLY.
-	// You can only use freeRTOS features that end with "FromISR"
-
 	tim6val++;
 }
 
@@ -215,7 +213,7 @@ void RAMN_CUSTOM_CustomTask6(void *argument)
 #ifdef ENABLE_I2C
 void RAMN_CUSTOM_ReceiveI2C(uint8_t buf[], uint16_t buf_size)
 {
-	// Warning: This function is called within an ISR. It should not use freeRTOS functions not available to ISRs, and should not be blocking.
+	// Warning: This function is called within an ISR. It should not use freeRTOS functions not available to ISRs, and should return quickly.
 	// See RAMNV1.ioc for I2C device address (likely 0x77)
 	// Note that by default, buf_size is fixed and equal to I2C_RX_BUFFER_SIZE. Function will NOT be called if fewer bytes are received.
 	// You'll need to modify HAL_I2C_AddrCallback and HAL_I2C_SlaveRxCpltCallback in main.c if you need another behavior.
@@ -223,7 +221,7 @@ void RAMN_CUSTOM_ReceiveI2C(uint8_t buf[], uint16_t buf_size)
 
 void RAMN_CUSTOM_PrepareTransmitDataI2C(uint8_t buf[], uint16_t buf_size)
 {
-	// Warning: This function is called within an ISR. It should not use freeRTOS functions not available to ISRs, and should not be blocking.
+	// Warning: This function is called within an ISR. It should not use freeRTOS functions not available to ISRs, and should return quickly.
 	// Note that you cannot modify buf_size, only buf.
 	// You'll need to modify HAL_I2C_AddrCallback in main.c if you need another behavior.
 }
@@ -232,7 +230,7 @@ void RAMN_CUSTOM_PrepareTransmitDataI2C(uint8_t buf[], uint16_t buf_size)
 #ifdef ENABLE_UART
 
 // You can send UART data using RAMN_UART_SendStringFromTask or RAMN_UART_SendFromTask, which are both non-blocking.
-
+// This function is called from a task, with an intermediary UART buffer, and does not need to return quickly.
 void RAMN_CUSTOM_ReceiveUART(uint8_t buf[], uint16_t buf_size)
 {
 	// By default, this function receives commands line by line, without endline character (\r)
