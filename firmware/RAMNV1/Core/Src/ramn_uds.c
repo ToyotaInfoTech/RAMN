@@ -1077,6 +1077,50 @@ static void RAMN_UDS_RoutineControlExecuteArbitraryCode(const uint8_t* data, uin
 	else RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SAD);
 }
 
+#ifndef HARDENING // Double-check to make sure these do not end up in hardened code.
+#ifdef ENABLE_MINICTF
+const char expected_password[] = "VULNERABILITY";
+
+// Routine to demonstrate simple overflow vulnerability, variable in stack
+static void RAMN_UDS_RoutineControlVulnerabilityExample(uint8_t* data, uint16_t size)
+{
+	if (checkAuthenticated() == True)
+	{
+		char stack_password[sizeof(expected_password)];
+
+		if ((size > 4U) && (size <= ISOTP_RXBUFFER_SIZE))
+		{
+			data[size-1U] = 0U; //zero-terminate buffer
+			strcpy(stack_password, (char*)&data[4U]); //copy string
+			if (strcmp(stack_password, expected_password) == 0U) RAMN_UDS_FormatPositiveResponseEcho(data, 4U);
+			else RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_ROOR);
+		}
+		else RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
+	}
+	else RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SAD);
+}
+
+// Routine to demonstrate simple overflow vulnerability, variable in .bss
+char ctf_global_password[sizeof(expected_password)];
+static void RAMN_UDS_RoutineControlVulnerabilityExample2(uint8_t* data, uint16_t size)
+{
+	if (checkAuthenticated() == True)
+	{
+		if ((size > 4U) && (size <= ISOTP_RXBUFFER_SIZE))
+		{
+			data[size-1U] = 0U; //zero-terminate buffer
+			strcpy(ctf_global_password, (char*)&data[4U]); //copy string
+			if (strcmp(ctf_global_password, expected_password) == 0U) RAMN_UDS_FormatPositiveResponseEcho(data, 4U);
+			else RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_ROOR);
+		}
+		else RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
+	}
+	else RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SAD);
+}
+
+#endif
+#endif
+
 // 0000 to 00FF ISO Reserved
 // 0100 to 01FF Tachograph
 // 0200 to 0DFF Manufacturer Specific
@@ -1166,9 +1210,19 @@ static void RAMN_UDS_RoutineControl(uint8_t* data, uint16_t size)
 			RAMN_UDS_RoutineControlAddDTCEntry(data,size);
 			break;
 #endif
+#ifndef HARDENING // double check to be sure these do not get enabled by other user changes.
 		case 0x0209: // Execute Arbitrary code
 			RAMN_UDS_RoutineControlExecuteArbitraryCode(data,size);
 			break;
+#ifdef ENABLE_MINICTF
+		case 0x020A: // Vulnerable password check
+			RAMN_UDS_RoutineControlVulnerabilityExample(data,size);
+			break;
+		case 0x020B: // Vulnerable password check
+			RAMN_UDS_RoutineControlVulnerabilityExample2(data,size);
+			break;
+#endif
+#endif
 		case 0x0210: // Reset Option Bytes:
 			RAMN_UDS_RoutineControlResetBootOptionBytes(data,size);
 			break;
