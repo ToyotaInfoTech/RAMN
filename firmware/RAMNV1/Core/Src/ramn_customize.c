@@ -94,17 +94,19 @@ void RAMN_CUSTOM_Update(uint32_t tick)
 		RAMN_UART_SendStringFromTask("Hello from RAMN\r");
 #endif
 
-		// Example: Send CAN message every second (payload size 8)
+		// Example: Send a CAN message every second.
+		// Note that if it is sent from ECU A, it will not show up on ECU A's USB interface (e.g., slcan), because ECU A will be the sender (and therefore not a receiver).
 		/*
 		FDCAN_TxHeaderTypeDef header;
 		uint8_t data[8U];
 
-		header.BitRateSwitch = FDCAN_BRS_OFF;	// Bitrate switching OFF (only needed for CAN-FD, but set anyway); other option is FDCAN_BRS_ON.
-		header.FDFormat = FDCAN_CLASSIC_CAN; 	// Classic CAN; other option is FDCAN_FD_CAN.
-		header.TxFrameType = FDCAN_DATA_FRAME;	// Data frame; other option is FDCAN_REMOTE_FRAME, only for classic CAN.
-		header.IdType = FDCAN_STANDARD_ID;		// Standard identifer; other optin is FDCAN_EXTENDED_ID for extended.
-		header.Identifier = 0x123; 				// Identifier.
-		header.DataLength = 8U;  				// DLC (Payload size).
+		header.BitRateSwitch = FDCAN_BRS_OFF;			// Bitrate switching OFF (only needed for CAN-FD, but set anyway); other option is FDCAN_BRS_ON.
+		header.ErrorStateIndicator = FDCAN_ESI_ACTIVE; 	// ESI bit (for CAN-FD only, but set anyway); other option is FDCAN_ESI_PASSIVE.
+		header.FDFormat = FDCAN_CLASSIC_CAN; 			// Classic CAN; other option is FDCAN_FD_CAN.
+		header.TxFrameType = FDCAN_DATA_FRAME;			// Data frame; other option is FDCAN_REMOTE_FRAME, only for classic CAN.
+		header.IdType = FDCAN_STANDARD_ID;				// Standard identifier; other option is FDCAN_EXTENDED_ID for extended.
+		header.Identifier = 0x123; 						// Identifier.
+		header.DataLength = 8U;  						// DLC (Payload size).
 
 		// Decide CAN message payload content
 		RAMN_memset(data, 0x77, 8U); // write 0x77 8 times
