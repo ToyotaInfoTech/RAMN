@@ -285,7 +285,7 @@ class slRAMN():
                     return False
                          
     def startBootloader(self):
-        if self.ecuName not in "BCD":
+        if (len(self.ecuName) != 1) or (self.ecuName not in "BCD"):
             log("Received a request for inexisting ECU",LOG_ERROR)
             return False
         self.write('p' + self.ecuName + '\r')
@@ -639,121 +639,127 @@ def canboot(serial_port,ecu_name,readout_unprotect,readout_protect,write_unprote
         serial_port = utils.RAMN_Utils.autoDetectRAMNPort()
      
     s = slRAMN(serial_port,ecu_name)
-    
     errHappened = False
+    
+    # read version to make sure this is actually RAMN we are talking too.
+    s.write("V\r")
+    answer = s.readline()
+    if answer is not None:
+        log("ECU A reported version: {}".format(answer), LOG_OUTPUT)
     
     if not s.startBootloader():
         log("Error - make sure that external CAN adapters are disconnected, they prevent a required baudrate change",LOG_ERROR)
         errHappened = True
     
+    else:
    
-    try:
-        option_byte = s.readMemory(0x40022042,1) 
-        option_byte_integer = int(option_byte, 16)
-
-        if (option_byte_integer >> 4)&0x1 != 0:
-            log("Bank swap active! You may want to check the option bytes.", LOG_WARNING)
-    except:
-        log("Could not read option bytes", LOG_ERROR)
-    
-    if info:
-        log("Asking target uC for info",LOG_OUTPUT)
-        s.printTargetInfo()
-    
-    if readout_unprotect:
-        log("Removing memory readout protect",LOG_OUTPUT)
-        if s.readoutUnprotect():
-            log("Memory readout protection successfully removed",LOG_OUTPUT)
-
-    if write_unprotect:
-        log("Removing memory write protection",LOG_OUTPUT)
-        if s.writeUnprotect():
-            log("Memory write protection successfully removed",LOG_OUTPUT)
-                
-    if dump:
-        log("Dumping memory",LOG_OUTPUT)
-        if output == None:
-            for area in range:
-                log("Dumping area : " + area)
-                data = None
-                with click.progressbar(length=getTotalHexSize([readableRange[area]]),label="Dumping in progress",show_pos=True) as bar:
-                    data = s.readAddressRange(readableRange[area][0],readableRange[area][1],progressBar=bar)
-                if data != None:
-                    log("*************************************")
-                    if binary:
-                        log((bytearray.fromhex(data).decode('ascii','replace')),LOG_DATA)
-                    else:  
-                        log(data,LOG_DATA)
-                    log("*************************************")
-                else:
-                    log("Dump failed", LOG_ERROR)
-        else:
-            if binary: 
-                for area in range:
-                    if s.binaryDump(readableRange[area], output + "/" + area + ".bin"):
-                        log("Binary memory dump successful",LOG_OUTPUT)
-            else:
-                if s.dumpHexFile(output,areas=[readableRange[r] for r in range]):
-                    log("Hex memory dump successful",LOG_OUTPUT)
-
-    if erase_all:
-        log("Erasing memory",LOG_OUTPUT)
-        if s.eraseMemory():
-            log("Memory erase successful",LOG_OUTPUT)      
-        else:
-            log("Fail",LOG_ERROR)
-            errHappened = True
-
-    if program:
-        log("Starting writing memory",LOG_OUTPUT)
-        if s.downloadHex(input,otp=otp):
-            log("Memory writing successful")
-        else:
-            log("Fail",LOG_ERROR)
-            errHappened = True
-    # log("Memory write successful",LOG_OUTPUT)
- 
-    if write_protect:        
-        log("Protecting memory write",LOG_OUTPUT)
-        if s.writeProtect():
-            log("Memory write protection successful",LOG_OUTPUT)    
-
-    if verify:
-        if s.verifyDownload(input):
-            log("Target is successfully programmed")    
-
-    if readout_protect:
-        log("Protecting memory readout",LOG_OUTPUT)
-        if s.readoutProtect():
-            log("Memory readout protection successful",LOG_OUTPUT)  
-        else:
-            log("Fail",LOG_ERROR)
-            errHappened = True
-    
-    if jump != None:
-        log("Jumping to Application")
-        addr = DEFAULT_JUMP_ADDRESS
         try:
-            addr = int(jump,0)
-            if addr < 0:
-                addr = DEFAULT_JUMP_ADDRESS
-                raise 
-        except:
-            log('Invalid jump address: ' + str(jump) + '. Jumping to 0x{:08x} instead'.format(addr),LOG_WARNING) 
+            option_byte = s.readMemory(0x40022042,1) 
+            option_byte_integer = int(option_byte, 16)
 
-        if s.jumpTo(addr):
-            log("Target accepted to jump to address 0x{:08x}".format(addr)) 
-            
-    if reset:     
-        log("Resetting ECUs")
-        s.write('n' + '\r')
-        if s.readline() == None:
-            log("ECU did not answer reset command")
+            if (option_byte_integer >> 4)&0x1 != 0:
+                log("Bank swap active! You may want to check the option bytes.", LOG_WARNING)
+        except:
+            log("Could not read option bytes", LOG_ERROR)
+        
+        if info:
+            log("Asking target uC for info",LOG_OUTPUT)
+            s.printTargetInfo()
+        
+        if readout_unprotect:
+            log("Removing memory readout protect",LOG_OUTPUT)
+            if s.readoutUnprotect():
+                log("Memory readout protection successfully removed",LOG_OUTPUT)
+
+        if write_unprotect:
+            log("Removing memory write protection",LOG_OUTPUT)
+            if s.writeUnprotect():
+                log("Memory write protection successfully removed",LOG_OUTPUT)
+                    
+        if dump:
+            log("Dumping memory",LOG_OUTPUT)
+            if output == None:
+                for area in range:
+                    log("Dumping area : " + area)
+                    data = None
+                    with click.progressbar(length=getTotalHexSize([readableRange[area]]),label="Dumping in progress",show_pos=True) as bar:
+                        data = s.readAddressRange(readableRange[area][0],readableRange[area][1],progressBar=bar)
+                    if data != None:
+                        log("*************************************")
+                        if binary:
+                            log((bytearray.fromhex(data).decode('ascii','replace')),LOG_DATA)
+                        else:  
+                            log(data,LOG_DATA)
+                        log("*************************************")
+                    else:
+                        log("Dump failed", LOG_ERROR)
+            else:
+                if binary: 
+                    for area in range:
+                        if s.binaryDump(readableRange[area], output + "/" + area + ".bin"):
+                            log("Binary memory dump successful",LOG_OUTPUT)
+                else:
+                    if s.dumpHexFile(output,areas=[readableRange[r] for r in range]):
+                        log("Hex memory dump successful",LOG_OUTPUT)
+
+        if erase_all:
+            log("Erasing memory",LOG_OUTPUT)
+            if s.eraseMemory():
+                log("Memory erase successful",LOG_OUTPUT)      
+            else:
+                log("Fail",LOG_ERROR)
+                errHappened = True
+
+        if program:
+            log("Starting writing memory",LOG_OUTPUT)
+            if s.downloadHex(input,otp=otp):
+                log("Memory writing successful")
+            else:
+                log("Fail",LOG_ERROR)
+                errHappened = True
+        # log("Memory write successful",LOG_OUTPUT)
+     
+        if write_protect:        
+            log("Protecting memory write",LOG_OUTPUT)
+            if s.writeProtect():
+                log("Memory write protection successful",LOG_OUTPUT)    
+
+        if verify:
+            if s.verifyDownload(input):
+                log("Target is successfully programmed")    
+
+        if readout_protect:
+            log("Protecting memory readout",LOG_OUTPUT)
+            if s.readoutProtect():
+                log("Memory readout protection successful",LOG_OUTPUT)  
+            else:
+                log("Fail",LOG_ERROR)
+                errHappened = True
+        
+        if jump != None:
+            log("Jumping to Application")
+            addr = DEFAULT_JUMP_ADDRESS
+            try:
+                addr = int(jump,0)
+                if addr < 0:
+                    addr = DEFAULT_JUMP_ADDRESS
+                    raise 
+            except:
+                log('Invalid jump address: ' + str(jump) + '. Jumping to 0x{:08x} instead'.format(addr),LOG_WARNING) 
+
+            if s.jumpTo(addr):
+                log("Target accepted to jump to address 0x{:08x}".format(addr)) 
+                
+        if reset:     
+            log("Resetting ECUs")
+            s.write('n' + '\r')
+            if s.readline() == None:
+                log("ECU did not answer reset command")
         
     s.close()
     if errHappened:
         log("Errors happened",LOG_ERROR)
-        time.sleep(2)
+        click.pause()
     log("Done", LOG_OUTPUT)
     
 if __name__ == '__main__':
