@@ -1097,9 +1097,9 @@ static void RAMN_UDS_RoutineControlVulnerabilityExample(uint8_t* data, uint16_t 
 	{
 		char stack_password[sizeof(expected_password)];
 
-		if ((size > 4U) && (size <= ISOTP_RXBUFFER_SIZE))
+		if ((size > 4U) && (size < ISOTP_RXBUFFER_SIZE))
 		{
-			data[size-1U] = 0U; //zero-terminate buffer
+			data[size] = 0U; //zero-terminate buffer
 			strcpy(stack_password, (char*)&data[4U]); //copy string
 			if (strcmp(stack_password, expected_password) == 0U) RAMN_UDS_FormatPositiveResponseEcho(data, 4U);
 			else RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_ROOR);
@@ -1115,9 +1115,9 @@ static void RAMN_UDS_RoutineControlVulnerabilityExample2(uint8_t* data, uint16_t
 {
 	if (checkAuthenticated() == True)
 	{
-		if ((size > 4U) && (size <= ISOTP_RXBUFFER_SIZE))
+		if ((size > 4U) && (size < ISOTP_RXBUFFER_SIZE))
 		{
-			data[size-1U] = 0U; //zero-terminate buffer
+			data[size] = 0U; //zero-terminate buffer
 			strcpy(ctf_global_password, (char*)&data[4U]); //copy string
 			if (strcmp(ctf_global_password, expected_password) == 0U) RAMN_UDS_FormatPositiveResponseEcho(data, 4U);
 			else RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_ROOR);
