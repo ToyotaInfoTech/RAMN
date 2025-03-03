@@ -141,10 +141,10 @@ Linux
 USB Connection
 ^^^^^^^^^^^^^^
 
-Connect your board to your computer using a USB cable. On Windows, it should appear as a "USB Serial Device" and be attributed a COM port number (e.g., COM1).
+Connect your board to your computer using a USB cable. On Windows, it should appear as a "USB Serial Device" (or Composite Device) and be attributed a COM port number (e.g., COM1).
 If that is not the case, you may need to install `STM32 Virtual COM Port Drivers <https://www.st.com/en/development-tools/stsw-stm32102.html>`_.
 
-Once the board is recognized by windows, you must forward the USB port to Virtual Box. Select Devices > USB and click Toyota Motor Corporation RAMN Virtual ComPort.
+Once the board is recognized by windows, you must forward the USB port to Virtual Box. Select Devices > USB and click Toyota Motor Corporation RAMN.
 You can open Devices > USB > USB Settings..., then click the + icon to add RAMN so that Virtual Box will always automatically forward the USB port.
 
 On Linux, RAMN should appear at the end of the dmesg command, and be attributed a device file (typically, /dev/ttyACM0).

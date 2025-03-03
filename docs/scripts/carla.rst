@@ -69,12 +69,7 @@ Check CARLA's `Quickstart guide <https://carla.readthedocs.io/en/latest/start_qu
 If you want, you can download additional assets (maps, etc.) by following the `instructions here <https://carla.readthedocs.io/en/latest/start_quickstart/#import-additional-assets>`_.
 You can also edit CARLA's default settings (weather, etc.) by following `this page <https://carla.readthedocs.io/en/stable/configuring_the_simulation/>`_.
 
-If you have not already, you also need to install RAMN's scripts.
-
-.. include:: install.rst
-   :start-after: .. _install_ramn_scripts:
-   :end-before: .. _configure_ramn_scripts:
-
+If you have not already, you also need to install RAMN's scripts (see :ref:`flashing_scripts`).
 
 .. _ramn_carla_scripts:
 

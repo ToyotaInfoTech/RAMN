@@ -4,6 +4,7 @@ Firmware Flashing
 =================
 
 RAMN has four ECUs, each requiring a different firmware file (ECUA.hex, ECUB.hex, ECUC.hex, and ECUD.hex).
+The STM32 microcontrollers used by RAMN feature an embedded USB/CAN bootloader, so **you do not need special tools to flash a fresh (never-programmed) board**. Skip to :ref:`flashing_scripts` for concrete instructions.
 
 Interfaces
 ----------
@@ -94,12 +95,25 @@ Linux Environment
 
     $ git clone https://github.com/ToyotaInfoTech/RAMN
 
-2. Install the modules in requirements.txt:
+3. Install the modules in requirements.txt:
 
 .. code-block:: console
 
     $ pip install -r requirements.txt
 
+.. warning:: 
+
+	On recent distributions, you may run into the **error: externally-managed-environment** error.
+	You can execute the following commands to prevent it from happening again:
+	
+	.. code-block:: bash
+	
+		python3 -m venv .venv
+		source .venv/bin/activate
+		python3 -m pip install -r requirements.txt
+	
+	You can find more `details here <https://stackoverflow.com/questions/75602063/pip-install-r-requirements-txt-is-failing-this-environment-is-externally-mana>`_.
+	
 Note that if you use a virtual machine, RAMN serial port and RAMN DFU port will be considered different; you will need to forward both to your VM.
 
 Scripts
@@ -121,11 +135,13 @@ Then, follow the instructions below:
     The program should display "Start operation achieved successfully" in green when it is successful.
     If you encounter too many issues, try using the Linux dfu-util tool instead.
 
+.. _jtag_interface:
+
 JTAG Hardware Interface
 -----------------------
 
-You can also reprogram ECUs using an `ST-LINK/V2 <https://www.st.com/en/development-tools/st-link-v2.html>`_ and the `STM32CubeProgrammer <https://www.st.com/en/development-tools/stm32cubeprog.html>`_ tool.
-You should be able to reprogram ECUs using other hardware/software compatible with STM32; however, we have not tested them.
+You can also reprogram and debug ECUs using an `ST-LINK/V2 <https://www.st.com/en/development-tools/st-link-v2.html>`_ tool.
+You should be able to reprogram and debug ECUs using other hardware/software compatible with STM32; however, we have not tested them.
 
 With the JTAG interface, you can only flash one ECU at once, so you need to repeat the firmware flashing steps for each ECU.
 Always make sure ECU A is programmed first, otherwise other ECUs may not be powered.
@@ -135,7 +151,7 @@ Preparing Your Environment
 
 1. Obtain an `ST-LINK/V2 <https://www.st.com/en/development-tools/st-link-v2.html>`_. Be careful of clones, which may not be supported by ST.
 2. Obtain a RAMN debugger expansion, or prepare jumper wires to connect manually to the RAMN ECUs.
-3. `Install STM32CubeProgrammer <https://www.st.com/en/development-tools/stm32cubeprog.html>`_. This requires that you create a free account with STMicroelectronics.
+3. `Install STM32CubeProgrammer <https://www.st.com/en/development-tools/stm32cubeprog.html>`_.
 
 Connecting your Debugger
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -156,7 +172,7 @@ If you do not own a RAMN debugger expansion, use jumper wires to connect ST-LINK
 
 
 
-Refer to the `ST-LINK/V2 manual <https://www.st.com/resource/en/user_manual/um1075-stlinkv2-incircuit-debuggerprogrammer-for-stm8-and-stm32-stmicroelectronics.pdf>`_ and `RAMN github repository <https://github.com/ToyotaInfoTech/RAMN>`_ for details about the connections
+Refer to the `ST-LINK/V2 manual <https://www.st.com/resource/en/user_manual/um1075-stlinkv2-incircuit-debuggerprogrammer-for-stm8-and-stm32-stmicroelectronics.pdf>`_ and expansions' :ref:`expansion_pinout` for details about the connections
 
 Using STM32CubeProgrammer
 ^^^^^^^^^^^^^^^^^^^^^^^^^

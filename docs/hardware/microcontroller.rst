@@ -3,15 +3,28 @@
 Microcontroller
 ===============
 
+.. _microcontroller_sel:
+
 Microcontroller selection
 -------------------------
 
-The ECUs can be populated with microcontrollers from either the STM32L4 or STM32L5 family. More precisely, the ECUs can accomodate the following microcontrollers:
+The microcontrollers compatible with the most recent RAMN firmware are:
 
-* STM32L433CxTx (e.g.  STM32L433CCT6)
-* STM32L443CxTx (e.g.  STM32L443CCT6)
-* STM32L552CxTx (e.g.  STM32L552CET6)
-* STM32L562CxTx (e.g.  STM32L562CET6)
+- **STM32L552CCT6** (256kB flash, no hardware cryptography).
+- **STM32L552CET6** (512kB flash, no hardware cryptography).
+- **STM32L562CET6** (512kB flash, with hardware cryptography).
+
+Because STM32L552CCT6 only has 256kB flash, it does not support UDS reprogramming, but it supports other reprogramming interfaces.
+The same firmware is used for all the microcontrollers above; RAMN automatically detects how much flash is available, and does not use hardware cryptography.
+
+**RAMN's firmware does not support STM32L4 microcontrollers anymore**, but the PCB is still compatible with them. 
+Old source code for STM32L4 family, used in the BETA version of RAMN, is available on request but is not maintained and has very limited features.
+
+**RAMN is not "officially" compatible with STM32U5 microcontrollers**.
+If you want to use STM32U5 microcontrollers, the only change needed is to update the PCB to add capacitors to the PB11 pins (which became "VCAP" in STM32U5 series).
+The source code is mostly compatible, but many of the code generation features used with STM32L5 are unavailable with STM32U5, so some porting work is needed.
+**Binary files are not compatible (you cannot flash an STM32L5 firmware to a STM32U5 device)**.
+Feel free to contact us if you need guidance on how to use STM32U5 microcontrollers.
 
 .. note:: For `STM32L microcontrollers <https://www.st.com/resource/en/datasheet/stm32l562ce.pdf#page=336>`_, the last four letters of the part number are used to specify:
 
@@ -20,18 +33,8 @@ The ECUs can be populated with microcontrollers from either the STM32L4 or STM32
    * Package ( T -> LQFP)
    * Temperature range (3 -> from -40 to 125 degrees C, 6 -> from -40 to 85 degrees C)
 
-   RAMN requires the microcontrollers to be in a LQFP48 package.
-   
-The newest `STM32L5 <https://www.st.com/resource/en/datasheet/stm32l562ce.pdf>`_ family offers many advantages over the `STM32L4 <https://www.st.com/resource/en/datasheet/stm32l443vc.pdf>`_ family, notably:
+   RAMN's PCB requires the microcontrollers to be in a LQFP48 package.
 
-* Better CPU performances (165DMIPS vs 100DMIPS)
-* More RAM (512kB vs 64kB)
-* TrustZone and other security features
-* Integrated CAN-FD controller
-
-as such, we use the `STM32L552CET6 <https://www.st.com/resource/en/datasheet/stm32l552ce.pdf>`_ as the standard microcontroller for RAMN. Source code for STM32L4 family, used in the BETA version of RAMN, is published on the github repository but is not maintained.
-
-Although not automotive-grade, the STM32L5 microcontrollers have characteristics and features typical of automotive-grade microcontrollers. This makes them a good choice for simulating ECUs using readily-available components (not requiring NDAs or high volumes).
 
 Surrounding circuitry
 ---------------------
@@ -61,7 +64,8 @@ Although not ideal, the layout follows best practice by keeping the crystal clos
 Boot Selection Resistors
 ************************
 
-Please refer to the Boot section of more information on how ECUs boot.
+There are boot selection resistors, because RAMN used to be compatible with both STM32L4 and STM32L5, which have different boot sequences.
+
 On STM32L4 and STM32L5 families, the BOOT0 pin is used by default to specify in which mode the microcontroller should start.
 Resistors R8 and R9 can be used to select the BOOT0 pin state of ECU A. Only ONE of those resistors should be populated at a time.
 
@@ -71,14 +75,14 @@ Resistors R8 and R9 can be used to select the BOOT0 pin state of ECU A. Only ONE
 
 The `boot patterns <https://www.st.com/resource/en/application_note/cd00167594-stm32-microcontroller-system-memory-boot-mode-stmicroelectronics.pdf#page=24>`_ are different for STM32L4 (Pattern 6) and STM32L5 (Pattern 12)
 
-
 STM32L4 will start the embedded bootloader when the flash memory is unprogrammed. This means a freshly-made board can directly be programmed over USB, no matter the state of BOOT0.
 Therefore, we use R9 to pull the BOOT0 pin down, and R8 is not populated. On the first connection, ECU A will start in DFU mode and be ready for programming over USB. Once ECU A is programmed, and because BOOT0 is pulled down, the board will launch the programmed firmware from the next reboot.
 
 STM32L5 will **NOT** start the embedded bootloader even if the flash memory is unprogrammed. To ensure a fresh board can be programmed over USB, we therefore need to use R8 to pull the BOOT0 pin up and force the ECU to start in DFU bootloader. R9 is left unpopulated.
 This means that ECU A will **always** start in STM32 bootloader mode, until the option bytes are overwritten with new values forcing another boot process.
 
-Finally, the BOOT0 pin of ECU A can be accessed externally through a test pad next to the USB port. It can be used to change the boot mode temporary at any time.
+The BOOT0 pin of ECU A can be accessed externally through a test pad next to the USB port.
+However, the BOOT0 pin is ignored by ECU A once a valid firmware has been flashed.
 
 .. figure:: img/boot0_testpad.png
 

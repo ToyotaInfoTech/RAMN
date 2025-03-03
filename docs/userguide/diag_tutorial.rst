@@ -519,6 +519,8 @@ When experimenting with Security Access, you may notably encounter the following
 - 0x36 (Exceeded number of attempts): you had too many failed attempts.
 - 0x37 (Required time delay not expired): you need to wait longer before attempting to unlock the ECU (typically after a reset, to prevent bruteforcing).
 
+.. _routine_control:
+
 Routine Control (0x31)
 ^^^^^^^^^^^^^^^^^^^^^^
 
@@ -543,12 +545,15 @@ The following routines are available with RAMN ECUs:
 - Routine 0x0205 can be used to ask the ECU to transmit a UDS payload of a specified size (for ECU -> PC link test).
 - Routine 0x0206 can be used to compute the CRC of the ECU's flash.
 - Routine 0x0207 can be used to enable autopilot (to use with CARLA).
+- Routine 0x0208 can be used to add an arbitrary DTC to an ECU.
+- Routine 0x0209 can be used to execute arbitrary ARM (Cortex M-33) shell code.
 - Routine 0x0210 can be used to reset BOOT Option bytes (to salvage an ECU with a bad firmware).
 - Routine 0x0211 can be used to force an ECU to swap memory banks (also to salvage an ECU).
 - Routine 0xFF00 can be used to erase the alternative firmware.
 - Routine 0xFF01 can be used to validate memory and swap memory banks.
 
 **Because these routines may modify the ECU flash, do not tinker with them unless you know what you are doing.**
+Refer to ``ramn_uds.c`` for how to use these routines.
 
 For example, you can ask ECU B to stop transmitting periodic messages with:
 
@@ -642,6 +647,8 @@ You can check that the memory was correctly written by using Read Memory by Addr
 Variable addresses depend on the exact version of the firmware that you use.
 In the version used in this example, 0x20000000 corresponds to the "error status" variable of the CAN adapter, which can be overwritten without impacting stability.
 **If you do not know what variable(s) you overwrote with your command, you should reset the ECU.**
+
+.. _link_control:
 
 Link Control (0x87)
 ^^^^^^^^^^^^^^^^^^^

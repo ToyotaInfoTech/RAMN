@@ -3,7 +3,7 @@
 Documentation of RAMN: Resistant Automotive Miniature Network 
 =============================================================
 
-.. image:: img/ramn_simple_setup.jpg
+.. image:: hardware/img/ramn_simple_setup.jpg
 
 .. toctree::
    :maxdepth: 2

@@ -9,7 +9,6 @@ There are 4 ECUs on RAMN's main board, and they all share a common design and pi
    powersupply
    microcontroller
    canphy
-   expansions
    
    
 .. figure:: img/zoom_ecu.png

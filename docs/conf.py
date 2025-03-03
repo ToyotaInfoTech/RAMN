@@ -19,7 +19,7 @@
 # -- Project information -----------------------------------------------------
 
 project = 'RAMN'
-copyright = '2024 TOYOTA MOTOR CORPORATION. ALL RIGHTS RESERVED'
+copyright = '2025 TOYOTA MOTOR CORPORATION. ALL RIGHTS RESERVED'
 author = 'Toyota Motor Corporation'
 
 # The full version, including alpha/beta/rc tags

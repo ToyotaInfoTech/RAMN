@@ -37,8 +37,6 @@ The schematic is therefore rather simple:
 The rotation of the key selects a point from a `voltage divider <https://en.wikipedia.org/wiki/Voltage_divider>`_ (Position 1 -> 0V, Position 2 -> 1.65V, Position 3 -> 3.3V), which is measured by an ADC on the ECU.
 A `TVS diode <https://en.wikipedia.org/wiki/Transient-voltage-suppression_diode>`_ is used for ESD protection, since the key is expected to be manipulated by the user.
 
-.. note:: Originally, we selected the `60538 (M1 Series) <https://jp.rs-online.com/web/p/key-switches/0332571/>`_ from Saia Burgess, which arguably looks better and is more challenging for lock-pickers. Unfortunately, that component is not easy to find as of 2021. During our testing, we also had the issue of the component breaking and creating a short-circuit on the 3V3 line.
-
 Lights
 ------
 
@@ -57,7 +55,7 @@ The lights are simulated by 8 LEDs (D1~D8) located near silkcreen markings resse
 
 	Schematic of the Lights circuitry
 
-The LEDs are driven by a `STP08CP05 <https://www.st.com/resource/en/datasheet/stp08cp05.pdf>`_ IC. The STP08CP05 is a LED driver controlled by a simple `shift-register <https://en.wikipedia.org/wiki/Shift_register>`_ circuit. In practice, the STP08CP05 is controlled by the SPI output of ECU D, and is multiplexed with other SPI devices (TPM, Screens, etc.). The SPI signals can easily be accessed through external probes.
+The LEDs are driven by a `STP08CP05 <https://www.st.com/resource/en/datasheet/stp08cp05.pdf>`_ IC. The STP08CP05 is a LED driver controlled by a simple `shift-register <https://en.wikipedia.org/wiki/Shift_register>`_ circuit. In practice, the STP08CP05 is controlled by the SPI output of ECU D, and is multiplexed with other SPI devices. The SPI signals can easily be accessed through external probes.
 
 Communications are done in 3.3V, but the LEDs are powered from the 5V line. R15 is used to set the current (~10mA). 
 

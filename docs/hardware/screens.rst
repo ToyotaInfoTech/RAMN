@@ -14,7 +14,7 @@ Our preferred choice is the 240x240 TFT color Screen `Adafruit 4313 <https://www
 
 We selected those screens mainly because they can be powered by 5V but controlled by 3.3V logic, without external components.
 
-..warning:: For now, we only tested screens for the J5 pin sockets. Other screens are not guaranteed to work.
+.. warning:: We only tested screens for the J5 pin sockets. Other screens are not guaranteed to work.
 
 Compatible Screens
 ------------------

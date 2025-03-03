@@ -1,3 +1,5 @@
+.. _usb_tutorial:
+
 Interacting with USB
 ====================
 
@@ -547,6 +549,13 @@ Exit Command Line Interface - b
 
 The command ``b`` can be used to exit the :ref:`usb_cli` and ensure that the device is currently accepting slcan commands.
 It is available both in normal slcan mode and in the Command Line Interface mode.
+
+
+Display freeRTOS Stats - X
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The command ``X`` can be used to display freeRTOS runtime stats, including CPU usage and stack usage.
+Note that statistics start from boot and are never reset (therefore, CPU usage only represents the overall average from boot time).
 
 
 Internal commands

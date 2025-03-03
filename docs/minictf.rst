@@ -120,3 +120,62 @@ UDS
 - **Easy** (requires scripting): ECU D holds another flag readable with the Read Data By Identifier Service.
 - **Easy**: ECU D holds a flag that is accessible with Read Memory By Address at address 0x01234567 and size 17 (0x11).
 - **Intermediate** (requires scripting): ECU D has a custom UDS service with ID 0x40, can you create a valid request?
+
+Exploitation (Advanced)
+^^^^^^^^^^^^^^^^^^^^^^^
+
+There are two UDS routines that implement a vulnerable password check, and which require slightly different exploitation approaches.
+Can you exploit them to recover all the previous flags? 
+
+The goal is not to recover the password or bypass the check. The goal is to overtake execution in order to dump memory (over USB, CAN, etc.).
+Check :ref:`write_shellcode` for guidance on how to get started. You can compile the source code yourself to generate .elf and .map files. Although a JTAG debugger isn't absolutely necessary, it will make exploitation easier.
+You will need to use the Routine Control service after performing a Security Access (see :ref:`diag_tutorial`).
+If you are already familiar with ARM exploitation, you may add yourself extra constraints that are not enforced (such as not executing any code in RAM).
+ 
+**Routine Control 0x20A**
+
+.. code-block:: C
+
+	const char expected_password[] = "VULNERABILITY";
+	static void RAMN_UDS_RoutineControlVulnerabilityExample(uint8_t* data, uint16_t size)
+	{
+		if (checkAuthenticated() == True)
+		{
+			char stack_password[sizeof(expected_password)];
+
+			if ((size > 4U) && (size < ISOTP_RXBUFFER_SIZE))
+			{
+				data[size] = 0U; //zero-terminate buffer
+				strcpy(stack_password, (char*)&data[4U]); //copy string
+				if (strcmp(stack_password, expected_password) == 0U) RAMN_UDS_FormatPositiveResponseEcho(data, 4U);
+				else RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_ROOR);
+			}
+			else RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
+		}
+		else RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SAD);
+	}
+
+**Routine Control 0x20B** 
+
+.. warning:: We do not regularly check that this one is solvable after every update, but it is likely to be.
+
+.. code-block:: C
+
+	const char expected_password[] = "VULNERABILITY";
+	char ctf_global_password[sizeof(expected_password)];
+	static void RAMN_UDS_RoutineControlVulnerabilityExample2(uint8_t* data, uint16_t size)
+	{
+		if (checkAuthenticated() == True)
+		{
+			if ((size > 4U) && (size < ISOTP_RXBUFFER_SIZE))
+			{
+				data[size] = 0U; //zero-terminate buffer
+				strcpy(ctf_global_password, (char*)&data[4U]); //copy string
+				if (strcmp(ctf_global_password, expected_password) == 0U) RAMN_UDS_FormatPositiveResponseEcho(data, 4U);
+				else RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_ROOR);
+			}
+			else RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
+		}
+		else RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SAD);
+	}
+

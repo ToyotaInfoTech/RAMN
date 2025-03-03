@@ -15,7 +15,7 @@ RAMN Hardware
 RAMN consists of a "main board" and "expansions". Expansions are not strictly required, but can be useful to implement physical interactions.
 RAMN has four ECUs: ECU A, ECU B, ECU C, and ECU D. Each ECU can be identified on the main board by looking at the PCB markings.
 
-.. figure:: ../img/simple_setup_annotated.jpg
+.. figure:: ../hardware/img/simple_setup_annotated.jpg
 
 The hardware design files of RAMN are `available on GitHub <https://github.com/ToyotaInfoTech/RAMN/tree/main/hardware>`_. Details about the hardware can be found in the :ref:`hardware` section.
 

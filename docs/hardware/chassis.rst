@@ -6,7 +6,7 @@ The CHASSIS expansion is used to simulate some functions usally found in the Cha
 * Steering Wheel
 * Parking Brake
 
-Although not traditionally part of the Chassis domain, the lighting switch is also present on the Chassis domain, out of convenience.
+Although not traditionally part of the Chassis domain, the lighting switch is also present on the Chassis domain.
 
 .. image:: img/chassis/chassis.png
    :align: center

@@ -9,7 +9,7 @@ What is RAMN ?
 
 RAMN (Resistant Automotive Miniature Network) is a credit-card size ECU testbed for safely studying and researching automotive systems.
 
-RAMN is a set of PCBs (Printed Circuit Boards) that can be used together to simulate a CAN-FD network of ECUs (Electronic Control Unit).
+RAMN is a set of PCBs (Printed Circuit Boards) that can be used together to simulate a CAN or CAN-FD network of ECUs (Electronic Control Units).
 
 
 Main Features
@@ -18,7 +18,8 @@ Main Features
 ECU Network Simulation
 **********************
 
-RAMN simulates a CAN-FD network of 4 ECUs (Electronic Control Unit). By default, Network traffic specifications are identical to those of `PASTA <https://github.com/pasta-auto/PASTA1.0>`_. 
+RAMN simulates a CAN/CAN-FD network of 4 ECUs.
+By default, network traffic specifications only use classic CAN messages, and are identical to those of `PASTA <https://github.com/pasta-auto/PASTA1.0>`_. 
 
 .. image:: gif/block_diagram.gif
    :align: center
@@ -39,6 +40,7 @@ RAMN implements the slcan protocol over USB. It is recognized as a standard CAN-
 .. image:: gif/usage.gif
    :align: center
 
+.. _expansions_demo:
 
 Expansions
 **********
@@ -54,7 +56,7 @@ You can stack expansion boards to add new features, such as Trusted Platform Mod
 Drive it
 ********
 
-RAMN can be connected in closed-loop with the open-source autonomous driving simulator `CARLA <https://carla.org/>`_. Values from the virtual world, such as car speed and throttle control, take a physical form on the CAN-FD bus and inside the ECUs. You can drive the car yourself, or let a self-driving algorithm do the job.
+RAMN can be connected in closed-loop with the open-source autonomous driving simulator `CARLA <https://carla.org/>`_. Values from the virtual world, such as car speed and throttle control, take a physical form on the CAN/CAN-FD bus and inside the ECUs. You can drive the car yourself, or let a self-driving algorithm do the job.
 
 .. image:: gif/carla.gif
    :align: center
@@ -97,7 +99,7 @@ We make RAMN open source in hope of facilitating education and research of autom
 Education
 *********
 
-RAMN tries to employ as many popular technologies as possible – not just CAN-FD. Expansion boards feature clip-on probes to observe important signals, and can be used to study analog circuits, SPI, I2C, UART, etc.
+RAMN tries to employ as many popular technologies as possible – not just CAN/CAN-FD. Expansion boards feature clip-on probes to observe important signals, and can be used to study analog circuits, SPI, I2C, UART, etc.
 
 .. image:: gif/education.gif
    :align: center
@@ -107,7 +109,7 @@ Research
 
 RAMN has the size of a credit card. It is inexpensive and is ideal for situations that require many boards, for example when evaluating the impact of manufacturing tolerances on a technology, or when subjecting the testbed to conditions likely to break it.
 Real ECUs are different from popular development boards because they are designed to resist the harsh environment in which they operate. RAMN is mostly made of automotive grade components that are designed to operate from -40 to 150 degrees Celsius. The microcontrollers are not automotive grade, but they can operate from -40 to 125 degrees Celsius. RAMN tries to keep a balance between open-source, cost, and fidelity to real ECU networks. The expansion boards are not automotive grade.
-A terminal block at the end of the CAN-FD bus lets you add other nodes. It can be used to develop and evaluate ECUs. One limitation though: the CAN-FD bus is terminated, so it cannot be connected to a real car.
+A terminal block at the end of the CAN/CAN-FD bus lets you add other nodes. It can be used to develop and evaluate ECUs. One limitation though: the CAN/CAN-FD bus is terminated, so it cannot be connected to a real car.
 
 
 
@@ -115,7 +117,7 @@ A terminal block at the end of the CAN-FD bus lets you add other nodes. It can b
 Contact
 -------
 
-Follow us (or send us a message) at `@ramn_auto <https://twitter.com/ramn_auto>`_ to stay updated!
+Refer to the contact section of the `RAMN Github repository <https://github.com/ToyotaInfoTech/RAMN?tab=readme-ov-file#contact>`_.
 
 License
 -------

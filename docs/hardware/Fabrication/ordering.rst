@@ -1,16 +1,25 @@
 PCB Ordering
 ============
 
+The version of RAMN hardware in active development (on the main branch of the Github repository) is aimed at ease of fabrication and cost.
+The original version of RAMN is archived and is available in the `misc folder <https://github.com/ToyotaInfoTech/RAMN/tree/main/misc>`_ in file RAMN_V1_reference_PCB.zip.
+This archived version uses some parts which are not easy to source anymore from turnkey fabrication services and/or are not cost effective for orders by RAMN users.
+We recommend that, in academic setting, the original archived version of RAMN is used for reference.
+
+.. warning:: 
+
+	**This page is provided for convenience only. We cannot guarantee the quality of your order**.
+
 .. image:: img/1000015167.jpg
    :align: center
 
 
-The design files are complete enough that you can fabricate and/or
-assemble your own RAMN and expansions. But there are two 're-orders' that can
-be made from PCBWay to get your own RAMN: 1) the mainboard and 2) the
-expansions (excluding the optional debugger expansion). The mainboard is usable for many applications
-all by itself, but acquiring the expansions is required for changing the
-simulated vehicle state e.g. driving the car in CARLA.
+The design files are complete enough that you can fabricate and/or assemble your own RAMN and expansions. But there are two 're-orders' that can be made from PCBWay to get your own RAMN: 
+
+1. The mainboard
+2. The expansions (excluding the optional debugger expansion).
+
+The mainboard is usable for many applications all by itself, but acquiring the expansions is required for changing the simulated vehicle state e.g. driving the car in CARLA.
 
 Click the buttons below to access the PCBway re-order pages.
 

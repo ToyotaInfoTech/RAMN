@@ -87,7 +87,9 @@ Make sure that you have installed python on your computer (see :ref:`analysis_en
 Connect your board to your computer, open Windows's Device Manager, and find what new device appears in "Ports (COM & LPT)".
 RAMN should typically be assigned a COM port number, such as "COM1".
 
-Open a command window (open Powershell or press Windows+R) and execute the following command to observe the latest CAN frame for each CAN ID:
+On Linux, you should be able to find the device name (typically, /dev/ttyACM0) by executing the command ``dmesg`` and looking at the last lines (if you are using a VM, make sure that the USB device is forwarded to it).
+
+Open a command window (open Powershell or press Windows+R on Windows) and execute the following command to observe the latest CAN frame for each CAN ID:
 
 .. code-block:: bash
 
@@ -138,6 +140,8 @@ Converting slcan to socketCAN
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 You can identify which name was given to your RAMN's slcan (serial port) by typing :code:`dmesg` and looking for the most recent device added, which should start with "*/dev/ttyACM*".
+If you do not see any device, make sure that your RAMN is connected over USB, and that the USB device is forwarded to your VM (if applicable).
+
 Some tools, such as wireshark, may not directly support slcan, but may support interfaces such as socketCAN.
 For these tools, you can execute the following command to convert an slcan interface (e.g., /dev/ttyACM0) to a socketCAN interface (e.g., can0):
 
