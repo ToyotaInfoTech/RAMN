@@ -40,7 +40,7 @@
 #include "usbd_composite.h"
 #include "usbd_ctlreq.h"
 #include "usbd_gs_usb.h"
-#include <usbd_gsusb_if.h>
+#include "usbd_gsusb_if.h"
 #include "gs_usb_breq.h"
 
 static uint8_t gsusb_vendor_request(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req);
