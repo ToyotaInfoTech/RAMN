@@ -10,9 +10,9 @@ Microcontroller selection
 
 The microcontrollers compatible with the most recent RAMN firmware are:
 
-- **STM32L552CCT6** (256kB flash, no hardware cryptography).
-- **STM32L552CET6** (512kB flash, no hardware cryptography).
 - **STM32L562CET6** (512kB flash, with hardware cryptography).
+- **STM32L552CET6** (512kB flash, no hardware cryptography).
+- **STM32L552CCT6** (256kB flash, no hardware cryptography).
 
 Because STM32L552CCT6 only has 256kB flash, it does not support UDS reprogramming, but it supports other reprogramming interfaces.
 The same firmware is used for all the microcontrollers above; RAMN automatically detects how much flash is available, and does not use hardware cryptography.
