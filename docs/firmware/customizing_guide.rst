@@ -1,7 +1,7 @@
 .. _customizing_guide:
 
-Customizing Guide
-=================
+Customization Guide
+===================
 
 This page contains information on how to customize RAMN, and guidance on implementing some projects (e.g., adding a custom bootloader, adding message authentication, etc.).
 If you want to learn what you can do with the default firmware, check the :ref:`quickstart_guide` or :ref:`userguide`.
@@ -209,7 +209,7 @@ You can do this by:
 
 If you want to modify the default baud rate, you should modify the CAN/CAN-FD peripheral settings in the `RAMNV1.ioc` file, as explained in the :ref:`modify_ioc` section.  
 Refer to the :ref:`bit_timings` section if you are not familiar with bit timings.  
-Alternatively, you can override the default nominal baud rate by modifying ``FDCAN_Config`` to call ``RAMN_FDCAN_UpdateBaudrate`` with your new baud rate before initializing the peripheral.
+Alternatively, you can override the default nominal baud rate by modifying ``FDCAN_Config`` in ``ramn_canfd.c`` to call ``RAMN_FDCAN_UpdateBaudrate`` with your new baud rate before initializing the peripheral.
 
 .. note::
 
@@ -252,6 +252,108 @@ Read ``ramn_customize.c`` for examples, e.g., how to send CAN messages.
 	This is because the task waits for a transfer-complete notification from the SPI module before resuming execution, but if you call it from another task, that task will not get the notification.  
 	
 	If you want to use SPI from another task, you need to update the calls to ``RAMN_SPI_Init`` or ``RAMN_SCREENMANAGER_Init`` to make the SPI module notify your task instead.  
+
+Example: Send a CAN Message Every Second
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To make ECU B transmit  every second a classic CAN message with standard ID 0x123 and payload of eight times 0x77, you can add the following code in ``RAMN_CUSTOM_Update``, just after the `"Code here is executed every 1s`" comment:
+
+.. code-block:: C
+
+	#ifdef TARGET_ECUB
+	FDCAN_TxHeaderTypeDef header;
+	uint8_t data[8U];
+
+	// CAN message header content
+	header.BitRateSwitch = FDCAN_BRS_OFF; // Bitrate switching OFF (only needed for CAN-FD, but set anyway); other option is FDCAN_BRS_ON.
+	header.ErrorStateIndicator = FDCAN_ESI_ACTIVE; // ESI bit (for CAN-FD only, but set anyway); other option is FDCAN_ESI_PASSIVE.
+	header.FDFormat = FDCAN_CLASSIC_CAN; // Classic CAN; other option is FDCAN_FD_CAN.
+	header.TxFrameType = FDCAN_DATA_FRAME; // Data frame; other option is FDCAN_REMOTE_FRAME, only for classic CAN.
+	header.IdType = FDCAN_STANDARD_ID; // Standard identifier; other option is FDCAN_EXTENDED_ID for extended.
+	header.Identifier = 0x123; // Identifier.
+	header.DataLength = 8U; // DLC (Payload size).
+
+	// CAN message payload content
+	RAMN_memset(data, 0x77, 8U); // write 0x77 8 times
+
+	// Send message
+	RAMN_FDCAN_SendMessage(&header,data);
+	#endif
+
+Example: Execute Something on Specific CAN Message Reception
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To make ECU C execute something on the reception of the CAN message above, you can add the following code in ``RAMN_CUSTOM_ProcessRxCANMessage``:
+
+
+.. code-block:: C
+
+	#ifdef TARGET_ECUC
+	// Fields that you may want to use:
+	// pHeader->Identifier: (11-bit val for standard, 29-bit for extended)
+	// pHeader->IdType: FDCAN_STANDARD_ID or FDCAN_EXTENDED_ID
+	// pHeader->RxFrameType:  FDCAN_DATA_FRAME or FDCAN_REMOTE_FRAME
+	// DataLength: length of CAN payload, FDCAN_DLC_BYTES_0 (0) to FDCAN_DLC_BYTES_8 (8) for CAN, FDCAN_DLC_BYTES_0 (0) to FDCAN_DLC_BYTES_64 (0xF, Not 64) for CAN-FD.
+	// pHeader->ErrorStateIndicator: For CAN-FD, either FDCAN_ESI_ACTIVE or FDCAN_ESI_PASSIVE
+	// pHeader->BitRateSwitch: For CAN-FD, either FDCAN_BRS_OFF or FDCAN_BRS_ON
+	// pHeader->FDFormat: FDCAN_CLASSIC_CAN or FDCAN_FD_CAN
+	
+	// Add or remove checks as needed.
+	if( (pHeader->FDFormat == FDCAN_CLASSIC_CAN) && (pHeader->Identifier == 0x123) && (pHeader->RxFrameType == FDCAN_DATA_FRAME) && (pHeader->IdType == FDCAN_STANDARD_ID))
+	{
+		/* Code executed by ECU C on reception of this specific CAN message */
+	}
+	#endif
+	
+Independently, you must make sure that ECU C does not filter the CAN message.
+Either undefine ``USE_HARDWARE_CAN_FILTERS`` in ``ramn_config.h``, or add the identifier to ``recvStdCANIDList`` in ``ramn_canfd.c``:
+
+.. code-block:: C
+
+	static const uint16_t recvStdCANIDList[] =
+	{
+	
+	/* List of standard IDs received by ECU */
+	
+	/* ... */
+	
+	#ifdef TARGET_ECUC
+		0x123,
+	#endif
+	};
+
+
+Example: Make a Decision Based on RAMN Controls
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+You can read the value of current RAMN controls using:
+
+- Variables in ``ramn_sensors.h`` if the ECU has physical access (e.g., ECU C for shift joystick).
+- Variables in ``ramn_dbc.h`` if the ECU does not (e.g., ECU B, C, and D for shift joystick).
+
+For example, if you want ECU C (which is physically connected to the shift joystick) to execute code only when the joystick is released, you can add this condition:
+
+.. code-block:: C
+
+	if (RAMN_SENSORS_POWERTRAIN.shiftJoystick == RAMN_SHIFT_RELEASED)
+	{
+		// Your code
+	}
+
+If you want to apply the same condition to another ECU (ECU B, C, or D), you can add this condition:
+
+.. code-block:: C
+
+	if (RAMN_DBC_Handle.joystick == RAMN_SHIFT_RELEASED)
+	{
+		// Your code
+	}	
+	
+	
+.. note::
+	
+	- For the first case, the ECU bases its decision on the **physical sensor**. Even if users spoof the CAN bus by sending CAN joystick messages, ECU C will not react (because ECU C bases its decision on the physical sensor).
+	- For the second case, the ECU bases its decision on the **latest relevant CAN message**. If you have not implemented CAN bus protections, users can override controls by spoofing the joystick CAN message.
 
 Customizing ECU A's Display
 ----------------------------
@@ -306,11 +408,11 @@ Select "Project" > "Generate Code" to regenerate code based on your changes, if 
 System and Peripheral Settings
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Most of the settings can be modified in the "Pinout & Configuration" tab.
+Most of the settings can be modified in the **"Pinout & Configuration"** tab.
 
-You can modify peripheral settings in the "Connectivity" category.
-For example, select LPUART1 to modify the default UART baud rate.
-Select "FDCAN1" to modify the default CAN/CAN-FD settings.
+You can modify peripheral settings in the **"Connectivity"** category.
+For example, select **"LPUART1"** to modify the default UART baud rate.
+Select **"FDCAN1"** to modify the default CAN/CAN-FD settings.
 
 STM32CubeIDE does not enable required interrupts automatically when adding new peripherals.
 Always check necessary interrupts have been enabled in the NVIC section.
@@ -323,7 +425,7 @@ Always check necessary interrupts have been enabled in the NVIC section.
 FreeRTOS Settings
 ^^^^^^^^^^^^^^^^^
 
-FreeRTOS settings are in the "Middleware and Software Packs" > "FreeRTOS" menu ("Config parameters").
+FreeRTOS settings are in the **"Middleware and Software Packs"** > **"FreeRTOS"** menu (**"Config parameters"**).
 There, you can notably modify "Minimal Stack Size" to prevent stack overflow issues, and modify TOTAL_HEAP_SIZE if you need more FreeRTOS heap memory.
 Note that those settings are different from the main stack and heap sizes described in :ref:`linker_settings`.
 If you are not sure which one you should modify, try modifying both.
@@ -334,7 +436,7 @@ Other schemes may not support the ``free()`` function, so it is preferable that 
 If you do not need FreeRTOS runtime stats, you can also disable "GENERATE_RUN_TIME_STATS", "USE_TRACE_FACILITY" and "USE_STATS_FORMATTING" to optimize your project.
 If you do so, you should also disable ``GENERATE_RUNTIME_STATS`` in ``ramn_config.h``.
 
-Open the "Tasks and Queues" tab to modify/add/delete FreeRTOS tasks.
+Open the **"Tasks and Queues"** tab to modify/add/delete FreeRTOS tasks.
 Double-click a task to modify its settings (the most important settings being the **Priority** and the **Stack Size**).
 Be aware that if you rename a task, STM32CubeIDE will actually delete the code inside that task and generate a new task, so you should copy its content first, then paste it inside the new task after code generation.
 
@@ -345,7 +447,7 @@ Clock Settings
 
 If you want to use the internal clock instead of the external crystal, read the comments at the bottom of ``ramn_config.h``.
 
-To modify the CPU clock  (SYSCLK), select the "Clock Configuration" tab (top menu) and modify the PLLCLK **N** and **R** parameters.
+To modify the CPU clock  (SYSCLK), select the **"Clock Configuration"** tab (top menu) and modify the PLLCLK **N** and **R** parameters.
 By default RAMN only uses 80MHz, but you can go up to 110MHz. After modifying this clock, make sure to change **Q** so that PLLQ remains 40MHz.
 
 Since timers rely on SYSCLK, you will also need to modify TIM6 and TIM16 settings if you use them (default RAMN does not require them; they are only preconfigured for your convenience).
@@ -355,14 +457,14 @@ Since timers rely on SYSCLK, you will also need to modify TIM6 and TIM16 setting
 Linker Settings
 ^^^^^^^^^^^^^^^
 
-To increase the main stack and main heap sizes (which are different from the FreeRTOS heap and stack sizes described in :ref:`freeRTOS_settings`), select the "Project Manager" tab (top menu), and update "Minimum Heap Size" and "Minimum Stack Size".
+To increase the main stack and main heap sizes (which are different from the FreeRTOS heap and stack sizes described in :ref:`freeRTOS_settings`), select the **"Project Manager"** tab (top menu), and update "Minimum Heap Size" and "Minimum Stack Size".
 
 For other settings, you will need to modify ``STM32L552CETX_FLASH.ld`` directly.
 
 Other Tools
 ^^^^^^^^^^^
 
-You can use the "Tools" tab to use other STM32CubeIDE tools, e.g., to compare your project to another project, or to have an overview of the power consumption of the microcontroller after your changes.
+You can use the **"Tools"** tab to use other STM32CubeIDE tools, e.g., to compare your project to another project, or to have an overview of the power consumption of the microcontroller after your changes.
 
 .. warning:: 
 
@@ -447,6 +549,8 @@ If you do not know which size to reduce, start with "Minimum Heap Size" (in :ref
 If you use the default ``STM32L552CETX_FLASH.ld`` linker script, you can move a variable from RAM to INSECURE_RAM by adding ``__attribute__ ((section (".buffers")))`` to its definition.
 If there is a large variable that you consider does not need protection (e.g., non-critical FreeRTOS task stacks), you can move them to INSECURE_RAM and use the freed space for your own application.
 
+Refer to the :ref:`implementing_vulns` section if you want to learn how to modify the layout to implement memory vulnerabilities.
+
 .. _about_security:
 
 Understanding RAMN's Security Features
@@ -524,7 +628,6 @@ Unique Hardware Seed
 ^^^^^^^^^^^^^^^^^^^^
 
 You can use the 8 bytes located at ``HARDWARE_UNIQUE_ID_ADDRESS`` if you need a seed for a key derivation function that generates a unique key per ECU.
-
 
 Additional Security Features (TrustZone, etc.)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -607,8 +710,6 @@ You can then execute debugging commands, e.g:
 	set_reg {pc 0x08000000}
 	read_memory 0x200000000 32 100
 	resume
-
-
 
 Guidance for Typical Projects
 -----------------------------
@@ -741,6 +842,47 @@ This is because STM32CubeIDE template projects do not reset the interrupt table 
 
 Once you are done developing your bootloader, if absolutely needed, you can disable the STM32 embedded bootloader, for example by setting the **NSBOOTADD0** and **NSBOOTADD1** to your bootloader's address, and enabling (permanent) memory protection (see :ref:`memory_protection`).
 Refer to `Boot configuration <https://www.st.com/content/ccc/resource/training/technical/product_training/group1/5a/01/e5/24/db/15/41/81/STM32L5-System-Boot_Configuration_BOOT/files/STM32L5-System-Boot_Configuration_BOOT.pdf/_jcr_content/translations/en.STM32L5-System-Boot_Configuration_BOOT.pdf>`_ for more details.
+
+
+.. _implementing_vulns:
+
+Implementing Vulnerabilities
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you want to implement memory vulnerabilities on RAMN (e.g., for security trainings), you will likely need to have some variables be placed next to each other in memory.
+The simple way to make sure that variables are next to each other is to use a C `struct`, but this is not practical if variables belong to different modules.
+
+Be aware that with GCC, you cannot use some suggestions that you may find online (e.g., using the ``at`` attribute).
+You can make sure that some variables (even if they belong to different modules) are placed next to each other in a specific memory region by using the ``section`` attribute.
+For example, if you want to make sure that ``variable1`` and ``variable2`` are located next to each other, you can define them with:
+
+.. code-block:: C
+
+	__attribute__((section(".variable1"))) char variable1[SIZE1];
+	
+	/* Possibly in another file */
+	
+	__attribute__((section(".variable2"))) char variable2[SIZE2];
+
+Then, you can modify the linker script ``STM32L552CETX_FLASH.ld`` and use the ``KEEP`` directive if you want these variables to be in a specific region.
+For example, if you want ``variable2`` to be just before ``variable1``, at the end of the ``.bss`` region, add the following lines just after ``*(.bss*)``:
+
+.. code-block::
+
+	KEEP(*(.variable2))
+	KEEP(*(.variable1))
+
+Alternatively, you can create new regions for these variables by defining a custom region in ``STM32L552CETX_FLASH.ld``:
+
+.. code-block::
+
+  ._custom :
+  {
+    KEEP(*(.variable2))
+    KEEP(*(.variable1))
+  } >RAM
+  
+For example, if you want to make sure that they are put at the very end of the RAM, add the definition above just after the definition of the HEAP section (that starts with ``._user_heap_stack :``).
 
 .. _creating_expansion:
 
