@@ -791,7 +791,7 @@ uint8_t USBD_Composite_ReceivePacket(USBD_HandleTypeDef *pdev, uint32_t epnum)
 	{
 		buf = hcmp->RxBuffer[1];
 		/* Prepare Out endpoint to receive next packet */
-		(void)USBD_LL_PrepareReceive(pdev, epnum, buf, sizeof(struct gs_host_frame));
+		(void)USBD_LL_PrepareReceive(pdev, epnum, buf, GSUSB_RX_DATA_SIZE);
 	}
 
 	return (uint8_t)USBD_OK;
