@@ -102,10 +102,10 @@ __ALIGN_BEGIN static uint8_t USBD_Composite_CfgFSDesc[] __ALIGN_END =
 	//---------------------------------------------------------------------------
 	0x07,                                 // bLength
 	USB_DESC_TYPE_ENDPOINT,               // bDescriptorType
-	GSUSB_IN_EP,                             // bEndpointAddress
+	GSUSB_IN_EP,                          // bEndpointAddress
 	0x02,                                 // bmAttributes: bulk
-	LOBYTE(CAN_DATA_MAX_PACKET_SIZE),     // wMaxPacketSize
-	HIBYTE(CAN_DATA_MAX_PACKET_SIZE),
+	LOBYTE(GSUSB_TX_DATA_SIZE),           // wMaxPacketSize
+	HIBYTE(GSUSB_TX_DATA_SIZE),
 	0x00,                                 // bInterval:
 	//---------------------------------------------------------------------------
 
@@ -114,10 +114,10 @@ __ALIGN_BEGIN static uint8_t USBD_Composite_CfgFSDesc[] __ALIGN_END =
 	//---------------------------------------------------------------------------
 	0x07,                                 // bLength
 	USB_DESC_TYPE_ENDPOINT,               // bDescriptorType
-	GSUSB_OUT_EP,                            // bEndpointAddress
+	GSUSB_OUT_EP,                         // bEndpointAddress
 	0x02,                                 // bmAttributes: bulk
-	LOBYTE(CAN_DATA_MAX_PACKET_SIZE),     // wMaxPacketSize
-	HIBYTE(CAN_DATA_MAX_PACKET_SIZE),
+	LOBYTE(GSUSB_RX_DATA_SIZE),           // wMaxPacketSize
+	HIBYTE(GSUSB_RX_DATA_SIZE),
 	0x00,                                 // bInterval:
 	//---------------------------------------------------------------------------
 
@@ -126,7 +126,7 @@ __ALIGN_BEGIN static uint8_t USBD_Composite_CfgFSDesc[] __ALIGN_END =
 	//---------------------------------------------------------------------------
 	0x09,                                 // bLength
 	USB_DESC_TYPE_INTERFACE,              // bDescriptorType
-	GSUSB_WINDEX + 1,                        // bInterfaceNumber
+	GSUSB_WINDEX + 1,                     // bInterfaceNumber
 	0x00,                                 // bAlternateSetting
 	0x00,                                 // bNumEndpoints
 	0xFE,                                 // bInterfaceClass: Vendor Specific
@@ -239,8 +239,8 @@ __ALIGN_BEGIN static uint8_t USBD_Composite_CfgFSDesc[] __ALIGN_END =
 	USB_DESC_TYPE_ENDPOINT,               // bDescriptorType: Endpoint
 	CDC_OUT_EP,                           // bEndpointAddress
 	0x02,                                 // bmAttributes: Bulk
-	LOBYTE(CDC_DATA_FS_MAX_PACKET_SIZE),  // wMaxPacketSize:
-	HIBYTE(CDC_DATA_FS_MAX_PACKET_SIZE),
+	LOBYTE(CDC_DATA_FS_OUT_PACKET_SIZE),  // wMaxPacketSize:
+	HIBYTE(CDC_DATA_FS_OUT_PACKET_SIZE),
 	0x00,                                 // bInterval: ignore for Bulk transfer
 
 	//---------------------------------------------------------------------------
@@ -250,8 +250,8 @@ __ALIGN_BEGIN static uint8_t USBD_Composite_CfgFSDesc[] __ALIGN_END =
 	USB_DESC_TYPE_ENDPOINT,               // bDescriptorType: Endpoint
 	CDC_IN_EP,                            // bEndpointAddress
 	0x02,                                 // bmAttributes: Bulk
-	LOBYTE(CDC_DATA_FS_MAX_PACKET_SIZE),  // wMaxPacketSize:
-	HIBYTE(CDC_DATA_FS_MAX_PACKET_SIZE),
+	LOBYTE(CDC_DATA_FS_IN_PACKET_SIZE),   // wMaxPacketSize:
+	HIBYTE(CDC_DATA_FS_IN_PACKET_SIZE),
 	0x00,                                 // bInterval: ignore for Bulk transfer
 #endif
 

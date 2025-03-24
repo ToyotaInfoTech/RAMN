@@ -96,6 +96,8 @@ typedef struct
 extern USBD_ClassTypeDef USBD_Composite;
 #define USBD_CDC_CLASS &USBD_CDC
 
+#include "usbd_gsusb_if.h"
+
 uint8_t USBD_Composite_RegisterInterface(
 	USBD_HandleTypeDef  *pdev,
     void                *fops,
