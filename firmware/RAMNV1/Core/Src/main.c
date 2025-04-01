@@ -37,6 +37,10 @@
 #include "ramn_cdc.h"
 #endif
 
+#ifdef ENABLE_GSUSB
+#include "ramn_gsusb.h"
+#endif
+
 #include "ramn_spi.h"
 #include "ramn_canfd.h"
 #include "ramn_trng.h"
@@ -1668,6 +1672,8 @@ void RAMN_ReceiveCANFunc(void *argument)
 #endif
 				}
 			}
+#endif
+
 #ifdef ENABLE_GSUSB
 			if(RAMN_USB_Config.gsusbOpened && GSUSB_IsConnected((USBD_HandleTypeDef*)hpcd_USB_FS.pData))
 			{
@@ -1677,8 +1683,6 @@ void RAMN_ReceiveCANFunc(void *argument)
 				}
 			}
 #endif
-#endif
-
 		}
 		else
 		{
