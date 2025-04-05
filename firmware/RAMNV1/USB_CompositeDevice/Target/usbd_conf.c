@@ -375,7 +375,7 @@ USBD_StatusTypeDef USBD_LL_Init(USBD_HandleTypeDef *pdev)
 	HAL_PWREx_EnableVddUSB();
 
 	hpcd_USB_FS.Instance = USB;
-	hpcd_USB_FS.Init.dev_endpoints = 8;
+	hpcd_USB_FS.Init.dev_endpoints = 5; // EP0, EP3, EP4, EP1, and EP2
 	hpcd_USB_FS.Init.speed = PCD_SPEED_FULL;
 	hpcd_USB_FS.Init.phy_itface = PCD_PHY_EMBEDDED;
 	hpcd_USB_FS.Init.Sof_enable = DISABLE;
@@ -409,22 +409,25 @@ USBD_StatusTypeDef USBD_LL_Init(USBD_HandleTypeDef *pdev)
 #endif /* USE_HAL_PCD_REGISTER_CALLBACKS */
 	/* USER CODE BEGIN EndPoint_Configuration */
 
-	epaddr = 0x50;
+	epaddr = hpcd_USB_FS.Init.dev_endpoints * 16 / 2; // 16 bytes BDT per endpoint, and convert to half-words
 
 	HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , 0x00 ,        PCD_SNG_BUF, epaddr);
-	epaddr += 0x40;
+	epaddr += USB_MAX_EP0_SIZE / 2;
 	HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , 0x80 ,        PCD_SNG_BUF, epaddr);
-	epaddr += 0x40;
+	epaddr += USB_MAX_EP0_SIZE / 2;
 	HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , CDC_IN_EP  ,  PCD_SNG_BUF, epaddr);
-	epaddr += 0x40;
+	epaddr += CDC_DATA_FS_IN_PACKET_SIZE / 2;
 	HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , CDC_OUT_EP ,  PCD_SNG_BUF, epaddr);
-	epaddr += 0x40;
+	epaddr += CDC_DATA_FS_OUT_PACKET_SIZE / 2;
 	HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , CDC_CMD_EP ,  PCD_SNG_BUF, epaddr);
-	epaddr += 0x40;
-	HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , GSUSB_IN_EP ,    PCD_SNG_BUF, epaddr);
-	epaddr += 0x40;
-	HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , GSUSB_OUT_EP ,   PCD_SNG_BUF, epaddr);
-
+	epaddr += CDC_CMD_PACKET_SIZE / 2;
+	HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , GSUSB_IN_EP , PCD_SNG_BUF, epaddr);
+	epaddr += GSUSB_TX_DATA_SIZE / 2;
+	HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , GSUSB_OUT_EP, PCD_SNG_BUF, epaddr);
+	epaddr += GSUSB_RX_DATA_SIZE / 2;
+	if(epaddr > 320) {
+		USBD_ErrLog("PMA buffers too big")
+	}
 	/* USER CODE END EndPoint_Configuration_CDC */
 
 	return USBD_OK;

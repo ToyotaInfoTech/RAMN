@@ -35,8 +35,8 @@
 /* USER CODE BEGIN EXPORTED_DEFINES */
 /* Define size for the receive and transmit buffer over SocketCAN */
 /* It's up to user to redefine and/or remove those define */
-#define GSUSB_RX_DATA_SIZE  			1024
-#define GSUSB_TX_DATA_SIZE  			1024
+#define GSUSB_RX_DATA_SIZE  			128  // must be at least GS_HOST_FRAME_SIZE (80 bytes) to accommodate buggy userspace drivers
+#define GSUSB_TX_DATA_SIZE  			CAN_DATA_MAX_PACKET_SIZE  // must be at least CAN_DATA_MAX_PACKET_SIZE
 
  typedef struct _USBD_GSUSB_Itf
  {

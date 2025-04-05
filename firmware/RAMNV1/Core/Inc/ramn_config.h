@@ -50,15 +50,18 @@
 // - Error frames are not reported
 // - CAN-FD is not supported
 // - Due to clock differences, bit timings are not respected (but equivalent baudrates are used)
-// You may want to update USBD_VID and USBD_PID in usbd_desc.c to automatically load the drivers on Linux.
 // Try increasing _Min_Stack_Size if you run into issues
-// #define ENABLE_GSUSB
+//#define ENABLE_GSUSB
 
-#define USBD_VID                      	0x483
-#define USBD_PID                    	0x5740
-// IDs below can be used to automatically load the drivers on Linux
-//#define USBD_VID                      0x1d50
-//#define USBD_PID                      0x606f
+#ifndef ENABLE_GSUSB
+#define USBD_VID                        0x483
+#define USBD_PID                        0x5740
+#else
+// IDs below automatically load the drivers on Linux and are required for userspace python-can drivers
+#define USBD_VID                        0x1d50
+#define USBD_PID                        0x606f
+#endif
+
 #define USBD_LANGID_STRING            	1033
 #define USBD_MANUFACTURER_STRING      	"Toyota Motor Corporation"
 #define USBD_PRODUCT_STRING           	"RAMN USB Composite Device"
