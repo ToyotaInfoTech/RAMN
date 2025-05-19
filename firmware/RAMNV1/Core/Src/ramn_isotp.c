@@ -251,7 +251,7 @@ void RAMN_ISOTP_ProcessRxMsg(RAMN_ISOTPHandler_t* handler, uint8_t dlc, const ui
 	if (handler->rxMustSendCF == True)
 	{
 		uint8_t dlc;
-		uint8_t data[3U];
+		uint8_t data[8U];
 		RAMN_ISOTP_GetFCFrame(handler,&dlc,data);
 		handler->pFC_CANHeader->DataLength = UINT8toDLC(dlc);
 		// Ignore potential error. If we miss the answer window, it is up to the diag tool to reduce speed.
@@ -268,7 +268,16 @@ RAMN_Bool_t RAMN_ISOTP_GetFCFrame(RAMN_ISOTPHandler_t* handler, uint8_t* dlc, ui
 		data[0U] = 0x30 | handler->selfFCFlag;
 		data[1U] = handler->selfBlockSize;
 		data[2U] = handler->selfST;
+
+#ifdef ISOTP_ANSWER_PADDING_BYTE
+		*dlc = 8U;
+		for (uint8_t i = 3U; i < 8U; i++)
+		{
+			data[i] = ISOTP_ANSWER_PADDING_BYTE;
+		}
+#else
 		*dlc = 3U;
+#endif
 		wroteValidMessage = True;
 		handler->rxMustSendCF = False;
 	}
@@ -348,6 +357,20 @@ RAMN_Bool_t RAMN_ISOTP_GetNextTxMsg(RAMN_ISOTPHandler_t* handler, uint8_t* dlc, 
 			handler->txLastTimestamp = tick;
 		}
 	}
+#ifdef ISOTP_ANSWER_PADDING_BYTE
+	// Add padding if required
+	if(wroteValidMessage == True)
+	{
+		if (*dlc < 8U)
+		{
+			for (uint8_t i = *dlc; i < 8U; i++)
+			{
+				data[i] = ISOTP_ANSWER_PADDING_BYTE;
+			}
+			*dlc = 8U;
+		}
+	}
+#endif
 	return wroteValidMessage;
 }
 

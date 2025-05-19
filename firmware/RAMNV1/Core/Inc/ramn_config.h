@@ -320,8 +320,14 @@
 // Maximum Security access attempts before locking device.
 #define SECURITY_ACCESS_MAX_ATTEMPTS 		5
 
-// Enable this flag to ignore ISO TP messages that are not padded (like real ECUs).
+// Enable this flag to ignore ISO TP messages that are not padded (like real ECUs do).
+// When this flag is enabled, the ECU only checks that ISO-TP CAN message size is 8, it does not check the value of the padding bytes.
+// This only applies to requests - see flag below for answers.
 // #define ISOTP_REQUIRE_PADDING
+
+// Define this flag to make the ECU pad its ISO-TP answers with the defined byte (until ISO-TP CAN messages reach a size of 8).
+// This only applies to answers - see flag above for requests.
+// #define ISOTP_ANSWER_PADDING_BYTE 0x00
 
 #ifdef ENABLE_CDC
 #define APP_RX_DATA_SIZE  2048
