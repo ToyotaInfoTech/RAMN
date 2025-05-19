@@ -320,6 +320,9 @@
 // Maximum Security access attempts before locking device.
 #define SECURITY_ACCESS_MAX_ATTEMPTS 		5
 
+// Enable this flag to ignore ISO TP messages that are not padded (like real ECUs).
+// #define ISOTP_REQUIRE_PADDING
+
 #ifdef ENABLE_CDC
 #define APP_RX_DATA_SIZE  2048
 #define APP_TX_DATA_SIZE  2048

@@ -216,6 +216,11 @@ void RAMN_ISOTP_ProcessRxMsg(RAMN_ISOTPHandler_t* handler, uint8_t dlc, const ui
 {
 	handler->rxLastTimestamp = tick; // Consider any message good to update the "alive" timer
 
+#ifdef ISOTP_REQUIRE_PADDING
+	// If padding required, only process messages with DLC of 8
+	if (dlc != 8U) return;
+#endif
+
 	if (dlc > 0)
 	{
 		switch((data[0] & 0xF0) >> 4) // Header: first 4 bits of message
