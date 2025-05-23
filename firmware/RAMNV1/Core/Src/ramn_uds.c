@@ -1796,7 +1796,7 @@ RAMN_Bool_t RAMN_UDS_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, c
 				{
 					// Valid frame
 					functionalAddressing = 1U;
-					requestSize = DLCtoUINT8(pHeader->DataLength)-1U;
+					requestSize = data[0]&0xF;
 					xBytesSent = xStreamBufferSend(*strbuf, (void *) &(functionalAddressing), sizeof(functionalAddressing), portMAX_DELAY );
 					xBytesSent += xStreamBufferSend(*strbuf, (void *) &(requestSize), sizeof(requestSize), portMAX_DELAY );
 					xBytesSent += xStreamBufferSend(*strbuf, (void *) &data[1], requestSize, portMAX_DELAY );

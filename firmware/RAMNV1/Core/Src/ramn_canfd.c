@@ -134,6 +134,11 @@ static const uint16_t recvStdCANIDList[] =
 #endif
 #ifdef ENABLE_UDS
 		UDS_RX_CANID,
+
+#ifdef UDS_ACCEPT_FUNCTIONAL_ADDRESSING
+		UDS_FUNCTIONAL_RX_CANID,
+#endif
+
 #endif
 #ifdef ENABLE_KWP
 		KWP_RX_CANID,
