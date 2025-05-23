@@ -43,15 +43,22 @@ RAMN_Result_t RAMN_DTC_Init()
 RAMN_Result_t RAMN_DTC_ClearAll()
 {
 	RAMN_Result_t result;
+	uint32_t numDTC;
 
-	if (RAMN_EEPROM_Write32(DTC_NUMBER_INDEX,0U) != EE_OK)
+	if (RAMN_DTC_GetNumberOfDTC(&numDTC) == RAMN_OK)
 	{
-		result =  RAMN_ERROR;
-	}
-	else
-	{
-		result =  RAMN_OK;
-	}
+		if (numDTC > 0) // Do nothing if number of DTC is already zero
+		{
+			if (RAMN_EEPROM_Write32(DTC_NUMBER_INDEX, 0U) != EE_OK)
+			{
+				result =  RAMN_ERROR;
+			}
+			else
+			{
+				result =  RAMN_OK;
+			}
+		} else result = RAMN_OK;
+	} else result = RAMN_ERROR;
 	return result;
 }
 

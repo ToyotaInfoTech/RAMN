@@ -83,6 +83,7 @@
 // Note that UDS programming does not work on microcontrollers with only 256 kb memory (e.g., reference ending with CCT6).
 #define ENABLE_UDS_REPROGRAMMING
 #define ENABLE_UDS
+#define ENABLE_J1979
 //#define ENABLE_KWP
 //#define ENABLE_XCP
 #define RTR_DEMO_ID 0x700
@@ -146,6 +147,7 @@
 
 #define ENABLE_UDS_REPROGRAMMING
 #define ENABLE_UDS
+#define ENABLE_J1979
 //#define ENABLE_KWP
 #define ENABLE_XCP
 #define RTR_DEMO_ID 0x701
@@ -159,6 +161,7 @@
 #define EXPANSION_POWERTRAIN
 #define ENABLE_UDS_REPROGRAMMING
 #define ENABLE_UDS
+#define ENABLE_J1979
 //#define ENABLE_KWP
 #define ENABLE_XCP
 #define RTR_DEMO_ID 0x702
@@ -177,6 +180,7 @@
 
 #define ENABLE_UDS_REPROGRAMMING
 #define ENABLE_UDS
+#define ENABLE_J1979
 //#define ENABLE_KWP
 #define ENABLE_XCP
 #define RTR_DEMO_ID 0x703
@@ -409,6 +413,9 @@
 #endif
 #ifdef ENABLE_XCP
 #error "It is preferable to turn off XCP to limit attack surfaces. Comment out this line to enable anyway (You'll need to update RAMN_MEMORY_CheckAreaReadable and/or XCP_COMMAND_UPLOAD)."
+#endif
+#ifdef ENABLE_J1979
+#error "It is preferable to turn off J1979 to limit attack surfaces. Comment out this line to enable anyway"
 #endif
 #ifdef ENABLE_USB_DEBUG
 #error "It is preferable to turn off USB debug to limit attack surfaces. Comment out this line to enable anyway."

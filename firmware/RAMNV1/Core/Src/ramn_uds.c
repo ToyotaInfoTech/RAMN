@@ -266,10 +266,12 @@ static void RAMN_UDS_ClearDTC(const uint8_t* data, uint16_t size)
 	{
 		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_ROOR);
 	}
+#ifdef ENABLE_EEPROM_EMULATION
 	else if (RAMN_DTC_ClearAll() != 0U)
 	{
 		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_GPF);
 	}
+#endif
 	else
 	{
 		RAMN_UDS_FormatPositiveResponseEcho(data,1U);
@@ -1598,12 +1600,16 @@ static void RAMN_UDS_ControlDTCSettings(const uint8_t* data, uint16_t size)
 	{
 		if ((data[1]&0x7F) == 0x1U)
 		{
+#ifdef EEPROM_EMULATION
 			RAMN_DTC_SetRecordingStatus(1U);
+#endif
 			if ((data[1]&0x80) == 0U) RAMN_UDS_FormatPositiveResponseEcho(data, size);
 		}
 		else if ((data[1]&0x7F) == 0x02U)
 		{
+#ifdef EEPROM_EMULATION
 			RAMN_DTC_SetRecordingStatus(0U);
+#endif
 			if ((data[1]&0x80) == 0U) RAMN_UDS_FormatPositiveResponseEcho(data, size);
 		}
 		else
