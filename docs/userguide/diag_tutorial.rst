@@ -58,7 +58,10 @@ In addition to standard services, there are two **custom** services added to ECU
 - Service 0x42 (Load and start provided Chip-8 game)
 
 These services are described later in this guide.
-The UDS implementation of RAMN ECUs is slightly simplified in order to tolerate more errors and be more beginner friendly.
+
+Diagnostic services with service IDs below 0x10 are defined by the J1979 standard, and are described in :ref:`j1979`.
+
+The UDS/J1979 implementation of RAMN ECUs is slightly simplified in order to tolerate more errors and be more beginner friendly.
 
 When you use functional addressing, you can only use Single Frame commands (payloads smaller than 7 bytes).
 When an ECU cannot process a command received with functional addressing, it will typically not answer at all.
@@ -290,6 +293,8 @@ You can also ask the ECU's Serial Hardware (which should be unique per ECU) with
     You **must** have an ISO-TP receiver actively set (e.g, with ``$ isotprecv -s 7e1 -d 7e9 -l can0``).
     Without an active receiver, the ECU will not receive the necessary "Flow Control Frame" to continue transmission, and you will only observe the ""First Frame" of its answer).
 
+.. _writedatabyid:
+
 Write Data by Identifier (0x2E)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -338,6 +343,8 @@ and vice versa:
 
     $ echo "56 49 4e 30 31 32 33 34 35 36 37 38 39 41 42 43 44" | xxd -r -p #hexadecimal to ASCII
 
+
+.. _uds_read_dtc:
 
 Read DTC Information (0x19)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -832,3 +839,135 @@ With RAMN, this can be done with:
 
 - Routine control 0x0202 to ask the ECU to copy its current EEPROM to the alternative memory bank.
 - Routine control 0xFF01 to ask the ECU to swap banks (and use the new firmware).
+
+.. _j1979:
+
+J1979 Services (OBD-II PIDs)
+----------------------------
+
+Services below 0x10 are defined by the J1979 standard (See `OBD-II PIDs <https://en.wikipedia.org/wiki/OBD-II_PIDs>`_).
+RAMN supports the following J1979 services:
+
+- Service 0x01 (Request Current Diagnostic Data)
+- Service 0x03 (Request DTCs)
+- Service 0x04 (Clear DTCs)
+- Service 0x09 (Request Vehicle Information)
+
+.. _service_01:
+
+Request Current Diagnostic Data (0x01)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This service can be used to read current data from the vehicle.
+It is used by providing a one-byte argument, which represents the data ("PID") that you want to read.
+PID 0x00 is used to indicate which PIDs are supported by an ECU (from 0x01 to 0x20). The ECU will answer with 4 bytes (0x20 bits), with bits set to one when the corresponding PIDs are supported (refer to `this link <https://en.wikipedia.org/wiki/OBD-II_PIDs#Service_01_PID_00>`_ for an illustration).
+If PID 0x20 is supported, then it is used in turn to indicate which PIDs from 0x21 to 0x40 are supported, and so on.
+
+For example, you can ask ECU C which PIDs it supports with the following command:
+
+.. code-block:: bash
+
+	$ echo "01 00" | isotpsend can0 -s 7e2 -d 7ea -b
+	$ echo "01 20" | isotpsend can0 -s 7e2 -d 7ea -b
+	$ echo "01 40" | isotpsend can0 -s 7e2 -d 7ea -b
+	$ echo "01 60" | isotpsend can0 -s 7e2 -d 7ea -b
+	$ echo "01 80" | isotpsend can0 -s 7e2 -d 7ea -b
+	$ echo "01 A0" | isotpsend can0 -s 7e2 -d 7ea -b
+
+.. image:: img/j1979_01_supportedPIDs.png
+   :align: center
+
+Note that isotpdump cannot interpret these commands because they are not technically UDS services.
+
+ECU answers the command **01 00** with **41 00 BE 1F A8 13**. Similarly to UDS, **41** corresponds to **Service ID + 0x40** and indicates a positive response. The second byte is an echo of the request parameter. 
+
+**BE** in binary is **10111110**, which means ECU C supports PIDs 1, 3, 4, 5, 6, 7, but not PIDs 2 and 8. 
+You can confirm this observation by trying to read PIDs 1, 2, and 3. Similarly to UDS, a negative answer consists of 0x7F + requested service ID + error code.
+
+.. code-block:: bash
+
+	$ echo "01 01" | isotpsend can0 -s 7e2 -d 7ea -b
+	$ echo "01 02" | isotpsend can0 -s 7e2 -d 7ea -b
+	$ echo "01 03" | isotpsend can0 -s 7e2 -d 7ea -b
+
+.. image:: img/j1979_01_readPIDs.png
+   :align: center
+   
+You can find the meaning and format of each PID on `the OBD-II PIDs Wikipedia page <https://en.wikipedia.org/wiki/OBD-II_PIDs#Standard_PIDs>`_.
+You may notably be interested in the following PIDs:
+
+- 0x0C (Engine speed).
+- 0x0D (Vehicle speed).
+- 0x1F (Run time since vehicle start).
+- 0x1C (OBD Standard used by vehicle) - RAMN uses 10 (JOBD).
+- 0x49 (Accelerator pedal position).
+- 0xA6 (Odometer).
+
+
+Note that many values returned by RAMN's J1979 implementation are placeholder values that may not properly represent the status of the simulator.
+PIDs 0x1F and 0x49 should however always be properly implemented:
+
+.. code-block:: bash
+
+	$ echo "01 1F" | isotpsend can0 -s 7e2 -d 7ea -b
+	$ echo "01 49" | isotpsend can0 -s 7e2 -d 7ea -b
+	$ echo "01 1F" | isotpsend can0 -s 7e2 -d 7ea -b
+
+.. image:: img/j1979_01_readPIDs2.png
+   :align: center
+
+In this case, ECU C answers that the accelerator pedal is currently at 0xFB (98%), and we can observe that 4 seconds elapsed between the two 0x1F PID read commands.
+
+Request DTCs (0x03)
+^^^^^^^^^^^^^^^^^^^
+
+Service 0x03 is used to request the ECU's stored DTCs.
+Contrary to UDS, there is no argument to provide. Instead, if you want to request pending DTCs or permanent DTCs, you should use other services (respectively, 0x07 and 0x0A).
+Note that RAMN will consider services 0x07 and 0x0A aliases for service 0x03, so you will be able to use them as well.
+
+Refer to :ref:`uds_read_dtc` for more information about DTCs. This service will only return 2 bytes per DTC (there is no status mask or FTB).
+You can use the following command to ask ECU C to show its stored DTCs:
+
+.. code-block:: bash
+
+	$ echo "03" | isotpsend can0 -s 7e2 -d 7ea -b
+
+.. image:: img/j1979_01_readDTC.png
+   :align: center
+
+ECU C answers with **43 01 01 72**. The first byte **43** indicates a positive answer, **01** indicates that there is one DTC, which value is **0172**.
+
+Clear DTCs (0x04)
+^^^^^^^^^^^^^^^^^
+
+This service can be used to clear DTCs, and is also used with no argument.
+For example, you can use the following commands to read DTCs, clear DTCs, and read DTCs again:
+
+.. code-block:: bash
+
+	$ echo "03" | isotpsend can0 -s 7e2 -d 7ea -b
+	$ echo "04" | isotpsend can0 -s 7e2 -d 7ea -b
+	$ echo "03" | isotpsend can0 -s 7e2 -d 7ea -b
+
+.. image:: img/j1979_01_clearDTC.png
+   :align: center
+
+Request Vehicle Information (0x09)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This service is similar to :ref:`service_01`, and is used to read `vehicle information <https://en.wikipedia.org/wiki/OBD-II_PIDs#Service_09>`_.
+It also uses a one-byte argument to specify which PID to read, and PID 0x00 is used to indicate which PIDs are supported.
+PID 0x02 corresponds to the VIN, and PID 0x0A corresponds to the ECU name.
+You can read these PIDs with the following commands:
+
+.. code-block:: bash
+
+	$ echo "09 00" | isotpsend can0 -s 7e2 -d 7ea -b
+	$ echo "09 02" | isotpsend can0 -s 7e2 -d 7ea -b
+	$ echo "09 0A" | isotpsend can0 -s 7e2 -d 7ea -b
+
+.. image:: img/j1979_01_readVehicleInfo.png
+   :align: center
+
+Note that if you have not written a VIN to the ECU, the answer will be only zeroes.
+
