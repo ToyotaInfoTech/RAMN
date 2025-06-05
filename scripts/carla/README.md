@@ -20,6 +20,7 @@ On Windows, you may launch a CARLA server either by running **0_CARLA_SERVER_sta
 $CarlaUE4.exe -windowed -resX=600 -resY=600 -quality-level=Low -carla-settings="CarlaSettings.ini"
 ```
 You may adjust the resolution (*-resX* and *-resY* arguments) as well as the quality (from *Low* to *Epic*) based on the performances of your machine.
+On recent versions, CarlaUE4.exe might be called CarlaUnreal.exe.
 
 ## CARLA Server configuration
 
