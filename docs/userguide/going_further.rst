@@ -46,15 +46,17 @@ Follow the `instructions here <https://github.com/CaringCaribou/caringcaribou/bl
 
     $ git clone https://github.com/CaringCaribou/caringcaribou
     $ cd caringcaribou
-    $ cd python3 setup.py install
+    $ python3 setup.py install
 
-Then create a .canrc file in your home directory (you can use ``$ nano ~/.canrc``) with the following content:
+Then, create a .canrc file in your home directory (you can use ``$ nano ~/.canrc``) with the following content:
 
 .. code-block:: bash
 
     [default]
     interface = socketcan
     channel = can0
+
+If you need to execute as root, you should create the .canrc file in ``/root/.canrc`` instead.
 
 You should then be able to use caring caribou's modules.
 

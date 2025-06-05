@@ -83,7 +83,7 @@ Troubleshooting
 ---------------
 
 If the steering potentiometer does not show 0% when centered, you may have flashed the wrong firmware (see :ref:`flashing`).
-You can fix this problem by flashing ECU B with the alternative firmware (most likely, linear in place of algorithmic).
+You can fix this problem by flashing ECU B with the alternative firmware (most likely, linear in place of logarithmic).
 
 If actuators are responsive but show erroneous values (for example, the screen shows "UP" when you press the SHIFT joystick down), your board may require calibration. 
 Please contact us for assistance.
