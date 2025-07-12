@@ -316,9 +316,9 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 		}
 		else
 		{
-			if(Buf[i] == '\n')
+			if((Buf[i] == '\n') || (Buf[i] == 0))
 			{
-				// newline character, we just ignore it.
+				// newline or zero character, we just ignore it.
 			}
 			else if(Buf[i] != '\r') // Regular character, we add it to the buffer
 			{
