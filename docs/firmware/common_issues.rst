@@ -5,6 +5,14 @@ Troubleshooting
 
 This page contains common troubleshooting approaches for RAMN, mostly to address reflashing and debugging issues.
 
+.. _unreliable_usb:
+
+Unreliable USB
+--------------
+
+If you encounter USB issues, try using a different USB port from your computer.
+If you are connected to RAMN through a USB hub, try connecting RAMN directly to your computer's USB port instead.
+
 .. _optionbyte_check:
 
 Expected Option Bytes
@@ -30,7 +38,7 @@ After resetting option bytes, you may need to reflash the firmware again.
 Failed Debugging
 ----------------
 
-If you encounter debugging issues with STM32CubeIDE, but you are certain that the JTAG connections are correct (e.g., you can connect using STM32CubeProgrammer), try deleting ``RAMNV1 Debug.launch`` and start from a fresh debugging configuration (see :ref:`debugging_RAMN`). 
+If you encounter debugging issues with STM32CubeIDE, but you are certain that the JTAG connections are correct (e.g., you can connect using STM32CubeProgrammer), see :ref:`debugging_RAMN`. 
 
 .. _inconsistent_protection:
 
@@ -58,8 +66,8 @@ Failed Reprogramming over CAN
 If reprogramming over CAN fails, it may be caused by an external CAN adapter that is actively destroying the traffic with error frames (because it does not perform a required baud rate change).
 **Before reprogramming over CAN, make sure external CAN adapters are turned off and/or unplugged.**
 
-DFU Issues
-----------
+Driver Issues
+-------------
 
 The `DfuSe tool <https://www.st.com/en/development-tools/stsw-stm32080.html>`_ from STMicroelectronics can be used to program ECU A over USB (when ECU A is in DFU mode).
 If ECU A is recognized as "DFU in FS Mode" over USB by Windows, but device information are "Unknown" or "Unavailable", you may need to separately install STM32 DFU drivers, which are located in the DFuse installation folder, for example:

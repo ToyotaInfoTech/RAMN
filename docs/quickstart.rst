@@ -148,6 +148,7 @@ Once the board is recognized by windows, you must forward the USB port to Virtua
 You can open Devices > USB > USB Settings..., then click the + icon to add RAMN so that Virtual Box will always automatically forward the USB port.
 
 On Linux, RAMN should appear at the end of the dmesg command, and be attributed a device file (typically, /dev/ttyACM0).
+If you encounter issues, see :ref:`unreliable_usb`.
 
 
 Starting slcand

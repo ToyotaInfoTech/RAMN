@@ -115,7 +115,9 @@ First, make sure that you have defined the target ECU that you want to debug in 
 Connect a debugger to that ECU, and press the green bug icon in STM32CubeIDE (or select "Run" > "Debug").
 If it is the first time that you run the debugger, you may see a prompt, for which you should keep the default settings.
 
-If debugging fails, select "Run" > "Debug Configurations...", select the "Debugger" tab, and experiment with different settings (try different "Debug probe" settings, and try both SWD and JTAG).
+If debugging fails (or is unreliable), try deleting ``RAMNV1 Debug.cfg`` and ``RAMNV1 Debug.launch`` to force the creation of a fresh debug configuration.
+Then, select "Run" > "Debug Configurations...", select the "Debugger" tab, and experiment with different settings (try different "Debug probe" settings, and try both SWD and JTAG).
+Also make sure that **C/C++ Application** in the **Main** tab points to the .elf file of your current configuration (typically, ``Debug/RAMNV1.elf``). You can use the "Search Project..." button to identify the correct binary file.
 
 If possible, try to enable RTOS Kernel Awareness (Enable "RTOS proxy", Driver: "FreeRTOS", Port: "ARM_CM33_NTZ") to get more debugging information, but turn it off if you encounter debugging issues.
 
@@ -170,6 +172,10 @@ You can upgrade from CAN to CAN-FD by modifying ``ramn_vehicle_specific.h``:
 - Change ``CAN_MAX_PAYLOAD_SIZE_DEFAULT`` to ``64`` (to enable 64-byte payloads).  
 - Change ``CAN_SIM_FORMAT_DEFAULT`` to ``FDCAN_FD_CAN``.  
 - Change ``CAN_SIM_BRS_DEFAULT`` to ``FDCAN_BRS_ON`` (if you want to enable bitrate switching).
+
+.. warning::
+
+    Changing ``CAN_MAX_PAYLOAD_SIZE_DEFAULT`` will likely result in a RAM overflow error when compiling. Read the :ref:`about_memory` section to learn how to free more memory for your application.
 
 .. warning::
 

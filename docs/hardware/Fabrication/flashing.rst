@@ -25,7 +25,7 @@ Important Knowledge
 - When you reprogram an ECU using the UDS interface, the new firmware is actually written to a different memory bank, and the option bytes of the microcontroller are set so that that memory bank becomes the new application firmware (memory bank swap). Some tools, including ST official tools, may not understand this memory swap and generate errors because of it. If that is the case, reflash the ECU over UDS to revert to the other, "default" memory bank\ [#f1]_.
 - ECU A and ECU B, C, and D have different option bytes. If you accidentally flash ECU B, C, or D with a firmware file for ECU A, they will not accept to go into bootloader mode anymore\ [#f2]_.
 - You can follow instructions at :ref:`try_out_controls` to verify that your board is fully functional.
-- If you encounter issues, always verify option bytes (:ref:`common_issues`).
+- If you encounter issues, always verify option bytes (:ref:`common_issues`) and check for common issues (see :ref:`unreliable_usb`).
 
 .. _embedded_bootloader:
 

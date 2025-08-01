@@ -16,6 +16,9 @@ If you are not familiar with serial terminals, keep in mind the following items:
 - You must ensure that the serial port of RAMN is not being used by any other program (virtual machine or programs accessing CAN).
 - By default, you should not expect any serial interface to support the "backspace" character. If you made a mistake while typing a command, you need to restart from the beginning. RAMN's :ref:`usb_cli` supports backspaces to be more user-friendly.
 
+.. warning::
+
+	Commands that change CAN settings (e.g., CAN filters or CAN baudrate) typically require that you reopen the CAN peripheral (e.g., by using the command ``O``).
 
 Opening a terminal
 ------------------
@@ -381,7 +384,7 @@ Enable Auto-Retransmission - a
 
 The ``a`` command can be used to enable automatic CAN message retransmission.
 When enabled, if ECU A fails to transmit a message, it will automatically retransmit it.
-Use ``a0`` to disable it and ``a`` to enable it.
+Use ``a0`` to disable it and ``a1`` to enable it.
 
 Open in restricted mode - l
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^

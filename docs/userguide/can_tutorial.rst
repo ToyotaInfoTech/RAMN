@@ -100,6 +100,7 @@ Open a command window (open Powershell or press Windows+R on Windows) and execut
 
 This may require that you install python modules with the command :code:`python -m pip install "python-can[viewer]"`.
 Press Q to quit. From here, you should be able to directly use `python-can scripts <https://python-can.readthedocs.io/en/stable/scripts.html>`_ with RAMN.
+If you encounter issues, see :ref:`unreliable_usb`.
 
 SavvyCAN (Windows, Linux)
 """""""""""""""""""""""""
@@ -509,6 +510,12 @@ Follow `this link <https://www.csselectronics.com/pages/can-bus-errors-intro-tut
 
 Similar to Error Frames are **Overload Frames**. They have the same form as Error Frames, however they do not increment the error counters.
 They can only be sent during the transmission of the IFS field (the "intermission"), either because an ECU wants extra time to process a frame, or because an ECU detected a violation of the intermission by another ECU.
+
+.. warning::
+
+	By default, RAMN ECUs have the "auto-retransmission" CAN setting enabled. This means that the ECUs will be very quick to enter bus off mode in case of problem (e.g., short-circuit) as they will reattempt transmission immediately after an error and quickly reach counter limits.
+	You can change this behavior by changing ``hfdcan1.Init.AutoRetransmission = ENABLE;`` to ``hfdcan1.Init.AutoRetransmission = DISABLE;`` (in ``main.c``) and recompile the firmware.
+	Alternatively, you can use the ``AUTO_RECOVER_BUSOFF`` config flag to automatically recover from bus off events.
 
 Acknowledgment
 ^^^^^^^^^^^^^^

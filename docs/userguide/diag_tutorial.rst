@@ -61,7 +61,14 @@ These services are described later in this guide.
 
 Diagnostic services with service IDs below 0x10 are defined by the J1979 standard, and are described in :ref:`j1979`.
 
-The UDS/J1979 implementation of RAMN ECUs is slightly simplified in order to tolerate more errors and be more beginner friendly.
+.. warning::
+
+	The UDS/J1979 implementation of RAMN ECUs is slightly simplified (with many dummy parameters) in order to tolerate more errors and be more beginner-friendly.
+	You should notably be aware of the following potential differences with real-life ECUs:
+	
+	- RAMN ECUs use normal addressing, but real-life ECUs may use different addressing methods (see :ref:`isotp_addressing`).
+	- By default, RAMN ECUs accept both padded and non-padded CAN messages. Real-life ECUs may only accept padded CAN messages (CAN message length of 8). You can use the ``-p 0:0`` option with ``isotpsend`` to pad CAN messages with zero bytes.
+		
 
 When you use functional addressing, you can only use Single Frame commands (payloads smaller than 7 bytes).
 When an ECU cannot process a command received with functional addressing, it will typically not answer at all.
@@ -90,6 +97,11 @@ The error codes that you are the most likely to encounter are:
 - 0x31 - "Request out of range": this means that your request has a valid format and is supported, but your parameters are out of the valid range. For example, you tried to read a memory address that does not exist (but you did provide an address with a valid format).
 - 0x33 - "Security access denied": this means that you need to unlock the service (see :ref:`security_access`) before using it.
 - 0x7E - "Service not supported in active session": this means that you must first request a different diagnostic session (see :ref:`diag_sess_control`).
+
+You may also encounter timing-related "errors":
+
+- 0x21 - "Busy repeat request": Your command may be correct, but you must retry it later (you must send another request).
+- 0x78 - "Request correctly received, response pending": The ECU will answer later (you **do not** need to send another request).
 
 These error codes are an extremely valuable source of information to learn how to correctly use UDS services.
 
@@ -361,7 +373,7 @@ For example, the DTC **"P0650"** means that there was a problem in the powertrai
 The 0 means that the DTC is a standard DTC, and in this context, "6" means *"Computer Output Circuit"*, and "05" means *"Malfunction Indicator Lamp (MIL) Control Circuit Malfunction"*.
 
 You will find plenty of information online to interpret DTCs.
-If the first letter is a zero, DTCs have a unique definition, but if it is a one, the definition varies by manufacturer and have different meanings depending on the vehicle.
+If the first digit is a zero, DTCs have a unique definition, but if it is a one, the definition varies by manufacturer and have different meanings depending on the vehicle.
 
 A DTC used to be stored as two bytes in the older KWP2000 protocol, that predates UDS.
 UDS added a third byte for a Failure Type Byte (FTB) to report even more information about the problem.
@@ -409,7 +421,7 @@ The ECU answers with five bytes:
 - First byte is 0x19 + 0x40 = 0x59 to signal it accepted the request.
 - Second byte repeats the sub-function byte.
 - Third byte is the "DTC Status Availability Mask" - which bits of the status flag can actually be checked by the ECU.
-- Fourth byte is the "DTC Format Identifier" (0x00 for the ISO15031-6 format)
+- Fourth byte is the "DTC Format Identifier" (e.g., 0x00 for the ISO 15031-6 DTC format or 0x01 for the ISO 14229-1 DTC format)
 - The last two bytes are the number of DTCs.
 
 For demonstration purpose, RAMN ECUs ensure that they have at least one DTC in memory when they reset. Its flag is always mark as pending, and the ECU does not allow you to filter by mask.
