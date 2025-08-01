@@ -362,31 +362,31 @@ RAMN_Result_t RAMN_FDCAN_UpdateBaudrate(uint32_t newSelection)
 #ifdef ENABLE_DYNAMIC_BITRATE
 	switch(newSelection)
 	{
-	case '0': // 9600
+	case 0: // 10000
 		result = FDCAN_ConfigureBitrate(FDCAN_BAUDRATE_0);
 		break;
-	case '1': // 19200
+	case 1: // 20000
 		result = FDCAN_ConfigureBitrate(FDCAN_BAUDRATE_1);
 		break;
-	case '2': // 38400
+	case 2: // 50000
 		result = FDCAN_ConfigureBitrate(FDCAN_BAUDRATE_2);
 		break;
-	case '3': // 57600
+	case 3: // 100000
 		result = FDCAN_ConfigureBitrate(FDCAN_BAUDRATE_3);
 		break;
-	case '4': // 115200
+	case 4: // 125000
 		result = FDCAN_ConfigureBitrate(FDCAN_BAUDRATE_4);
 		break;
-	case '5': //125k
+	case 5: // 250000
 		result = FDCAN_ConfigureBitrate(FDCAN_BAUDRATE_5);
 		break;
-	case '6': //250k
+	case 6: // 500000
 		result = FDCAN_ConfigureBitrate(FDCAN_BAUDRATE_6);
 		break;
-	case '7': // 500k
+	case 7: // 800000
 		result = FDCAN_ConfigureBitrate(FDCAN_BAUDRATE_7);
 		break;
-	case '8': // 1M
+	case 8: // 1M
 		result = FDCAN_ConfigureBitrate(FDCAN_BAUDRATE_8);
 		break;
 
@@ -463,6 +463,7 @@ void RAMN_FDCAN_ResetStatistics(void)
 	RAMN_FDCAN_Status.CANRxOverrunCnt = 0U;
 	RAMN_FDCAN_Status.prevCANError = HAL_FDCAN_ERROR_NONE;
 	RAMN_FDCAN_Status.CANErrCnt = 0U;
+	RAMN_FDCAN_Status.busOff = False;
 }
 
 RAMN_Bool_t RAMN_FDCAN_IsTXBufferSpaceAvailable(uint8_t payloadSize)
