@@ -34,6 +34,8 @@ void 	RAMN_DEBUG_DumpCANErrorRegisters(const FDCAN_ErrorCountersTypeDef* pErrCnt
 
 #if defined(ENABLE_USB_DEBUG)
 
+extern RAMN_Bool_t RAMN_DEBUG_ENABLE;
+
 // Function To Enable/Disable Debugging features
 void 	RAMN_DEBUG_SetStatus(RAMN_Bool_t status);
 

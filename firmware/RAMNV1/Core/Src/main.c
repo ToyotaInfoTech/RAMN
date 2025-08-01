@@ -1890,7 +1890,7 @@ void RAMN_ErrorTaskFunc(void *argument)
 		taskEXIT_CRITICAL();
 #endif
 #if defined(ENABLE_USB) && defined(ENABLE_USB_DEBUG)
-		RAMN_DEBUG_PrintCANError(&errorCount, &protocolStatus, &gw_freeze, err);
+		if (RAMN_DEBUG_ENABLE == True) RAMN_DEBUG_PrintCANError(&errorCount, &protocolStatus, &gw_freeze, err);
 #endif
 
 #ifdef ENABLE_USB
