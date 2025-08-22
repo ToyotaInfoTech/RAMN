@@ -752,6 +752,8 @@ def canboot(serial_port,ecu_name,readout_unprotect,readout_protect,write_unprote
                 
         if reset:     
             log("Resetting ECUs")
+            if readout_protect or write_protect or readout_unprotect or write_unprotect:
+                time.sleep(3) # Wait a bit, as these commands may take time to execute
             s.write('n' + '\r')
             if s.readline() == None:
                 log("ECU did not answer reset command")
