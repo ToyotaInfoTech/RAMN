@@ -11,7 +11,8 @@ If you are new to CTFs, we recommend that you tackle past CTFs in the following 
 - Automotive CTF Japan 2024 (Mostly Easy to Medium).
 - Automotive CTF 2024 (Mostly Medium to Difficult).
 - CHV2024 (Mostly Difficult to Very Difficult).
-- ESV2024 (Mostly Very Difficult, and not automotive related).
+- ESV2025 (Mostly Difficult, not automotive related).
+- ESV2024 (Mostly Very Difficult, not automotive related).
 
 # Required Tools
 
@@ -34,7 +35,7 @@ To reset your RAMN board to the original firmware, revert ``scripts/firmware`` t
 
 **The ESV firmware does not start in slcan mode - you must first open a USB serial terminal and type ``selfdestruct``, which will put ECU A back in DFU mode**.
 
-# About memory protection
+# About Memory Protection
 
 To prevent flag dumping, STM32's (temporary) memory protection was typically activated for every ECU during the events. 
 You can enable memory protection with the following commands, but note that **this is not required.** 
@@ -47,5 +48,11 @@ python ..\canboot.py AUTO D -rp --reset
 
 You can use ``scripts/STbootloader/windows/Unlock_BCD.bat`` to remove that protection.
 A JTAG adapter is required if you want to enable/disable memory protection for ECU A.
+
+# About File Attachments
+
+Some challenges have ECU firmware with redacted flags as an attachment.
+As explained above, ECU A firmware was recompiled to allow it to revert to DFU mode. However, attachments correspond to the original firmware used in the event.
+As a result, the redacted firmware files provided as attachments may not exactly match the flashed firmware files.
 
 
