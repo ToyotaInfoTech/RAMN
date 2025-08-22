@@ -1,0 +1,96 @@
+Challenge RAMN A-1
+Tags: RE, USB
+Difficulty: Easy
+Attachment: ECUA_REDACTED_FLAGS.hex (source code of ECU A with redacted flags)
+Prompt: Here is the firmware for ECU A (with redacted flags for challenges RAMN A-1 and RAMN A-2). Can you recover the password for the USB interface?
+
+----------------------------------------
+
+Challenge RAMN A-2
+Tags: PWN, USB, OSINT
+Difficulty: Medium
+
+Prompt: What is this, a memory dump for ants?
+(Note: This challenge follows RAMN A-1. It can be solved using only the USB serial interface and ECU A’s screen. You can assume most of the source code is unchanged from RAMN’s GitHub, and that all memory-dumping features are disabled.).
+
+----------------------------------------
+
+Challenge RAMN D-1
+Tags: PWN, UART
+Difficulty: Easy
+Prompt: ECU D’s UART debug interface has been deactivated and cannot be abused.
+(Note: You are only allowed to connect to the expansion port of ECU D for this challenge and RAMN D-2 challenge https://ramn.readthedocs.io/en/latest/hardware/expansions.html#id5 )
+
+----------------------------------------
+
+Challenge RAMN D-2
+Tags: PWN, UART
+Difficulty: Medium
+Prompt: Not quite my tempo. (Note: This challenge follows RAMN D-1).
+
+----------------------------------------
+
+(Flags below)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+RAMN A-1: flag{ch3stNu7s}
+RAMN A-2: flag{H0rSie3eS}
+RAMN D-1: flag{Bra1nst0rm}
+RAMN D-2: flag{B33GB4UD}
