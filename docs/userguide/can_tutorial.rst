@@ -8,7 +8,7 @@ Introduction
 
 `Controller Area Network (CAN) <https://en.wikipedia.org/wiki/CAN_bus>`_ is the most popular communication protocol found in vehicles.
 It uses **only two wires, common to all ECUs**: CAN High (CANH) and CAN Low (CANL).
-CAN only supports broadcasting, with no built-in restrictions: any ECU can send any message, and all ECUs connected to the same CAN bus will receive the same messages.
+CAN only supports broadcasting, with no built-in security mechanisms: any ECU can send any message, and all ECUs connected to the same CAN bus will receive the same messages.
 A CAN frame is simply a bitstream of zeroes and ones, with a fixed nominal baudrate (typically 500 kbps in modern vehicles).
 
 A CAN frame contains:

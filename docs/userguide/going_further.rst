@@ -1,6 +1,11 @@
 Going Further
 =============
 
+What to Do Next
+---------------
+
+If you have completed all the tutorials in this section and are looking for new content, try tackling the challenges in the :ref:`minictf` page, or try replaying past professional CTFs featuring RAMN (:ref:`ctf_writeups`).
+
 Using External Adapters
 -----------------------
 
@@ -82,7 +87,7 @@ You can find out which services are supported by ECU B using the "services" modu
 
 
 
-In a different window, you can use ``$ isotpdump can0 -s 7e1 -d 7e9 -c -u`` to observe traffic; make sure your receiver is closed.
+In a different window, you can use ``$ isotpdump can0 -s 7e1 -d 7e9 -c -u`` to observe traffic.
 
 .. image:: img/caringcaribou_uds_services.png
    :align: center

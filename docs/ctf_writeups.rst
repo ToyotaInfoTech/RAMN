@@ -3,8 +3,9 @@
 CTF Write-ups
 =============
 
-This page contains write-ups of past CTFs using RAMN. 
-Feel free to contact us to add or remove your own write-ups, request more details, or request ECU firmware binaries.
+This page contains write-ups of past CTFs featuring RAMN. 
+You can download past CTF firmware and challenge prompts from the `misc folder <https://github.com/ToyotaInfoTech/RAMN/tree/main/misc/past_CTFs>`_ of the github repository.
+Feel free to contact us to add or remove your own write-ups.
 
 DEFCON Embedded Systems Village 2024
 ------------------------------------
@@ -53,7 +54,7 @@ By analyzing the verify_secret_input function, we can identify which RAMN inputs
    
    
 With help from cansniffer (or RAMN's CAN RX MONITOR screen), we can identify which CAN ID corresponds to each control, by physically moving controls and observing which CAN ID has a payload that changes accordingly.
-We can then set RAMN's inputs as specified by the secret_input_function.
+We can then set RAMN's inputs as specified by the verify_secret_input.
 
 .. image:: img/writeups/chv_ecua_4.jpg
    :align: center

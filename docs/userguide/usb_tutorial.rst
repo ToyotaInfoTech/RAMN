@@ -237,7 +237,7 @@ The format is slightly different from the format in the original specifications.
 
 
 If you want to apply filters for standard identifiers, use a three-digit argument.
-For standard identifiers, use an eight-digit argument.
+For extended identifiers, use an eight-digit argument.
 
 For example, to apply filter value "701" and mask "7ff" (to only receive ID 0x701), use:
 

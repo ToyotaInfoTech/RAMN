@@ -178,7 +178,7 @@ To observe the most recent CAN message for each identifier and highlight bit cha
     $ cansniffer -c can0
 
 The first two bytes of each message represent the status of something on the board. Try moving controls and observe how these values change.
-The following two bytes represent a message counter, and the last 4 bytes represent a random value.
+The following two bytes represent a message counter, and the last four bytes represent the CRC32 of the first four bytes.
 
 Dumping CAN Traffic
 ^^^^^^^^^^^^^^^^^^^
@@ -255,7 +255,6 @@ Finally, open a fourth terminal and type the following command to send your firs
 
     $ echo "3E 00" | isotpsend -s 7e1 -d 7e9 can0
 
-Notice that the source and destination arguments have been swapped from the previous command.
 This command sends the 2-byte command "3E 00" to ECU B, which corresponds to the "Tester Present" command.
 This is an optional command to let the ECU now that you are currently diagnosing it and that it should wait for your commands.
 You should see on your "isotprecv" terminal that ECU B has answered "7E 00", which means the command was accepted.

@@ -373,7 +373,7 @@ It is recommended that you create a new module (.c and .h files) and imitate the
 Simply copy-paste the content of these files and replace "screensaver" and "screen_saver" strings with the name of your new screen.
 Then, modify the files to implement the behavior that you want, and add your structure to the ``screens`` array in ``ramn_screen_manager.c``.
 
-If you want to display an image, you can use the ``image_to_C.py`` script in the `misc` folder to convert an image file to source code that can be added to a .c file (RGR565 array).  
+If you want to display an image, you can use the ``image_to_C.py`` script in the `misc` folder to convert an image file to source code that can be added to a .c file (RGB565 array).  
 Then, use ``RAMN_SPI_DrawImage`` with your image to display it (preferably in the Init function that only gets called once, and not the Update function, that is called periodically).
 ECU A's display size is 240x240. The "internal screen" has a size of 236x195 (starting at offset x=2, y=2).
 
@@ -570,7 +570,7 @@ When you enable this flag, you will get various compile errors to indicate which
 Address them by following prompted recommendations, or by deleting the ``#error`` directives.
 
 If you do not need some of the remaining features, remove them by editing the source code directly.
-Notably, we recommend that you review available UDS services and edit ``RAMN_UDS_ProcessDiagPayload`` and ``RAMN_UDS_ProcessDiagPayload``.
+Notably, we recommend that you review available UDS services and edit ``RAMN_UDS_ProcessDiagPayload`` and ``RAMN_UDS_ProcessDiagPayloadFunctional``.
 Remember to rebuild the index to make sure STM32CubeIDE correctly highlights which functions are still available (Select **"Project"** > **"C/C++ Index"** > **"Rebuild"**).
 
 .. _memory_protection:

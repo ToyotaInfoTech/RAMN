@@ -370,7 +370,7 @@ The letter indicates the domain of the problem: "U" is for Network (ECU A), "C" 
 the first digit indicates whether the DTC is standard ("0") or manufacturer specific ("1").
 
 For example, the DTC **"P0650"** means that there was a problem in the powertrain domain.
-The 0 means that the DTC is a standard DTC, and in this context, "6" means *"Computer Output Circuit"*, and "05" means *"Malfunction Indicator Lamp (MIL) Control Circuit Malfunction"*.
+The 0 means that the DTC is a standard DTC, and in this context, "6" means *"Computer Output Circuit"*, and "50" means *"Malfunction Indicator Lamp (MIL) Control Circuit Malfunction"*.
 
 You will find plenty of information online to interpret DTCs.
 If the first digit is a zero, DTCs have a unique definition, but if it is a one, the definition varies by manufacturer and have different meanings depending on the vehicle.
@@ -416,7 +416,7 @@ For example, if you want to request the number of pending DTCs, you can use sub-
 
     $ echo "19 01 04" | isotpsend -s 7e1 -d 7e9 can0
 
-The ECU answers with five bytes:
+The ECU answers with six bytes:
 
 - First byte is 0x19 + 0x40 = 0x59 to signal it accepted the request.
 - Second byte repeats the sub-function byte.
@@ -702,7 +702,7 @@ If you want to ask the ECU to not answer if there is no error, use 0x83 instead.
 When changing the baudrate of ECUs, you will need to also update the baudrate of your CAN adapter.
 If you are using an slcan adapter, you will need to restart slcand and use the -s option (see :ref:`slcan_baudrate`).
 
-Use -s4 for 125000 bps, -s5 for 250000 bps, -s6 for 500000 bps, and -s\ **8** for 100000 bps.
+Use -s4 for 125000 bps, -s5 for 250000 bps, -s6 for 500000 bps, and -s\ **8** for 1000000 bps.
 
 For example, the following commands can be used to update RAMN's baudrate to 1000000 bps for all ECUs, **one by one** (assuming your interface is /dev/ttyACM0):
 
