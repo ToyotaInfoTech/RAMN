@@ -110,6 +110,43 @@ If you want them, consider requesting them to PCBWay or ordering them separately
 Only the terminal block requires soldering.
 Note that the Davies Molding 1300-F knobs used in the original RAMN are **not** compatible with the current order on PCBWay.
 
+Production Notes
+----------------
+
+Component Orientation
+#####################
+
+You can identify the correct orientation of each component from the pictures above, or from the :ref:`schematics_details` page.
+
+.. warning:: 
+
+	Although there are silkscreen markings to indicate the correct orientation of each component, the two following components are susceptible to be soldered with the wrong orientation by the fab and therefore require extra attention:
+
+	- SW1 (Shift Joystick): the notch should be on the opposite side of the silkscreen word "SHIFT" (it is barely visible in the picture above).
+	- SW3 (Lighting Switch): the notch on the knob should be on the side of the pin header (see picture above). There are four possible positions for this switch; if you are shown a picture where the notch is parallel to the pin header, then it should be on the opposite side of the hand brake switch.
+
+Below are clarifications based on past questions from fabs:
+
+- Orientation of D8 on 4_body PCB is as specified by the graphics at the bottom-right of the PCB's silkscreen (same orientation for all LEDs; K up and A down). The dot near the bottom of D8 is just art, it does not indicate the cathode.
+- Y1, Y2, Y3, Y4 do not have orientation (they are passive crystals, despite their unusual footprint).
+
+BOM Component References
+########################
+
+Expansions (1_screens to 5_debugger) use non-overlapping references and can easily be panelized together.
+The main board (0_ramn) has components references that overlap with the expansions, and some fabs may refuse panelization because of that reason.
+
+Notes from Past Issues
+######################
+
+ECU A's screen (external-1 in BOM) is rather fragile and requires careful handling and packaging.
+
+We have had past production issues with badly soldered potentiometers (RV1 and RV2).
+Similarly, we have had one rare occurrence of a defective SW2 (OS102011MA1QN1), probably also due to bad soldering.
+We have had one report of SW3 (on the Chassis Expansion Board) being soldered with the wrong orientation.
+
+Those components therefore require extra attention during soldering and quality check.
+
 Alternative Components
 ----------------------
 
@@ -120,32 +157,3 @@ Components availability and cost may vary.
 - **SSQ-113-23-G-D** can be replaced with **SSQ-113-23-L-D**, **SSQ-113-23-F-D**, or **SSQ-113-23-T-D**.
   They can also be replaced with **4UCON TECHNOLOGY 18507**, but those have softer pins, which are more prone to bending.
 - LEDs can be replaced with **SML-D12P8WT86**, **SML-D12D1WT86**, and **SML-D12V1WT86** (depending on color). If you use other LEDs, make sure they have a similar nominal current.
-
-
-Production Notes
-----------------
-
-BOM component references
-########################
-
-Expansions (1_screens to 5_debugger) use non-overlapping references and can easily be panelized together.
-The main board (0_ramn) has components references that overlap with the expansions, and some fabs may refuse panelization because of that reason.
-
-
-Clarifications
-##############
-
-Below are clarifications based on past questions from fabs:
-
-- Orientation of D8 on 4_body PCB is as specified by the graphics at the bottom-right of the PCB's silkscreen (same orientation for all LEDs; K up and A down). The dot near the bottom of D8 is just art, it does not indicate the cathode.
-- Y1, Y2, Y3, Y4 do not have orientation (they are passive crystals, despite their unusual footprint).
-
-
-Notes from Past Issues
-######################
-
-ECU A's screen (external-1 in BOM) is rather fragile and requires careful handling and packaging.
-
-We have had past production issues with badly soldered potentiometers (RV1 and RV2).
-Similarly, we have had one rare occurrence of a defective SW2 (OS102011MA1QN1), probably also due to bad soldering.
-Those should require extra attention during soldering and quality check.
