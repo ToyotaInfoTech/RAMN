@@ -82,6 +82,10 @@ With PCBWay, we recommend that you select one of these colors for the soldermask
 If you select a **black, white, or matte black** soldermask, PCBWay may warn you that the soldermask constraints of RAMN cannot be respected (the soldermask spacing between microcontroller pins and USB connector pins is 0.20mm, but PCBWay asks for at least 0.22mm).
 If you want to use one of these colors anyway, it is typically OK to ask PCBWay to ignore the issue, or to remove problematic soldermask themselves. This will however slightly increase the probability of soldering issues.
 
+.. note::
+
+	To avoid fabrication issues, it is recommended that you copy the content of the :ref:`componentorientation` Section in the order's details.
+
 Ordering Fewer Than a Quantity of Five (5)
 ------------------------------------------
 
@@ -112,6 +116,8 @@ Note that the Davies Molding 1300-F knobs used in the original RAMN are **not** 
 
 Production Notes
 ----------------
+
+.. _componentorientation:
 
 Component Orientation
 #####################
