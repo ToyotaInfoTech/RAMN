@@ -335,7 +335,7 @@ Example: Make a Decision Based on RAMN Controls
 You can read the value of current RAMN controls using:
 
 - Variables in ``ramn_sensors.h`` if the ECU has physical access (e.g., ECU C for shift joystick).
-- Variables in ``ramn_dbc.h`` if the ECU does not (e.g., ECU B, C, and D for shift joystick).
+- Variables in ``ramn_dbc.h`` if the ECU does not (e.g., ECU A, B, and D for shift joystick).
 
 For example, if you want ECU C (which is physically connected to the shift joystick) to execute code only when the joystick is released, you can add this condition:
 
@@ -346,7 +346,7 @@ For example, if you want ECU C (which is physically connected to the shift joyst
 		// Your code
 	}
 
-If you want to apply the same condition to another ECU (ECU B, C, or D), you can add this condition:
+If you want to apply the same condition to another ECU (ECU A, B, or D), you can add this condition:
 
 .. code-block:: C
 
