@@ -19,9 +19,14 @@ Expected Option Bytes
 ---------------------
 
 If you have trouble reprogramming or debugging RAMN, use STM32CubeProgrammer to make sure that the option bytes are as below. 
+
 **Configurations are different for ECU A, and for ECU B/C/D.**
 
 **Correct configuration for ECU A Option Bytes**:
+
+.. warning::
+
+	Do not update ECU A's Option Bytes if it does not have a valid firmware (e.g., because programming failed or was interrupted).
 
 .. figure:: img/OptionBytes_ECUA.png
 

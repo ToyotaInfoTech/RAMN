@@ -131,9 +131,10 @@ Then, follow the instructions below:
 .. warning::
 
     As of 2024, the DFU tool provided by STMicroelectronics does not work well on some computers.
-    You may need to run the script several times in a row until it succeeds. Trying different USB ports of your computer may help.
+    You may need to run the script several times in a row until it succeeds. Trying different USB ports of your computer or using a USB hub may help.
     The program should display "Start operation achieved successfully" in green when it is successful.
-    If you encounter too many issues, try using the Linux dfu-util tool instead.
+    If you encounter too many issues, try using the Linux dfu-util tool instead. **Do not update Option Bytes manually if programming fails.**
+
 
 .. _jtag_interface:
 
