@@ -13,7 +13,9 @@ firmware/RAMNV1_CTF/.settings/language.settings.xml
 firmware/RAMNV1/.cproject
 firmware/RAMNV1/.mxproject
 /firmware/RAMNV1/Release
-/scripts/utils/__pycache__
+**/__pycache__/
+*.pyc
+*.pyo
 /docs/.idea
 /hardware/V1_revC/0_ramn/ramn-backups
 hardware/V1_revC/0_ramn/fp-info-cache
@@ -28,3 +30,4 @@ firmware/RAMNV1/Core/Src/ramn_screen_template.c
 firmware/RAMNV1/RAMNV1 Debug.launch
 workspace/
 __pycache__/
+*.so
