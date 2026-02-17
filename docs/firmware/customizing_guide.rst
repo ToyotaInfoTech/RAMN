@@ -192,7 +192,7 @@ This ensures that all ECUs have access to all RAMN controls, even if a control b
 For example, if you want to know the status of ECU C's joystick from ECU A, you can simply read the value of ``RAMN_DBC_Handle.joystick``.
 
 - The function ``RAMN_ACTUATORS_ApplyControls`` in ``ramn_actuators.c`` is responsible for determining the payload to set for outgoing periodic CAN/CAN-FD messages.  
-- The function ``RAMN_DBC_FormatDefaultPeriodicMessage`` in ``ramn_dbc.c`` formats the message by adding a counter and a CRC32 checksum.  
+- The function ``RAMN_DBC_FormatDefaultPeriodicMessage`` in ``ramn_dbc.c`` formats the message by adding a counter and a CRC32 checksum. The position of these fields is defined per message in ``ramn_vehicle_specific.c`` (using ``counterOffset`` and ``crcOffset``). Setting these offsets to -1 will disable the corresponding field for that message.  
 - The function ``RAMN_DBC_Send`` actually transmits the CAN messages.  
 - The function ``RAMN_DBC_ProcessCANMessage`` interprets and records incoming CAN messages in the RAMN_DBC module.
 
@@ -770,7 +770,8 @@ To implement your own message authentication or encryption mechanism over CAN (o
 
 Read the :ref:`canfd_upgrade` section if you want to use CAN-FD instead of CAN. Read the :ref:`advanced_can_modifications` section to learn more about the ``ramn_dbc.c`` module.
 
-To modify only a specific CAN/CAN-FD message (e.g., the brake control message) instead of all messages, update ``RAMN_DBC_Send`` to call your function instead of ``RAMN_DBC_FormatDefaultPeriodicMessage``.  
+To modify only a specific CAN/CAN-FD message (e.g., the brake control message) instead of all messages, update ``RAMN_DBC_Send`` to call your function instead of ``RAMN_DBC_FormatDefaultPeriodicMessage``.
+Note that if you only want to change the position (or existence) of the counter and CRC, you do not need to modify this function; you can simply update the message definition in ``ramn_vehicle_specific.c`` (by modifying ``counterOffset`` and ``crcOffset``).  
 For example:
 
 .. code-block:: C
