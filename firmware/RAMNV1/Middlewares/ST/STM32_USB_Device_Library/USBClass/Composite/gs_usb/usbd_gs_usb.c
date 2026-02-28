@@ -254,8 +254,8 @@ static uint8_t gsusb_config_request(USBD_HandleTypeDef *pdev, USBD_SetupReqTyped
 
 static uint8_t gsusb_vendor_request(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req)
 {
-	uint8_t req_rcpt = req->bRequest & 0x1F;
-	uint8_t req_type = (req->bRequest >> 5) & 0x03;
+	uint8_t req_rcpt = req->bmRequest & 0x1F;
+	uint8_t req_type = (req->bmRequest >> 5) & 0x03;
 
 	if (
 			(req_type == 0x01) // class request
@@ -279,7 +279,7 @@ USBD_StatusTypeDef USBD_GSUSB_Init(USBD_HandleTypeDef *pdev)
 	}
 	pdev->ep_in[GSUSB_IN_EP & 0xFU].is_used = 1U;
 
-	USBD_LL_OpenEP(pdev, GSUSB_OUT_EP, USBD_EP_TYPE_BULK, CAN_DATA_MAX_PACKET_SIZE);
+	ret = USBD_LL_OpenEP(pdev, GSUSB_OUT_EP, USBD_EP_TYPE_BULK, CAN_DATA_MAX_PACKET_SIZE);
 	if(ret != USBD_OK)
 	{
 		return ret;
@@ -412,9 +412,17 @@ void GSUSB_MarshalFrame(USBD_HandleTypeDef *pdev, struct gs_host_frame *in, uint
 	out[ofs++] = in->channel;
 	out[ofs++] = in->flags;
 	out[ofs++] = in->reserved;
-	RAMN_memcpy(&out[ofs], in->data, in->can_dlc); ofs += in->can_dlc;
-	if(!hcan->enable_fdcan) RAMN_memset(&out[ofs], 0x00, 8 - in->can_dlc);
-	else RAMN_memset(&out[ofs], 0x00, 64 - in->can_dlc);
+	RAMN_memcpy(&out[ofs], in->data, in->can_dlc);
+	if(!hcan->enable_fdcan)
+	{
+		RAMN_memset(&out[ofs + in->can_dlc], 0x00, 8 - in->can_dlc);
+		ofs += 8;
+	}
+	else
+	{
+		RAMN_memset(&out[ofs + in->can_dlc], 0x00, 64 - in->can_dlc);
+		ofs += 64;
+	}
 
 	if (hcan->timestamps_enabled)
 	{
@@ -438,9 +446,17 @@ void GSUSB_UnmarshalFrame(USBD_HandleTypeDef *pdev, uint8_t *in, uint16_t inlen,
 	out->channel = in[ofs++];
 	out->flags = in[ofs++];
 	out->reserved = in[ofs++];
-	RAMN_memcpy(out->data, &in[ofs], out->can_dlc); ofs += out->can_dlc;
-	if(!hcan->enable_fdcan) RAMN_memset(&out->data[ofs], 0x00, 8 - out->can_dlc);
-	else RAMN_memset(&out->data[ofs], 0x00, 64 - out->can_dlc);
+	RAMN_memcpy(out->data, &in[ofs], out->can_dlc);
+	if(!hcan->enable_fdcan)
+	{
+		RAMN_memset(&out->data[out->can_dlc], 0x00, 8 - out->can_dlc);
+		ofs += 8;
+	}
+	else
+	{
+		RAMN_memset(&out->data[out->can_dlc], 0x00, 64 - out->can_dlc);
+		ofs += 64;
+	}
 
 	if (hcan->timestamps_enabled)
 	{

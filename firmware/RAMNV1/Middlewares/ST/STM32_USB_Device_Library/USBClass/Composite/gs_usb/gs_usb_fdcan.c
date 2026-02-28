@@ -91,9 +91,9 @@ void FDCAN_DefaultInit(FDCAN_Instance *fdcan_data)
 	fdcan_data->bitrate_info.sjw        = hfdcan1.Init.NominalSyncJumpWidth;
 
 	fdcan_data->data_bitrate_info.prescaler  = hfdcan1.Init.DataPrescaler;
-	fdcan_data->data_bitrate_info.phase_seg1 = hfdcan1.Init.DataPrescaler;
-	fdcan_data->data_bitrate_info.phase_seg2 = hfdcan1.Init.DataPrescaler;
-	fdcan_data->data_bitrate_info.sjw        = hfdcan1.Init.DataPrescaler;
+	fdcan_data->data_bitrate_info.phase_seg1 = hfdcan1.Init.DataTimeSeg1;
+	fdcan_data->data_bitrate_info.phase_seg2 = hfdcan1.Init.DataTimeSeg2;
+	fdcan_data->data_bitrate_info.sjw        = hfdcan1.Init.DataSyncJumpWidth;
 }
 
 /*!
@@ -214,9 +214,56 @@ void FDCAN_DeinitQueues(void)
  * @brief get current queue max size
  * @retval current queue max size
  */
-uint32_t FDCAN_GetQueueSize()
+uint32_t FDCAN_GetQueueSize(void)
 {
 	return g_frames_list_len;
+}
+
+/*!
+ * @brief get can dlc associated HAL macro value
+ * @param[in] n actual byte length
+ * @retval FDCAN_DLC_BYTES_xx(see HAL macro stm32l5xx_hal_fdcan.h)
+ */
+uint32_t FDCAN_ConvertToDLC(int n)
+{
+	if (n <= 0)  return FDCAN_DLC_BYTES_0;
+	if (n <= 8)  return (uint32_t)n;
+	if (n <= 12) return FDCAN_DLC_BYTES_12;
+	if (n <= 16) return FDCAN_DLC_BYTES_16;
+	if (n <= 20) return FDCAN_DLC_BYTES_20;
+	if (n <= 24) return FDCAN_DLC_BYTES_24;
+	if (n <= 32) return FDCAN_DLC_BYTES_32;
+	if (n <= 48) return FDCAN_DLC_BYTES_48;
+	return FDCAN_DLC_BYTES_64;
+}
+
+/*!
+ * @brief get actual byte length from HAL macro value (see HAL macro stm32l5xx_hal_fdcan.h)
+ * @param[in] dlc HAL macro value
+ * @retval actual byte length
+ */
+uint8_t FDCAN_ConvertToActual(uint32_t dlc)
+{
+	switch (dlc)
+	{
+	case FDCAN_DLC_BYTES_0:  return 0;
+	case FDCAN_DLC_BYTES_1:  return 1;
+	case FDCAN_DLC_BYTES_2:  return 2;
+	case FDCAN_DLC_BYTES_3:  return 3;
+	case FDCAN_DLC_BYTES_4:  return 4;
+	case FDCAN_DLC_BYTES_5:  return 5;
+	case FDCAN_DLC_BYTES_6:  return 6;
+	case FDCAN_DLC_BYTES_7:  return 7;
+	case FDCAN_DLC_BYTES_8:  return 8;
+	case FDCAN_DLC_BYTES_12: return 12;
+	case FDCAN_DLC_BYTES_16: return 16;
+	case FDCAN_DLC_BYTES_20: return 20;
+	case FDCAN_DLC_BYTES_24: return 24;
+	case FDCAN_DLC_BYTES_32: return 32;
+	case FDCAN_DLC_BYTES_48: return 48;
+	case FDCAN_DLC_BYTES_64: return 64;
+	default:                 return 0;
+	}
 }
 
 #endif
