@@ -30,15 +30,6 @@ RAMN_Result_t RAMN_GSUSB_ProcessRX(FDCAN_RxHeaderTypeDef *canRxHeader, uint8_t *
 	qret = xQueueReceive(RAMN_GSUSB_PoolQueueHandle, &frameData, portMAX_DELAY);
 	if (qret == pdPASS)
 	{
-		// Does not support CAN FD yet
-		if(canRxHeader->FDFormat == FDCAN_FD_CAN)
-		{
-#ifdef HANG_ON_ERRORS
-			Error_Handler();
-#endif
-			return RAMN_ERROR;
-		}
-
 		frameData->can_id = canRxHeader->Identifier;
 		if (canRxHeader->IdType != FDCAN_STANDARD_ID) frameData->can_id |= CAN_EFF_FLAG;
 		if (canRxHeader->RxFrameType != FDCAN_DATA_FRAME) frameData->can_id |= CAN_RTR_FLAG;
@@ -49,7 +40,20 @@ RAMN_Result_t RAMN_GSUSB_ProcessRX(FDCAN_RxHeaderTypeDef *canRxHeader, uint8_t *
 		frameData->can_dlc = canRxHeader->DataLength;
 		frameData->timestamp_us = (xTaskGetTickCount() * (1000000 /*us per sec*/ / configTICK_RATE_HZ) );
 
-		if (!(frameData->can_id & CAN_RTR_FLAG)) RAMN_memcpy(frameData->data, canRxData, frameData->can_dlc);
+#ifdef ENABLE_GSUSB_CANFD
+		if (canRxHeader->FDFormat == FDCAN_FD_CAN)
+		{
+			frameData->flags |= GS_CAN_FLAG_FD;
+			if (canRxHeader->BitRateSwitch == FDCAN_BRS_ON)   frameData->flags |= GS_CAN_FLAG_BRS;
+			if (canRxHeader->ErrorStateIndicator == FDCAN_ESI_PASSIVE) frameData->flags |= GS_CAN_FLAG_ESI;
+		}
+#endif
+
+		if (!(frameData->can_id & CAN_RTR_FLAG))
+		{
+			uint8_t actual = FDCAN_ConvertToActual(frameData->can_dlc);
+			RAMN_memcpy(frameData->data, canRxData, actual);
+		}
 
 		// Send to task
 		qret = xQueueSendToBack(RAMN_GSUSB_SendQueueHandle, &frameData, CAN_QUEUE_TIMEOUT);
@@ -75,21 +79,25 @@ RAMN_Result_t RAMN_GSUSB_ProcessTX(FDCAN_TxHeaderTypeDef *canTxHeader, uint8_t *
 	qret = xQueueReceive(RAMN_GSUSB_PoolQueueHandle, &frameData, CAN_QUEUE_TIMEOUT);
 	if (qret == pdPASS)
 	{
-		// Does not support CAN FD yet
-		if(canTxHeader->FDFormat == FDCAN_FD_CAN)
-		{
-#ifdef HANG_ON_ERRORS
-			Error_Handler();
-#endif
-			return RAMN_ERROR;
-		}
-
 		frameData->can_id = canTxHeader->Identifier;
 		frameData->echo_id = 0xFFFFFFFF;
 		frameData->channel = 0;
+		frameData->flags = 0;
 		frameData->can_dlc = canTxHeader->DataLength;
 		frameData->timestamp_us = 0;  // timestamps are ignored on send
-		RAMN_memcpy(frameData->data, canRxData, frameData->can_dlc);
+
+#ifdef ENABLE_GSUSB_CANFD
+		if (canTxHeader->FDFormat == FDCAN_FD_CAN)
+		{
+			frameData->flags |= GS_CAN_FLAG_FD;
+			if (canTxHeader->BitRateSwitch == FDCAN_BRS_ON) frameData->flags |= GS_CAN_FLAG_BRS;
+		}
+#endif
+
+		{
+			uint8_t actual = FDCAN_ConvertToActual(frameData->can_dlc);
+			RAMN_memcpy(frameData->data, canRxData, actual);
+		}
 
 		// Send to task
 		qret = xQueueSendToBack(RAMN_GSUSB_SendQueueHandle, &frameData, CAN_QUEUE_TIMEOUT);
