@@ -1867,7 +1867,6 @@ void RAMN_ErrorTaskFunc(void *argument)
 {
   /* USER CODE BEGIN RAMN_ErrorTaskFunc */
 	/* Infinite loop */
-	//TODO: report Errors to GS_USB
 	FDCAN_ErrorCountersTypeDef errorCount;
 	FDCAN_ProtocolStatusTypeDef protocolStatus;
 	RAMN_FDCAN_Status_t gw_freeze;
@@ -1902,6 +1901,13 @@ void RAMN_ErrorTaskFunc(void *argument)
 
 #ifdef ENABLE_USB
 		if(err & HAL_FDCAN_ERROR_PROTOCOL_DATA) RAMN_FDCAN_Status.slcanFlags |= SLCAN_FLAG_BUS_ERROR;
+#endif
+
+#ifdef ENABLE_GSUSB
+		if(RAMN_USB_Config.gsusbOpened && GSUSB_IsConnected((USBD_HandleTypeDef*)hpcd_USB_FS.pData))
+		{
+			RAMN_GSUSB_SendErrorFrame(&protocolStatus, &errorCount, err);
+		}
 #endif
 
 #if defined(AUTO_RECOVER_BUSOFF)

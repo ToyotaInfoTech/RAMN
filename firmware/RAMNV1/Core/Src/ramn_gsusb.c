@@ -103,4 +103,82 @@ RAMN_Result_t RAMN_GSUSB_ProcessTX(FDCAN_TxHeaderTypeDef *canTxHeader, uint8_t *
 	return ret;
 }
 
+RAMN_Result_t RAMN_GSUSB_SendErrorFrame(const FDCAN_ProtocolStatusTypeDef *protocolStatus, const FDCAN_ErrorCountersTypeDef *errorCount, uint32_t err)
+{
+	BaseType_t            qret;
+	struct gs_host_frame *frameData;
+
+	// Get frame data pointer from pool queue (non-blocking)
+	qret = xQueueReceive(RAMN_GSUSB_PoolQueueHandle, &frameData, 0);
+	if (qret != pdPASS) return RAMN_ERROR;
+
+	frameData->echo_id = 0xFFFFFFFF;
+	frameData->can_id = CAN_ERR_FLAG;
+	frameData->can_dlc = CAN_ERR_DLC;
+	frameData->channel = 0;
+	frameData->flags = 0;
+	frameData->reserved = 0;
+	frameData->timestamp_us = (xTaskGetTickCount() * (1000000U / configTICK_RATE_HZ));
+	RAMN_memset(frameData->data, 0, CAN_ERR_DLC);
+
+	// Bus off
+	if (protocolStatus->BusOff != 0U)
+	{
+		frameData->can_id |= CAN_ERR_BUSOFF;
+	}
+
+	// Controller error state
+	if ((protocolStatus->ErrorPassive != 0U) || (protocolStatus->Warning != 0U))
+	{
+		frameData->can_id |= CAN_ERR_CRTL;
+		if (protocolStatus->Warning != 0U)
+		{
+			if (errorCount->TxErrorCnt >= 96U) frameData->data[1] |= CAN_ERR_CRTL_TX_WARNING;
+			if (errorCount->RxErrorCnt >= 96U) frameData->data[1] |= CAN_ERR_CRTL_RX_WARNING;
+		}
+		if (protocolStatus->ErrorPassive != 0U)
+		{
+			if (errorCount->TxErrorCnt >= 128U) frameData->data[1] |= CAN_ERR_CRTL_TX_PASSIVE;
+			if (errorCount->RxErrorPassive != 0U) frameData->data[1] |= CAN_ERR_CRTL_RX_PASSIVE;
+		}
+	}
+
+	// Protocol errors
+	if ((err & (HAL_FDCAN_ERROR_PROTOCOL_ARBT | HAL_FDCAN_ERROR_PROTOCOL_DATA)) != 0U)
+	{
+		uint32_t lec = protocolStatus->LastErrorCode;
+		frameData->can_id |= CAN_ERR_BUSERROR;
+		if ((lec != FDCAN_PROTOCOL_ERROR_NONE) && (lec != FDCAN_PROTOCOL_ERROR_NO_CHANGE))
+		{
+			frameData->can_id |= CAN_ERR_PROT;
+			switch (lec)
+			{
+			case FDCAN_PROTOCOL_ERROR_STUFF: frameData->data[2] = CAN_ERR_PROT_STUFF; break;
+			case FDCAN_PROTOCOL_ERROR_FORM:  frameData->data[2] = CAN_ERR_PROT_FORM;  break;
+			case FDCAN_PROTOCOL_ERROR_ACK:   frameData->can_id |= CAN_ERR_ACK;        break;
+			case FDCAN_PROTOCOL_ERROR_BIT1:  frameData->data[2] = CAN_ERR_PROT_BIT1;  break;
+			case FDCAN_PROTOCOL_ERROR_BIT0:  frameData->data[2] = CAN_ERR_PROT_BIT0;  break;
+			case FDCAN_PROTOCOL_ERROR_CRC:   frameData->data[3] = CAN_ERR_PROT_LOC_CRC_SEQ; break;
+			default:                         frameData->data[2] = CAN_ERR_PROT_UNSPEC; break;
+			}
+		}
+	}
+
+	// Only send if there is actual error info
+	if (frameData->can_id == CAN_ERR_FLAG)
+	{
+		xQueueSendToBack(RAMN_GSUSB_PoolQueueHandle, &frameData, portMAX_DELAY);
+		return RAMN_OK;
+	}
+
+	qret = xQueueSendToBack(RAMN_GSUSB_SendQueueHandle, &frameData, 0);
+	if (qret != pdPASS)
+	{
+		xQueueSendToBack(RAMN_GSUSB_PoolQueueHandle, &frameData, portMAX_DELAY);
+		return RAMN_ERROR;
+	}
+
+	return RAMN_OK;
+}
+
 #endif

@@ -30,6 +30,9 @@ RAMN_Result_t RAMN_GSUSB_ProcessRX(FDCAN_RxHeaderTypeDef *canRxHeader, uint8_t *
 // Forward a USB message to CAN
 RAMN_Result_t RAMN_GSUSB_ProcessTX(FDCAN_TxHeaderTypeDef *canTxHeader, uint8_t *canRxData);
 
+// Send a CAN error frame to USB
+RAMN_Result_t RAMN_GSUSB_SendErrorFrame(const FDCAN_ProtocolStatusTypeDef *protocolStatus, const FDCAN_ErrorCountersTypeDef *errorCount, uint32_t err);
+
 #endif
 
 #endif /* INC_RAMN_GSUSB_H_ */
