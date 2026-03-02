@@ -62,6 +62,15 @@ void 			RAMN_USB_SendFromTask_Blocking(uint8_t* data, uint32_t length);
 // Sends Data over USB. Returns as soon as buffer is filled.
 RAMN_Result_t 	RAMN_USB_SendFromTask(const uint8_t* data, uint32_t length);
 
+// Acquires the USB TX lock. Must be paired with RAMN_USB_ReleaseLock.
+void 			RAMN_USB_AcquireLock(void);
+
+// Releases the USB TX lock previously acquired by RAMN_USB_AcquireLock.
+void 			RAMN_USB_ReleaseLock(void);
+
+// Sends Data over USB while the USB TX lock is already held by the caller.
+RAMN_Result_t 	RAMN_USB_SendFromTask_Locked(const uint8_t* data, uint32_t length);
+
 // Sends a string over serial USB
 RAMN_Result_t 	RAMN_USB_SendStringFromTask(const char* data);
 

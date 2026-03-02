@@ -113,6 +113,32 @@ RAMN_Result_t RAMN_USB_SendFromTask(const uint8_t* data, uint32_t length)
 	return result;
 }
 
+void RAMN_USB_AcquireLock(void)
+{
+	while (xSemaphoreTake(USB_TX_SEMAPHORE, portMAX_DELAY ) != pdTRUE);
+}
+
+void RAMN_USB_ReleaseLock(void)
+{
+	xSemaphoreGive(USB_TX_SEMAPHORE);
+}
+
+RAMN_Result_t RAMN_USB_SendFromTask_Locked(const uint8_t* data, uint32_t length)
+{
+	size_t xBytesSent = 0;
+	RAMN_Result_t result = RAMN_OK;
+
+	xBytesSent = xStreamBufferSend(*usbTxBuffer, data, length, 2000U);
+	if (xBytesSent != length)
+	{
+		RAMN_USB_Config.USBTxOverflowCnt++;
+		result = RAMN_ERROR;
+		while( xStreamBufferReset(*usbTxBuffer) != pdPASS) osDelay(10); //Clear buffer
+	}
+
+	return result;
+}
+
 RAMN_Result_t RAMN_USB_SendStringFromTask(const char* data)
 {
 	return RAMN_USB_SendFromTask((uint8_t*)data, RAMN_strlen(data));
