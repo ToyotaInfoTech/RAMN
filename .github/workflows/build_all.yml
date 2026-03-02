@@ -193,8 +193,6 @@ jobs:
     name: Report
     permissions:
       contents: read
-      pull-requests: write
-      issues: write
     needs: [build_all, macro_coverage]
     if: always()
     runs-on: ubuntu-latest
@@ -238,35 +236,18 @@ jobs:
             --compiled-lines "${{ steps.line_coverage.outputs.compiled_lines }}" \
             --coverage-pct "${{ steps.line_coverage.outputs.coverage_pct }}"
 
-      - name: Post PR comment
+      - name: Save PR number
         if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
+        run: echo "${{ github.event.pull_request.number }}" > pr-number.txt
+
+      - name: Upload coverage report artifact
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
         with:
-          script: |
-            const fs = require('fs');
-            const body = fs.readFileSync('report.md', 'utf8');
-            const marker = '<!-- build-coverage-report -->';
-            const {data: comments} = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-            });
-            const existing = comments.find(c => c.body.includes(marker));
-            if (existing) {
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: existing.id,
-                body: body,
-              });
-            } else {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                body: body,
-              });
-            }
+          name: coverage-report
+          path: |
+            report.md
+            pr-number.txt
 
       - name: Write step summary
         if: always()
