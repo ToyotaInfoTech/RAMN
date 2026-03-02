@@ -9,10 +9,15 @@ shift 2 2>/dev/null || shift $#
 
 SKIP_IMPORT=false
 BUILD_MODE="-cleanBuild"
-for arg in "$@"; do
-	case "$arg" in
-		--skip-import) SKIP_IMPORT=true ;;
-		--no-clean) BUILD_MODE="-build" ;;
+EXTRA_DEFINES=""
+
+while [[ $# -gt 0 ]]; do
+	case "$1" in
+		--skip-import) SKIP_IMPORT=true; shift ;;
+		--no-clean) BUILD_MODE="-build"; shift ;;
+		-D) EXTRA_DEFINES="${EXTRA_DEFINES} -D $2"; shift 2 ;;
+		-D*) EXTRA_DEFINES="${EXTRA_DEFINES} $1"; shift ;;
+		*) shift ;;
 	esac
 done
 
@@ -32,4 +37,4 @@ fi
 # when the Docker container's clock differs from the host that created the files.
 find "${WORKSPACE}" -type f -exec touch -c {} + 2>/dev/null || true
 
-headless-build.sh -data /tmp/stm-workspace ${BUILD_MODE} ${PROJECT_NAME}/${PROJECT_CONF} -D ${ECU}
+headless-build.sh -data /tmp/stm-workspace ${BUILD_MODE} ${PROJECT_NAME}/${PROJECT_CONF} -D ${ECU} ${EXTRA_DEFINES}
