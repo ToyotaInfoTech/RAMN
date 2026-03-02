@@ -1,60 +1,277 @@
-name: build all, clean release and debug
+name: Build
 
 on:
   push:
+    branches: [main]
   pull_request:
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
 
 jobs:
   build_all:
+    name: ${{ matrix.conf }} (tag ${{ matrix.cubeide_docker_tag }})
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
         spice: [RAMNV1]
         conf: [Release, Debug]
-    
+        cubeide_docker_tag: ["7.0", "15.0"]
+
     runs-on: ubuntu-latest
     steps:
       - name: checkout
         uses: actions/checkout@v4
 
-      - name: Build ECUB
-        uses: xanderhendriks/action-build-stm32cubeide@v7.0
-        with:
-          project-path: firmware/${{ matrix.spice }} -D TARGET_ECUB
-          project-target: ${{ matrix.spice}}/${{ matrix.conf}} -D TARGET_ECUB
-      - name: Copy ECUB hex
-        run: cp firmware/${{ matrix.spice }}/${{ matrix.conf }}/${{ matrix.spice }}.hex scripts/firmware/ECUB.hex
+      - name: Build all ECUs (${{ matrix.conf }})
+        env:
+          DOCKER_STM32CUBEIDE_TAG: ${{ matrix.cubeide_docker_tag }}
+        run: |
+          chmod +x scripts/build/docker_BUILD_Clean_${{ matrix.conf }}.sh scripts/build/_build_ecu.sh
+          bash scripts/build/docker_BUILD_Clean_${{ matrix.conf }}.sh
 
-      - name: Build ECUC
-        uses: xanderhendriks/action-build-stm32cubeide@v7.0
+      - name: Collect hex file sizes
+        if: always()
+        run: |
+          mkdir -p build-metrics
+          for ecu in ECUA ECUB ECUC ECUD; do
+            hex="scripts/firmware/${ecu}.hex"
+            if [ -f "$hex" ]; then
+              echo "${ecu}=$(wc -c < "$hex" | tr -d ' ')" >> build-metrics/hex-sizes.txt
+            else
+              echo "${ecu}=N/A" >> build-metrics/hex-sizes.txt
+            fi
+          done
+
+      - name: Upload build metrics
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
-          project-path: firmware/${{ matrix.spice }} -D TARGET_ECUC
-          project-target: ${{ matrix.spice}}/${{ matrix.conf}} -D TARGET_ECUC
-      - name: Copy ECUC hex
-        run: cp firmware/${{ matrix.spice }}/${{ matrix.conf }}/${{ matrix.spice }}.hex scripts/firmware/ECUC.hex
-        
-      - name: Build ECUD
-        uses: xanderhendriks/action-build-stm32cubeide@v7.0
-        with:
-          project-path: firmware/${{ matrix.spice }} -D TARGET_ECUD
-          project-target: ${{ matrix.spice}}/${{ matrix.conf}} -D TARGET_ECUD
-      - name: Copy ECUD hex
-        run: cp firmware/${{ matrix.spice }}/${{ matrix.conf }}/${{ matrix.spice }}.hex scripts/firmware/ECUD.hex
-      
-      - name: Build ECUA
-        if: ${{ matrix.spice!='RAMNV1_CTF' }}
-        uses: xanderhendriks/action-build-stm32cubeide@v7.0
-        with:
-          project-path: firmware/${{ matrix.spice }} -D TARGET_ECUA
-          project-target: ${{ matrix.spice}}/${{ matrix.conf}} -D TARGET_ECUA
-      - name: Copy ECUA hex
-        if: ${{ matrix.spice!='RAMNV1_CTF' }}
-        run: cp firmware/${{ matrix.spice }}/${{ matrix.conf }}/${{ matrix.spice }}.hex scripts/firmware/ECUA.hex
-      
+          name: build-metrics-${{ matrix.spice }}-${{ matrix.conf }}-${{ matrix.cubeide_docker_tag }}
+          path: build-metrics/
 
       - name: upload RAMN dir as artifact
         if: ${{ !env.ACT }}
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.spice }}-${{ matrix.conf}}
+          name: ${{ matrix.spice }}-${{ matrix.conf }}-${{ matrix.cubeide_docker_tag }}
           path: .
+
+  macro_coverage:
+    name: ${{ matrix.variant }}
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - ecu: TARGET_ECUA
+            variant: gsusb
+            enable: "ENABLE_GSUSB"
+            disable: "ENABLE_CDC"
+          - ecu: TARGET_ECUA
+            variant: no_uds
+            enable: ""
+            disable: "ENABLE_UDS ENABLE_UDS_REPROGRAMMING"
+          - ecu: TARGET_ECUA
+            variant: no_extras
+            enable: ""
+            disable: "ENABLE_J1979 ENABLE_MINICTF ENABLE_CHIP8 ENABLE_SCREEN ENABLE_SPI"
+          - ecu: TARGET_ECUA
+            variant: no_debug
+            enable: ""
+            disable: "ENABLE_USB_DEBUG ENABLE_JOYSTICK_CONTROLS ENABLE_SCREEN ENABLE_CHIP8 GENERATE_RUNTIME_STATS"
+          - ecu: TARGET_ECUB
+            variant: kwp
+            enable: "ENABLE_KWP"
+            disable: ""
+          - ecu: TARGET_ECUB
+            variant: no_dynamic_bitrate
+            enable: ""
+            disable: "ENABLE_DYNAMIC_BITRATE"
+          - ecu: TARGET_ECUB
+            variant: watchdog
+            enable: "WATCHDOG_ENABLE"
+            disable: ""
+          - ecu: TARGET_ECUC
+            variant: uart
+            enable: "ENABLE_UART"
+            disable: ""
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: Modify ramn_config.h
+        run: |
+          python3 .github/modify_config.py \
+            --ecu "${{ matrix.ecu }}" \
+            --variant "${{ matrix.variant }}" \
+            --enable "${{ matrix.enable }}" \
+            --disable "${{ matrix.disable }}"
+
+      - name: Macro-testing build ${{ matrix.ecu }}
+        id: build
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          chmod +x scripts/build/_build_ecu.sh
+          source scripts/build/_version.sh
+          docker run --rm -e STM32_IMPORT_FLAG -v "$(pwd)":/workspace xanderhendriks/stm32cubeide:${DOCKER_STM32CUBEIDE_TAG} bash -c '
+            set -e
+            ECU='"'"'${{ matrix.ecu }}'"'"'
+            OUTPUT_FOLDER="/workspace/scripts/firmware"
+            PROJECT_NAME=RAMNV1
+            mkdir -p "${OUTPUT_FOLDER}"
+            bash /workspace/scripts/build/_build_ecu.sh "${ECU}" Release
+            ECU_NAME="${ECU#TARGET_}"
+            cp -pr "/workspace/firmware/${PROJECT_NAME}/Release/${PROJECT_NAME}.hex" "${OUTPUT_FOLDER}/${ECU_NAME}.hex"
+          ' 2>&1 | tee build-output.log
+
+      - name: Collect build results
+        if: always()
+        run: |
+          mkdir -p macro-results
+          {
+            echo "ecu=${{ matrix.ecu }}"
+            echo "variant=${{ matrix.variant }}"
+            echo "enable=${{ matrix.enable }}"
+            echo "disable=${{ matrix.disable }}"
+            echo "outcome=${{ steps.build.outcome }}"
+            ecu_name="${{ matrix.ecu }}"
+            ecu_name="${ecu_name#TARGET_}"
+            hex="scripts/firmware/${ecu_name}.hex"
+            if [ -f "$hex" ]; then
+              echo "hex_size=$(wc -c < "$hex" | tr -d ' ')"
+            else
+              echo "hex_size=N/A"
+            fi
+            if [ -f build-output.log ]; then
+              warn_count=$(grep -ci 'warning:' build-output.log || true)
+            else
+              warn_count=0
+            fi
+            echo "warnings=${warn_count}"
+          } > macro-results/result.txt
+
+      - name: Upload macro results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: macro-results-${{ matrix.ecu }}-${{ matrix.variant }}
+          path: macro-results/
+
+      - name: Report build result
+        if: always()
+        run: |
+          if [ "${{ steps.build.outcome }}" = "success" ]; then
+            echo "### ✅ Build PASSED" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### ❌ Build FAILED" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Failed configuration details:**" >> $GITHUB_STEP_SUMMARY
+            echo "- **ECU:** \`${{ matrix.ecu }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "- **Variant:** \`${{ matrix.variant }}\`" >> $GITHUB_STEP_SUMMARY
+            if [ -n "${{ matrix.enable }}" ]; then
+              echo "- **Macros enabled:** \`${{ matrix.enable }}\`" >> $GITHUB_STEP_SUMMARY
+            fi
+            if [ -n "${{ matrix.disable }}" ]; then
+              echo "- **Macros disabled:** \`${{ matrix.disable }}\`" >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+
+      - name: Fail job if build failed
+        if: always() && steps.build.outcome == 'failure'
+        run: exit 1
+
+  coverage_report:
+    name: Report
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    needs: [build_all, macro_coverage]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: Download build metrics
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          pattern: build-metrics-*
+          path: all-build-metrics
+
+      - name: Download macro results
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          pattern: macro-results-*
+          path: all-macro-results
+
+      - name: Calculate .c line coverage
+        id: line_coverage
+        run: |
+          python3 .github/calculate_coverage.py \
+            firmware/RAMNV1/Core/Inc/ramn_config.h \
+            firmware/RAMNV1/Core/Src \
+            all-macro-results > coverage_output.txt
+          cat coverage_output.txt
+          while IFS='=' read -r key value; do
+            echo "${key}=${value}" >> "$GITHUB_OUTPUT"
+          done < coverage_output.txt
+
+      - name: Generate report
+        run: |
+          python3 .github/generate_report.py \
+            --metrics-dir all-build-metrics \
+            --results-dir all-macro-results \
+            --config firmware/RAMNV1/Core/Inc/ramn_config.h \
+            --total-lines "${{ steps.line_coverage.outputs.total_lines }}" \
+            --compiled-lines "${{ steps.line_coverage.outputs.compiled_lines }}" \
+            --coverage-pct "${{ steps.line_coverage.outputs.coverage_pct }}"
+
+      - name: Post PR comment
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const body = fs.readFileSync('report.md', 'utf8');
+            const marker = '<!-- build-coverage-report -->';
+            const {data: comments} = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const existing = comments.find(c => c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body: body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body,
+              });
+            }
+
+      - name: Write step summary
+        if: always()
+        run: cat report.md >> $GITHUB_STEP_SUMMARY
+
+      - name: Fail if upstream builds failed
+        if: always() && (needs.build_all.result == 'failure' || needs.macro_coverage.result == 'failure')
+        run: exit 1

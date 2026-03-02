@@ -6,9 +6,7 @@ RAMN (Resistant Automotive Miniature Network) is a miniature CAN/CAN-FD testbed 
 
 Please check the [Documentation](https://ramn.readthedocs.io/) for demonstrations and details.
 
-[![build all, clean release and debug](https://github.com/BenGardiner/RAMN/actions/workflows/build_all.yml/badge.svg)](https://github.com/BenGardiner/RAMN/actions/workflows/build_all.yml) [^1]
-
-[^1]: pointing temporarily at a fork while this org's policies prevent automated builds)
+[![build all, clean release and debug](https://github.com/ToyotaInfoTech/RAMN/actions/workflows/build_all.yml/badge.svg)](https://github.com/ToyotaInfoTech/RAMN/actions/workflows/build_all.yml)
 
 ## Fabricating RAMN boards
 
