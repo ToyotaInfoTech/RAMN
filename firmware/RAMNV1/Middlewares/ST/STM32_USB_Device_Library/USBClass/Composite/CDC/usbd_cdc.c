@@ -190,3 +190,5 @@ USBD_StatusTypeDef USBD_CDC_Setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef
 }
 
 #endif
+
+typedef int usbd_cdc_prevent_empty_translation_unit;

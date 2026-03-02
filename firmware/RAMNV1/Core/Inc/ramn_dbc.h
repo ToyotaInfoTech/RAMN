@@ -22,7 +22,7 @@
 #include "main.h"
 #include "ramn_canfd.h"
 #include "ramn_crc.h"
-#ifdef ENABLE_SCREEN
+#ifdef ENABLE_JOYSTICK_CONTROLS
 #include "ramn_joystick.h"
 #endif
 

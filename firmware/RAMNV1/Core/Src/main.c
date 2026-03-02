@@ -553,6 +553,8 @@ int main(void)
 		if (dtcCnt == 0U)
 		{
 			// No DTC, add one per ECU
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic" // needed bc 0b binary constants are an extension
 #ifdef TARGET_ECUA
 			uint32_t dtcVal = 0b11 << 30; // "11" for network ("U")
 			dtcVal |= 0x0029 << 16; // Bus A Performance, FTB 0
@@ -566,6 +568,7 @@ int main(void)
 			uint32_t dtcVal = 0b10 << 30;// "10" for body ("B")
 			dtcVal |= 0x0091 << 16; // Active switch wrong state, FTB 0
 #endif
+#pragma GCC diagnostic pop
 
 			dtcVal |= 1 << 2; //mark DTC as pending.
 			RAMN_DTC_AddNew(dtcVal);
@@ -1455,7 +1458,10 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 		}
 		uart_current_index = 0;
 	}
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wincompatible-pointer-types" // needed to avoid passing the technically correct (but strange looking) uart_rx_data
 	HAL_UART_Receive_IT(&hlpuart1, &uart_rx_data, 1);
+#pragma GCC diagnostic pop
 }
 #endif
 
@@ -1508,7 +1514,10 @@ void RAMN_ReceiveUSBFunc(void *argument)
 		}
 	}
 #elif defined(ENABLE_UART)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wincompatible-pointer-types" //needed to avoid passing the technically correct (but strange looking) uart_rx_data
 	HAL_UART_Receive_IT(&hlpuart1, &uart_rx_data, 1); // Start receiving characters, one by one by default (slow)
+#pragma GCC diagnostic pop
 
 	for(;;)
 	{
@@ -2018,7 +2027,7 @@ void RAMN_DiagRXFunc(void *argument)
 					index = 0;
 					while (index != diagRxSize)
 					{
-						index += xStreamBufferReceive(KwpRxDataStreamBufferHandle, (void *)diagRxbuf+index,diagRxSize-index, portMAX_DELAY);
+						index += xStreamBufferReceive(KwpRxDataStreamBufferHandle, (void *)((uint8_t *)diagRxbuf+index),diagRxSize-index, portMAX_DELAY);
 					}
 
 
@@ -2050,7 +2059,7 @@ void RAMN_DiagRXFunc(void *argument)
 					index = 0;
 					while (index != diagRxSize)
 					{
-						index += xStreamBufferReceive(XcpRxDataStreamBufferHandle, (void *)diagRxbuf+index,diagRxSize-index, portMAX_DELAY);
+						index += xStreamBufferReceive(XcpRxDataStreamBufferHandle, (void *)((uint8_t *)diagRxbuf+index),diagRxSize-index, portMAX_DELAY);
 					}
 
 

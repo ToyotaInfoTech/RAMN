@@ -56,7 +56,7 @@ void RAMN_CHIP8_SetColor(uint16_t fg, uint16_t bg);
 void RAMN_CHIP8_Init(const uint8_t* game_to_load, uint16_t game_size);
 
 // Returns whether a game is currently being played or not.
-uint8_t RAMN_CHIP8_IsGameActive();
+RAMN_Bool_t RAMN_CHIP8_IsGameActive();
 
 // Starts the game currently loaded in memory.
 void RAMN_CHIP8_StartGame(uint32_t xLastWakeTime);

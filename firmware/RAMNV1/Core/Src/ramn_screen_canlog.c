@@ -84,7 +84,7 @@ static void SCREENCANLOG_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeade
 		message = &canMessageBuffer.messages[canMessageBuffer.head];
 		message->identifier = pHeader->Identifier;
 		message->payload_size = pHeader->DataLength;
-		RAMN_memcpy(message->data, data, pHeader->DataLength);
+		RAMN_memcpy((uint8_t*)message->data, data, pHeader->DataLength);
 
 		// Update the buffer head and count
 		canMessageBuffer.head = (canMessageBuffer.head + 1) % CAN_MESSAGE_BUFFER_SIZE;
@@ -153,7 +153,8 @@ static void SCREENCANLOG_Update(uint32_t tick)
 			for (uint8_t i = 0; i < canMessageBuffer.count; i++)
 			{
 				uint32_t index = (start_index + i) % CAN_MESSAGE_BUFFER_SIZE;
-				CAN_Message *message = &canMessageBuffer.messages[index];
+				// Safe to cast away volatile: access is protected by CANLOG_SEMAPHORE
+				CAN_Message *message = (CAN_Message *)&canMessageBuffer.messages[index];
 				uint8_t tmp[21];
 
 				if(xStreamBufferBytesAvailable(CANRxDataStreamBufferHandle) > MAX_BUFFER_BYTES)

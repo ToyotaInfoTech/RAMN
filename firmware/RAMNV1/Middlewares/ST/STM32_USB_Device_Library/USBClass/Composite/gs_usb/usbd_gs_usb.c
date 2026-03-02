@@ -43,6 +43,7 @@
 #include "usbd_gsusb_if.h"
 #include "gs_usb_breq.h"
 
+#ifdef ENABLE_GSUSB
 static uint8_t gsusb_vendor_request(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req);
 
 // device info
@@ -54,6 +55,7 @@ static const struct gs_device_config gscan_dconf = {
 		1, // software version
 		2  // hardware version
 };
+#endif
 
 // bit timing constraints
 const struct gs_device_bt_const gscan_btconst = {
@@ -371,7 +373,7 @@ USBD_StatusTypeDef USBD_GSUSB_SetChannel(USBD_HandleTypeDef *pdev, uint8_t chann
 }
 
 
-uint8_t USBD_GSUSB_SendFrame(USBD_HandleTypeDef *pdev, struct gs_host_frame *frame)
+USBD_StatusTypeDef USBD_GSUSB_SendFrame(USBD_HandleTypeDef *pdev, struct gs_host_frame *frame)
 {
 	uint16_t                   len;
 	uint8_t                    buf[128];
@@ -393,7 +395,7 @@ uint8_t USBD_GSUSB_SendFrame(USBD_HandleTypeDef *pdev, struct gs_host_frame *fra
 		len = sizeof(buf);
 	}
 
-	return GSUSB_Transmit(pdev, buf, len);
+	return (USBD_StatusTypeDef)GSUSB_Transmit(pdev, buf, len);
 }
 
 void GSUSB_MarshalFrame(USBD_HandleTypeDef *pdev, struct gs_host_frame *in, uint8_t *out, uint16_t *outlen)

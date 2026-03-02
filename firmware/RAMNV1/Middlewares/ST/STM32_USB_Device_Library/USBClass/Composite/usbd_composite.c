@@ -798,4 +798,7 @@ uint8_t USBD_Composite_ReceivePacket(USBD_HandleTypeDef *pdev, uint32_t epnum)
 }
 
 #endif
+
+typedef int usbd_composite_prevent_empty_translation_unit;
+
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

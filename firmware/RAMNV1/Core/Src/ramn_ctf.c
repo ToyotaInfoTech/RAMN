@@ -15,6 +15,7 @@
  */
 
 #include "ramn_ctf.h"
+#include <string.h>
 
 #ifdef ENABLE_MINICTF
 

@@ -15,6 +15,7 @@
  */
 
 #include "ramn_uds.h"
+#include <string.h>
 
 #if defined(ENABLE_UDS)
 
@@ -475,13 +476,13 @@ static void RAMN_UDS_ReadDataByIdentifier(uint8_t* data, uint16_t size)
 			{
 #if defined(ENABLE_MINICTF) && defined(TARGET_ECUD)
 			case 0x0001:
-				RAMN_memcpy(&(answer[3]),FLAG_UDS_1,sizeof(FLAG_UDS_1)-1);
+				RAMN_memcpy(&(answer[3]),(const uint8_t*)FLAG_UDS_1,sizeof(FLAG_UDS_1)-1);
 				answer_size = 3+(sizeof(FLAG_UDS_1)-1);
 				break;
 			case 0x0002:
 				if (checkAuthenticated() == True)
 				{
-					RAMN_memcpy(&(answer[3]),FLAG_UDS_5,sizeof(FLAG_UDS_5)-1);
+					RAMN_memcpy(&(answer[3]),(const uint8_t*)FLAG_UDS_5,sizeof(FLAG_UDS_5)-1);
 					answer_size = 3+(sizeof(FLAG_UDS_5)-1);
 				}
 				else
@@ -493,7 +494,7 @@ static void RAMN_UDS_ReadDataByIdentifier(uint8_t* data, uint16_t size)
 				}
 				break;
 			case 0x7742:
-				RAMN_memcpy(&(answer[3]),FLAG_UDS_2,sizeof(FLAG_UDS_2)-1);
+				RAMN_memcpy(&(answer[3]),(const uint8_t*)FLAG_UDS_2,sizeof(FLAG_UDS_2)-1);
 				answer_size = 3+(sizeof(FLAG_UDS_2)-1);
 				break;
 #endif
@@ -1080,7 +1081,7 @@ static void RAMN_UDS_RoutineControlExecuteArbitraryCode(const uint8_t* data, uin
 {
 	if (checkAuthenticated() == True)
 	{
-		exec_func_t func = (&data[4] + 1); //use +1 to force thumb mode, data must be aligned.
+		exec_func_t func = (exec_func_t)(uintptr_t)(&data[4] + 1); //use +1 to force thumb mode, data must be aligned.
 		__DSB();
 		__ISB();
 		func();
@@ -1731,7 +1732,7 @@ static void processCustomServiceFlag(const uint8_t* data, uint16_t size)
 	else if ((data[2] == 0x13) && data[3] == 0x37)
 	{
 		uds_answerData[0] = data[0] + 0x40;
-		RAMN_memcpy(&uds_answerData[1], FLAG_UDS_3, sizeof(FLAG_UDS_3)-1);
+		RAMN_memcpy(&uds_answerData[1], (const uint8_t*)FLAG_UDS_3, sizeof(FLAG_UDS_3)-1);
 		*uds_answerSize = sizeof(FLAG_UDS_3);
 	}
 	else

@@ -221,16 +221,18 @@ uint32_t UINT8toDLC(uint8_t dlc)
 
 void RAMN_memset(void* dst, uint8_t byte, uint32_t size)
 {
+	uint8_t* p = (uint8_t *)dst;
 	for(uint32_t i = 0; i < size; i++)
 	{
-		*(uint8_t *)dst = byte;
-		(uint8_t *)(dst)++;
+		p[i] = byte;
 	}
 }
 
-void RAMN_memcpy(uint8_t* dst, const uint8_t* src, uint32_t size)
+void RAMN_memcpy(void* dst, const void* src, uint32_t size)
 {
-	for(uint32_t i = 0; i < size; i++) dst[i] = src[i];
+	uint8_t* d = (uint8_t*)dst;
+	const uint8_t* s = (const uint8_t*)src;
+	for(uint32_t i = 0; i < size; i++) d[i] = s[i];
 }
 
 uint16_t RAMN_strlen(const char *str)

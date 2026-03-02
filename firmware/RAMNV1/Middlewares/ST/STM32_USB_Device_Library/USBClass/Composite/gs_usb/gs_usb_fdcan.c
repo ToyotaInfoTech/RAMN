@@ -23,6 +23,7 @@
 #include "cmsis_os.h"
 
 #include "ramn_config.h"
+#include "ramn_canfd.h"
 #include "../../../USBClass/Composite/gs_usb/usbd_gs_usb.h"
 #include "../../../USBClass/Composite/usbd_composite.h"
 

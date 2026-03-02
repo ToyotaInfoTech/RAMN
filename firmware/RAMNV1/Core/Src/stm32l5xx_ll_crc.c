@@ -103,5 +103,7 @@ ErrorStatus LL_CRC_DeInit(CRC_TypeDef *CRCx)
 
 #endif /* USE_FULL_LL_DRIVER */
 
+typedef int stm32l5xx_ll_crc_prevent_empty_translation_unit;
+
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
 

@@ -429,4 +429,7 @@ static int8_t CDC_TransmitCplt_FS(uint8_t *Buf, uint32_t *Len, uint8_t epnum)
  * @}
  */
 #endif /* ENABLE_USB */
+
+typedef int usbd_cdc_if_prevent_empty_translation_unit;
+
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

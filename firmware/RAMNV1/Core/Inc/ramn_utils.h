@@ -72,7 +72,7 @@ uint32_t UINT8toDLC(uint8_t dlc);
 void     RAMN_memset(void* dst, uint8_t byte, uint32_t size);
 
 // Regular memcpy operation
-void RAMN_memcpy(uint8_t* dst, const uint8_t* src, uint32_t size);
+void RAMN_memcpy(void* dst, const void* src, uint32_t size);
 
 // Regular strlen operation
 uint16_t RAMN_strlen(const char *str);

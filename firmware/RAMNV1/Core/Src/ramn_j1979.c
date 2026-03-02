@@ -15,6 +15,7 @@
  */
 
 #include "ramn_j1979.h"
+#include <string.h>
 
 #if defined(ENABLE_UDS) || defined(ENABLE_KWP)
 
@@ -498,7 +499,7 @@ static void showStoredDTCs(const uint8_t* data, uint16_t size, uint8_t* answerDa
 			answerData[0U] = data[0U] + 0x40;
 			answerData[1U] = numDTC&0xFF;
 
-			for(uint16_t i; i < (numDTC&0xFF); i++ )
+			for(uint16_t i = 0U; i < (numDTC&0xFF); i++ )
 			{
 				if (RAMN_DTC_GetIndex(i, &tmp) != RAMN_OK)
 				{

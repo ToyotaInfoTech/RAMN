@@ -44,6 +44,10 @@ void HAL_SPI_TxCpltCallback (SPI_HandleTypeDef * hspi)
 	portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
 }
 
+#endif
+
+#ifdef ENABLE_SCREEN
+
 static HAL_StatusTypeDef SPI_WriteData_DMA(const uint8_t *data, uint16_t nbytes)
 {
 	HAL_StatusTypeDef result;
@@ -84,10 +88,6 @@ static HAL_StatusTypeDef SPI_WriteDataUint32_DMA(uint32_t data)
 	HAL_GPIO_WritePin(LCD_nCS_GPIO_Port, LCD_nCS_Pin, GPIO_PIN_SET);
 	return result;
 }
-
-#endif
-
-#ifdef ENABLE_SCREEN
 
 static void SPI_SetAddrWindow(uint16_t x, uint16_t y, uint16_t w, uint16_t h)
 {
