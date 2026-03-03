@@ -47,11 +47,14 @@
 
 // Enable this flag to enable the candlelight interface (gs_usb drivers)
 // Current implementation is experimental:
-// - Error frames are not reported
-// - CAN-FD is not supported
 // - Due to clock differences, bit timings are not respected (but equivalent baudrates are used)
 // Try increasing _Min_Stack_Size if you run into issues
 //#define ENABLE_GSUSB
+
+// Enable this flag to enable CAN-FD support in the gs_usb interface.
+// When enabled, FD frames (up to 64 bytes) with BRS and ESI flags are supported.
+// Requires ENABLE_GSUSB to be defined.
+//#define ENABLE_GSUSB_CANFD
 
 #ifndef ENABLE_GSUSB
 #define USBD_VID                        0x483
@@ -398,6 +401,10 @@
 
 #if !defined(ENABLE_USB) && defined(ENABLE_GSUSB)
 #error Cannot activate GSUSB without enabling USB
+#endif
+
+#if defined(ENABLE_GSUSB_CANFD) && !defined(ENABLE_GSUSB)
+#error Cannot activate GSUSB_CANFD without enabling GSUSB
 #endif
 
 #if defined(ENABLE_USB) && !defined(ENABLE_CDC) && !defined(ENABLE_GSUSB)

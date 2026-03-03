@@ -64,7 +64,12 @@ const struct gs_device_bt_const gscan_btconst = {
 		| GS_CAN_FEATURE_HW_TIMESTAMP
 		| GS_CAN_FEATURE_IDENTIFY
 		| GS_CAN_FEATURE_USER_ID
-		| GS_CAN_FEATURE_PAD_PKTS_TO_MAX_PKT_SIZE,
+		| GS_CAN_FEATURE_PAD_PKTS_TO_MAX_PKT_SIZE
+#ifdef ENABLE_GSUSB_CANFD
+		| GS_CAN_FEATURE_FD
+		| GS_CAN_FEATURE_BT_CONST_EXT
+#endif
+		,
 		48000000, // can timing base clock
 		1,        // tseg1 min
 		16,       // tseg1 max
@@ -75,6 +80,36 @@ const struct gs_device_bt_const gscan_btconst = {
 		512,      // brp_max
 		1,        // brp increment;
 };
+
+#ifdef ENABLE_GSUSB_CANFD
+static const struct gs_device_bt_const_extended gscan_btconst_ext = {
+		GS_CAN_FEATURE_LISTEN_ONLY  // supported features
+		| GS_CAN_FEATURE_LOOP_BACK
+		| GS_CAN_FEATURE_HW_TIMESTAMP
+		| GS_CAN_FEATURE_IDENTIFY
+		| GS_CAN_FEATURE_USER_ID
+		| GS_CAN_FEATURE_PAD_PKTS_TO_MAX_PKT_SIZE
+		| GS_CAN_FEATURE_FD
+		| GS_CAN_FEATURE_BT_CONST_EXT,
+		48000000, // can timing base clock
+		1,        // tseg1 min
+		16,       // tseg1 max
+		2,        // tseg2 min
+		8,        // tseg2 max
+		4,        // sjw max
+		1,        // brp min
+		512,      // brp_max
+		1,        // brp increment
+		1,        // dtseg1 min
+		16,       // dtseg1 max
+		2,        // dtseg2 min
+		8,        // dtseg2 max
+		4,        // dsjw max
+		1,        // dbrp min
+		512,      // dbrp_max
+		1,        // dbrp increment
+};
+#endif
 
 
 /*  Microsoft Compatible ID Feature Descriptor  */
@@ -224,11 +259,15 @@ static uint8_t gsusb_config_request(USBD_HandleTypeDef *pdev, USBD_SetupReqTyped
 		USBD_CtlPrepareRx(pdev, hcan->ep0_buf, req->wLength);
 		break;
 	case GS_USB_BREQ_DATA_BITTIMING:
-
+#ifdef ENABLE_GSUSB_CANFD
 		hcan->enable_fdcan = 1;
 		hcan->last_setup_request = *req;
 		USBD_CtlPrepareRx(pdev, hcan->ep0_buf, req->wLength);
 		break;
+#else
+		ret = USBD_FAIL;
+		break;
+#endif
 	case GS_USB_BREQ_DEVICE_CONFIG:
 		RAMN_memcpy(hcan->ep0_buf, &gscan_dconf, sizeof(gscan_dconf));
 		USBD_CtlSendData(pdev, hcan->ep0_buf, req->wLength);
@@ -238,6 +277,14 @@ static uint8_t gsusb_config_request(USBD_HandleTypeDef *pdev, USBD_SetupReqTyped
 		RAMN_memcpy(hcan->ep0_buf, &gscan_btconst, sizeof(gscan_btconst));
 		USBD_CtlSendData(pdev, hcan->ep0_buf, req->wLength);
 		break;
+
+#ifdef ENABLE_GSUSB_CANFD
+	case GS_USB_BREQ_BT_CONST_EXT:
+		// Use USBD_DescBuf instead of ep0_buf: extended bt_const (72 bytes) exceeds ep0_buf (64 bytes)
+		RAMN_memcpy(USBD_DescBuf, &gscan_btconst_ext, sizeof(gscan_btconst_ext));
+		USBD_CtlSendData(pdev, USBD_DescBuf, MIN(sizeof(gscan_btconst_ext), req->wLength));
+		break;
+#endif
 
 	case GS_USB_BREQ_TIMESTAMP:
 		RAMN_memcpy(hcan->ep0_buf, &hcan->sof_timestamp_us, sizeof(hcan->sof_timestamp_us));
@@ -254,8 +301,8 @@ static uint8_t gsusb_config_request(USBD_HandleTypeDef *pdev, USBD_SetupReqTyped
 
 static uint8_t gsusb_vendor_request(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req)
 {
-	uint8_t req_rcpt = req->bRequest & 0x1F;
-	uint8_t req_type = (req->bRequest >> 5) & 0x03;
+	uint8_t req_rcpt = req->bmRequest & 0x1F;
+	uint8_t req_type = (req->bmRequest >> 5) & 0x03;
 
 	if (
 			(req_type == 0x01) // class request
@@ -279,7 +326,7 @@ USBD_StatusTypeDef USBD_GSUSB_Init(USBD_HandleTypeDef *pdev)
 	}
 	pdev->ep_in[GSUSB_IN_EP & 0xFU].is_used = 1U;
 
-	USBD_LL_OpenEP(pdev, GSUSB_OUT_EP, USBD_EP_TYPE_BULK, CAN_DATA_MAX_PACKET_SIZE);
+	ret = USBD_LL_OpenEP(pdev, GSUSB_OUT_EP, USBD_EP_TYPE_BULK, CAN_DATA_MAX_PACKET_SIZE);
 	if(ret != USBD_OK)
 	{
 		return ret;
@@ -412,9 +459,20 @@ void GSUSB_MarshalFrame(USBD_HandleTypeDef *pdev, struct gs_host_frame *in, uint
 	out[ofs++] = in->channel;
 	out[ofs++] = in->flags;
 	out[ofs++] = in->reserved;
-	RAMN_memcpy(&out[ofs], in->data, in->can_dlc); ofs += in->can_dlc;
-	if(!hcan->enable_fdcan) RAMN_memset(&out[ofs], 0x00, 8 - in->can_dlc);
-	else RAMN_memset(&out[ofs], 0x00, 64 - in->can_dlc);
+	{
+		uint8_t actual = FDCAN_ConvertToActual(in->can_dlc);
+		RAMN_memcpy(&out[ofs], in->data, actual);
+		if(!hcan->enable_fdcan)
+		{
+			RAMN_memset(&out[ofs + actual], 0x00, 8 - actual);
+			ofs += 8;
+		}
+		else
+		{
+			RAMN_memset(&out[ofs + actual], 0x00, 64 - actual);
+			ofs += 64;
+		}
+	}
 
 	if (hcan->timestamps_enabled)
 	{
@@ -438,9 +496,20 @@ void GSUSB_UnmarshalFrame(USBD_HandleTypeDef *pdev, uint8_t *in, uint16_t inlen,
 	out->channel = in[ofs++];
 	out->flags = in[ofs++];
 	out->reserved = in[ofs++];
-	RAMN_memcpy(out->data, &in[ofs], out->can_dlc); ofs += out->can_dlc;
-	if(!hcan->enable_fdcan) RAMN_memset(&out->data[ofs], 0x00, 8 - out->can_dlc);
-	else RAMN_memset(&out->data[ofs], 0x00, 64 - out->can_dlc);
+	{
+		uint8_t actual = FDCAN_ConvertToActual(out->can_dlc);
+		RAMN_memcpy(out->data, &in[ofs], actual);
+		if(!hcan->enable_fdcan)
+		{
+			RAMN_memset(&out->data[actual], 0x00, 8 - actual);
+			ofs += 8;
+		}
+		else
+		{
+			RAMN_memset(&out->data[actual], 0x00, 64 - actual);
+			ofs += 64;
+		}
+	}
 
 	if (hcan->timestamps_enabled)
 	{

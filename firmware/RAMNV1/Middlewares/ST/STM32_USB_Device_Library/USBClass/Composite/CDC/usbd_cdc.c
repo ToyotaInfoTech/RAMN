@@ -34,6 +34,7 @@
 *                            Public functions                                  *
 *==============================================================================*/
 
+#ifdef ENABLE_CDC
 static void cdc_init(USBD_HandleTypeDef *pdev, uint8_t index)
 {
 	if(index == 0)
@@ -61,6 +62,7 @@ static void cdc_init(USBD_HandleTypeDef *pdev, uint8_t index)
 		((USBD_Composite_HandleTypeDef *)pdev->pClassData)->RxState[0] = 0U;
 	}
 }
+#endif
 
 /**
   * @brief  USBD_CDC_Init

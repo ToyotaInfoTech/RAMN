@@ -1867,7 +1867,6 @@ void RAMN_ErrorTaskFunc(void *argument)
 {
   /* USER CODE BEGIN RAMN_ErrorTaskFunc */
 	/* Infinite loop */
-	//TODO: report Errors to GS_USB
 	FDCAN_ErrorCountersTypeDef errorCount;
 	FDCAN_ProtocolStatusTypeDef protocolStatus;
 	RAMN_FDCAN_Status_t gw_freeze;
@@ -1902,6 +1901,13 @@ void RAMN_ErrorTaskFunc(void *argument)
 
 #ifdef ENABLE_USB
 		if(err & HAL_FDCAN_ERROR_PROTOCOL_DATA) RAMN_FDCAN_Status.slcanFlags |= SLCAN_FLAG_BUS_ERROR;
+#endif
+
+#ifdef ENABLE_GSUSB
+		if(RAMN_USB_Config.gsusbOpened && GSUSB_IsConnected((USBD_HandleTypeDef*)hpcd_USB_FS.pData))
+		{
+			RAMN_GSUSB_SendErrorFrame(&protocolStatus, &errorCount, err);
+		}
 #endif
 
 #if defined(AUTO_RECOVER_BUSOFF)
@@ -2287,10 +2293,7 @@ void RAMN_RxTask2Func(void *argument)
 		else
 		{
 
-			// TODO implement CAN-FD
-
 			//recvFrame->echo_id
-			//recvFrame.flags
 			//recvFrame.reserved
 
 
@@ -2302,9 +2305,20 @@ void RAMN_RxTask2Func(void *argument)
 			if (recvFrame->can_id & CAN_EFF_FLAG) CANTxHeader.IdType = FDCAN_EXTENDED_ID;
 			else CANTxHeader.IdType = FDCAN_STANDARD_ID;
 
-			CANTxHeader.BitRateSwitch = FDCAN_BRS_OFF;
-			CANTxHeader.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
-			CANTxHeader.FDFormat = FDCAN_CLASSIC_CAN;
+#ifdef ENABLE_GSUSB_CANFD
+			if (recvFrame->flags & GS_CAN_FLAG_FD)
+			{
+				CANTxHeader.FDFormat = FDCAN_FD_CAN;
+				CANTxHeader.BitRateSwitch = (recvFrame->flags & GS_CAN_FLAG_BRS) ? FDCAN_BRS_ON : FDCAN_BRS_OFF;
+				CANTxHeader.ErrorStateIndicator = (recvFrame->flags & GS_CAN_FLAG_ESI) ? FDCAN_ESI_PASSIVE : FDCAN_ESI_ACTIVE;
+			}
+			else
+#endif
+			{
+				CANTxHeader.FDFormat = FDCAN_CLASSIC_CAN;
+				CANTxHeader.BitRateSwitch = FDCAN_BRS_OFF;
+				CANTxHeader.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
+			}
 			CANTxHeader.TxEventFifoControl = FDCAN_NO_TX_EVENTS;
 
 			//CANTxHeader.MessageMarker = 0U;

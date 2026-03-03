@@ -20,7 +20,7 @@ jobs:
       matrix:
         spice: [RAMNV1]
         conf: [Release, Debug]
-        cubeide_docker_tag: ["7.0", "15.0"]
+        cubeide_docker_tag: ["15.0"]
 
     runs-on: ubuntu-latest
     steps:
@@ -72,6 +72,10 @@ jobs:
           - ecu: TARGET_ECUA
             variant: gsusb
             enable: "ENABLE_GSUSB"
+            disable: "ENABLE_CDC"
+          - ecu: TARGET_ECUA
+            variant: gsusb-fdcan
+            enable: "ENABLE_GSUSB ENABLE_GSUSB_CANFD"
             disable: "ENABLE_CDC"
           - ecu: TARGET_ECUA
             variant: no_uds
