@@ -20,7 +20,7 @@ jobs:
       matrix:
         spice: [RAMNV1]
         conf: [Release, Debug]
-        cubeide_docker_tag: ["7.0", "15.0"]
+        cubeide_docker_tag: ["15.0"]
 
     runs-on: ubuntu-latest
     steps:
