@@ -150,9 +150,12 @@ __ALIGN_BEGIN uint8_t USBD_MDC_DeviceDesc[USB_LEN_DEV_DESC] __ALIGN_END =
 		USB_DESC_TYPE_DEVICE,       /*bDescriptorType*/
 		0x00,                       /*bcdUSB */
 		0x02,
-		0xEF,                       /*bDeviceClass*/
-		0x02,                       /*bDeviceSubClass*/
-		0x01,                       /*bDeviceProtocol*/
+		/* WARNING: Class 0xEF/0x02/0x01 (Misc/Common/IAD) is required for
+		 * composite device enumeration. Without this, AMD xHCI controllers
+		 * fail to split interfaces into separate child devices. */
+		0xEF,                       /*bDeviceClass: Miscellaneous */
+		0x02,                       /*bDeviceSubClass: Common Class */
+		0x01,                       /*bDeviceProtocol: IAD */
 		USB_MAX_EP0_SIZE,           /*bMaxPacketSize*/
 		LOBYTE(USBD_VID),           /*idVendor*/
 		HIBYTE(USBD_VID),           /*idVendor*/

@@ -51,7 +51,10 @@ void (*USBD_serialCloseCallback_ptr)(USBD_HandleTypeDef* hUsbDeviceFS, uint8_t i
 /*=============================================================================*
 *                            Static global variable                            *
 *==============================================================================*/
-/* USB Standard Device Descriptor */
+/* WARNING: GetDeviceQualifierDescriptor callback MUST NOT be NULL.
+ * STM32 USB library zero-initializes dev_speed to USBD_SPEED_HIGH (0).
+ * Before HAL_PCD_ResetCallback sets speed to FULL, a Device Qualifier
+ * request will call this callback; if NULL, the device hard-faults. */
 __ALIGN_BEGIN static uint8_t USBD_Composite_DeviceQualifierDesc[USB_LEN_DEV_QUALIFIER_DESC] __ALIGN_END =
 {
 	USB_LEN_DEV_QUALIFIER_DESC,
@@ -76,13 +79,27 @@ __ALIGN_BEGIN static uint8_t USBD_Composite_CfgFSDesc[] __ALIGN_END =
 	USB_DESC_TYPE_CONFIGURATION,          // bDescriptorType: Configuration
 	USB_COMPOSITE_CONFIG_DESC_SIZ,        // wTotalLength:no of returned bytes
 	0x00,
-	USBD_MAX_NUM_INTERFACES,              // bNumInterfaces: 2 or 4
+	USBD_MAX_NUM_INTERFACES,              // bNumInterfaces: 1 or 3
 	0x01,                                 // bConfigurationValue: Configuration value
 	0x00,                                 // iConfiguration: Index of string descriptor describing the configuration
 	0x80,                                 // bmAttributes: Bus powered
 	0xFA,                                 // MaxPower 500 mA
 
 #ifdef ENABLE_GSUSB
+	//---------------------------------------------------------------------------
+	// IAD for GS_USB
+	// WARNING: IAD is required for composite device enumeration on AMD
+	// xHCI controllers. bInterfaceCount MUST be 1 (gs_usb only).
+	//---------------------------------------------------------------------------
+	0x08,                                 // bLength: Interface Association Descriptor size
+	0x0B,                                 // bDescriptorType: IAD
+	GSUSB_WINDEX,                         // bFirstInterface: gs_usb interface number
+	0x01,                                 // bInterfaceCount
+	0xFF,                                 // bFunctionClass: Vendor Specific
+	0xFF,                                 // bFunctionSubClass: Vendor Specific
+	0xFF,                                 // bFunctionProtocol: Vendor Specific
+	0x00,                                 // iFunction
+
 	//---------------------------------------------------------------------------
 	// GS_USB Interface Descriptor
 	//---------------------------------------------------------------------------
@@ -111,38 +128,18 @@ __ALIGN_BEGIN static uint8_t USBD_Composite_CfgFSDesc[] __ALIGN_END =
 
 	//---------------------------------------------------------------------------
 	// EP2 descriptor
+	// WARNING: wMaxPacketSize MUST be <= 64 for Full Speed bulk endpoints
+	// per USB 2.0 §5.8.3. Larger values cause enumeration failure on
+	// AMD xHCI controllers.
 	//---------------------------------------------------------------------------
 	0x07,                                 // bLength
 	USB_DESC_TYPE_ENDPOINT,               // bDescriptorType
 	GSUSB_OUT_EP,                         // bEndpointAddress
 	0x02,                                 // bmAttributes: bulk
-	LOBYTE(GSUSB_RX_DATA_SIZE),           // wMaxPacketSize
-	HIBYTE(GSUSB_RX_DATA_SIZE),
+	LOBYTE(CAN_DATA_MAX_PACKET_SIZE),     // wMaxPacketSize
+	HIBYTE(CAN_DATA_MAX_PACKET_SIZE),
 	0x00,                                 // bInterval:
 	//---------------------------------------------------------------------------
-
-	//---------------------------------------------------------------------------
-	// DFU Interface Descriptor
-	//---------------------------------------------------------------------------
-	0x09,                                 // bLength
-	USB_DESC_TYPE_INTERFACE,              // bDescriptorType
-	GSUSB_WINDEX + 1,                     // bInterfaceNumber
-	0x00,                                 // bAlternateSetting
-	0x00,                                 // bNumEndpoints
-	0xFE,                                 // bInterfaceClass: Vendor Specific
-	0x01,                                 // bInterfaceSubClass
-	0x01,                                 // bInterfaceProtocol : Runtime mode
-	DFU_INTERFACE_STR_INDEX,              // iInterface
-
-	//---------------------------------------------------------------------------
-	// Run-Time DFU Functional Descriptor
-	//---------------------------------------------------------------------------
-	0x09,                                 // bLength
-	0x21,                                 // bDescriptorType: DFU FUNCTIONAL
-	0x0B,                                 // bmAttributes: detach, upload, download
-	0xFF, 0x00,                           // wDetachTimeOut
-	0x00, 0x64,                           // wTransferSize
-	0x1a, 0x01,                           // bcdDFUVersion: 1.1a
 
 #endif
 
@@ -411,7 +408,7 @@ static uint8_t USBD_Composite_Setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTyped
 //		ret = USBD_OK; //
 #endif
 	default:
-		//Error_Handler();
+		ret = USBD_FAIL;
 		break;
 	}
 
@@ -632,9 +629,6 @@ static uint8_t *USBD_Composite_GetStrdesc(USBD_HandleTypeDef *pdev, uint8_t inde
 	UNUSED(pdev);
 
 	switch (index) {
-		case DFU_INTERFACE_STR_INDEX:
-			USBD_GetString(GSUSB_DFU_INTERFACE_STRING_FS, USBD_StrDesc, length);
-			return USBD_StrDesc;
 		case 0xEE:
 			*length = sizeof(usbd_gscan_winusb_str);
 			return usbd_gscan_winusb_str;

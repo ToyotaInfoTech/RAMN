@@ -44,7 +44,7 @@
 #include "gs_usb_breq.h"
 
 #ifdef ENABLE_GSUSB
-static uint8_t gsusb_vendor_request(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req);
+static uint8_t gsusb_config_request(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req);
 
 // device info
 static const struct gs_device_config gscan_dconf = {
@@ -77,23 +77,16 @@ const struct gs_device_bt_const gscan_btconst = {
 };
 
 
-/*  Microsoft Compatible ID Feature Descriptor  */
+/* WARNING: Only 1 section mapping interface 0 (gs_usb) to WINUSB.
+ * Do NOT add sections for other interfaces (e.g. CDC). */
 static const uint8_t USBD_MS_COMP_ID_FEATURE_DESC[] = {
-		0x40, 0x00, 0x00, 0x00, /* length */
+		0x28, 0x00, 0x00, 0x00, /* length */
 		0x00, 0x01,             /* version 1.0 */
 		0x04, 0x00,             /* descr index (0x0004) */
-		0x02,                   /* number of sections */
+		0x01,                   /* number of sections */
 		0x00, 0x00, 0x00, 0x00, /* reserved */
 		0x00, 0x00, 0x00,
 		0x00,                   /* interface number */
-		0x01,                   /* reserved */
-		0x57, 0x49, 0x4E, 0x55, /* compatible ID ("WINUSB\0\0") */
-		0x53, 0x42, 0x00, 0x00,
-		0x00, 0x00, 0x00, 0x00, /* sub-compatible ID */
-		0x00, 0x00, 0x00, 0x00,
-		0x00, 0x00, 0x00, 0x00, /* reserved */
-		0x00, 0x00,
-		0x01,                   /* interface number */
 		0x01,                   /* reserved */
 		0x57, 0x49, 0x4E, 0x55, /* compatible ID ("WINUSB\0\0") */
 		0x53, 0x42, 0x00, 0x00,
@@ -169,38 +162,17 @@ USBD_StatusTypeDef USBD_GSUSB_CustomDeviceRequest(USBD_HandleTypeDef *pdev, USBD
 			}
 			break;
 		}
+
+		/* WARNING: Must STALL unrecognized vendor requests.
+		 * Windows enumeration fails without this. */
+		USBD_CtlError(pdev, req);
+		return USBD_OK;
 	}
 
 	return USBD_FAIL;
 }
 
 #ifdef ENABLE_GSUSB
-
-static uint8_t gsusb_dfu_request(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req)
-{
-	USBD_GS_CAN_HandleTypeDef *hcan = ((USBD_Composite_HandleTypeDef *)pdev->pClassData)->hcan;
-	switch (req->bRequest) {
-
-	case 0: // DETACH request
-		hcan->dfu_detach_requested = true;
-		break;
-
-	case 3: // GET_STATIS request
-		hcan->ep0_buf[0] = 0x00; // bStatus: 0x00 == OK
-		hcan->ep0_buf[1] = 0x00; // bwPollTimeout
-		hcan->ep0_buf[2] = 0x00;
-		hcan->ep0_buf[3] = 0x00;
-		hcan->ep0_buf[4] = 0x00; // bState: appIDLE
-		hcan->ep0_buf[5] = 0xFF; // status string descriptor index
-		USBD_CtlSendData(pdev, hcan->ep0_buf, 6);
-		break;
-
-	default:
-		USBD_CtlError(pdev, req);
-
-	}
-	return USBD_OK;
-}
 
 static uint8_t gsusb_config_request(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req)
 {
@@ -252,22 +224,6 @@ static uint8_t gsusb_config_request(USBD_HandleTypeDef *pdev, USBD_SetupReqTyped
 	return ret;
 }
 
-static uint8_t gsusb_vendor_request(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req)
-{
-	uint8_t req_rcpt = req->bRequest & 0x1F;
-	uint8_t req_type = (req->bRequest >> 5) & 0x03;
-
-	if (
-			(req_type == 0x01) // class request
-			&& (req_rcpt == 0x01) // recipient: interface
-			&& (req->wIndex == DFU_INTERFACE_NUM)
-	) {
-		return gsusb_dfu_request(pdev, req);
-	} else {
-		return gsusb_config_request(pdev, req);
-	}
-}
-
 USBD_StatusTypeDef USBD_GSUSB_Init(USBD_HandleTypeDef *pdev)
 {
 	USBD_StatusTypeDef ret;
@@ -308,7 +264,7 @@ USBD_StatusTypeDef USBD_GSUSB_Setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTyped
 	{
 	case USB_REQ_TYPE_CLASS:
 	case USB_REQ_TYPE_VENDOR:
-		return gsusb_vendor_request(pdev, req);
+		return gsusb_config_request(pdev, req);
 
 	case USB_REQ_TYPE_STANDARD:
 		switch (req->bRequest)
@@ -318,13 +274,20 @@ USBD_StatusTypeDef USBD_GSUSB_Setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTyped
 			break;
 
 		case USB_REQ_SET_INTERFACE:
+			break;
+
 		default:
+			/* WARNING: Must STALL unknown standard requests
+			 * for Windows enumeration on AMD xHCI. */
+			USBD_CtlError(pdev, req);
 			break;
 		}
 		break;
 
 		default:
-			ret = USBD_FAIL;
+			/* WARNING: Must STALL unhandled request types
+			 * for Windows enumeration on AMD xHCI. */
+			USBD_CtlError(pdev, req);
 			break;
 	}
 
