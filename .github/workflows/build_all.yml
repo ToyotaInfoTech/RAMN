@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   build_all:
-    name: ${{ matrix.conf }} (tag ${{ matrix.cubeide_docker_tag }})
+    name: ${{ matrix.variant == 'default' && matrix.conf || format('{0} ({1})', matrix.conf, matrix.variant) }} (tag ${{ matrix.cubeide_docker_tag }})
     permissions:
       contents: read
     strategy:
@@ -20,12 +20,21 @@ jobs:
       matrix:
         spice: [RAMNV1]
         conf: [Release, Debug]
-        cubeide_docker_tag: ["7.0", "15.0"]
+        cubeide_docker_tag: ["15.0"]
+        variant: [default, gsusb]
 
     runs-on: ubuntu-latest
     steps:
       - name: checkout
         uses: actions/checkout@v4
+
+      - name: Modify ramn_config.h for ${{ matrix.variant }}
+        if: matrix.variant == 'gsusb'
+        run: |
+          python3 .github/modify_config.py \
+            --ecu TARGET_ECUA \
+            --variant "${{ matrix.variant }}" \
+            --enable "ENABLE_GSUSB"
 
       - name: Build all ECUs (${{ matrix.conf }})
         env:
@@ -51,14 +60,14 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: build-metrics-${{ matrix.spice }}-${{ matrix.conf }}-${{ matrix.cubeide_docker_tag }}
+          name: build-metrics-${{ matrix.spice }}-${{ matrix.variant }}-${{ matrix.conf }}-${{ matrix.cubeide_docker_tag }}
           path: build-metrics/
 
       - name: upload RAMN dir as artifact
         if: ${{ !env.ACT }}
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.spice }}-${{ matrix.conf }}-${{ matrix.cubeide_docker_tag }}
+          name: ${{ matrix.spice }}-${{ matrix.variant }}-${{ matrix.conf }}-${{ matrix.cubeide_docker_tag }}
           path: .
 
   macro_coverage:
