@@ -251,6 +251,12 @@
 // Avoid using if you are not sure what you are doing.
 // #define MEMORY_AUTOLOCK
 
+// Enable this flag to change the CAN signal definitions ('DBC') to use J1939
+// Preserves all knobs, switches and sliders on the RAMN
+// Removes CAN frame freshness and checksums used in the default configuration.
+// #define ENABLE_J1939_MODE
+
+
 // Value to set to the RDP option byte if flag above is active.
 // It is 0xAA when unlocked (OB_RDP_LEVEL_0), 0xBB if temporarily locked by bootloader (OB_RDP_LEVEL_1, or 0xDC if locked by STM32CubeProgrammer).
 // Setting this value to 0xCC (OB_RDP_LEVEL_2) will PERMANENTLY LOCK JTAG (the ECU will not be reprogrammable anymore)

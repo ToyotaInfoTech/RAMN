@@ -85,13 +85,12 @@ void RAMN_SIM_UpdatePeriodic(uint32_t tick)
 		else
 		{
 			RAMN_DBC_Handle.control_steer  = RAMN_DBC_Handle.command_steer;
-			RAMN_DBC_Handle.command_lights = 0x0000; //Engine Warning LED OFF
+			RAMN_DBC_Handle.control_sidebrake = RAMN_DBC_Handle.command_sidebrake;
 		}
 	}
 	else
 	{
 		RAMN_DBC_Handle.control_steer = RAMN_SENSORS_CHASSIS.steeringPotentiometer;
-		RAMN_DBC_Handle.command_lights = 0x0000; //Engine Warning LED OFF
 	}
 	if ((!RAMN_SIM_AutopilotEnabled) || (RAMN_SENSORS_CHASSIS.sidebrakeSwitch != 0U))
 	{
@@ -117,6 +116,7 @@ void RAMN_SIM_UpdatePeriodic(uint32_t tick)
 	if (RAMN_FDCAN_Status.busOff == True) RAMN_ACTUATORS_SetLampState(LED_CHECKENGINE ,(tick % 1000) >= 500);
 
 	RAMN_ACTUATORS_SetLampState(LED_SIDEBRAKE	, (RAMN_DBC_Handle.control_brake >= 0x010) || (RAMN_DBC_Handle.control_sidebrake != RAMN_SIDEBRAKE_DOWN));
+
 	RAMN_ACTUATORS_SetLampState(LED_TAILLAMP	, ((RAMN_DBC_Handle.command_lights&0x00FF) == RAMN_LIGHTSWITCH_POS2) || ((RAMN_DBC_Handle.command_lights&0x00FF) == RAMN_LIGHTSWITCH_POS3) || ((RAMN_DBC_Handle.command_lights&0x00FF) == RAMN_LIGHTSWITCH_POS4) );
 	RAMN_ACTUATORS_SetLampState(LED_LOWBEAM		, ((RAMN_DBC_Handle.command_lights&0x00FF) == RAMN_LIGHTSWITCH_POS3) || ((RAMN_DBC_Handle.command_lights&0x00FF) == RAMN_LIGHTSWITCH_POS4) );
 	RAMN_ACTUATORS_SetLampState(LED_HIGHBEAM	, ((RAMN_DBC_Handle.command_lights&0x00FF) == RAMN_LIGHTSWITCH_POS4) );

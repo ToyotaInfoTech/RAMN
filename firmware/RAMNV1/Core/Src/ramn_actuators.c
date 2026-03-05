@@ -17,6 +17,10 @@
 #include "ramn_actuators.h"
 #include "ramn_signal_defs.h"
 #include "ramn_can_database.h"
+#include "ramn_vehicle_specific.h"
+#include "ramn_sensors.h"
+#include "ramn_dbc.h"
+#include <string.h>
 
 #ifdef EXPANSION_BODY
 // Byte that store the state of each LED of ECU D.
@@ -46,7 +50,41 @@ void RAMN_ACTUATORS_SetLampState(uint8_t mask, uint8_t val)
 
 void RAMN_ACTUATORS_ApplyControls(uint32_t tick)
 {
-#if defined(EXPANSION_CHASSIS) //CHASSIS
+#ifdef ENABLE_J1939_MODE
+#if defined(TARGET_ECUA)
+	RAMN_Encode_Control_Horn((uint8_t)RAMN_DBC_Handle.control_horn, &msg_control_horn.data->rawData[0]);
+
+#elif defined(EXPANSION_CHASSIS) //CHASSIS
+	RAMN_Encode_Control_Steering((uint16_t)RAMN_DBC_Handle.control_steer, &msg_control_steering.data->rawData[0]);
+	RAMN_Encode_Control_Sidebrake((uint8_t)RAMN_DBC_Handle.control_sidebrake, &msg_control_sidebrake.data->rawData[0]);
+	RAMN_Encode_Command_Lights((uint16_t)RAMN_DBC_Handle.command_lights, &msg_command_lights.data->rawData[0]);
+
+#elif defined(EXPANSION_POWERTRAIN) //POWERTRAIN
+	RAMN_Encode_Control_Brake((uint16_t)RAMN_DBC_Handle.control_brake, &msg_control_brake.data->rawData[0]);
+	RAMN_Encode_Control_Accel((uint16_t)RAMN_DBC_Handle.control_accel, &msg_control_accel.data->rawData[0]);
+	RAMN_Encode_Control_Shift_Joystick((uint8_t)RAMN_DBC_Handle.control_shift, (uint8_t)RAMN_DBC_Handle.joystick, &msg_control_shift.data->rawData[0]);
+	RAMN_Encode_Command_Horn((uint8_t)RAMN_DBC_Handle.command_horn, &msg_command_horn.data->rawData[0]);
+	RAMN_Encode_Command_TurnIndicator((uint16_t)RAMN_DBC_Handle.command_turnindicator, &msg_command_turnindicator.data->rawData[0]);
+	RAMN_Encode_JoystickButtons((uint8_t)RAMN_SENSORS_POWERTRAIN.shiftJoystick, &msg_joystick_buttons.data->rawData[0]);
+
+#elif defined(EXPANSION_BODY) //BODY
+	RAMN_Encode_Control_EngineKey((uint8_t)RAMN_DBC_Handle.control_enginekey, &msg_control_enginekey.data->rawData[0]);
+	RAMN_Encode_Control_Lights((uint8_t)RAMN_DBC_Handle.control_lights, &msg_control_lights.data->rawData[0]);
+
+	LEDState = (uint8_t)RAMN_DBC_Handle.control_lights;
+#if (LED_TEST_DURATION_MS > 0)
+	if((tick < LED_TEST_DURATION_MS) && (LEDTestOver == False)) LEDState = 0xFF;
+	else LEDTestOver = True;
+#endif
+	RAMN_SPI_UpdateLED(&LEDState);
+#endif
+
+#else // Standard mode (non J1939)
+
+#if defined(TARGET_ECUA)
+	RAMN_Encode_Control_Horn((uint8_t)RAMN_DBC_Handle.control_horn, &msg_control_horn.data->rawData[CAN_SIM_CONTROL_HORN_PAYLOAD_OFFSET / 8]);
+
+#elif defined(EXPANSION_CHASSIS) //CHASSIS
 	RAMN_Encode_Control_Steering((uint16_t)RAMN_DBC_Handle.control_steer, &msg_control_steering.data->rawData[CAN_SIM_CONTROL_STEERING_PAYLOAD_OFFSET / 8]);
 	RAMN_Encode_Control_Sidebrake((uint8_t)RAMN_DBC_Handle.control_sidebrake, &msg_control_sidebrake.data->rawData[CAN_SIM_CONTROL_SIDEBRAKE_PAYLOAD_OFFSET / 8]);
 	RAMN_Encode_Command_Lights((uint16_t)RAMN_DBC_Handle.command_lights, &msg_command_lights.data->rawData[CAN_SIM_COMMAND_LIGHTS_PAYLOAD_OFFSET / 8]);
@@ -55,7 +93,7 @@ void RAMN_ACTUATORS_ApplyControls(uint32_t tick)
 	RAMN_Encode_Control_Brake((uint16_t)RAMN_DBC_Handle.control_brake, &msg_control_brake.data->rawData[CAN_SIM_CONTROL_BRAKE_PAYLOAD_OFFSET / 8]);
 	RAMN_Encode_Control_Accel((uint16_t)RAMN_DBC_Handle.control_accel, &msg_control_accel.data->rawData[CAN_SIM_CONTROL_ACCEL_PAYLOAD_OFFSET / 8]);
 	RAMN_Encode_Control_Shift_Joystick((uint8_t)RAMN_DBC_Handle.control_shift, (uint8_t)RAMN_DBC_Handle.joystick, &msg_control_shift.data->rawData[CAN_SIM_CONTROL_SHIFT_PAYLOAD_OFFSET / 8]);
-	RAMN_Encode_Control_Horn((uint8_t)RAMN_DBC_Handle.control_horn, &msg_control_horn.data->rawData[CAN_SIM_CONTROL_HORN_PAYLOAD_OFFSET / 8]);
+	RAMN_Encode_Command_Horn((uint8_t)RAMN_DBC_Handle.command_horn, &msg_command_horn.data->rawData[CAN_SIM_COMMAND_HORN_PAYLOAD_OFFSET / 8]);
 	RAMN_Encode_Command_TurnIndicator((uint16_t)RAMN_DBC_Handle.command_turnindicator, &msg_command_turnindicator.data->rawData[CAN_SIM_COMMAND_TURNINDICATOR_PAYLOAD_OFFSET / 8]);
 
 #elif defined(EXPANSION_BODY) //BODY

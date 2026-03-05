@@ -104,6 +104,9 @@ jobs:
           - variant: uart
             enable: "ENABLE_UART"
             disable: "ENABLE_CDC ENABLE_USB"
+          - variant: j1939
+            enable: "ENABLE_J1939_MODE"
+            disable: ""
 
     runs-on: ubuntu-latest
     steps:
