@@ -110,6 +110,10 @@ jobs:
             variant: uart
             enable: "ENABLE_UART"
             disable: ""
+          - ecu: TARGET_ECUA
+            variant: j1939
+            enable: "ENABLE_J1939_MODE"
+            disable: ""
 
     runs-on: ubuntu-latest
     steps:

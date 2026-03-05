@@ -153,7 +153,11 @@ uint8_t removeOldNodes(uint32_t thresholdTick)
 static void SCREENCANMONITOR_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, const uint8_t* data, uint32_t tick)
 {
 	//TODO: process more types (?)
+#ifdef ENABLE_J1939_MODE
+	if ((pHeader->IdType == FDCAN_EXTENDED_ID) && (pHeader->FDFormat == FDCAN_CLASSIC_CAN) && (pHeader->RxFrameType == FDCAN_DATA_FRAME) && (pHeader->DataLength <= 8))
+#else
 	if ((pHeader->IdType == FDCAN_STANDARD_ID) && (pHeader->FDFormat == FDCAN_CLASSIC_CAN) && (pHeader->RxFrameType == FDCAN_DATA_FRAME) && (pHeader->DataLength <= 8))
+#endif
 	{
 
 		if (CANMONITOR_SEMAPHORE == 0U) return; // Module not initialized yet, skip message.
@@ -225,8 +229,13 @@ static void SCREENCANMONITOR_Update(uint32_t tick)
 
 				while (current != NULL)
 				{
+#ifdef ENABLE_J1939_MODE
+					uint16toASCII((current->identifier >> 8) & 0xFFFF, tmp);
+					tmp[4] = 0;
+#else
 					uint12toASCII(current->identifier, tmp);
 					tmp[3] = 0;
+#endif
 					RAMN_SPI_DrawString(7,25+(msgCnt*16), RAMN_SCREENUTILS_COLORTHEME.LIGHT, RAMN_SCREENUTILS_COLORTHEME.BACKGROUND, (char*)tmp);
 					current = current->next;
 					msgCnt += 1;
@@ -237,23 +246,28 @@ static void SCREENCANMONITOR_Update(uint32_t tick)
 			msgCnt = 0;
 			while (current != NULL)
 			{
+#ifdef ENABLE_J1939_MODE
+				uint8_t x_offset = 5;
+#else
+				uint8_t x_offset = 4;
+#endif
 				for(uint8_t i=0;i<current->messages[0].header.DataLength*2;i++)
 				{
 					uint4toASCII((current->messages[0].data[i/2] >> (4*((i+1)%2)))&0xF,&tmp[i]);
 
 					if (tick - current->lastNibbleChange[i] >= 500U)
 					{
-						RAMN_SPI_RefreshChar(7+(4*11)+i*11,25+(msgCnt*16), RAMN_SCREENUTILS_COLORTHEME.LIGHT, RAMN_SCREENUTILS_COLORTHEME.BACKGROUND, tmp[i]);
+						RAMN_SPI_RefreshChar(7+(x_offset*11)+i*11,25+(msgCnt*16), RAMN_SCREENUTILS_COLORTHEME.LIGHT, RAMN_SCREENUTILS_COLORTHEME.BACKGROUND, tmp[i]);
 					}
 					else
 					{
-						RAMN_SPI_RefreshChar(7+(4*11)+i*11,25+(msgCnt*16), RAMN_SCREENUTILS_COLORTHEME.WHITE, RAMN_SCREENUTILS_COLORTHEME.BACKGROUND, tmp[i]);
+						RAMN_SPI_RefreshChar(7+(x_offset*11)+i*11,25+(msgCnt*16), RAMN_SCREENUTILS_COLORTHEME.WHITE, RAMN_SCREENUTILS_COLORTHEME.BACKGROUND, tmp[i]);
 					}
 				}
 				if (8 - current->messages[0].header.DataLength > 0)
 				{
 					// Erase bytes after DLC (that could have been written by a previous message with longer DLC)
-					RAMN_SPI_DrawRectangle(7+(4*11)+current->messages[0].header.DataLength*22,25+(msgCnt*16),22*(8 - current->messages[0].header.DataLength),14,RAMN_SCREENUTILS_COLORTHEME.BACKGROUND);
+					RAMN_SPI_DrawRectangle(7+(x_offset*11)+current->messages[0].header.DataLength*22,25+(msgCnt*16),22*(8 - current->messages[0].header.DataLength),14,RAMN_SCREENUTILS_COLORTHEME.BACKGROUND);
 				}
 				current = current->next;
 				msgCnt += 1;
