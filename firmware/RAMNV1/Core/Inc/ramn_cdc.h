@@ -39,6 +39,14 @@
 #include "ramn_uds.h"
 #endif
 
+// Header and data for the "spoof ASAP" replace module of ECU A.
+extern FDCAN_TxHeaderTypeDef ReplaceTxHeader;
+extern uint8_t ReplaceTxData[];
+
+// Header and data for the "flooding"  module of ECU A.
+extern FDCAN_TxHeaderTypeDef FloodTxHeader;
+extern uint8_t FloodTxData[];
+
 // Processes a CLI (custom line interface) command
 RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLength);
 
