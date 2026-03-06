@@ -50,6 +50,41 @@ static int countElements(char* buffer, int length) {
 	return count;
 }
 
+static FDCAN_TxHeaderTypeDef USBTxHeader;
+static uint8_t USBTxData[8U];
+
+// Function to send a UDS frame based on provided CAN ID and ascii string
+void sendUDSAsciiHex(uint16_t can_id, char *ascii_hex)
+{
+	uint8_t data[8] = {0};
+	uint8_t payload[7];
+	uint8_t payload_len = 0;
+
+	while (*ascii_hex && *(ascii_hex + 1) && payload_len < 7)
+	{
+		payload[payload_len++] = ASCIItoUint8(ascii_hex);
+		ascii_hex += 2;
+	}
+
+	data[0] = payload_len;
+
+	for (uint8_t i = 0; i < payload_len; i++)
+	{
+		data[i + 1] = payload[i];
+	}
+
+	/* Configure CAN header */
+	USBTxHeader.BitRateSwitch = FDCAN_BRS_OFF;
+	USBTxHeader.FDFormat = FDCAN_CLASSIC_CAN;
+	USBTxHeader.TxFrameType = FDCAN_DATA_FRAME;
+	USBTxHeader.IdType = FDCAN_STANDARD_ID;
+	USBTxHeader.Identifier = can_id;
+	USBTxHeader.DataLength = UINT8toDLC(8);
+
+	RAMN_memcpy((uint8_t*)USBTxData, data, 8);
+	RAMN_FDCAN_SendMessage(&USBTxHeader, USBTxData);
+}
+
 RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLength)
 {
 	// Command is in USBRxBuffer, length is in commandLength. There is no endline in buffer.
@@ -462,6 +497,137 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 						}
 
 						RAMN_FDCAN_ResetPeripheral();
+					}
+				}
+				else if (strcmp(token, "uds") == 0) {
+					if (elementCount != 3)
+					{
+						RAMN_USB_SendStringFromTask("Usage: uds <B|C|D|*> <hex_payload>. Use * for broadcast.\r");
+					}
+					else
+					{
+						uint16_t can_id = 0;
+
+						token = strtok(NULL, " ");
+						can_id = 0;
+						if (strcmp(token, "*") == 0)
+						{
+							can_id = 0x7DF;
+						}
+						else if (strcmp(token, "B") == 0)
+						{
+							can_id = 0x7E1;
+						}
+						else if (strcmp(token, "C") == 0)
+						{
+							can_id = 0x7E2;
+						}
+						else if (strcmp(token, "D") == 0)
+						{
+							can_id = 0x7E3;
+						}
+						else if (strcmp(token, "A") == 0)
+						{
+							RAMN_USB_SendStringFromTask("Error: Use slcan to send UDS commands to ECU A.\r");
+						}
+						else
+						{
+							RAMN_USB_SendStringFromTask("Invalid ECU. Use B, C, D, or *.\r");
+						}
+						if (0x7E1 != 0)
+						{
+							token = strtok(NULL, " ");
+
+							uint16_t len = RAMN_strlen(token);
+
+							if ((len == 0) || (len % 2 != 0) || (len > 14))
+							{
+								RAMN_USB_SendStringFromTask("Invalid payload. Must be 1-7 bytes hex.\r");
+							}
+							else
+							{
+								sendUDSAsciiHex(can_id, token);
+							}
+						}
+					}
+				}
+				else if (strcmp(token, "silence") == 0) {
+
+					if (elementCount != 2)
+					{
+						RAMN_USB_SendStringFromTask("Usage: silence <B|C|D|*>\r");
+					}
+					else
+					{
+						token = strtok(NULL, " ");
+
+						for (uint8_t i = 0; ((token[i] != 0) && (i < 4)); i++)
+						{
+							switch(token[i])
+							{
+							case '*':
+								RAMN_USB_SendStringFromTask("Silencing all ECUs (broadcast).\r");
+								sendUDSAsciiHex(0x7DF, "31010200");
+								break;
+							case 'A':
+								RAMN_USB_SendStringFromTask("ECU A does not support this command.\r");
+								break;
+							case 'B':
+								RAMN_USB_SendStringFromTask("Silencing ECU B.\r");
+								sendUDSAsciiHex(0x7E1, "31010200");
+								break;
+							case 'C':
+								RAMN_USB_SendStringFromTask("Silencing ECU C.\r");
+								sendUDSAsciiHex(0x7E2, "31010200");
+								break;
+							case 'D':
+								RAMN_USB_SendStringFromTask("Silencing ECU D.\r");
+								sendUDSAsciiHex(0x7E3, "31010200");
+								break;
+							default:
+								RAMN_USB_SendStringFromTask("Invalid ECU. Use B, C, D, or *.\r");
+								break;
+							}
+						}
+					}
+				}
+				else if (strcmp(token, "talk") == 0) {
+					if (elementCount != 2)
+					{
+						RAMN_USB_SendStringFromTask("Usage: talk <B|C|D|*>\r");
+					}
+					else
+					{
+						token = strtok(NULL, " ");
+
+						for (uint8_t i = 0; ((token[i] != 0) && (i < 4)); i++)
+						{
+							switch(token[i])
+							{
+							case '*':
+								RAMN_USB_SendStringFromTask("Restoring communication for all ECUs.\r");
+								sendUDSAsciiHex(0x7DF, "31020200");
+								break;
+							case 'A':
+								RAMN_USB_SendStringFromTask("ECU A does not support this command.\r");
+								break;
+							case 'B':
+								RAMN_USB_SendStringFromTask("Restoring ECU B communication.\r");
+								sendUDSAsciiHex(0x7E1, "31020200");
+								break;
+							case 'C':
+								RAMN_USB_SendStringFromTask("Restoring ECU C communication.\r");
+								sendUDSAsciiHex(0x7E2, "31020200");
+								break;
+							case 'D':
+								RAMN_USB_SendStringFromTask("Restoring ECU D communication.\r");
+								sendUDSAsciiHex(0x7E3, "31020200");
+								break;
+							default:
+								RAMN_USB_SendStringFromTask("Invalid ECU. Use B, C, D, or *.\r");
+								break;
+							}
+						}
 					}
 				}
 #ifdef ENABLE_SCREEN
