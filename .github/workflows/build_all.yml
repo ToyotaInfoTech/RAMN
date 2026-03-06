@@ -41,7 +41,7 @@ jobs:
           DOCKER_STM32CUBEIDE_TAG: ${{ matrix.cubeide_docker_tag }}
         run: |
           chmod +x scripts/build/docker_BUILD_Clean_${{ matrix.conf }}.sh scripts/build/_build_ecu.sh
-          bash scripts/build/docker_BUILD_Clean_${{ matrix.conf }}.sh
+          bash scripts/build/docker_BUILD_Clean_${{ matrix.conf }}.sh --no-quiet
 
       - name: Collect hex file sizes
         if: always()
@@ -137,7 +137,7 @@ jobs:
             OUTPUT_FOLDER="/workspace/scripts/firmware"
             PROJECT_NAME=RAMNV1
             mkdir -p "${OUTPUT_FOLDER}"
-            bash /workspace/scripts/build/_build_ecu.sh "${ECU}" Release
+            bash /workspace/scripts/build/_build_ecu.sh "${ECU}" Release --no-quiet
             ECU_NAME="${ECU#TARGET_}"
             cp -pr "/workspace/firmware/${PROJECT_NAME}/Release/${PROJECT_NAME}.hex" "${OUTPUT_FOLDER}/${ECU_NAME}.hex"
           ' 2>&1 | tee build-output.log
