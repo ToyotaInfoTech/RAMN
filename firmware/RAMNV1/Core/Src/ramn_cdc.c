@@ -144,6 +144,8 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 							RAMN_USB_SendStringFromTask("      enable C\r");
 							RAMN_USB_SendStringFromTask("    - To enable ECU D, use:\r");
 							RAMN_USB_SendStringFromTask("      enable D\r");
+							RAMN_USB_SendStringFromTask("    - To enable ECU B, C, D at once, use:\r");
+							RAMN_USB_SendStringFromTask("      enable BCD\r");
 							RAMN_USB_SendStringFromTask("\r");
 							RAMN_USB_SendStringFromTask("-------------------------------------------------------------\r");
 						}
@@ -170,6 +172,8 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 							RAMN_USB_SendStringFromTask("      disable C\r");
 							RAMN_USB_SendStringFromTask("    - To disable ECU D, use:\r");
 							RAMN_USB_SendStringFromTask("      disable D\r");
+							RAMN_USB_SendStringFromTask("    - To disable ECU B, C, D at once, use:\r");
+							RAMN_USB_SendStringFromTask("      disable BCD\r");
 							RAMN_USB_SendStringFromTask("\r");
 							RAMN_USB_SendStringFromTask("-------------------------------------------------------------\r");
 						}
@@ -215,25 +219,34 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 					else
 					{
 						token = strtok(NULL, " ");
-						if (strcmp(token, "A") == 0) {
-							RAMN_USB_SendStringFromTask("Cannot disable ECU A. Type \"reset\" if reset it.\r");
-						} else if (strcmp(token, "B") == 0)
+
+						for (uint8_t i = 0; ((token[i] != 0) && (i < 4)); i++)
 						{
-							RAMN_USB_SendStringFromTask("Setting ECU B power supply to OFF.\r");
-							RAMN_ECU_SetEnable('B',GPIO_PIN_RESET);
-						} else if (strcmp(token, "C") == 0)
-						{
-							RAMN_USB_SendStringFromTask("Setting ECU C power supply to OFF.\r");
-							RAMN_ECU_SetEnable('C',GPIO_PIN_RESET);
-						}
-						else if (strcmp(token, "D") == 0)
-						{
-							RAMN_USB_SendStringFromTask("Setting ECU D power supply to OFF.\r");
-							RAMN_ECU_SetEnable('D',GPIO_PIN_RESET);
-						}
-						else
-						{
-							RAMN_USB_SendStringFromTask("Invalid ECU. Must be B, C, or D.\r");
+							switch(token[i])
+							{
+							case 'a':
+							case 'A':
+								RAMN_USB_SendStringFromTask("Cannot disable ECU A. Type \"reset\" to reset it (along with other ECUs).\r");
+								break;
+							case 'b':
+							case 'B':
+								RAMN_USB_SendStringFromTask("Setting ECU B power supply to OFF.\r");
+								RAMN_ECU_SetEnable('B', GPIO_PIN_RESET);
+								break;
+							case 'c':
+							case 'C':
+								RAMN_USB_SendStringFromTask("Setting ECU C power supply to OFF.\r");
+								RAMN_ECU_SetEnable('C', GPIO_PIN_RESET);
+								break;
+							case 'd':
+							case 'D':
+								RAMN_USB_SendStringFromTask("Setting ECU D power supply to OFF.\r");
+								RAMN_ECU_SetEnable('D', GPIO_PIN_RESET);
+								break;
+							default:
+								RAMN_USB_SendStringFromTask("Invalid ECU. Must be A, B, C, or D.\r");
+								break;
+							}
 						}
 					}
 				}
@@ -245,29 +258,35 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 					else
 					{
 						token = strtok(NULL, " ");
-						if (strcmp(token, "A") == 0) {
-							RAMN_USB_SendStringFromTask("ECU A is always enabled.\r");
-						}
-						else if (strcmp(token, "B") == 0)
+						for (uint8_t i = 0; ((token[i] != 0) && (i < 4)); i++)
 						{
-							RAMN_USB_SendStringFromTask("Setting ECU B power supply to ON.\r");
-							RAMN_ECU_SetEnable('B',GPIO_PIN_SET);
-						} else if (strcmp(token, "C") == 0)
-						{
-							RAMN_USB_SendStringFromTask("Setting ECU C power supply to ON.\r");
-							RAMN_ECU_SetEnable('C',GPIO_PIN_SET);
-						}
-						else if (strcmp(token, "D") == 0)
-						{
-							RAMN_USB_SendStringFromTask("Setting ECU D power supply to ON.\r");
-							RAMN_ECU_SetEnable('D',GPIO_PIN_SET);
-						}
-						else
-						{
-							RAMN_USB_SendStringFromTask("Invalid ECU. Must be B, C, or D.\r");
+							switch(token[i])
+							{
+							case 'a':
+							case 'A':
+								RAMN_USB_SendStringFromTask("ECU A is always enabled.\r");
+								break;
+							case 'b':
+							case 'B':
+								RAMN_USB_SendStringFromTask("Setting ECU B power supply to ON.\r");
+								RAMN_ECU_SetEnable('B', GPIO_PIN_SET);
+								break;
+							case 'c':
+							case 'C':
+								RAMN_USB_SendStringFromTask("Setting ECU C power supply to ON.\r");
+								RAMN_ECU_SetEnable('C', GPIO_PIN_SET);
+								break;
+							case 'd':
+							case 'D':
+								RAMN_USB_SendStringFromTask("Setting ECU D power supply to ON.\r");
+								RAMN_ECU_SetEnable('D', GPIO_PIN_SET);
+								break;
+							default:
+								RAMN_USB_SendStringFromTask("Invalid ECU. Must be A, B, C, or D.\r");
+								break;
+							}
 						}
 					}
-
 				}
 #ifdef ENABLE_SCREEN
 				else if ( strcmp(token, "theme") == 0) {
@@ -1044,7 +1063,7 @@ RAMN_Bool_t RAMN_CDC_ProcessSLCANBuffer(uint8_t* USBRxBuffer, uint32_t commandLe
 			break;
 #endif
 #ifdef ENABLE_UDS
-//#ifndef HARDENING   // Uncomment this to disable UDS over USB when HARDENING flag is active.
+			//#ifndef HARDENING   // Uncomment this to disable UDS over USB when HARDENING flag is active.
 		case '%': // Diagnostic Message
 			if (commandLength >= 4U)
 			{
@@ -1066,7 +1085,7 @@ RAMN_Bool_t RAMN_CDC_ProcessSLCANBuffer(uint8_t* USBRxBuffer, uint32_t commandLe
 			}
 			else RAMN_USB_SendFromTask((uint8_t*)"\a",1);
 			break;
-//#endif
+			//#endif
 #endif
 		case 'b': // Already in slcan mode, just say yes
 			RAMN_USB_SendFromTask((uint8_t*)"\r",1);
