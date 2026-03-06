@@ -930,6 +930,66 @@ static void RAMN_UDS_RoutineControlComputeCRC(const uint8_t* data, uint16_t size
 	}
 }
 
+// Functions are kept below the 7-bytes limit in order to fit into single UDS frames.
+// Note that new settings are applied directly - UDS answer will not be sent if new settings are invalid.
+static void RAMN_UDS_RoutineControlUpdateCANTiming(const uint8_t* data, uint16_t size)
+{
+	if (size != 7U)
+	{
+		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
+	}
+	else
+	{
+		RAMN_FDCAN_UpdateTiming((uint8_t*)(&data[4]));
+		RAMN_FDCAN_ResetPeripheral();
+		osDelay(10);
+		uds_answerData[0] = data[0] + 0x40; // Positive response
+		uds_answerData[1] = data[1];
+		uds_answerData[2] = data[2];
+		uds_answerData[3] = data[3];
+		*uds_answerSize = 4U;
+	}
+}
+
+static void RAMN_UDS_RoutineControlUpdateCANSJW(const uint8_t* data, uint16_t size)
+{
+	if (size != 5U)
+	{
+		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
+	}
+	else
+	{
+		RAMN_FDCAN_UpdateSJW(data[4]);
+		RAMN_FDCAN_ResetPeripheral();
+		osDelay(10);
+		uds_answerData[0] = data[0] + 0x40; // Positive response
+		uds_answerData[1] = data[1];
+		uds_answerData[2] = data[2];
+		uds_answerData[3] = data[3];
+		*uds_answerSize = 4U;
+	}
+}
+
+static void RAMN_UDS_RoutineControlUpdateCANParameters(const uint8_t* data, uint16_t size)
+{
+	if (size != 7U)
+	{
+		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
+	}
+	else
+	{
+		RAMN_FDCAN_UpdateSettings((uint8_t*)(&data[4]));
+		RAMN_FDCAN_ResetPeripheral();
+		osDelay(10);
+		uds_answerData[0] = data[0] + 0x40; // Positive response
+		uds_answerData[1] = data[1];
+		uds_answerData[2] = data[2];
+		uds_answerData[3] = data[3];
+		*uds_answerSize = 4U;
+	}
+}
+
+
 
 //Routine Control to enable or disable autopilot features
 #if defined(TARGET_ECUB) || defined(TARGET_ECUC) || defined(TARGET_ECUD)
@@ -1249,6 +1309,15 @@ static void RAMN_UDS_RoutineControl(uint8_t* data, uint16_t size)
 			RAMN_UDS_RoutineControlForceMemorySwap(data,size);
 			break;
 #endif
+		case 0x0220: // Update CAN timing (3-byte argument for prescaler, Tseg1, Tseg2)
+			RAMN_UDS_RoutineControlUpdateCANTiming(data,size);
+			break;
+		case 0x0221: // Update CAN SJW (1-byte argument, SJW)
+			RAMN_UDS_RoutineControlUpdateCANSJW(data,size);
+			break;
+		case 0x0222: // Update CAN parameters (3-byte argument, auto-recovery from bus off, auto retransmit, transmitPause)
+			RAMN_UDS_RoutineControlUpdateCANParameters(data,size);
+			break;
 		default:
 			RAMN_UDS_FormatNegativeResponse(data,UDS_NRC_ROOR);
 			break;

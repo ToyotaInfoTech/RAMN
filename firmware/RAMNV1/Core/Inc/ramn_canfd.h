@@ -102,6 +102,15 @@ void 			RAMN_FDCAN_Disable(void);
 // Required after baudrate change or mode change (e.g. listen mode).
 RAMN_Result_t 	RAMN_FDCAN_UpdateBaudrate(uint32_t newSelection);
 
+#ifdef ENABLE_UDS
+// Functions to update CAN peripheral settings from UDS routine controls
+// Note that those functions are designed to enable unusual configurations (e.g., to test protocol attacks) and do not enforce validity checks.
+// Use RAMN_FDCAN_UpdateBaudrate if you need validity checks.
+RAMN_Result_t RAMN_FDCAN_UpdateTiming(uint8_t *data);
+RAMN_Result_t RAMN_FDCAN_UpdateSJW(uint8_t sjw);
+RAMN_Result_t RAMN_FDCAN_UpdateSettings(uint8_t *data);
+#endif
+
 // Resets statistics kept of the module. Does NOT reset the filter.
 void 			RAMN_FDCAN_ResetStatistics(void);
 

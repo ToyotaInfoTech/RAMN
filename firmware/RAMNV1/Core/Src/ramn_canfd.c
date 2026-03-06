@@ -454,6 +454,31 @@ RAMN_Result_t RAMN_FDCAN_UpdateBaudrate(uint32_t newSelection)
 	return result;
 }
 
+#ifdef ENABLE_UDS
+RAMN_Result_t RAMN_FDCAN_UpdateTiming(uint8_t *data)
+{
+	hfdcan1.Init.NominalPrescaler     = data[0];
+	hfdcan1.Init.NominalTimeSeg1      = data[1];
+	hfdcan1.Init.NominalTimeSeg2      = data[2];
+	hfdcan1.Init.NominalSyncJumpWidth = data[3];
+	return RAMN_OK;
+}
+
+RAMN_Result_t RAMN_FDCAN_UpdateSJW(uint8_t sjw)
+{
+	hfdcan1.Init.NominalSyncJumpWidth = sjw;
+	return RAMN_OK;
+}
+
+RAMN_Result_t RAMN_FDCAN_UpdateSettings(uint8_t *data)
+{
+	g_autoRecoverBusOff 			= data[0];
+	hfdcan1.Init.AutoRetransmission = data[1];
+	hfdcan1.Init.TransmitPause      = data[2];
+	return RAMN_OK;
+}
+#endif
+
 void RAMN_FDCAN_ResetStatistics(void)
 {
 	RAMN_FDCAN_Status.slcanFlags = 0U;
