@@ -113,6 +113,7 @@ extern FDCAN_HandleTypeDef hfdcan1;
 
 /* USER CODE BEGIN Private defines */
 #define HARDWARE_UNIQUE_ID_ADDRESS ((uint32_t*)0x0BFA0590)
+extern uint8_t g_autoRecoverBusOff; // ECU will automatically recover from bus-off if non zero
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
