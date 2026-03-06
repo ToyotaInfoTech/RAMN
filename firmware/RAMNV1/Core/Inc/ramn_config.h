@@ -64,7 +64,7 @@
 
 #define USBD_LANGID_STRING            	1033
 #define USBD_MANUFACTURER_STRING      	"Toyota Motor Corporation"
-#define USBD_PRODUCT_STRING           	"RAMN USB Composite Device"
+#define USBD_PRODUCT_STRING           	"RAMN gs_usb Device"
 #define USBD_CONFIGURATION_STRING     	"MDC Config"
 #define USBD_INTERFACE_STRING         	"MDC Interface"
 
@@ -127,7 +127,6 @@
 #define GS_HOST_FRAME_SIZE     	80
 #define CAN_QUEUE_SIZE			512
 #endif
-#define GSUSB_DFU_INTERFACE_STRING_FS		(uint8_t*) "RAMN gs_usb interface"
 
 #endif
 
