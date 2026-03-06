@@ -406,6 +406,64 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 						}
 					}
 				}
+				else if (strcmp(token, "can") == 0) {
+					if (elementCount != 3)
+					{
+						RAMN_USB_SendStringFromTask("Usage: can <param> <value>\r");
+					}
+					else
+					{
+						uint32_t value;
+
+						token = strtok(NULL, " ");
+						char *param = token;
+
+						token = strtok(NULL, " ");
+						value = (uint32_t)strtoul(token, NULL, 10);
+
+						if (strcmp(param, "prescaler") == 0)
+						{
+							hfdcan1.Init.NominalPrescaler = value;
+							RAMN_USB_SendStringFromTask("CAN prescaler updated.\r");
+						}
+						else if (strcmp(param, "tseg1") == 0)
+						{
+							hfdcan1.Init.NominalTimeSeg1 = value;
+							RAMN_USB_SendStringFromTask("CAN TSEG1 updated.\r");
+						}
+						else if (strcmp(param, "tseg2") == 0)
+						{
+							hfdcan1.Init.NominalTimeSeg2 = value;
+							RAMN_USB_SendStringFromTask("CAN TSEG2 updated.\r");
+						}
+						else if (strcmp(param, "sjw") == 0)
+						{
+							hfdcan1.Init.NominalSyncJumpWidth = value;
+							RAMN_USB_SendStringFromTask("CAN SJW updated.\r");
+						}
+						else if (strcmp(param, "autoretry") == 0)
+						{
+							hfdcan1.Init.AutoRetransmission = value ? ENABLE : DISABLE;
+							RAMN_USB_SendStringFromTask("CAN transmission autoretry updated.\r");
+						}
+						else if (strcmp(param, "transmitpause") == 0)
+						{
+							hfdcan1.Init.TransmitPause = value ? ENABLE : DISABLE;
+							RAMN_USB_SendStringFromTask("CAN TransmitPause updated.\r");
+						}
+						else if (strcmp(param, "autorecover") == 0)
+						{
+							g_autoRecoverBusOff = value ? 1 : 0;
+							RAMN_USB_SendStringFromTask("BusOff auto recovery updated.\r");
+						}
+						else
+						{
+							RAMN_USB_SendStringFromTask("Unknown CAN parameter.\r");
+						}
+
+						RAMN_FDCAN_ResetPeripheral();
+					}
+				}
 #ifdef ENABLE_SCREEN
 				else if ( strcmp(token, "theme") == 0) {
 					if (elementCount != 2)
