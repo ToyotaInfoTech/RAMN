@@ -893,7 +893,23 @@ static void MX_FDCAN1_Init(void)
 		Error_Handler();
 	}
 	/* USER CODE BEGIN FDCAN1_Init 2 */
+#ifdef ENABLE_CDC
+	// Initialize header for the "spoof asap" replace module
+	ReplaceTxHeader.BitRateSwitch = FDCAN_BRS_OFF;
+	ReplaceTxHeader.FDFormat = FDCAN_CLASSIC_CAN;
+	ReplaceTxHeader.TxFrameType = FDCAN_DATA_FRAME;
+	ReplaceTxHeader.IdType = FDCAN_STANDARD_ID;
+	ReplaceTxHeader.Identifier = 0xFFFFFFFF;
+	ReplaceTxHeader.DataLength = 0U;
 
+	// Initialize header for the "flood CAN bus" module
+	FloodTxHeader.BitRateSwitch = FDCAN_BRS_OFF;
+	FloodTxHeader.FDFormat = FDCAN_CLASSIC_CAN;
+	FloodTxHeader.TxFrameType = FDCAN_DATA_FRAME;
+	FloodTxHeader.IdType = FDCAN_STANDARD_ID;
+	FloodTxHeader.Identifier = 0xFFFFFFFF;
+	FloodTxHeader.DataLength = 0U;
+#endif
 	/* USER CODE END FDCAN1_Init 2 */
 
 }
@@ -1584,6 +1600,13 @@ void RAMN_ReceiveCANFunc(void *argument)
 			}
 
 			if(CANRxHeader.RxFrameType == FDCAN_DATA_FRAME) {
+#if defined(ENABLE_CDC)
+				// Spoof ASAP module: if we receive the target ID, we immediately send the defined CAN message instead.
+				if (CANRxHeader.Identifier == ReplaceTxHeader.Identifier)
+				{
+					RAMN_FDCAN_SendMessage(&ReplaceTxHeader,ReplaceTxData);
+				}
+#endif
 				RAMN_DBC_ProcessCANMessage(CANRxHeader.Identifier,payloadSize,(RAMN_CANFrameData_t*)CANRxData);
 #if defined(ENABLE_DIAG)
 				RAMN_DIAG_ProcessRxCANMessage(&CANRxHeader, CANRxData, xTaskGetTickCount());
@@ -1828,6 +1851,20 @@ void RAMN_PeriodicTaskFunc(void *argument)
 #ifdef HANG_ON_ERRORS
 			Error_Handler();
 #endif
+		}
+#endif
+#ifdef ENABLE_CDC
+		if ((ReplaceTxHeader.Identifier != 0xFFFFFFFF) || (FloodTxHeader.Identifier != 0xFFFFFFFF))
+		{
+			if(FloodTxHeader.Identifier != 0xFFFFFFFF)
+			{
+				for (uint32_t i = 0; i < 1000; i++)
+				{
+					if (RAMN_FDCAN_SendMessage(&FloodTxHeader, FloodTxData) != RAMN_OK) break; // Fill buffer with flood message
+				}
+			}
+			vTaskDelayUntil(&xLastWakeTime, SIM_LOOP_CLOCK_MS);
+			continue;
 		}
 #endif
 		RAMN_SENSORS_Update(xLastWakeTime);

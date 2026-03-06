@@ -18,6 +18,12 @@
 
 #ifdef ENABLE_CDC
 
+FDCAN_TxHeaderTypeDef ReplaceTxHeader;
+uint8_t ReplaceTxData[8];
+
+FDCAN_TxHeaderTypeDef FloodTxHeader;
+uint8_t FloodTxData[8];
+
 #ifdef ENABLE_UDS
 // Holds currently processed Diag Command from USB.
 static __attribute__ ((section (".buffers")))  uint8_t diagRxUSBbuf[0xFFF+2];
@@ -284,6 +290,118 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 							default:
 								RAMN_USB_SendStringFromTask("Invalid ECU. Must be A, B, C, or D.\r");
 								break;
+							}
+						}
+					}
+				}
+				else if (strcmp(token, "replace") == 0) {
+					if (elementCount == 1U)
+					{
+						ReplaceTxHeader.Identifier = 0xFFFFFFFF;
+						RAMN_USB_SendStringFromTask("Replacing module stopped.\r");
+					}
+					else if ((elementCount != 2) && (elementCount != 3))
+					{
+						RAMN_USB_SendStringFromTask("Usage: replace <can_id_hex> [data_hex]\r");
+					}
+					else
+					{
+						uint16_t len = 0;
+						uint8_t data_len = 0;
+
+						token = strtok(NULL, " ");
+						uint32_t can_id = ASCIItoUint12((uint8_t*)token);
+
+						if (can_id > 0x7FF)
+						{
+							RAMN_USB_SendStringFromTask("Invalid CAN ID (must be <= 0x7FF).\r");
+						}
+						else
+						{
+							ReplaceTxHeader.Identifier = can_id;
+
+							if (elementCount == 2)
+							{
+								ReplaceTxHeader.DataLength = UINT8toDLC(0);
+								RAMN_USB_SendStringFromTask("Replace frame updated (DLC=0).\r");
+							}
+							else
+							{
+								token = strtok(NULL, " ");
+								len = RAMN_strlen(token);
+
+								if ((len % 2 != 0) || (len > 16))
+								{
+									RAMN_USB_SendStringFromTask("Invalid data field.\r");
+								}
+								else
+								{
+									for (uint16_t i = 0; i < len; i += 2)
+									{
+										ReplaceTxData[data_len++] = ASCIItoUint8((uint8_t*)&token[i]);
+									}
+
+									ReplaceTxHeader.DataLength = UINT8toDLC(data_len);
+									RAMN_USB_SendStringFromTask("Replacing ongoing (screen will freeze)\r");
+								}
+							}
+						}
+					}
+				}
+				else if (strcmp(token, "flood") == 0) {
+					if (elementCount == 1U)
+					{
+						FloodTxHeader.Identifier = 0xFFFFFFFF;
+						RAMN_USB_SendStringFromTask("Flooding module stopped.\r");
+						osThreadSetPriority(osThreadGetId(), osPriorityNormal);
+					}
+					else if ((elementCount != 2) && (elementCount != 3))
+					{
+						RAMN_USB_SendStringFromTask("Usage: flood <can_id_hex> [data_hex]\r");
+					}
+					else
+					{
+						uint16_t len = 0;
+						uint8_t data_len = 0;
+
+						token = strtok(NULL, " ");
+						uint32_t can_id = ASCIItoUint12((uint8_t*)token);
+
+						if (can_id > 0x7FF)
+						{
+							RAMN_USB_SendStringFromTask("Invalid CAN ID (must be standard 11-bit).\r");
+						}
+						else
+						{
+							FloodTxHeader.Identifier = can_id;
+
+							if (elementCount == 2)
+							{
+								FloodTxHeader.DataLength = UINT8toDLC(0);
+								RAMN_USB_SendStringFromTask("Flood frame updated (DLC=0).\r");
+							}
+							else
+							{
+								// Set this thread priority high to make sure to know when to stop.
+								osThreadSetPriority(osThreadGetId(), osPriorityHigh);
+
+								token = strtok(NULL, " ");
+								len = RAMN_strlen(token);
+
+								if ((len % 2 != 0) || (len > 16))
+								{
+									RAMN_USB_SendStringFromTask("Invalid data field.\r");
+								}
+								else
+								{
+									for (uint16_t i = 0; i < len; i += 2)
+									{
+										FloodTxData[data_len++] = ASCIItoUint8((uint8_t*)&token[i]);
+									}
+
+									FloodTxHeader.DataLength = UINT8toDLC(data_len);
+									RAMN_USB_SendStringFromTask("Flood ongoing (screen will freeze).\r");
+								}
 							}
 						}
 					}
