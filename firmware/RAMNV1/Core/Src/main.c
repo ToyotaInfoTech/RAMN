@@ -65,6 +65,9 @@
 #endif
 #include "usb_device.h"
 #include "usbd_gsusb_if.h"
+#ifdef TARGET_ECUA
+#include "ramn_memory.h"
+#endif
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
