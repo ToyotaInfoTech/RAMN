@@ -10,11 +10,11 @@ PROJECT_NAME=RAMNV1
 set -e
 
 mkdir -p "${OUTPUT_FOLDER}"
-bash "${SCRIPT_DIR}/_build_ecu.sh" TARGET_ECUA Release
+bash "${SCRIPT_DIR}/_build_ecu.sh" TARGET_ECUA Release "$@"
 cp -pr "${WORKSPACE}/firmware/${PROJECT_NAME}/Release/${PROJECT_NAME}.hex" "${OUTPUT_FOLDER}/ECUA.hex"
-bash "${SCRIPT_DIR}/_build_ecu.sh" TARGET_ECUB Release --skip-import
+bash "${SCRIPT_DIR}/_build_ecu.sh" TARGET_ECUB Release --skip-import "$@"
 cp -pr "${WORKSPACE}/firmware/${PROJECT_NAME}/Release/${PROJECT_NAME}.hex" "${OUTPUT_FOLDER}/ECUB.hex"
-bash "${SCRIPT_DIR}/_build_ecu.sh" TARGET_ECUC Release --skip-import
+bash "${SCRIPT_DIR}/_build_ecu.sh" TARGET_ECUC Release --skip-import "$@"
 cp -pr "${WORKSPACE}/firmware/${PROJECT_NAME}/Release/${PROJECT_NAME}.hex" "${OUTPUT_FOLDER}/ECUC.hex"
-bash "${SCRIPT_DIR}/_build_ecu.sh" TARGET_ECUD Release --skip-import
+bash "${SCRIPT_DIR}/_build_ecu.sh" TARGET_ECUD Release --skip-import "$@"
 cp -pr "${WORKSPACE}/firmware/${PROJECT_NAME}/Release/${PROJECT_NAME}.hex" "${OUTPUT_FOLDER}/ECUD.hex"

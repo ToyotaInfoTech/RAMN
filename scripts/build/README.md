@@ -11,7 +11,7 @@ This folder contains various scripts for headless builds of RAMN ECUs' firmware.
 - `BUILD_{Release,Debug}.{sh,bat}` — Incremental-build all ECUs locally
 - `docker_BUILD_Clean_{Release,Debug}.{sh,bat}` — Clean-build all ECUs via Docker
 - `docker_BUILD_{Release,Debug}.{sh,bat}` — Incremental-build all ECUs via Docker
-- `_build_ecu.sh` — Inner build script (called by the above)
+- `_build_ecu.sh` — Inner build script (called by the above); quiet by default (shows only the *Build Finished* summary line on success, full output on failure). Pass `--no-quiet` for full verbose output (used by CI). All wrapper scripts forward extra arguments (e.g. `--no-quiet`) to `_build_ecu.sh`
 - `_version.sh` / `_version.bat` — Centralized STM32CubeIDE version config
 
 ## Usage
