@@ -8,13 +8,13 @@ if [ -e /workspace ]; then
 	OUTPUT_FOLDER="/workspace/scripts/firmware"
 	PROJECT_NAME=RAMNV1
 	mkdir -p "${OUTPUT_FOLDER}"
-	bash "${SCRIPT_DIR}/_build_ecu.sh" TARGET_ECUA Release
+	bash "${SCRIPT_DIR}/_build_ecu.sh" TARGET_ECUA Release "$@"
 	cp -pr "/workspace/firmware/${PROJECT_NAME}/Release/${PROJECT_NAME}.hex" "${OUTPUT_FOLDER}/ECUA.hex"
-	bash "${SCRIPT_DIR}/_build_ecu.sh" TARGET_ECUB Release --skip-import
+	bash "${SCRIPT_DIR}/_build_ecu.sh" TARGET_ECUB Release --skip-import "$@"
 	cp -pr "/workspace/firmware/${PROJECT_NAME}/Release/${PROJECT_NAME}.hex" "${OUTPUT_FOLDER}/ECUB.hex"
-	bash "${SCRIPT_DIR}/_build_ecu.sh" TARGET_ECUC Release --skip-import
+	bash "${SCRIPT_DIR}/_build_ecu.sh" TARGET_ECUC Release --skip-import "$@"
 	cp -pr "/workspace/firmware/${PROJECT_NAME}/Release/${PROJECT_NAME}.hex" "${OUTPUT_FOLDER}/ECUC.hex"
-	bash "${SCRIPT_DIR}/_build_ecu.sh" TARGET_ECUD Release --skip-import
+	bash "${SCRIPT_DIR}/_build_ecu.sh" TARGET_ECUD Release --skip-import "$@"
 	cp -pr "/workspace/firmware/${PROJECT_NAME}/Release/${PROJECT_NAME}.hex" "${OUTPUT_FOLDER}/ECUD.hex"
 	exit 0
 fi
@@ -22,4 +22,4 @@ fi
 STM32CUBEIDEWORKSPACE="$( cd "${SCRIPT_DIR}/../../" ; pwd )"
 source "${SCRIPT_DIR}/_version.sh"
 
-( cd "${STM32CUBEIDEWORKSPACE}"; docker run --rm -e STM32_IMPORT_FLAG -v .:/workspace xanderhendriks/stm32cubeide:${DOCKER_STM32CUBEIDE_TAG} /workspace/scripts/build/docker_BUILD_Clean_Release.sh ) || exit 1
+( cd "${STM32CUBEIDEWORKSPACE}"; docker run --rm -e STM32_IMPORT_FLAG -v .:/workspace xanderhendriks/stm32cubeide:${DOCKER_STM32CUBEIDE_TAG} /workspace/scripts/build/docker_BUILD_Clean_Release.sh "$@" ) || exit 1

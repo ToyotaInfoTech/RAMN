@@ -10,11 +10,11 @@ PROJECT_NAME=RAMNV1
 set -e
 
 mkdir -p "${OUTPUT_FOLDER}"
-bash "${SCRIPT_DIR}/_build_ecu.sh" TARGET_ECUA Debug
+bash "${SCRIPT_DIR}/_build_ecu.sh" TARGET_ECUA Debug "$@"
 cp -pr "${WORKSPACE}/firmware/${PROJECT_NAME}/Debug/${PROJECT_NAME}.hex" "${OUTPUT_FOLDER}/ECUA.hex"
-bash "${SCRIPT_DIR}/_build_ecu.sh" TARGET_ECUB Debug --skip-import
+bash "${SCRIPT_DIR}/_build_ecu.sh" TARGET_ECUB Debug --skip-import "$@"
 cp -pr "${WORKSPACE}/firmware/${PROJECT_NAME}/Debug/${PROJECT_NAME}.hex" "${OUTPUT_FOLDER}/ECUB.hex"
-bash "${SCRIPT_DIR}/_build_ecu.sh" TARGET_ECUC Debug --skip-import
+bash "${SCRIPT_DIR}/_build_ecu.sh" TARGET_ECUC Debug --skip-import "$@"
 cp -pr "${WORKSPACE}/firmware/${PROJECT_NAME}/Debug/${PROJECT_NAME}.hex" "${OUTPUT_FOLDER}/ECUC.hex"
-bash "${SCRIPT_DIR}/_build_ecu.sh" TARGET_ECUD Debug --skip-import
+bash "${SCRIPT_DIR}/_build_ecu.sh" TARGET_ECUD Debug --skip-import "$@"
 cp -pr "${WORKSPACE}/firmware/${PROJECT_NAME}/Debug/${PROJECT_NAME}.hex" "${OUTPUT_FOLDER}/ECUD.hex"
