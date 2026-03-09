@@ -145,8 +145,6 @@ THE SOFTWARE.
 #define USB_CAN_CONFIG_DESC_SIZ    50
 #define NUM_CAN_CHANNEL             1
 #define USBD_GS_CAN_VENDOR_CODE  0x20
-#define DFU_INTERFACE_NUM           1
-#define DFU_INTERFACE_STR_INDEX  0xE0
 
 // queue send/recv timeout[msec]
 #define CAN_QUEUE_TIMEOUT      100
@@ -264,7 +262,6 @@ typedef struct {
 	uint32_t               out_requests;
 	uint32_t               out_requests_fail;
 	uint32_t               out_requests_no_buf;
-	uint8_t                dfu_detach_requested;
 	uint8_t                timestamps_enabled;
 	uint32_t               sof_timestamp_us;
 	uint8_t                pad_pkts_to_max_pkt_size;
