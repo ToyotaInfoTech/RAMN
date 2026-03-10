@@ -660,7 +660,8 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 				}
 
 				else if (strcmp(token, "reset") == 0) {
-
+					if (elementCount == 1U)
+					{
 #ifdef START_IN_CLI_MODE
 					RAMN_USB_SendStringFromTask("Resetting...\r\r>");
 #else
@@ -668,6 +669,48 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 #endif
 					osDelay(200);
 					HAL_NVIC_SystemReset();
+					}
+					else if (elementCount > 2)
+					{
+						RAMN_USB_SendStringFromTask("Too many parameters. Use 'reset' to reset the whole board, or provide B/C/D as argument. For example, use 'reset B' to reset ECU B.");
+					}
+					else
+					{
+						token = strtok(NULL, " ");
+
+						for (uint8_t i = 0; ((token[i] != 0) && (i < 3)); i++)
+						{
+							switch(token[i])
+							{
+							case 'A':
+								RAMN_USB_SendStringFromTask("Use 'reset' with no parameters to reset ECU A (and other ECUs with it).\r");
+								break;
+							case 'B':
+								RAMN_USB_SendStringFromTask("Resetting ECU B.\r");
+								RAMN_ECU_SetEnable('B', GPIO_PIN_RESET);
+								osDelay(50);
+								RAMN_ECU_SetEnable('B', GPIO_PIN_SET);
+								break;
+							case 'C':
+								RAMN_USB_SendStringFromTask("Resetting ECU C.\r");
+								RAMN_ECU_SetEnable('C', GPIO_PIN_RESET);
+								osDelay(50);
+								RAMN_ECU_SetEnable('C', GPIO_PIN_SET);
+								break;
+							case 'D':
+								RAMN_USB_SendStringFromTask("Resetting ECU D.\r");
+								RAMN_ECU_SetEnable('D', GPIO_PIN_RESET);
+								osDelay(50);
+								RAMN_ECU_SetEnable('D', GPIO_PIN_SET);
+								break;
+							default:
+								RAMN_USB_SendStringFromTask("Invalid ECU. Use B, C, or D.\r");
+								break;
+							}
+						}
+					}
+
+
 				}
 				else if (strcmp(token, "clear") == 0) {
 					RAMN_USB_SendStringFromTask("\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r");
