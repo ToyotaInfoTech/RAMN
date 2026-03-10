@@ -108,7 +108,14 @@ void RAMN_SIM_UpdatePeriodic(uint32_t tick)
 	// Body Expansion simply lights up LED based on current state
 	RAMN_DBC_Handle.control_enginekey  = RAMN_SENSORS_BODY.engineKey;
 	RAMN_ACTUATORS_SetLampState(LED_BATTERY		, (RAMN_SENSORS_BODY.engineKey == RAMN_ENGINEKEY_MIDDLE) || (RAMN_SENSORS_BODY.engineKey == RAMN_ENGINEKEY_RIGHT));
+
+	// Turn on LED if requested by controls
 	RAMN_ACTUATORS_SetLampState(LED_CHECKENGINE	, ((RAMN_DBC_Handle.command_lights&0xFF00) != 0U));
+	// Turn on "Check Engine LED" if a CAN error was detected
+	if (RAMN_FDCAN_Status.CANErrCnt > 0) RAMN_ACTUATORS_SetLampState(LED_CHECKENGINE , 1U);
+	// If bus off, blink
+	if (RAMN_FDCAN_Status.busOff == True) RAMN_ACTUATORS_SetLampState(LED_CHECKENGINE ,(tick % 1000) >= 500);
+
 	RAMN_ACTUATORS_SetLampState(LED_SIDEBRAKE	, (RAMN_DBC_Handle.control_brake >= 0x010) || (RAMN_DBC_Handle.control_sidebrake != RAMN_SIDEBRAKE_DOWN));
 	RAMN_ACTUATORS_SetLampState(LED_TAILLAMP	, ((RAMN_DBC_Handle.command_lights&0x00FF) == RAMN_LIGHTSWITCH_POS2) || ((RAMN_DBC_Handle.command_lights&0x00FF) == RAMN_LIGHTSWITCH_POS3) || ((RAMN_DBC_Handle.command_lights&0x00FF) == RAMN_LIGHTSWITCH_POS4) );
 	RAMN_ACTUATORS_SetLampState(LED_LOWBEAM		, ((RAMN_DBC_Handle.command_lights&0x00FF) == RAMN_LIGHTSWITCH_POS3) || ((RAMN_DBC_Handle.command_lights&0x00FF) == RAMN_LIGHTSWITCH_POS4) );
