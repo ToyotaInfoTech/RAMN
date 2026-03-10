@@ -240,6 +240,7 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 						RAMN_USB_SendStringFromTask("    - help: Display general help, or help for a specific command when available. Usage: help <command>.\r");
 						RAMN_USB_SendStringFromTask("    - b: Alias for the \"exit\" command.\r");
 						RAMN_USB_SendStringFromTask("    - quit: Alias for the \"exit\" command.\r");
+						RAMN_USB_SendStringFromTask("    - randomize: Randomize boot delays to prevent ECU being synchronized. Usage: randomize.\r");
 						RAMN_USB_SendStringFromTask("    - reset: Reset the device. Usage: reset.\r");
 						RAMN_USB_SendStringFromTask("    - slcan: Alias for the \"exit\" command.\r");
 						RAMN_USB_SendStringFromTask("    - theme: Set the color theme for ECU A's LCD screen. Usage: theme <theme number>.\r");
@@ -630,6 +631,25 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 						}
 					}
 				}
+				else if (strcmp(token, "randomize") == 0) {
+					if (elementCount != 1)
+					{
+						RAMN_USB_SendStringFromTask("Too many arguments. Usage: randomize.\r");
+					}
+					else
+					{
+						token = strtok(NULL, " ");
+						RAMN_USB_SendStringFromTask("Randomizing boot delays for ECU B/C/D. Note that boot order is always the same (B->C->D).\r");
+						RAMN_ECU_SetEnableAll(GPIO_PIN_RESET);
+						osDelay(50);
+						RAMN_ECU_SetEnable('B', GPIO_PIN_SET);
+						osDelay(RAMN_RNG_Pop8());
+						RAMN_ECU_SetEnable('C', GPIO_PIN_SET);
+						osDelay(RAMN_RNG_Pop8());
+						RAMN_ECU_SetEnable('D', GPIO_PIN_SET);
+					}
+				}
+
 #ifdef ENABLE_SCREEN
 				else if ( strcmp(token, "theme") == 0) {
 					if (elementCount != 2)
