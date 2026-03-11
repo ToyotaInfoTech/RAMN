@@ -65,11 +65,11 @@
 
 /* J1939 Destination Addresses (DA) */
 #define J1939_DA_ENGINE             0
-#define J1939_DA_POWERTRAIN_CTRL    0
 #define J1939_DA_TRANSMISSION       3
 #define J1939_DA_BRAKE_SYSTEM       11
 #define J1939_DA_STEERING_CTRL      19
 #define J1939_DA_BODY_CTRL          33
+#define J1939_DA_POWERTRAIN_CTRL    90
 #define J1939_DA_BODY_CTRL_2        166
 #define J1939_DA_BROADCAST          255
 

@@ -66,7 +66,7 @@ static void RAMN_DBC_FormatDefaultPeriodicMessage(RAMN_PeriodicFDCANTx_t* msg)
 
 void RAMN_DBC_Init(void)
 {
-#if defined(TARGET_ECUA)
+#if defined(TARGET_ECUA) && !defined(RAMN_FORCE_AUTOPILOT)
 	RAMN_DBC_RequestSilence = True;
 #else
 	RAMN_DBC_RequestSilence = False;
@@ -224,14 +224,17 @@ void RAMN_DBC_ProcessCANMessage(uint32_t canid, uint32_t dlc, RAMN_CANFrameData_
 
 void RAMN_DBC_Send(uint32_t tick)
 {
-	for(uint16_t i = 0; i < NUMBER_OF_PERIODIC_MSG ; i++)
+	if (RAMN_DBC_RequestSilence == False)
 	{
-		if((tick - periodicTxCANMsgs[i]->lastSent) >= periodicTxCANMsgs[i]->periodms)
+		for(uint16_t i = 0; i < NUMBER_OF_PERIODIC_MSG ; i++)
 		{
-			RAMN_DBC_FormatDefaultPeriodicMessage(periodicTxCANMsgs[i]);
-			RAMN_FDCAN_SendMessage(&(periodicTxCANMsgs[i]->header),(uint8_t*)(periodicTxCANMsgs[i]->data));
-			periodicTxCANMsgs[i]->counter++;
-			periodicTxCANMsgs[i]->lastSent = tick;
+			if((tick - periodicTxCANMsgs[i]->lastSent) >= periodicTxCANMsgs[i]->periodms)
+			{
+				RAMN_DBC_FormatDefaultPeriodicMessage(periodicTxCANMsgs[i]);
+				RAMN_FDCAN_SendMessage(&(periodicTxCANMsgs[i]->header),(uint8_t*)(periodicTxCANMsgs[i]->data));
+				periodicTxCANMsgs[i]->counter++;
+				periodicTxCANMsgs[i]->lastSent = tick;
+			}
 		}
 	}
 }

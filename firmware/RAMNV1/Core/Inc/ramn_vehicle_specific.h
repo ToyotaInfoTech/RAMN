@@ -119,6 +119,8 @@
 #define CAN_SIM_BRS_DEFAULT       						FDCAN_BRS_OFF      // Bit rate switching ON or OFF
 #define CAN_SIM_DLC_DEFAULT   							FDCAN_DLC_BYTES_8  // Default CAN payload size
 
+#define J1939_EMPTY_PAYLOAD { .data = { { .rawData = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF} } } }
+
 // Message specific settings
 #ifdef ENABLE_J1939_MODE
   #include "ramn_j1939.h"

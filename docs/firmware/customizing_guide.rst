@@ -197,7 +197,60 @@ For example, if you want to know the status of ECU C's joystick from ECU A, you 
 - The function ``RAMN_DBC_ProcessCANMessage`` interprets and records incoming CAN messages in the RAMN_DBC module.
 
 
-If you want an ECU to stop sending messages, simply comment out the call to ``RAMN_DBC_Send``.  
+If you want an ECU to stop sending messages, simply comment out the call to ``RAMN_DBC_Send``.
+
+.. _force_autopilot_mode:
+
+Force Autopilot Mode
+--------------------
+
+RAMN includes a "Force Autopilot" mode (enabled via ``#define RAMN_FORCE_AUTOPILOT`` in ``ramn_config.h``) designed for testing, fuzzing, and demonstrations where physical user input is not available or should be ignored.
+
+In this mode, the vehicle's control flow is significantly altered:
+
+1. **ECU A (Headway Controller) becomes the Master:**
+   - It randomizes all command signals (Brake, Accel, Steering, Gear, Lights, Horn, Turn Indicators) at a 1 Hz frequency.
+   - It transmits these commands periodically to the rest of the bus.
+   - It will not remain silent at startup (the default behavior for ECU A).
+
+2. **ECU B and ECU C ignore physical sensors:**
+   - **ECU B (Chassis):** Completely ignores the physical steering wheel potentiometer and sidebrake switch. It will follow the ``Command_Steering`` and ``Command_Sidebrake`` received via CAN regardless of noise or manual movement.
+   - **ECU C (Powertrain):** Completely ignores the physical brake and accelerator pedals, as well as the shift joystick state. It will follow the ``Command_Brake``, ``Command_Accel``, and ``Command_Shift`` received via CAN.
+
+3. **ECU C acts as a Horn Proxy:**
+   - ECU C receives the ``Command_Horn`` from ECU A and combines it with its own physical button state.
+   - It then transmits a ``Control_Horn`` message to ECU D to report the final horn status.
+
+Standard vs. J1939 Message Mapping
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The signal distribution changes depending on whether ``ENABLE_J1939_MODE`` is active:
+
++----------------------+--------------------+-----------+-----------------------------------+-----------------------------------+
+| Signal               | Source ECU         | Target    | Standard Mode (11-bit ID)         | J1939 Mode (29-bit ID / PGN)      |
++======================+====================+===========+===================================+===================================+
+| **Command_Brake**    | ECU A              | ECU C     | ID ``0x1A``                       | PGN ``1024`` (XBR), DA 11         |
++----------------------+--------------------+-----------+-----------------------------------+-----------------------------------+
+| **Command_Accel**    | ECU A              | ECU C     | ID ``0x2F``                       | PGN ``0`` (TSC1), DA 0            |
++----------------------+--------------------+-----------+-----------------------------------+-----------------------------------+
+| **Command_Steer**    | ECU A              | ECU B     | ID ``0x58``                       | PGN ``61184`` (PropA), DA 19      |
++----------------------+--------------------+-----------+-----------------------------------+-----------------------------------+
+| **Command_Shift**    | ECU A              | ECU C     | ID ``0x6D``                       | PGN ``256`` (TC1), DA 3           |
++----------------------+--------------------+-----------+-----------------------------------+-----------------------------------+
+| **Command_Horn**     | ECU A              | ECU C     | ID ``0x1A8`` (Control_Horn)       | PGN ``61184`` (PropA), DA 90      |
++----------------------+--------------------+-----------+-----------------------------------+-----------------------------------+
+| **Control_Horn**     | ECU C              | ECU D     | ID ``0x1A8``                      | PGN ``61184`` (PropA), DA 33      |
++----------------------+--------------------+-----------+-----------------------------------+-----------------------------------+
+| **Command_P-Brake**  | ECU A              | ECU B     | ID ``0x1C9``                      | PGN ``65265`` (CCVS1)             |
++----------------------+--------------------+-----------+-----------------------------------+-----------------------------------+
+| **Status_RPM**       | ECU A              | All       | ID ``0x12``                       | PGN ``61444`` (EEC1)              |
++----------------------+--------------------+-----------+-----------------------------------+-----------------------------------+
+
+.. note::
+   In J1939 mode, the horn signals are strictly unicast to their respective targets (DA 90 for the command, DA 33 for the status) using Proprietary A. In Standard mode, these are broadcasted using functional IDs.
+
+This mode is strictly for development and should be disabled for any scenario involving real-world user interaction or safety-critical testing.
+
 See :ref:`example_MAC` for a customization example.
 
 .. note:: ECU A also uses ``RAMN_DBC_ProcessUSBBuffer`` to convert USB data received from CARLA into CAN messages.  
