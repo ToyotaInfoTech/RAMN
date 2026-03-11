@@ -67,7 +67,7 @@ static void RAMN_DBC_FormatDefaultPeriodicMessage(RAMN_PeriodicFDCANTx_t* msg)
 
 void RAMN_DBC_Init(void)
 {
-#if defined(TARGET_ECUA)
+#if defined(TARGET_ECUA) && !defined(RAMN_FORCE_AUTOPILOT)
 	RAMN_DBC_RequestSilence = True;
 #else
 	RAMN_DBC_RequestSilence = False;
@@ -132,9 +132,25 @@ void RAMN_DBC_ProcessCANMessage(uint32_t canid, uint32_t dlc, RAMN_CANFrameData_
 			RAMN_DBC_Handle.command_shift = RAMN_Decode_Command_Shift(&dataframe->rawData[0], dlc);
 			break;
 		case J1939_PGN_CM3:
-			// CM3 contains Control_EngineKey and Command_Horn (SPN 2641)
-			RAMN_DBC_Handle.control_enginekey = RAMN_Decode_Control_EngineKey(&dataframe->rawData[0], dlc);
-			RAMN_DBC_Handle.command_horn = RAMN_Decode_Command_Horn(&dataframe->rawData[0], dlc);
+			{
+				// CM3 is sent by both ECU C (Horn) and ECU D (EngineKey)
+				uint8_t sa = (uint8_t)(canid & 0xFF);
+				if (sa == J1939_SA_BODY_CTRL) {
+					uint8_t enginekey = RAMN_Decode_Control_EngineKey(&dataframe->rawData[0], dlc);
+#ifdef RAMN_FORCE_AUTOPILOT
+					RAMN_DBC_Handle.control_enginekey = enginekey;
+#else
+					if (enginekey != 3) RAMN_DBC_Handle.control_enginekey = enginekey;
+#endif
+				} else if (sa == J1939_SA_POWERTRAIN_CTRL) {
+					uint8_t horn = RAMN_Decode_Command_Horn(&dataframe->rawData[0], dlc);
+#ifdef RAMN_FORCE_AUTOPILOT
+					RAMN_DBC_Handle.command_horn = horn;
+#else
+					if (horn != 3) RAMN_DBC_Handle.command_horn = horn;
+#endif
+				}
+			}
 			break;
 		case J1939_PGN_B1:
 			RAMN_DBC_Handle.control_sidebrake = RAMN_Decode_Control_Sidebrake(&dataframe->rawData[0], dlc);
@@ -231,14 +247,17 @@ void RAMN_DBC_ProcessCANMessage(uint32_t canid, uint32_t dlc, RAMN_CANFrameData_
 
 void RAMN_DBC_Send(uint32_t tick)
 {
-	for(uint16_t i = 0; i < NUMBER_OF_PERIODIC_MSG ; i++)
+	if (RAMN_DBC_RequestSilence == False)
 	{
-		if((tick - periodicTxCANMsgs[i]->lastSent) >= periodicTxCANMsgs[i]->periodms)
+		for(uint16_t i = 0; i < NUMBER_OF_PERIODIC_MSG ; i++)
 		{
-			RAMN_DBC_FormatDefaultPeriodicMessage(periodicTxCANMsgs[i]);
-			RAMN_FDCAN_SendMessage(&(periodicTxCANMsgs[i]->header),(uint8_t*)(periodicTxCANMsgs[i]->data));
-			periodicTxCANMsgs[i]->counter++;
-			periodicTxCANMsgs[i]->lastSent = tick;
+			if((tick - periodicTxCANMsgs[i]->lastSent) >= periodicTxCANMsgs[i]->periodms)
+			{
+				RAMN_DBC_FormatDefaultPeriodicMessage(periodicTxCANMsgs[i]);
+				RAMN_FDCAN_SendMessage(&(periodicTxCANMsgs[i]->header),(uint8_t*)(periodicTxCANMsgs[i]->data));
+				periodicTxCANMsgs[i]->counter++;
+				periodicTxCANMsgs[i]->lastSent = tick;
+			}
 		}
 	}
 }

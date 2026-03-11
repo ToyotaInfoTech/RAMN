@@ -107,6 +107,10 @@ jobs:
           - variant: j1939
             enable: "ENABLE_J1939_MODE"
             disable: ""
+          - ecu: TARGET_ECUA
+            variant: force_autopilot
+            enable: "RAMN_FORCE_AUTOPILOT"
+            disable: ""
 
     runs-on: ubuntu-latest
     steps:
