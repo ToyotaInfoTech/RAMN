@@ -50,11 +50,11 @@ RECEIVERS = {
 }
 
 MAPPING_REPORT = []
+REPORT_PATH = os.path.join(os.path.dirname(__file__), "j1939_mapping_report.json")
 
 
 def save_report():
-    report_path = os.path.join(os.path.dirname(__file__), "j1939_mapping_report.json")
-    with open(report_path, "w") as f:
+    with open(REPORT_PATH, "w") as f:
         json.dump(MAPPING_REPORT, f, indent=4)
 
 
@@ -96,7 +96,7 @@ import subprocess
 import sys
 
 # Build the shared library automatically
-build_script_path = os.path.join(os.path.dirname(__file__), "build_serdes_lib.sh")
+build_script_path = os.path.join(os.path.dirname(__file__), "build_testing_libs.sh")
 repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 try:
     print("Building shared library...", file=sys.stderr)

@@ -15,6 +15,7 @@
  */
 
 #include "ramn_xcp.h"
+#include <stdio.h>
 
 #if defined(ENABLE_XCP)
 
@@ -107,16 +108,20 @@ static uint8_t* xcp_answerData;
 static uint16_t* xcp_answerSize;
 
 // XCP Device Name
-#if   defined(TARGET_ECUB)
-static const char XCP_DEVICE_NAME[] = "ECUB";
+#ifndef XCP_DEVICE_NAME
+#if defined(TARGET_ECUB)
+const char XCP_DEVICE_NAME[] = "ECUB";
 #elif defined(TARGET_ECUC)
-static const char XCP_DEVICE_NAME[] = "ECUC";
+const char XCP_DEVICE_NAME[] = "ECUC";
 #elif defined(TARGET_ECUD)
-static const char XCP_DEVICE_NAME[] = "ECUD";
+const char XCP_DEVICE_NAME[] = "ECUD";
+#else
+const char XCP_DEVICE_NAME[] = "ECUA";
+#endif
 #endif
 
 // Header used to request transmission of XCP answer CAN message
-static FDCAN_TxHeaderTypeDef RAMN_XCP_TxMsgHeader =
+FDCAN_TxHeaderTypeDef RAMN_XCP_TxMsgHeader =
 {
 		.Identifier  = XCP_TX_CANID,
 		.DataLength = FDCAN_DLC_BYTES_0,
@@ -208,7 +213,7 @@ static void RAMN_XCP_GetID(const uint8_t* data, uint16_t size)
 			xcp_answerData[6] = 0; //sizeof(XCP_DEVICE_NAME)-1; //non-null terminated
 			xcp_answerData[7] = 0; //sizeof(XCP_DEVICE_NAME)-1; //non-null terminated
 			*xcp_answerSize = 8U;
-			RAMN_XCP_Handler.mtaPointer = (uint32_t)&XCP_DEVICE_NAME;
+			RAMN_XCP_Handler.mtaPointer = (uint32_t)(uintptr_t)&XCP_DEVICE_NAME;
 			break;
 		default:
 			XCP_FormatNegativeAnswer(XCP_ERR_OUT_OF_RANGE);
@@ -226,18 +231,19 @@ static void XCP_Upload(const uint8_t* data, uint16_t size)
 		{
 			XCP_FormatNegativeAnswer(XCP_ERR_OUT_OF_RANGE);
 		}
-		else if (RAMN_MEMORY_CheckAreaReadable(RAMN_XCP_Handler.mtaPointer,RAMN_XCP_Handler.mtaPointer + (uint32_t)data[1]) != True)
+		else if (RAMN_MEMORY_CheckAreaReadable(RAMN_XCP_Handler.mtaPointer, RAMN_XCP_Handler.mtaPointer + (uint32_t)data[1]) != True)
 		{
 			XCP_FormatNegativeAnswer(XCP_ERR_OUT_OF_RANGE);
 		}
 		else
 		{
+			xcp_answerData[0] = 0xFF;
 			for(uint8_t i = 0; i < data[1] ; i++)
 			{
-				xcp_answerData[i+1] = (uint8_t)*(uint8_t*)(RAMN_XCP_Handler.mtaPointer);
+				xcp_answerData[i+1] = (uint8_t)*(uint8_t*)(uintptr_t)(RAMN_XCP_Handler.mtaPointer);
 				RAMN_XCP_Handler.mtaPointer++;
 			}
-			*xcp_answerSize = data[1]+1;
+			*xcp_answerSize = (uint16_t)data[1] + 1U;
 		}
 	}
 }
@@ -247,7 +253,7 @@ static void XCP_SetMTA(const uint8_t* data, uint16_t size)
 	if (size != 8U) XCP_FormatNegativeAnswer(XCP_ERR_CMD_SYNTAX);
 	else
 	{
-		RAMN_XCP_Handler.mtaPointer = (data[4] << 24) + (data[5] << 16) + (data[6] << 8) + (data[7]);
+		RAMN_XCP_Handler.mtaPointer = (uint32_t)((data[4] << 24) + (data[5] << 16) + (data[6] << 8) + (data[7]));
 		*xcp_answerSize = 1U;
 	}
 }
@@ -281,8 +287,43 @@ RAMN_Bool_t RAMN_XCP_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, c
 	size_t xBytesSent;
 	uint16_t size;
 	RAMN_Bool_t result = False;
+	RAMN_Bool_t matched = False;
 
+#ifdef ENABLE_J1939_MODE
+	uint8_t prio = (pHeader->Identifier >> 26) & 0x7;
+	uint8_t pf = (pHeader->Identifier >> 16) & 0xFF;
+	uint8_t da = (pHeader->Identifier >> 8) & 0xFF;
+	uint8_t sa = pHeader->Identifier & 0xFF;
+
+	// Proprietary A (PF 0xEF) is used for KWP2000 and XCP. Physical only.
+	// TSA must be 0x3F or 0x5A for XCP.
+	if (pHeader->IdType == FDCAN_EXTENDED_ID && pf == 0xEF && da == J1939_ECU_SA)
+	{
+		if (sa == 0x3F || sa == 0x5A)
+		{
+			// Avoid ECUC (SA 0x5A) responding to itself if another ECU is using TSA 0x5A
+			if (sa != J1939_ECU_SA)
+			{
+				RAMN_XCP_TxMsgHeader.Identifier = J1939_UCAST_ID(prio, 0xEF00, sa, J1939_ECU_SA);
+				RAMN_XCP_TxMsgHeader.IdType = FDCAN_EXTENDED_ID;
+				matched = True;
+			}
+		}
+
+		if (matched == False)
+		{
+			RAMN_XCP_TxMsgHeader.Identifier = XCP_TX_CANID;
+			RAMN_XCP_TxMsgHeader.IdType = FDCAN_STANDARD_ID;
+		}
+	}
+#else
 	if (pHeader->Identifier == XCP_RX_CANID)
+	{
+		matched = True;
+	}
+#endif
+
+	if (matched == True)
 	{
 		size = (uint16_t)DLCtoUINT8(pHeader->DataLength);
 		if (size > 0U)

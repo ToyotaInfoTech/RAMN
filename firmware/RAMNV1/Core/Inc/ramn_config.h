@@ -304,7 +304,9 @@
 #endif
 
 #if defined(ENABLE_UDS) || defined(ENABLE_KWP)
+#ifndef ENABLE_ISOTP
 #define ENABLE_ISOTP
+#endif
 #endif
 
 #define ISOTP_RXBUFFER_SIZE 			4096
@@ -353,6 +355,10 @@
 #define CAN_TX_BUFFER_SIZE 				15000
 #define UDS_ISOTP_RX_BUFFER_SIZE 		0xFFF+2 //Add +2 for buffer-size
 #define UDS_ISOTP_TX_BUFFER_SIZE 		0xFFF+2
+#define KWP_ISOTP_RX_BUFFER_SIZE 		0xFFF+2
+#define KWP_ISOTP_TX_BUFFER_SIZE 		0xFFF+2
+#define XCP_RX_BUFFER_SIZE 				(4000)
+#define XCP_TX_BUFFER_SIZE 				(4000)
 
 #else
 #define CAN_RX_BUFFER_SIZE 				20480
