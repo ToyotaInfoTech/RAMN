@@ -128,6 +128,8 @@
 #define CAN_QUEUE_SIZE			512
 #endif
 
+#define ENABLE_BITBANG
+
 #endif
 
 // CONFIGURATION OF ECU B ------------------------------------------------------

@@ -257,3 +257,73 @@ void RAMN_TaskDelay(uint32_t msec)
 	osDelay(pdMS_TO_TICKS(msec));
 }
 
+RAMN_Bool_t RAMN_streq(const char *a, const char *b)
+{
+	if (!a || !b) return False;
+
+	while (*a && (*a == *b))
+	{
+		a++;
+		b++;
+	}
+
+	return (*a == *b) ? True : False;
+}
+
+uint32_t RAMN_strtoul(const char *s, uint8_t base, RAMN_Bool_t *ok)
+{
+	uint32_t val = 0;
+	uint8_t digit;
+
+	if (ok) *ok = False;
+
+	if (!s || !*s) return 0;
+
+	while (*s)
+	{
+		if (*s >= '0' && *s <= '9') digit = *s - '0';
+		else if (*s >= 'A' && *s <= 'F') digit = *s - 'A' + 10;
+		else if (*s >= 'a' && *s <= 'f') digit = *s - 'a' + 10;
+		else return 0;
+
+
+		if (digit >= base) return 0;
+		val = (val * base) + digit;
+		s++;
+	}
+
+	if (ok) *ok = True;
+
+	return val;
+}
+
+uint8_t uint32toBCD(uint32_t val, char *dst)
+{
+	char *ptr = dst;
+	char *start = dst;
+	uint8_t len;
+
+	if (val == 0) *ptr++ = '0';
+	else
+	{
+		while (val > 0)
+		{
+			*ptr++ = (val % 10) + '0';
+			val /= 10;
+		}
+	}
+
+	len = ptr - dst;
+	*ptr = '\0';
+
+	ptr--;
+	while (start < ptr)
+	{
+		char t = *start;
+		*start++ = *ptr;
+		*ptr-- = t;
+	}
+
+	return len;
+}
+

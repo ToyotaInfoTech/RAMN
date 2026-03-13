@@ -38,6 +38,9 @@
 #ifdef ENABLE_UDS
 #include "ramn_uds.h"
 #endif
+#ifdef ENABLE_BITBANG
+#include "ramn_bitbang.h"
+#endif
 
 // Header and data for the "spoof ASAP" replace module of ECU A.
 extern FDCAN_TxHeaderTypeDef ReplaceTxHeader;

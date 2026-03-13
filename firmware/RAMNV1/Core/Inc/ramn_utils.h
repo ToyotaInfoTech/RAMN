@@ -84,4 +84,13 @@ uint16_t applyEndian16(uint16_t val);
 // Wrapper for osDelay
 void     RAMN_TaskDelay(uint32_t msec);
 
+// Strings equal check (assumes string length check already done)
+RAMN_Bool_t RAMN_streq(const char *a, const char *b);
+
+// More general version of ASCIItoUint32
+uint32_t RAMN_strtoul(const char *s, uint8_t base, RAMN_Bool_t *ok);
+
+// Function to help print a variable in base 10
+uint8_t uint32toBCD(uint32_t val, char *dst);
+
 #endif /* INC_RAMN_UTILS_H_ */

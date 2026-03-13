@@ -989,6 +989,24 @@ static void RAMN_UDS_RoutineControlUpdateCANParameters(const uint8_t* data, uint
 	}
 }
 
+static void RAMN_UDS_RoutineControlResetCAN(const uint8_t* data, uint16_t size)
+{
+	if (size != 4U)
+	{
+		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
+	}
+	else
+	{
+		RAMN_FDCAN_ResetPeripheral();
+		osDelay(10);
+		uds_answerData[0] = data[0] + 0x40; // Positive response
+		uds_answerData[1] = data[1];
+		uds_answerData[2] = data[2];
+		uds_answerData[3] = data[3];
+		*uds_answerSize = 4U;
+	}
+}
+
 
 
 //Routine Control to enable or disable autopilot features
@@ -1317,6 +1335,9 @@ static void RAMN_UDS_RoutineControl(uint8_t* data, uint16_t size)
 			break;
 		case 0x0222: // Update CAN parameters (3-byte argument, auto-recovery from bus off, auto retransmit, transmitPause)
 			RAMN_UDS_RoutineControlUpdateCANParameters(data,size);
+			break;
+		case 0x0223: // Reset CAN peripheral (useful to clear CAN errors).
+			RAMN_UDS_RoutineControlResetCAN(data,size);
 			break;
 		default:
 			RAMN_UDS_FormatNegativeResponse(data,UDS_NRC_ROOR);
