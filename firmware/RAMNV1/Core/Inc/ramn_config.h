@@ -304,7 +304,9 @@
 #endif
 
 #if defined(ENABLE_UDS) || defined(ENABLE_KWP)
+#ifndef ENABLE_ISOTP
 #define ENABLE_ISOTP
+#endif
 #endif
 
 #define ISOTP_RXBUFFER_SIZE 			4096
