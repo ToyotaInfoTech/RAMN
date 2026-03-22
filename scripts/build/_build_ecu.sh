@@ -18,7 +18,7 @@ while [[ $# -gt 0 ]]; do
 		--no-clean) BUILD_MODE="-build"; shift ;;
 		--no-quiet) QUIET=false; shift ;;
 		-D) EXTRA_DEFINES="${EXTRA_DEFINES} -D $2"; shift 2 ;;
-		-D*) EXTRA_DEFINES="${EXTRA_DEFINES} $1"; shift ;;
+		-D*) EXTRA_DEFINES="${EXTRA_DEFINES} -D ${1#-D}"; shift ;;
 		*) shift ;;
 	esac
 done
