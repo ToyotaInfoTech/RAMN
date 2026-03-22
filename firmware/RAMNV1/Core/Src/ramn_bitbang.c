@@ -375,7 +375,7 @@ void CAN_PrintFrame(char *bits)
 	uint8_t rtr;
 
 	char buf[32];
-	char hex[8];
+	char hex[9];
 
 	uint32_t len = RAMN_strlen(bits);
 
@@ -437,7 +437,7 @@ void CAN_PrintFrame(char *bits)
 		RAMN_USB_SendStringFromTask(" (0x");
 
 		uint32toASCII(id_ext,(uint8_t*)hex);
-		hex[7] = 0;
+		hex[8] = 0;
 		RAMN_USB_SendStringFromTask(hex);
 		RAMN_USB_SendStringFromTask(")\r");
 

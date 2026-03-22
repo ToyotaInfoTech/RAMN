@@ -62,7 +62,7 @@ void sendUDSAsciiHex(uint16_t can_id, char *ascii_hex)
 
 	while (*ascii_hex && *(ascii_hex + 1) && payload_len < 7)
 	{
-		payload[payload_len++] = ASCIItoUint8(ascii_hex);
+		payload[payload_len++] = ASCIItoUint8((uint8_t*)ascii_hex);
 		ascii_hex += 2;
 	}
 
