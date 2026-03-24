@@ -14,5 +14,6 @@ If your goal is to customize RAMN, check the :ref:`customizing_guide`.
    userguide/isotp_tutorial
    userguide/diag_tutorial
    userguide/usb_tutorial
+   userguide/protocol_tutorial
    userguide/going_further
 
