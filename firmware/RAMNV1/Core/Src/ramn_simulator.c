@@ -20,7 +20,11 @@ uint8_t RAMN_SIM_AutopilotEnabled;
 
 void RAMN_SIM_Init(void)
 {
+#if defined(RAMN_FORCE_AUTOPILOT)
+	RAMN_SIM_AutopilotEnabled = True;
+#else
 	RAMN_SIM_AutopilotEnabled = False;
+#endif
 }
 
 void RAMN_SIM_UpdatePeriodic(uint32_t tick)
@@ -45,8 +49,52 @@ void RAMN_SIM_UpdatePeriodic(uint32_t tick)
 	}
 #endif
 
+#if defined(RAMN_FORCE_AUTOPILOT) && defined(TARGET_ECUA)
+	// Forced autopilot/fuzzer mode: ECU A periodically randomizes command values at 1 Hz.
+	// Other ECUs use their default behavior, reacting to commands received via CAN.
+	{
+		static uint32_t lastRandomTick = 0U;
+		static uint8_t firstRun = 1U;
+
+		if (firstRun != 0U)
+		{
+			lastRandomTick = tick;
+			firstRun = 0U;
+		}
+
+		if ((tick - lastRandomTick) >= 1000U)
+		{
+			lastRandomTick = tick;
+
+			RAMN_DBC_Handle.command_brake         = RAMN_RNG_Pop16() & 0xFFF;
+			RAMN_DBC_Handle.command_accel          = RAMN_RNG_Pop16() & 0xFFF;
+			RAMN_DBC_Handle.command_steer          = RAMN_RNG_Pop16() & 0xFFF;
+			RAMN_DBC_Handle.command_shift          = (uint16_t)(RAMN_RNG_Pop8() % (MAX_GEAR_VALUE + 1U));
+			RAMN_DBC_Handle.command_sidebrake      = (uint16_t)(RAMN_RNG_Pop8() & 0x01);
+			RAMN_DBC_Handle.status_rpm             = RAMN_RNG_Pop16() & 0xFFF;
+			RAMN_DBC_Handle.control_horn           = RAMN_RNG_Pop8() & 0x01;
+		}
+	}
+#endif
+
 #if defined(EXPANSION_POWERTRAIN)
 	// Powertrain ECU sends back data from the Self-Driving agent, except if sensors are above a certain threshold
+#if defined(RAMN_FORCE_AUTOPILOT)
+	RAMN_DBC_Handle.control_brake = RAMN_DBC_Handle.command_brake;
+	RAMN_DBC_Handle.control_accel = RAMN_DBC_Handle.command_accel;
+	RAMN_DBC_Handle.control_shift = (RAMN_DBC_Handle.command_shift)&0xFF;
+
+	// In Force Autopilot mode, ECUC randomizes the Horn and Turn Indicator commands
+	{
+		static uint32_t lastRandomTick = 0U;
+		if ((tick - lastRandomTick) >= 1000U)
+		{
+			lastRandomTick = tick;
+			RAMN_DBC_Handle.command_horn = RAMN_RNG_Pop8() & 0x01;
+			RAMN_DBC_Handle.command_turnindicator = RAMN_RNG_Pop16();
+		}
+	}
+#else
 	if ((!RAMN_SIM_AutopilotEnabled) || ((RAMN_SENSORS_POWERTRAIN.brakePotentiometer >= 0x20) || (RAMN_SENSORS_POWERTRAIN.accelPotentiometer >= 0x20)))
 	{
 		RAMN_DBC_Handle.control_brake = RAMN_SENSORS_POWERTRAIN.brakePotentiometer;
@@ -66,15 +114,30 @@ void RAMN_SIM_UpdatePeriodic(uint32_t tick)
 	{
 		RAMN_DBC_Handle.control_shift 			= (RAMN_DBC_Handle.command_shift)&0xFF;
 	}
+	RAMN_DBC_Handle.command_horn = RAMN_SENSORS_POWERTRAIN.hornRequest;
+#endif
 	// Note that we do not allow overriding the joystick, only gear status.
 	// It can be implemented by looking at the second byte of command_shift (declared as uint16_t).
 	RAMN_DBC_Handle.joystick 				= (uint8_t) RAMN_SENSORS_POWERTRAIN.shiftJoystick;
-	RAMN_DBC_Handle.command_horn 			= RAMN_SENSORS_POWERTRAIN.hornRequest;
 	RAMN_DBC_Handle.command_turnindicator 	= RAMN_SENSORS_POWERTRAIN.turnIndicatorRequest;
 #endif
 
 #if defined(EXPANSION_CHASSIS)
 	// Chassis ECU sends back data from the Self-Driving agent, except if steering wheel is not centered
+#if defined(RAMN_FORCE_AUTOPILOT)
+	RAMN_DBC_Handle.control_steer  = RAMN_DBC_Handle.command_steer;
+	RAMN_DBC_Handle.control_sidebrake = RAMN_DBC_Handle.command_sidebrake;
+
+	// In Force Autopilot mode, ECUB randomizes the Lights command
+	{
+		static uint32_t lastRandomTick = 0U;
+		if ((tick - lastRandomTick) >= 1000U)
+		{
+			lastRandomTick = tick;
+			RAMN_DBC_Handle.command_lights = (uint16_t)(RAMN_RNG_Pop8() % (RAMN_LIGHTSWITCH_POS4 + 1U));
+		}
+	}
+#else
 	if (RAMN_SIM_AutopilotEnabled)
 	{
 		if((RAMN_SENSORS_CHASSIS.steeringPotentiometer <= 0x7E0) || (RAMN_SENSORS_CHASSIS.steeringPotentiometer >= 0x820))
@@ -101,6 +164,7 @@ void RAMN_SIM_UpdatePeriodic(uint32_t tick)
 	{
 		RAMN_DBC_Handle.control_sidebrake = RAMN_DBC_Handle.command_sidebrake;
 	}
+#endif
 	RAMN_DBC_Handle.command_lights  |= ((RAMN_SENSORS_CHASSIS.lightsSwitch)&0xFF); //We use command here and not control because we consider we command the simulator's lights
 #endif
 
@@ -124,5 +188,3 @@ void RAMN_SIM_UpdatePeriodic(uint32_t tick)
 	RAMN_ACTUATORS_SetLampState(LED_RIGHTTURN	, ((RAMN_DBC_Handle.command_turnindicator&0x00FF) != 0U) & ((tick % 1000) >= 500));
 #endif
 }
-
-

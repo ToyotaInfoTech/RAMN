@@ -243,15 +243,6 @@ uint16_t RAMN_strlen(const char *str)
 	return i;
 }
 
-uint16_t applyEndian16(uint16_t val)
-{
-#ifdef USE_BIG_ENDIAN_CAN
-	return ((val&0xFF) << 8) | ((val >> 8)&0xFF);
-#else
-	return val;
-#endif
-}
-
 void RAMN_TaskDelay(uint32_t msec)
 {
 	osDelay(pdMS_TO_TICKS(msec));

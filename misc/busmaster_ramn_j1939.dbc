@@ -1,0 +1,126 @@
+VERSION ""
+
+
+NS_ : 
+	NS_DESC_
+	CM_
+	BA_DEF_
+	BA_
+	VAL_
+	CAT_DEF_
+	CAT_
+	FILTER
+	BA_DEF_DEF_
+	EV_DATA_
+	ENVVAR_DATA_
+	SGTYPE_
+	SGTYPE_VAL_
+	BA_DEF_SGTYPE_
+	BA_SGTYPE_
+	SIG_TYPE_REF_
+	VAL_TABLE_
+	SIG_GROUP_
+	SIG_VALTYPE_
+	SIGTYPE_VALTYPE_
+	BO_TX_BU_
+	BA_DEF_REL_
+	BA_REL_
+	BA_DEF_DEF_REL_
+	BU_SG_REL_
+	BU_EV_REL_
+	BU_BO_REL_
+	SG_MUL_VAL_
+
+BS_:
+
+BU_: Engine Transmission ShiftConsole BrakeSystem Steering BodyController HeadwayController PowertrainController BrakesDriveAxle1 ChassisController1
+
+BO_ 2214857514 Command_Brake: 8 HeadwayController
+ SG_ Command_Brake_ExtDecel : 0|16@1+ (0.000244140625,-15.687) [-15.687|15.687] "m/s2" BrakeSystem
+
+BO_ 2565865818 Control_Brake: 8 PowertrainController
+ SG_ Control_Brake_PedalPos : 8|8@1+ (0.4,0) [0|100] "%" HeadwayController
+
+BO_ 2348810282 Command_Accel: 8 HeadwayController
+ SG_ Command_Accel_ReqSpeed : 8|16@1+ (0.125,0) [0|8031.875] "rpm" Engine
+
+BO_ 2565866330 Control_Accel: 8 PowertrainController
+ SG_ Control_Accel_PedalPos : 8|8@1+ (0.4,0) [0|100] "%" HeadwayController
+
+BO_ 2364539946 Status_RPM: 8 HeadwayController
+ SG_ Status_RPM_EngineSpeed : 24|16@1+ (0.125,0) [0|8031.875] "rpm" PowertrainController
+
+BO_ 2297369386 Command_Steering: 8 HeadwayController
+ SG_ Command_Steering_ReqAngle : 0|16@1+ (1,0) [0|65535] "" Steering
+
+BO_ 2565867795 Control_Steering: 8 Steering
+ SG_ Control_Steering_WheelAngle : 0|16@1+ (0.0009765625,-31.374) [-31.374|32.625] "rad" HeadwayController
+
+BO_ 2348876586 Command_Shift: 8 HeadwayController
+ SG_ Command_Shift_ReqGear : 16|8@1+ (1,-125) [-125|125] "gear" Transmission
+
+BO_ 2565866755 Control_Shift: 8 Transmission
+ SG_ Control_Shift_CurrentGear : 24|8@1+ (1,-125) [-125|125] "gear" HeadwayController
+
+BO_ 2566849029 Joystick_Buttons: 8 ShiftConsole
+ SG_ Joystick_Buttons_Up : 0|2@1+ (1,0) [0|3] "" HeadwayController
+ SG_ Joystick_Buttons_Down : 2|2@1+ (1,0) [0|3] "" HeadwayController
+ SG_ Joystick_Buttons_Left : 4|2@1+ (1,0) [0|3] "" HeadwayController
+ SG_ Joystick_Buttons_Right : 6|2@1+ (1,0) [0|3] "" HeadwayController
+ SG_ Joystick_Buttons_Push : 8|2@1+ (1,0) [0|3] "" HeadwayController
+
+BO_ 2566771802 Command_Horn: 8 PowertrainController
+ SG_ Command_Horn_Req : 26|2@1+ (1,0) [0|3] "" HeadwayController
+
+BO_ 2214857514 Control_Horn: 8 HeadwayController
+ SG_ Control_Horn_Status : 0|8@1+ (1,0) [0|255] "" PowertrainController
+
+BO_ 2365377541 Command_TurnIndicator: 8 ShiftConsole
+ SG_ Command_TurnIndicator_Req : 8|4@1+ (1,0) [0|15] "" BodyController
+
+BO_ 2566844714 Command_Sidebrake: 8 HeadwayController
+ SG_ Command_Sidebrake_Req : 2|2@1+ (1,0) [0|3] "" BrakeSystem
+
+BO_ 2566846989 Control_Sidebrake: 8 BrakesDriveAxle1
+ SG_ Control_Sidebrake_Status : 24|2@1+ (1,0) [0|3] "" HeadwayController
+
+BO_ 2566771745 Control_EngineKey: 8 BodyController
+ SG_ Control_EngineKey_Acc : 18|2@1+ (1,0) [0|3] "" HeadwayController
+ SG_ Control_EngineKey_Ign : 20|2@1+ (1,0) [0|3] "" HeadwayController
+
+BO_ 2365473095 Command_Lights: 8 ChassisController1
+ SG_ Command_Lights_Running : 0|2@1+ (1,0) [0|3] "" BodyController
+ SG_ Command_Lights_LowBeam : 4|2@1+ (1,0) [0|3] "" BodyController
+ SG_ Command_Lights_HighBeam : 6|2@1+ (1,0) [0|3] "" BodyController
+
+BO_ 2566848545 Control_Lights: 8 BodyController
+ SG_ Control_Lights_LED1 : 0|8@1+ (1,0) [0|255] "" HeadwayController
+ SG_ Control_Lights_LED2 : 8|8@1+ (1,0) [0|255] "" HeadwayController
+ SG_ Control_Lights_LED3 : 16|8@1+ (1,0) [0|255] "" HeadwayController
+ SG_ Control_Lights_LED4 : 24|8@1+ (1,0) [0|255] "" HeadwayController
+ SG_ Control_Lights_LED5 : 32|8@1+ (1,0) [0|255] "" HeadwayController
+ SG_ Control_Lights_LED6 : 40|8@1+ (1,0) [0|255] "" HeadwayController
+ SG_ Control_Lights_LED7 : 48|8@1+ (1,0) [0|255] "" HeadwayController
+ SG_ Control_Lights_LED8 : 56|8@1+ (1,0) [0|255] "" HeadwayController
+
+BA_DEF_ BO_  "VFrameFormat" ENUM  "StandardCAN","ExtendedCAN","reserved","J1939PG";
+BA_DEF_DEF_  "VFrameFormat" "J1939PG";
+
+BA_ "VFrameFormat" BO_ 2214857514 3;
+BA_ "VFrameFormat" BO_ 2565865818 3;
+BA_ "VFrameFormat" BO_ 2348810282 3;
+BA_ "VFrameFormat" BO_ 2565866330 3;
+BA_ "VFrameFormat" BO_ 2364539946 3;
+BA_ "VFrameFormat" BO_ 2297369386 3;
+BA_ "VFrameFormat" BO_ 2565867795 3;
+BA_ "VFrameFormat" BO_ 2348876586 3;
+BA_ "VFrameFormat" BO_ 2565866755 3;
+BA_ "VFrameFormat" BO_ 2566849029 3;
+BA_ "VFrameFormat" BO_ 2566771802 3;
+BA_ "VFrameFormat" BO_ 2214857514 3;
+BA_ "VFrameFormat" BO_ 2365377541 3;
+BA_ "VFrameFormat" BO_ 2566844714 3;
+BA_ "VFrameFormat" BO_ 2566846989 3;
+BA_ "VFrameFormat" BO_ 2566771745 3;
+BA_ "VFrameFormat" BO_ 2365473095 3;
+BA_ "VFrameFormat" BO_ 2566848545 3;

@@ -82,69 +82,113 @@ RAMN_FDCAN_Status_t RAMN_FDCAN_Status = {
 static const uint16_t recvStdCANIDList[] =
 {
 #ifdef RECEIVE_CONTROL_BRAKE
+#ifndef ENABLE_J1939_MODE
 		CAN_SIM_CONTROL_BRAKE_CANID,
 #endif
+#endif
 #ifdef RECEIVE_COMMAND_BRAKE
+#ifndef ENABLE_J1939_MODE
 		CAN_SIM_COMMAND_BRAKE_CANID,
 #endif
+#endif
 #ifdef RECEIVE_CONTROL_ACCEL
+#ifndef ENABLE_J1939_MODE
 		CAN_SIM_CONTROL_ACCEL_CANID,
 #endif
+#endif
 #ifdef RECEIVE_COMMAND_ACCEL
+#ifndef ENABLE_J1939_MODE
 		CAN_SIM_COMMAND_ACCEL_CANID,
 #endif
+#endif
 #ifdef RECEIVE_STATUS_RPM
+#ifndef ENABLE_J1939_MODE
 		CAN_SIM_STATUS_RPM_CANID,
 #endif
+#endif
 #ifdef RECEIVE_CONTROL_STEERING
+#ifndef ENABLE_J1939_MODE
 		CAN_SIM_CONTROL_STEERING_CANID,
 #endif
+#endif
 #ifdef RECEIVE_COMMAND_STEERING
+#ifndef ENABLE_J1939_MODE
 		CAN_SIM_COMMAND_STEERING_CANID,
 #endif
+#endif
 #ifdef RECEIVE_CONTROL_SHIFT
+#ifndef ENABLE_J1939_MODE
 		CAN_SIM_CONTROL_SHIFT_CANID,
 #endif
+#endif
+#ifdef RECEIVE_JOYSTICK_BUTTONS
+#ifndef ENABLE_J1939_MODE
+		CAN_SIM_JOYSTICK_BUTTONS_CANID,
+#endif
+#endif
 #ifdef RECEIVE_COMMAND_SHIFT
+#ifndef ENABLE_J1939_MODE
 		CAN_SIM_COMMAND_SHIFT_CANID,
 #endif
+#endif
 #ifdef RECEIVE_COMMAND_HORN
+#ifndef ENABLE_J1939_MODE
 		CAN_SIM_COMMAND_HORN_CANID,
 #endif
+#endif
 #ifdef RECEIVE_CONTROL_HORN
+#ifndef ENABLE_J1939_MODE
 		CAN_SIM_CONTROL_HORN_CANID,
 #endif
+#endif
 #ifdef RECEIVE_CONTROL_SIDEBRAKE
+#ifndef ENABLE_J1939_MODE
 		CAN_SIM_CONTROL_SIDEBRAKE_CANID,
 #endif
+#endif
 #ifdef RECEIVE_COMMAND_SIDEBRAKE
+#ifndef ENABLE_J1939_MODE
 		CAN_SIM_COMMAND_SIDEBRAKE_CANID,
 #endif
+#endif
 #ifdef RECEIVE_COMMAND_TURNINDICATOR
+#ifndef ENABLE_J1939_MODE
 		CAN_SIM_COMMAND_TURNINDICATOR_CANID,
 #endif
+#endif
 #ifdef RECEIVE_CONTROL_ENGINEKEY
+#ifndef ENABLE_J1939_MODE
 		CAN_SIM_CONTROL_ENGINEKEY_CANID,
 #endif
+#endif
 #ifdef RECEIVE_COMMAND_LIGHTS
+#ifndef ENABLE_J1939_MODE
 		CAN_SIM_COMMAND_LIGHTS_CANID,
 #endif
+#endif
 #ifdef RECEIVE_CONTROL_LIGHTS
+#ifndef ENABLE_J1939_MODE
 		CAN_SIM_CONTROL_LIGHTS_CANID,
 #endif
+#endif
 #ifdef ENABLE_UDS
+#ifndef ENABLE_J1939_MODE
 		UDS_RX_CANID,
 
 #ifdef UDS_ACCEPT_FUNCTIONAL_ADDRESSING
 		UDS_FUNCTIONAL_RX_CANID,
 #endif
-
+#endif
 #endif
 #ifdef ENABLE_KWP
+#ifndef ENABLE_J1939_MODE
 		KWP_RX_CANID,
 #endif
+#endif
 #ifdef ENABLE_XCP
+#ifndef ENABLE_J1939_MODE
 		XCP_RX_CANID,
+#endif
 #endif
 		RTR_DEMO_ID,
 
@@ -159,7 +203,10 @@ static const uint16_t recvStdCANIDList[] =
 // List of Extended CAN IDs that can be received when hardware filters are ON
 static const uint32_t recvExtCANIDList[] =
 {
-		CTF_EXTENDED_ID
+		CTF_EXTENDED_ID,
+#ifdef ENABLE_J1939_MODE
+		0 // Use 0 to indicate "accept all extended" for J1939 emulation
+#endif
 };
 
 static_assert(sizeof(recvStdCANIDList) <= 28U, "Too many hardware filters, update the code to use other types of filters (such as dual or range)");
@@ -203,13 +250,14 @@ static void FDCAN_SetExtendedFilterList(const uint32_t *canidList, uint16_t size
 	RAMN_FDCAN_Status.sFilterExtConfig.IdType 		= FDCAN_EXTENDED_ID;
 	RAMN_FDCAN_Status.sFilterExtConfig.FilterType   = FDCAN_FILTER_MASK; //Use FDCAN_FILTER_DUAL if you need more IDs
 	RAMN_FDCAN_Status.sFilterExtConfig.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
-	RAMN_FDCAN_Status.sFilterExtConfig.FilterID2 	= 0x7FFFFFFF;
 
 	for(uint8_t i = 0; i < size; i++)
 	{
 		RAMN_FDCAN_Status.sFilterExtConfig.FilterIndex  = i;
 		RAMN_FDCAN_Status.sFilterExtConfig.FilterID1    = canidList[i];
-		// Configure Filter for STANDARD CAN IDs
+		if (canidList[i] == 0) RAMN_FDCAN_Status.sFilterExtConfig.FilterID2 = 0; // Accept all extended
+		else RAMN_FDCAN_Status.sFilterExtConfig.FilterID2 	= 0x1FFFFFFF; // Match all 29 bits
+		// Configure Filter for EXTENDED CAN IDs
 		if (HAL_FDCAN_ConfigFilter(hfdcan, &(RAMN_FDCAN_Status.sFilterExtConfig)) != HAL_OK)
 		{
 			Error_Handler();
