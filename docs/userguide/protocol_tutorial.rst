@@ -806,7 +806,7 @@ Therefore, a more elegant solution is needed.
 An obvious solution is to not send our custom 0x024 CAN frames at a random timing, but **as soon as the original message transmitted by ECU B is received**, in order to immediately overwrite that previous value in the receiver's memory as soon as possible (ideally, before it impacts the ECU's processing loop).
 You could implement this on your computer (in fact, you are invited to try it with your own script), but the latency is likely to be too long to provide satisfiable results, and you might experience some blinking.
 
-You can use the ``asap`` command to instruct ECU A to immediately send a CAN frame when a specific ID is received (and to do this with the highest priority). This ensures that the date from the original CAN frame is overwritten in the receiver memory by your value at the **earliest opportunity**.
+You can use the ``asap`` command to instruct ECU A to immediately send a CAN frame when a specific ID is received (and to do this with the highest priority). This ensures that the data from the original CAN frame is overwritten in the receiver memory by your value at the **earliest opportunity**.
 
 For example, reset your RAMN to make sure it is in a known state, then ensure the controls are so that ECU D's Stop LED is OFF (handbrake released and brake pedal at 0%).
 Then, enter the CLI mode and type the following command to overwrite the 0x024 brake message with a value of 100%:
