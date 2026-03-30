@@ -54,6 +54,7 @@ On PCBWay, you have two purchase options:
 The bill of materials used in the above orders were tailored to match
 the components that are available from PCBWay, and some parts are
 removed (marked DNP) to reduce costs (e.g. test points).
+See :ref:`additional_components` for a list of optional components you may want.
 
 .. warning::
 
@@ -98,6 +99,8 @@ If you only want 1 RAMN, you can set "5" in the number of PCBs, and "1" in the n
 The more boards you order, the cheaper they become.
 If you order 5 assembled RAMN sets, the expected cost is approximately 210 USD per full RAMN set (assuming a green soldermask and ENIG surface finish, and without the optional debugger expansion).
 If you order only one set, that cost however becomes 430 USD. If you order 100 sets, it becomes about 140 USD.
+
+.. _additional_components:
 
 Additional Components
 ---------------------
@@ -180,3 +183,9 @@ Components availability and cost may vary.
 - **SSQ-113-23-G-D** can be replaced with **SSQ-113-23-L-D**, **SSQ-113-23-F-D**, or **SSQ-113-23-T-D**.
   They can also be replaced with **4UCON TECHNOLOGY 18507**, but those have softer pins, which are more prone to bending.
 - LEDs can be replaced with **SML-D12P8WT86**, **SML-D12D1WT86**, and **SML-D12V1WT86** (depending on color). If you use other LEDs, make sure they have a similar nominal current.
+
+
+3D-Printed Base and D-Pad
+-------------------------
+
+User 0xRM shared .stl design data on `Thingiverse <https://www.thingiverse.com/thing:7275735>`_ for an unofficial, custom 3D-printed base and joystick D-pad (shift lever) for RAMN.

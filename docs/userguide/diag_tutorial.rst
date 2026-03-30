@@ -568,12 +568,17 @@ The following routines are available with RAMN ECUs:
 - Routine 0x0207 can be used to enable autopilot (to use with CARLA).
 - Routine 0x0208 can be used to add an arbitrary DTC to an ECU.
 - Routine 0x0209 can be used to execute arbitrary ARM (Cortex M-33) shell code.
+- Routine 0x020A is a vulnerable routine to experiment with ARM exploitation.
+- Routine 0x020B is another vulnerable routine (see :ref:`minictf`).
 - Routine 0x0210 can be used to reset BOOT Option bytes (to salvage an ECU with a bad firmware).
 - Routine 0x0211 can be used to force an ECU to swap memory banks (also to salvage an ECU).
+- Routine 0x0220 can be used to update CAN bit timings directly (prescaler, TSEG1, TSEG2).
+- Routine 0x0221 can be used to update the CAN SJW parameter.
+- Routine 0x0222 can be used to update other CAN parameters: bus-off auto-recovery, auto-retransmission, transmit pause.
 - Routine 0xFF00 can be used to erase the alternative firmware.
 - Routine 0xFF01 can be used to validate memory and swap memory banks.
 
-**Because these routines may modify the ECU flash, do not tinker with them unless you know what you are doing.**
+**Because some of these routines modify the ECU flash, do not tinker with them unless you know what you are doing.**
 Refer to ``ramn_uds.c`` for how to use these routines.
 
 For example, you can ask ECU B to stop transmitting periodic messages with:

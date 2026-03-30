@@ -250,6 +250,9 @@ There are various functions in ``ramn_customize.c`` that allow you to add your o
 You can also use TIM16 to access a high-accuracy free-running timer, which is not used by other modules (see comments in ``ramn_customize.c``).  
 You can modify TIM6 and TIM16 without impacting RAMN features.
 
+ECU A's bitbang module actively uses TIM2 and TIM17 as timers when it is actively used.
+You can disable the bitbang module of ECU A (uncomment ``ENABLE_BITBANG`` in ``ramn_config.h``) if you want to use these timers in your code.
+
 Read ``ramn_customize.c`` for examples, e.g., how to send CAN messages.
 
 .. warning:: 

@@ -184,8 +184,8 @@ CAN Baudrate
 You can change the CAN baudrate of your slcan adapter using the -s option, with an integer that corresponds to the following baudrates:
 
 - 0 - 10000 bps
-- 1	- 2000 bps
-- 2	- 5000 bps
+- 1	- 20000 bps
+- 2	- 50000 bps
 - 3	- 100000 bps
 - 4	- 125000 bps
 - 5	- 250000 bps
