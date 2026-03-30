@@ -333,15 +333,15 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 						}
 					}
 				}
-				else if (strcmp(token, "replace") == 0) {
+				else if (strcmp(token, "asap") == 0) {
 					if (elementCount == 1U)
 					{
 						ReplaceTxHeader.Identifier = 0xFFFFFFFF;
-						RAMN_USB_SendStringFromTask("Replacing module stopped.\r");
+						RAMN_USB_SendStringFromTask("asap module stopped.\r");
 					}
 					else if ((elementCount != 2) && (elementCount != 3))
 					{
-						RAMN_USB_SendStringFromTask("Usage: replace <can_id_hex> [data_hex]\r");
+						RAMN_USB_SendStringFromTask("Usage: asap <can_id_hex> [data_hex]\r");
 					}
 					else
 					{
@@ -362,7 +362,7 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 							if (elementCount == 2)
 							{
 								ReplaceTxHeader.DataLength = UINT8toDLC(0);
-								RAMN_USB_SendStringFromTask("Replace frame updated (DLC=0).\r");
+								RAMN_USB_SendStringFromTask("asap frame updated (DLC=0).\r");
 							}
 							else
 							{
@@ -381,7 +381,7 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 									}
 
 									ReplaceTxHeader.DataLength = UINT8toDLC(data_len);
-									RAMN_USB_SendStringFromTask("Replacing ongoing (screen will freeze)\r");
+									RAMN_USB_SendStringFromTask("asap spoofing ongoing (screen will freeze)\r");
 								}
 							}
 						}
