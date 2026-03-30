@@ -103,10 +103,11 @@ During this process, the CAN transceiver does the translation between the 3.3V R
 
 .. note:: 
 
-	RAMN features probes to connect to CANH and CANL, and ECU D has debug traces to connect to its CAN RX and CAN TX pins.  
-	Should you want to connect a logic analyzer to your RAMN, you need to configure it properly (note that **you do not need a logic analyzer for this tutorial**, but you may want to connect one to observe the CAN bus with your own tools).
+	RAMN features probes to connect to CANH and CANL, and ECU D has debug traces with 'Test Points' to connect to its CAN RX and CAN TX pins. You can solder flying leads ('wires') to these test points to gain access to the logic-level signals which are perfect for a logic analyzer. You can also use an SOIC-8 'test clip' on the CAN transceiver chips to easily gain access to the same.
+
+	Should you choose to connect a logic analyzer to CANH/CANL on your RAMN, you need to configure it properly (note that **you do not need a logic analyzer for this tutorial**, but you may want to connect one to observe the CAN bus with your own tools).
 	Technically, the "common-mode" voltage of a CAN bus (the voltage of CANH/CANL relative to ground during a recessive state) is not guaranteed to be fixed, so you should use a logic analyzer with differential inputs.
-	In practice, however, nothing is likely to perturbate that voltage on a RAMN board, so you can consider the following:
+	In practice, however, nothing is likely to perturb that voltage on a RAMN board, so you can consider the following:
 
 	- CANH is 2.5V during a one, 3.5V during a zero.
 	- CANL is 2.5V during a one, 1.5V during a zero.
@@ -189,12 +190,12 @@ Wait for about 30 seconds, and you should observe that the LED is now blinking, 
 
 What is happening here? First, you need to understand what the Check Engine LED indicates:
 
-- **ECU D will light up its Check Engine LED when it detects a CAN error**.
-- **ECU D will blink its Check Engine LED when it enters the bus-off mode** and disconnects from the CAN bus.
+- **The Check Engine LED will be lit when ECU D detects a CAN error**.
+- **The Check Engine LED will blink when ECU D enters the bus-off mode** and disconnects from the CAN bus.
 
 .. note::
 
-	The Check Engine LED will light up if **any CAN error is detected**, and will not turn off unless your reset the ECU (with ``reset D``) or reset the CAN peripheral of ECU D (with ``resetcan D``, which only works if ECU D is not in bus-off mode).
+	The Check Engine LED will light up if **any CAN error is detected**, and will not turn off unless you reset the ECU (with ``reset D``) or reset the CAN peripheral of ECU D (with ``resetcan D``, which only works if ECU D is not in bus-off mode).
 	
 	The Check Engine LED **does not represent** the value of CAN error counters (REC and TEC), which automatically go back to zero when errors do not happen.
 
@@ -259,8 +260,8 @@ As a result, you should keep in mind that **when auto-retransmission is off, you
 
 .. note::
 
-	The first observation is relevant to security: a CAN error on a CAN frame does not mean that the content of that frame cannot be read and processed by other ECUs. 
-	Although the CAN frame sent by ECU D is technically invalid (because it was not acknowledged), it is still processed by ECU A and displayed on its screen.
+	The first observation is relevant to security: a CAN error on a CAN frame does not mean that the content of that frame cannot be read and processed by other ECUs in listen mode. 
+	Although the CAN frame sent by ECU D is technically invalid (because it was not acknowledged), it is still processed by ECU A and displayed on its screen. If ECU A were not in listen mode then the atomic broadcast property of CAN would guarantee that since the frame was not acknowledged, it is not received by any node on the bus.
 	
 	
 The "silence" and "talk" Commands
@@ -298,6 +299,8 @@ This approach has several limitations:
 - The timing is not perfect: the microcontroller is doing its best but cannot be as fast and accurate as a dedicated peripheral or FPGA.
 - ECU A will stop acknowledging CAN frames (unless you reprogram it to), so for most scenarios you will need to ensure that at least two ECUs are powered on.
 - ECU A will stop all its normal activities (such as updating its screen) when in bitbang mode.
+
+But this approach also yields benefits derived from the fact that the ECU A no longer has to 'follow the rules' of CAN -- as we will see.
 
 The bitbang commands all start with ``bitbang`` (or ``bb`` as a shortcut).
 Type ``bb help`` for a list of supported commands.
@@ -504,7 +507,7 @@ You can confirm these values are within the expected range: for example, ECU D s
 
 .. note:: 
 
-	If you're looking for a small challenge, you may try to find yourself the shortest and longest possible valid CAN frames bitstreams (by influencing bit stuffing with your data).
+	💪 If you're looking for a small challenge, you may try to find yourself the shortest and longest possible valid CAN frames bitstreams (by influencing bit stuffing with your data).
 
 Transmit Pause
 ^^^^^^^^^^^^^^
@@ -718,7 +721,7 @@ This means the error is detected and reported significantly later than in the pr
 
 .. note::
 
-	Security professionals you may wonder what happens if we change the DLC field to something above 8, with a valid CRC.
+	Security Professionals: you may wonder what happens if we change the DLC field to something above 8, with a valid CRC.
 	You do not need bitbanging for this: STM32's FDCAN peripheral will happily transmit and receive such CAN frames, but will simply consider the size to be 8 bytes.
 
 Forcing Error Passive mode
@@ -790,7 +793,7 @@ Protocol Level Attacks
 In this section, we use ECU A to demonstrate attacks that are implemented by tools such as `canhack <https://github.com/kentindell/canhack>`_.
 We limit the scope to attacks that can be performed only by interacting with the CAN TX CAN RX pins, but note that some CAN protocol level attack tools may implement more attacks using special hardware such as analog switches (e.g., to force a recessive state even when a dominant bit is sent).
 
-ASAP Replacement
+ASAP Spoofing
 ^^^^^^^^^^^^^^^^
 
 Before using our bitbang module, we can demonstrate what can be done with a regular CAN peripheral.
@@ -800,17 +803,17 @@ Notably, we recorded the brake message (ID 0x024, normally transmitted by ECU C)
 However, this "attack" was not very subtle or efficient: because ECU C was still actively transmitting the 0x024 message, whatever value we sent was quickly overwritten. If we sent too many messages, we would generate CAN bus errors.
 Therefore, a more elegant solution is needed.
 
-An obvious solution is to not send our custom 0x024 CAN frames at a random timing, but **as soon as the original message transmitted by ECU B is received**, in order to immediately overwrite it as soon as possible (ideally, before it impacts the ECU's processing loop).
+An obvious solution is to not send our custom 0x024 CAN frames at a random timing, but **as soon as the original message transmitted by ECU B is received**, in order to immediately overwrite that previous value in the receiver's memory as soon as possible (ideally, before it impacts the ECU's processing loop).
 You could implement this on your computer (in fact, you are invited to try it with your own script), but the latency is likely to be too long to provide satisfiable results, and you might experience some blinking.
 
-You can use the ``replace`` command to instruct ECU A to immediately send a CAN frame when a specific ID is received (and to do this with the highest priority). This ensures that the original CAN frame is overwritten by your value at the **earliest opportunity**.
+You can use the ``asap`` command to instruct ECU A to immediately send a CAN frame when a specific ID is received (and to do this with the highest priority). This ensures that the date from the original CAN frame is overwritten in the receiver memory by your value at the **earliest opportunity**.
 
 For example, reset your RAMN to make sure it is in a known state, then ensure the controls are so that ECU D's Stop LED is OFF (handbrake released and brake pedal at 0%).
 Then, enter the CLI mode and type the following command to overwrite the 0x024 brake message with a value of 100%:
 	
 .. code-block:: text
 
-	replace 024 0FFF
+	asap 024 0FFF
 
 You should observe that:
 
@@ -822,7 +825,7 @@ To stop the replacing module, simply type:
 
 .. code-block:: text
 
-	replace
+	asap
 
 Note that this method is still very much detectable:
 
