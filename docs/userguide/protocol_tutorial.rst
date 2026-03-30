@@ -1107,7 +1107,7 @@ You need to provide one argument: the offset (from EOF1) of the bit that you wan
 - ``deny 4`` will target IFS0.
 - Higher values will target bits after the targeted CAN frame.
 
-Usually, you will want to use this module either to target EOF1 or EOF0:
+Usually, you will want to use this module to target either EOF1 or EOF0:
 
 - If you target EOF1, you will cause the frame to be dropped **for everybody**.
 - If you target EOF0, you will trigger an error **only for the transmitter**.
@@ -1192,4 +1192,4 @@ You should observe that the highest message priority (brake signal, 0x24) has no
 
 .. note::
 
-	When auto-retransmission is enabled, you may notice that "denying" a specific arbitration ID may cause the following lower-priority IDs to not be transmitted, this is caused by STM32 CAN peripheral being quick to give up transmission, and is not a quirk true of all ECUs in general.
+	When auto-retransmission is enabled, you may notice that "denying" a specific arbitration ID may cause the following lower-priority IDs to not be transmitted, this is caused by the STM32 CAN peripheral being quick to give up transmission, and is not a quirk true of all ECUs in general.
