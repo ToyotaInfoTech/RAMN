@@ -76,7 +76,7 @@ Useful shortcuts:
 	To avoid this issue, after changing the target ECU, you should select **"Project"** > **"C/C++ Index"** > **"Rebuild"**.
 
 To build the firmware for all ECUs at once, you can use the build scripts in the `scripts/build` folder (make sure that STM32CubeIDE is closed first).
-**You may need to update STM32CUBEIDEPATH in the build scripts (.bat or .sh files) to match your installation**. 
+**You may need to update STM32CUBEIDEPATH in the build scripts (in ``_version.bat`` or ``_version.sh``) to match your installation**. 
 
 ``BUILD_Clean_Debug.bat`` will build the firmware for all four ECUs, and put the new firmware files in the `scripts/firmware` folder.
 
@@ -250,7 +250,7 @@ There are various functions in ``ramn_customize.c`` that allow you to add your o
 You can also use TIM16 to access a high-accuracy free-running timer, which is not used by other modules (see comments in ``ramn_customize.c``).  
 You can modify TIM6 and TIM16 without impacting RAMN features.
 
-ECU A's bitbang module actively uses TIM2 and TIM17 as timers when it is actively used.
+ECU A's bitbang module actively uses TIM2 and TIM17 as timers when it is used.
 You can disable the bitbang module of ECU A (uncomment ``ENABLE_BITBANG`` in ``ramn_config.h``) if you want to use these timers in your code.
 
 Read ``ramn_customize.c`` for examples, e.g., how to send CAN messages.
