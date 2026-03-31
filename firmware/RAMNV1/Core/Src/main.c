@@ -2016,11 +2016,11 @@ void RAMN_ErrorTaskFunc(void *argument)
 		// Clear the errorCode manually
 		hfdcan1.ErrorCode = HAL_FDCAN_ERROR_NONE;
 
-		// It seems there is a bug with HAL calling this interrupt infinitely because of auto-retransmission, prevent getting stuck
-		// TODO find better fix
+		// HAL is calling this interrupt infinitely because of auto-retransmission, prevent getting stuck
 		if ((gw_freeze.CANErrCnt > 0x20000) && ((RAMN_FDCAN_Status.prevCANError & FDCAN_IR_PEA) != 0U))
 		{
 			RAMN_FDCAN_Status.busOff = True;
+			protocolStatus.BusOff = True; // Manually set bus off
 			RAMN_FDCAN_Disable();
 		}
 
@@ -2034,7 +2034,7 @@ void RAMN_ErrorTaskFunc(void *argument)
 		if(err & HAL_FDCAN_ERROR_PROTOCOL_DATA) RAMN_FDCAN_Status.slcanFlags |= SLCAN_FLAG_BUS_ERROR;
 #endif
 
-		if ((g_autoRecoverBusOff != 0U) && (protocolStatus.BusOff != 0U))
+		if ((g_autoRecoverBusOff != 0U) && (protocolStatus.BusOff != False))
 		{
 			osDelay(100);
 			RAMN_FDCAN_ResetPeripheral();

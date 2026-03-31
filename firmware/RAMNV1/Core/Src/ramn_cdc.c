@@ -233,10 +233,13 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 						RAMN_USB_SendStringFromTask("This interface allows you to interact with various RAMN functions and control the device's operations through a set of commands.\rType 'b' to go back to slcan mode.");
 						RAMN_USB_SendStringFromTask("\r");
 						RAMN_USB_SendStringFromTask("Commands:\r");
+						RAMN_USB_SendStringFromTask("    - asap: Immediately overwrite data of CAN frames with specified CAN ID. Usage: asap <can_id_hex> [data_hex].\r");
+						RAMN_USB_SendStringFromTask("    - can: update ECU A CAN settings: prescaler, tseg1, tseg2, sjw, autoretry, transmitpause, autorecover, ack. Example: 'can ack 0'.\r");
 						RAMN_USB_SendStringFromTask("    - clear: Clears your serial terminal.\r");
 						RAMN_USB_SendStringFromTask("    - disable: Disable the power supply for another ECU. Usage: disable <ECU>.\r");
 						RAMN_USB_SendStringFromTask("    - enable: Enable the power supply for another ECU. Usage: enable <ECU>.\r");
 						RAMN_USB_SendStringFromTask("    - exit: Exit this debug interface and revert to slcan mode. Usage: exit.\r");
+						RAMN_USB_SendStringFromTask("    - flood: flood bus with provided CAN frame. Usage: flood <can_id_hex> [data_hex].\r");
 						RAMN_USB_SendStringFromTask("    - help: Display general help, or help for a specific command when available. Usage: help <command>.\r");
 						RAMN_USB_SendStringFromTask("    - b: Alias for the \"exit\" command.\r");
 						RAMN_USB_SendStringFromTask("    - quit: Alias for the \"exit\" command.\r");
@@ -705,178 +708,178 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 #ifdef ENABLE_BITBANG
 				else if ((strcmp(token, "bb") == 0) || (strcmp(token, "bitbang") == 0)) {
 
-				    if (elementCount < 2)
-				    {
-				        RAMN_USB_SendStringFromTask("Invalid number of arguments. Type \"bitbang help\" for help.\r");
-				    }
-				    else
-				    {
-				        token = strtok(NULL, " ");
+					if (elementCount < 2)
+					{
+						RAMN_USB_SendStringFromTask("Invalid number of arguments. Type \"bitbang help\" for help.\r");
+					}
+					else
+					{
+						token = strtok(NULL, " ");
 
-				        if (token != NULL)
-				        {
-				            if (strcmp(token, "help") == 0)
-				            {
-				                RAMN_USB_SendStringFromTask(
-				                    "Bitbang commands:\r"
-				                    " bb read           - Read and parse one CAN frame (might occasionally lose sync and say bad CRC)\r"
-				                    " bb jam            - Jam the CAN bus by alternating 0 and 1 until timeout (ignores trigger)\r"
-				                    " bb busload        - Measure CAN bus load\r"
-				                    " bb dump           - Dump CAN bus bits\r"
-				                    " bb deny <n>       - Send one dominant after 6+n recessive bits (loops until timeout; see below)\r"
-				                    " bb denyonce <n>   - Same as deny, but executed once while recording.\r"
-				                    " bb send <msg>     - Send raw bitstream (once) when triggered (starts on next bit after trigger condition detected).\r"
-				                    " bb loopof         - Send a loop of overload frames after trigger message (until timeout)\r"
-				                    " bb set <p> <v>    - Set parameter. See 'bb show' for list.\r"
-				                    " bb show           - Show configuration\r"
-				                	"\rHOW TO USE (see documentation for details)\r\rFirst set a trigger (specific CAN ID /'any'/'idle'/'now') and timeout value with the set command.\rExamples:'bb set trig 024', 'bb set trig any', 'bb set timeout 5000'.\r"
-				                	"Commands will return when they succeed or when they timeout (trigger timeout or end of loop)."
-				                	"\r\rCommands 'deny' and 'deny_once' target the bit provided in argument: n=0 -> EOF1 (rx/tx error), n=1 -> EOF0 (tx error), n=2 -> IFS2 (OF), n=3 -> IFS1 (OF), n=4-> IFS0 (OK).\r"
-				                	"ECU D's check engine LED lights up on CAN error and blinks on bus off. You can reset ECU D's can with 'resetcan D' (for bus off, use 'reset D').\r"
-				                	"ECUs have auretransmit ON by default! you can disable it with UDS, e.g., 'uds D 31010222000000'. (first 00 for busoff autorecover, second 00 for auto retransmit, last 00 for transmit pause).\r"
+						if (token != NULL)
+						{
+							if (strcmp(token, "help") == 0)
+							{
+								RAMN_USB_SendStringFromTask(
+										"Bitbang commands:\r"
+										" bb read           - Read and parse one CAN frame (might occasionally lose sync and say bad CRC)\r"
+										" bb jam            - Jam the CAN bus by alternating 0 and 1 until timeout (ignores trigger)\r"
+										" bb busload        - Measure CAN bus load\r"
+										" bb dump           - Dump CAN bus bits\r"
+										" bb deny <n>       - Send one dominant after 6+n recessive bits (loops until timeout; see below)\r"
+										" bb denyonce <n>   - Same as deny, but executed once while recording.\r"
+										" bb send <msg>     - Send raw bitstream (once) when triggered (starts on next bit after trigger condition detected).\r"
+										" bb loopof         - Send a loop of overload frames after trigger message (until timeout)\r"
+										" bb set <p> <v>    - Set parameter. See 'bb show' for list.\r"
+										" bb show           - Show configuration\r"
+										"\rHOW TO USE (see documentation for details)\r\rFirst set a trigger (specific CAN ID /'any'/'idle'/'now') and timeout value with the set command.\rExamples:'bb set trig 024', 'bb set trig any', 'bb set timeout 5000'.\r"
+										"Commands will return when they succeed or when they timeout (trigger timeout or end of loop)."
+										"\r\rCommands 'deny' and 'deny_once' target the bit provided in argument: n=0 -> EOF1 (rx/tx error), n=1 -> EOF0 (tx error), n=2 -> IFS2 (OF), n=3 -> IFS1 (OF), n=4-> IFS0 (OK).\r"
+										"ECU D's check engine LED lights up on CAN error and blinks on bus off. You can reset ECU D's can with 'resetcan D' (for bus off, use 'reset D').\r"
+										"ECUs have auretransmit ON by default! you can disable it with UDS, e.g., 'uds D 31010222000000'. (first 00 for busoff autorecover, second 00 for auto retransmit, last 00 for transmit pause).\r"
 
-				                	"\r\rWarning: CAN timing parameters are not checked - module may hang if they are invalid.\rCommands such as busload or read assume no errors on the CAN bus.\r"
-				                );
-				            }
+										"\r\rWarning: CAN timing parameters are not checked - module may hang if they are invalid.\rCommands such as busload or read assume no errors on the CAN bus.\r"
+								);
+							}
 
-				            else if (strcmp(token, "read") == 0) {
-				                RAMN_BITBANG_Read();
-				            }
+							else if (strcmp(token, "read") == 0) {
+								RAMN_BITBANG_Read();
+							}
 
-				            else if (strcmp(token, "jam") == 0) {
-				                RAMN_USB_SendStringFromTask("Jamming...");
-				                RAMN_BITBANG_Jam();
-				                RAMN_USB_SendStringFromTask("Done!\r");
-				            }
+							else if (strcmp(token, "jam") == 0) {
+								RAMN_USB_SendStringFromTask("Jamming...");
+								RAMN_BITBANG_Jam();
+								RAMN_USB_SendStringFromTask("Done!\r");
+							}
 
-				            else if (strcmp(token, "busload") == 0) {
+							else if (strcmp(token, "busload") == 0) {
 
-				                RAMN_USB_SendStringFromTask("Measuring bus load...\r");
+								RAMN_USB_SendStringFromTask("Measuring bus load...\r");
 
-				                char buffer[32];
-				                uint32_t load_x1000 = RAMN_BITBANG_BusLoad();
+								char buffer[32];
+								uint32_t load_x1000 = RAMN_BITBANG_BusLoad();
 
-				                uint32_t integer = load_x1000 / 1000;
-				                uint32_t fraction = load_x1000 % 1000;
+								uint32_t integer = load_x1000 / 1000;
+								uint32_t fraction = load_x1000 % 1000;
 
-				                uint8_t pos = 0;
+								uint8_t pos = 0;
 
-				                pos += uint32toBCD(integer, &buffer[pos]);
+								pos += uint32toBCD(integer, &buffer[pos]);
 
-				                buffer[pos++] = '.';
+								buffer[pos++] = '.';
 
-				                buffer[pos++] = '0' + (fraction / 100);
-				                buffer[pos++] = '0' + ((fraction / 10) % 10);
-				                buffer[pos++] = '0' + (fraction % 10);
+								buffer[pos++] = '0' + (fraction / 100);
+								buffer[pos++] = '0' + ((fraction / 10) % 10);
+								buffer[pos++] = '0' + (fraction % 10);
 
-				                buffer[pos++] = ' ';
-				                buffer[pos++] = '%';
-				                buffer[pos++] = '\r';
-				                buffer[pos] = '\0';
+								buffer[pos++] = ' ';
+								buffer[pos++] = '%';
+								buffer[pos++] = '\r';
+								buffer[pos] = '\0';
 
-				                RAMN_USB_SendStringFromTask(buffer);
-				            }
+								RAMN_USB_SendStringFromTask(buffer);
+							}
 
-				            else if (strcmp(token, "dump") == 0) {
-				                RAMN_USB_SendStringFromTask("Dumping bus bits...\r");
-				                RAMN_BITBANG_Dump();
-				            }
+							else if (strcmp(token, "dump") == 0) {
+								RAMN_USB_SendStringFromTask("Dumping bus bits...\r");
+								RAMN_BITBANG_Dump();
+							}
 
-				            else if (strcmp(token, "deny") == 0) {
+							else if (strcmp(token, "deny") == 0) {
 
-				                if (elementCount != 3U) {
-				                    RAMN_USB_SendStringFromTask("Error: deny requires 1 parameter.\r");
-				                }
-				                else {
+								if (elementCount != 3U) {
+									RAMN_USB_SendStringFromTask("Error: deny requires 1 parameter.\r");
+								}
+								else {
 
-				                    char *param = strtok(NULL, " ");
-				                    RAMN_Bool_t ok = False;
+									char *param = strtok(NULL, " ");
+									RAMN_Bool_t ok = False;
 
-				                    uint8_t n = (uint8_t)RAMN_strtoul(param, 10, &ok);
+									uint8_t n = (uint8_t)RAMN_strtoul(param, 10, &ok);
 
-				                    if (ok == True)
-				                    {
-				                        RAMN_USB_SendStringFromTask("Denying...\r");
-				                        RAMN_BITBANG_Deny(n);
-				                        RAMN_USB_SendStringFromTask("Done.\r");
-				                    }
-				                    else
-				                    {
-				                        RAMN_USB_SendStringFromTask("Invalid number.\r");
-				                    }
-				                }
-				            }
+									if (ok == True)
+									{
+										RAMN_USB_SendStringFromTask("Denying...\r");
+										RAMN_BITBANG_Deny(n);
+										RAMN_USB_SendStringFromTask("Done.\r");
+									}
+									else
+									{
+										RAMN_USB_SendStringFromTask("Invalid number.\r");
+									}
+								}
+							}
 
-				            else if (strcmp(token, "denyonce") == 0) {
+							else if (strcmp(token, "denyonce") == 0) {
 
-				                if (elementCount != 3U) {
-				                    RAMN_USB_SendStringFromTask("Error: denyonce requires 1 parameter.\r");
-				                }
-				                else {
+								if (elementCount != 3U) {
+									RAMN_USB_SendStringFromTask("Error: denyonce requires 1 parameter.\r");
+								}
+								else {
 
-				                    char *param = strtok(NULL, " ");
-				                    RAMN_Bool_t ok = False;
+									char *param = strtok(NULL, " ");
+									RAMN_Bool_t ok = False;
 
-				                    uint8_t n = (uint8_t)RAMN_strtoul(param, 10, &ok);
+									uint8_t n = (uint8_t)RAMN_strtoul(param, 10, &ok);
 
-				                    if (ok == True)
-				                    {
-				                        RAMN_USB_SendStringFromTask("Denying...\r");
-				                        RAMN_BITBANG_DenyOnce(n);
-				                    }
-				                    else
-				                    {
-				                        RAMN_USB_SendStringFromTask("Invalid number.\r");
-				                    }
-				                }
-				            }
+									if (ok == True)
+									{
+										RAMN_USB_SendStringFromTask("Denying...\r");
+										RAMN_BITBANG_DenyOnce(n);
+									}
+									else
+									{
+										RAMN_USB_SendStringFromTask("Invalid number.\r");
+									}
+								}
+							}
 
-				            else if (strcmp(token, "send") == 0) {
+							else if (strcmp(token, "send") == 0) {
 
-				                RAMN_USB_SendStringFromTask("Sending...\r");
+								RAMN_USB_SendStringFromTask("Sending...\r");
 
-				                if (elementCount == 3U)
-				                {
-				                    token = strtok(NULL, " ");
-				                    RAMN_BITBANG_Send(token);
-				                }
-				                else {
-				                    RAMN_USB_SendStringFromTask("Invalid number of arguments\r");
-				                }
-				            }
+								if (elementCount == 3U)
+								{
+									token = strtok(NULL, " ");
+									RAMN_BITBANG_Send(token);
+								}
+								else {
+									RAMN_USB_SendStringFromTask("Invalid number of arguments\r");
+								}
+							}
 
-				            else if (strcmp(token, "loopof") == 0) {
-				                RAMN_USB_SendStringFromTask("Looping Overload Frames...\r");
-				                RAMN_BITBANG_LoopOF();
-				            }
+							else if (strcmp(token, "loopof") == 0) {
+								RAMN_USB_SendStringFromTask("Looping Overload Frames...\r");
+								RAMN_BITBANG_LoopOF();
+							}
 
-				            else if (strcmp(token, "set") == 0) {
+							else if (strcmp(token, "set") == 0) {
 
-				                if (elementCount == 4U)
-				                {
-				                    token = strtok(NULL, " ");
+								if (elementCount == 4U)
+								{
+									token = strtok(NULL, " ");
 
-				                    if (RAMN_BITBANG_Set(token) == RAMN_OK) {
-				                        RAMN_USB_SendStringFromTask("Done.\r");
-				                    }
-				                    else {
-				                        RAMN_USB_SendStringFromTask("Error setting parameter.\r");
-				                    }
-				                }
-				                else {
-				                    RAMN_USB_SendStringFromTask("Invalid number of arguments\r");
-				                }
-				            }
+									if (RAMN_BITBANG_Set(token) == RAMN_OK) {
+										RAMN_USB_SendStringFromTask("Done.\r");
+									}
+									else {
+										RAMN_USB_SendStringFromTask("Error setting parameter.\r");
+									}
+								}
+								else {
+									RAMN_USB_SendStringFromTask("Invalid number of arguments\r");
+								}
+							}
 
-				            else if (strcmp(token, "show") == 0) {
-				                RAMN_BITBANG_Show();
-				            }
+							else if (strcmp(token, "show") == 0) {
+								RAMN_BITBANG_Show();
+							}
 
-				            else {
-				                RAMN_USB_SendStringFromTask("Invalid bitbang command. Type 'bitbang help' for help.\r");
-				            }
-				        }
-				    }
+							else {
+								RAMN_USB_SendStringFromTask("Invalid bitbang command. Type 'bitbang help' for help.\r");
+							}
+						}
+					}
 				}
 #endif
 #ifdef ENABLE_SCREEN
@@ -1186,20 +1189,35 @@ RAMN_Bool_t RAMN_CDC_ProcessSLCANBuffer(uint8_t* USBRxBuffer, uint32_t commandLe
 	{
 		switch(USBRxBuffer[0U]){
 		case 'O': // Open the channel
-			RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
-			hfdcan1.Init.Mode = FDCAN_MODE_NORMAL;
-			RAMN_USB_Config.slcanOpened = True;
-			RAMN_FDCAN_ResetPeripheral();
+			if(commandLength != 1U) RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
+			else
+			{
+				RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
+				hfdcan1.Init.Mode = FDCAN_MODE_NORMAL;
+				RAMN_USB_Config.slcanOpened = True;
+				RAMN_FDCAN_ResetPeripheral();
+			}
 			break;
 		case 'C': // Close the channel
-			RAMN_USB_Config.slcanOpened = False;
-			RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
+			if(commandLength != 1U)
+			{
+				RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
+			}
+			else
+			{
+				RAMN_USB_Config.slcanOpened = False;
+				RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
+			}
 			break;
 		case 'L': // Open in listening mode
-			RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
-			hfdcan1.Init.Mode = FDCAN_MODE_BUS_MONITORING;
-			RAMN_USB_Config.slcanOpened = True;
-			RAMN_FDCAN_ResetPeripheral();
+			if(commandLength != 1U) RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
+			else
+			{
+				RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
+				hfdcan1.Init.Mode = FDCAN_MODE_BUS_MONITORING;
+				RAMN_USB_Config.slcanOpened = True;
+				RAMN_FDCAN_ResetPeripheral();
+			}
 			break;
 		case 'V': // Return SW version
 			RAMN_USB_SendFromTask((uint8_t*)"V1 SLCAN RAMN (",15U);

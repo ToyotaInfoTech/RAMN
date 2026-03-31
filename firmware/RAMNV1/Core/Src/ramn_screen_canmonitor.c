@@ -94,6 +94,7 @@ static CANMessageNode* findOrCreateCANMessageNode(uint32_t identifier)
 		}
 		idCnt--;
 		identifierOverflowed = True;
+		newIdentifierAdded = True; // Force Redraw
 	}
 
 	// Create new node
@@ -103,6 +104,7 @@ static CANMessageNode* findOrCreateCANMessageNode(uint32_t identifier)
 	{
 		// No place in memory
 		identifierOverflowed = True;
+		newIdentifierAdded = True; // Force Redraw
 		return NULL;
 	}
 	newNode->identifier = identifier;
@@ -161,7 +163,11 @@ static void SCREENCANMONITOR_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pH
 
 		// Process Message
 		CANMessageNode* node = findOrCreateCANMessageNode(pHeader->Identifier);
-		if (node == NULL) identifierOverflowed = True;
+		if (node == NULL)
+		{
+			identifierOverflowed = True;
+			newIdentifierAdded = True; // Force Redraw
+		}
 		else
 		{
 			node->messages[1] = node->messages[0];
