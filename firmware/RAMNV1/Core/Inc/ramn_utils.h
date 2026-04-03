@@ -78,8 +78,12 @@ void RAMN_memcpy(void* dst, const void* src, uint32_t size);
 uint16_t RAMN_strlen(const char *str);
 
 // Apply required endian, used if CAN data should use Big Endian
-// TODO: replace by modifying RAMN_DefaultCANFrameFormat_t defition (?), apply other fields
-uint16_t applyEndian16(uint16_t val);
+// Refactored to data-driven offsets and masks in ramn_vehicle_specific.h
+#ifdef USE_BIG_ENDIAN_CAN
+#define APPLY_ENDIAN_16(val) ((((val) & 0xFF) << 8) | (((val) >> 8) & 0xFF))
+#else
+#define APPLY_ENDIAN_16(val) (val)
+#endif
 
 // Wrapper for osDelay
 void     RAMN_TaskDelay(uint32_t msec);

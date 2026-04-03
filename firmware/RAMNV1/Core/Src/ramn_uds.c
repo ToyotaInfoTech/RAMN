@@ -81,7 +81,7 @@ struct {
 } udsSessionHandler;
 
 
-static FDCAN_TxHeaderTypeDef udsMsgHeader =
+FDCAN_TxHeaderTypeDef udsMsgHeader =
 {
 		.Identifier  = UDS_TX_CANID,
 		.DataLength = FDCAN_DLC_BYTES_0,
@@ -94,7 +94,7 @@ static FDCAN_TxHeaderTypeDef udsMsgHeader =
 		. MessageMarker = 0,
 };
 
-static FDCAN_TxHeaderTypeDef udsFCMsgHeader =
+FDCAN_TxHeaderTypeDef udsFCMsgHeader =
 {
 		.Identifier  = UDS_TX_CANID,
 		.DataLength = FDCAN_DLC_BYTES_0,
@@ -1866,8 +1866,22 @@ RAMN_Bool_t RAMN_UDS_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, c
 	uint8_t functionalAddressing = 0U;
 	RAMN_Bool_t result = False;
 	uint16_t requestSize = 0;
+#ifdef ENABLE_J1939_MODE
+	uint8_t prio = (pHeader->Identifier >> 26) & 0x7;
+	uint8_t pf = (pHeader->Identifier >> 16) & 0xFF;
+	uint8_t da = (pHeader->Identifier >> 8) & 0xFF;
+	uint8_t sa = pHeader->Identifier & 0xFF;
+	if (pHeader->IdType == FDCAN_EXTENDED_ID && pf == 0xDA && da == J1939_ECU_SA)
+#else
 	if (pHeader->Identifier == UDS_RX_CANID)
+#endif
 	{
+#ifdef ENABLE_J1939_MODE
+		udsMsgHeader.Identifier = J1939_UCAST_ID(prio, 0xDA00, sa, J1939_ECU_SA);
+		udsMsgHeader.IdType = FDCAN_EXTENDED_ID;
+		udsFCMsgHeader.Identifier = udsMsgHeader.Identifier;
+		udsFCMsgHeader.IdType = FDCAN_EXTENDED_ID;
+#endif
 		RAMN_ISOTP_ProcessRxMsg(&RAMN_UDS_ISOTPHandler,DLCtoUINT8(pHeader->DataLength),data, tick);
 
 		// If a ISO-TP has been received, copy it to buffer
@@ -1883,7 +1897,11 @@ RAMN_Bool_t RAMN_UDS_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, c
 		}
 	}
 #ifdef UDS_ACCEPT_FUNCTIONAL_ADDRESSING
+#ifdef ENABLE_J1939_MODE
+	else if (pHeader->IdType == FDCAN_EXTENDED_ID && pf == 0xDB && da == 0xFF)
+#else
 	else if(pHeader->Identifier == UDS_FUNCTIONAL_RX_CANID)
+#endif
 	{
 		if (DLCtoUINT8(pHeader->DataLength) > 0)
 		{
@@ -1894,6 +1912,15 @@ RAMN_Bool_t RAMN_UDS_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, c
 					// Valid frame
 					functionalAddressing = 1U;
 					requestSize = data[0]&0xF;
+
+#ifdef ENABLE_J1939_MODE
+					// Functional responses are physical (PF 0xDA)
+					udsMsgHeader.Identifier = J1939_UCAST_ID(prio, 0xDA00, sa, J1939_ECU_SA);
+					udsMsgHeader.IdType = FDCAN_EXTENDED_ID;
+					udsFCMsgHeader.Identifier = udsMsgHeader.Identifier;
+					udsFCMsgHeader.IdType = FDCAN_EXTENDED_ID;
+#endif
+
 					xBytesSent = xStreamBufferSend(*strbuf, (void *) &(functionalAddressing), sizeof(functionalAddressing), portMAX_DELAY );
 					xBytesSent += xStreamBufferSend(*strbuf, (void *) &(requestSize), sizeof(requestSize), portMAX_DELAY );
 					xBytesSent += xStreamBufferSend(*strbuf, (void *) &data[1], requestSize, portMAX_DELAY );

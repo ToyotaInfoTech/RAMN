@@ -78,8 +78,7 @@ The SHIFT joystick has 5 positions (excluding the released state): Left-pressed,
 
 **Hold each of these positions and verify that the bottom of the screen respectively shows "LT", "RT", "UP", "DW", and "MD".**
 (When using left/right, you will move between screens. If you end up on a screen that has no bottom text, try moving to another screen).
-  
-   
+
 .. _quality_troubleshooting:
 
 Troubleshooting
