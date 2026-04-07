@@ -32,7 +32,7 @@
 #include "ramn_canfd.h"
 #endif
 
-#ifdef RAMN_FORCE_AUTOPILOT
+#ifdef RAMN_SHOWCASE_MODE
 #include "ramn_trng.h"
 #endif
 

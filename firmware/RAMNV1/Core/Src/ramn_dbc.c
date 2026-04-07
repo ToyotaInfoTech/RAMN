@@ -67,7 +67,7 @@ static void RAMN_DBC_FormatDefaultPeriodicMessage(RAMN_PeriodicFDCANTx_t* msg)
 
 void RAMN_DBC_Init(void)
 {
-#if defined(TARGET_ECUA) && !defined(RAMN_FORCE_AUTOPILOT)
+#if defined(TARGET_ECUA) && !defined(RAMN_SHOWCASE_MODE)
 	RAMN_DBC_RequestSilence = True;
 #else
 	RAMN_DBC_RequestSilence = False;
@@ -137,14 +137,14 @@ void RAMN_DBC_ProcessCANMessage(uint32_t canid, uint32_t dlc, RAMN_CANFrameData_
 				uint8_t sa = (uint8_t)(canid & 0xFF);
 				if (sa == J1939_SA_BODY_CTRL) {
 					uint8_t enginekey = RAMN_Decode_Control_EngineKey(&dataframe->rawData[0], dlc);
-#ifdef RAMN_FORCE_AUTOPILOT
+#ifdef RAMN_SHOWCASE_MODE
 					RAMN_DBC_Handle.control_enginekey = enginekey;
 #else
 					if (enginekey != 3) RAMN_DBC_Handle.control_enginekey = enginekey;
 #endif
 				} else if (sa == J1939_SA_POWERTRAIN_CTRL) {
 					uint8_t horn = RAMN_Decode_Command_Horn(&dataframe->rawData[0], dlc);
-#ifdef RAMN_FORCE_AUTOPILOT
+#ifdef RAMN_SHOWCASE_MODE
 					RAMN_DBC_Handle.command_horn = horn;
 #else
 					if (horn != 3) RAMN_DBC_Handle.command_horn = horn;

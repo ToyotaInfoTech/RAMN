@@ -4,9 +4,9 @@ SET RAMN_PORT=AUTO
 
 SET ECU_FIRMWARE_PATH=%~dp0\..\..\firmware
 
-REM Disable autopilot/fuzzer on ECU A before flashing to prevent bus flooding.
-REM Safe no-op if RAMN is not connected or autopilot is not active.
-python "%~dp0\..\disable_autopilot.py" %RAMN_PORT% 2>NUL
+REM Disable Showcase Mode on ECU A before flashing to prevent bus flooding.
+REM Safe no-op if RAMN is not connected or Showcase Mode is not active.
+python "%~dp0\..\disable_showcase.py" %RAMN_PORT% 2>NUL
 
 python "%~dp0\..\canboot.py" %RAMN_PORT% B -i "%ECU_FIRMWARE_PATH%\ECUB.hex" -e -p -v
 

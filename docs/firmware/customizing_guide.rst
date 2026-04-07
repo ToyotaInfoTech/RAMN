@@ -199,12 +199,12 @@ For example, if you want to know the status of ECU C's joystick from ECU A, you 
 
 If you want an ECU to stop sending messages, simply comment out the call to ``RAMN_DBC_Send``.
 
-.. _force_autopilot_mode:
+.. _showcase_mode:
 
-Force Autopilot Mode
---------------------
+Showcase Mode
+-------------
 
-RAMN includes a "Force Autopilot" mode (enabled via ``#define RAMN_FORCE_AUTOPILOT`` in ``ramn_config.h``) designed for testing, fuzzing, and demonstrations where physical user input is not available or should be ignored.
+RAMN includes a "Showcase Mode" (enabled via ``#define RAMN_SHOWCASE_MODE`` in ``ramn_config.h``) designed for testing and demonstrations where physical user input is not available or should be ignored.
 
 In this mode, the vehicle's control flow is significantly altered:
 

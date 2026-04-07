@@ -5,9 +5,9 @@
 # This work is licensed under the terms of the MIT license.
 # For a copy, see <https://opensource.org/licenses/MIT>.
 
-# Disable autopilot/fuzzer on ECU A before flashing to prevent bus flooding.
+# Disable Showcase Mode on ECU A before flashing to prevent bus flooding.
 # Sends a serial close command and a UDS RoutineControl stop (0x31 0x02 0x02 0x07).
-# Safe no-op if RAMN is not connected or autopilot is not active.
+# Safe no-op if RAMN is not connected or Showcase Mode is not active.
 
 import serial
 import serial.tools.list_ports
@@ -22,7 +22,7 @@ def find_ramn_port(port_hint="AUTO"):
             return p.device
     return None
 
-def disable_autopilot(port_hint="AUTO"):
+def disable_showcase(port_hint="AUTO"):
     port = find_ramn_port(port_hint)
     if port is None:
         return
@@ -45,4 +45,4 @@ def disable_autopilot(port_hint="AUTO"):
 
 if __name__ == "__main__":
     port_hint = sys.argv[1] if len(sys.argv) > 1 else "AUTO"
-    disable_autopilot(port_hint)
+    disable_showcase(port_hint)

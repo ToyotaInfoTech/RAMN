@@ -108,8 +108,8 @@ jobs:
             enable: "ENABLE_J1939_MODE"
             disable: ""
           - ecu: TARGET_ECUA
-            variant: force_autopilot
-            enable: "RAMN_FORCE_AUTOPILOT"
+            variant: showcase_mode
+            enable: "RAMN_SHOWCASE_MODE"
             disable: ""
 
     runs-on: ubuntu-latest

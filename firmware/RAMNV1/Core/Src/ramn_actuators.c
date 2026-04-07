@@ -79,7 +79,7 @@ void RAMN_ACTUATORS_ApplyControls(uint32_t tick)
 	RAMN_SPI_UpdateLED(&LEDState);
 #endif
 
-#if defined(RAMN_FORCE_AUTOPILOT) && defined(TARGET_ECUA)
+#if defined(RAMN_SHOWCASE_MODE) && defined(TARGET_ECUA)
 	RAMN_Encode_Command_Brake((uint16_t)RAMN_DBC_Handle.command_brake, &msg_command_brake.data->rawData[0]);
 	RAMN_Encode_Command_Accel((uint16_t)RAMN_DBC_Handle.command_accel, &msg_command_accel.data->rawData[0]);
 	RAMN_Encode_Status_RPM((uint16_t)RAMN_DBC_Handle.status_rpm, &msg_status_RPM.data->rawData[0]);
@@ -117,8 +117,9 @@ void RAMN_ACTUATORS_ApplyControls(uint32_t tick)
 #ifdef ENABLE_SPI
 	RAMN_SPI_UpdateLED(&LEDState);
 #endif
+#endif
 
-#if defined(RAMN_FORCE_AUTOPILOT) && defined(TARGET_ECUA)
+#if defined(RAMN_SHOWCASE_MODE) && defined(TARGET_ECUA)
 	RAMN_Encode_Command_Brake((uint16_t)RAMN_DBC_Handle.command_brake, &msg_command_brake.data->rawData[CAN_SIM_COMMAND_BRAKE_PAYLOAD_OFFSET / 8]);
 	RAMN_Encode_Command_Accel((uint16_t)RAMN_DBC_Handle.command_accel, &msg_command_accel.data->rawData[CAN_SIM_COMMAND_ACCEL_PAYLOAD_OFFSET / 8]);
 	RAMN_Encode_Status_RPM((uint16_t)RAMN_DBC_Handle.status_rpm, &msg_status_RPM.data->rawData[CAN_SIM_STATUS_RPM_PAYLOAD_OFFSET / 8]);
@@ -126,5 +127,6 @@ void RAMN_ACTUATORS_ApplyControls(uint32_t tick)
 	RAMN_Encode_Command_Shift((uint8_t)RAMN_DBC_Handle.command_shift, &msg_command_shift.data->rawData[CAN_SIM_COMMAND_SHIFT_PAYLOAD_OFFSET / 8]);
 	RAMN_Encode_Command_Sidebrake((uint16_t)RAMN_DBC_Handle.command_sidebrake, &msg_command_parkingbrake.data->rawData[CAN_SIM_COMMAND_SIDEBRAKE_PAYLOAD_OFFSET / 8]);
 #endif
+
 #endif
 }

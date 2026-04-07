@@ -20,7 +20,7 @@ uint8_t RAMN_SIM_AutopilotEnabled;
 
 void RAMN_SIM_Init(void)
 {
-#if defined(RAMN_FORCE_AUTOPILOT)
+#if defined(RAMN_SHOWCASE_MODE)
 	RAMN_SIM_AutopilotEnabled = True;
 #else
 	RAMN_SIM_AutopilotEnabled = False;
@@ -49,8 +49,8 @@ void RAMN_SIM_UpdatePeriodic(uint32_t tick)
 	}
 #endif
 
-#if defined(RAMN_FORCE_AUTOPILOT) && defined(TARGET_ECUA)
-	// Forced autopilot/fuzzer mode: ECU A periodically randomizes command values at 1 Hz.
+#if defined(RAMN_SHOWCASE_MODE) && defined(TARGET_ECUA)
+	// Showcase mode: ECU A periodically randomizes command values at 1 Hz.
 	// Other ECUs use their default behavior, reacting to commands received via CAN.
 	{
 		static uint32_t lastRandomTick = 0U;
@@ -79,12 +79,12 @@ void RAMN_SIM_UpdatePeriodic(uint32_t tick)
 
 #if defined(EXPANSION_POWERTRAIN)
 	// Powertrain ECU sends back data from the Self-Driving agent, except if sensors are above a certain threshold
-#if defined(RAMN_FORCE_AUTOPILOT)
+#if defined(RAMN_SHOWCASE_MODE)
 	RAMN_DBC_Handle.control_brake = RAMN_DBC_Handle.command_brake;
 	RAMN_DBC_Handle.control_accel = RAMN_DBC_Handle.command_accel;
 	RAMN_DBC_Handle.control_shift = (RAMN_DBC_Handle.command_shift)&0xFF;
 
-	// In Force Autopilot mode, ECUC randomizes the Horn and Turn Indicator commands
+	// In Showcase mode, ECUC randomizes the Horn and Turn Indicator commands
 	{
 		static uint32_t lastRandomTick = 0U;
 		if ((tick - lastRandomTick) >= 1000U)
@@ -124,11 +124,11 @@ void RAMN_SIM_UpdatePeriodic(uint32_t tick)
 
 #if defined(EXPANSION_CHASSIS)
 	// Chassis ECU sends back data from the Self-Driving agent, except if steering wheel is not centered
-#if defined(RAMN_FORCE_AUTOPILOT)
+#if defined(RAMN_SHOWCASE_MODE)
 	RAMN_DBC_Handle.control_steer  = RAMN_DBC_Handle.command_steer;
 	RAMN_DBC_Handle.control_sidebrake = RAMN_DBC_Handle.command_sidebrake;
 
-	// In Force Autopilot mode, ECUB randomizes the Lights command
+	// In Showcase mode, ECUB randomizes the Lights command
 	{
 		static uint32_t lastRandomTick = 0U;
 		if ((tick - lastRandomTick) >= 1000U)
@@ -172,8 +172,8 @@ void RAMN_SIM_UpdatePeriodic(uint32_t tick)
 
 #if defined(EXPANSION_BODY)
 	// Body Expansion simply lights up LED based on current state
-#if defined(RAMN_FORCE_AUTOPILOT)
-	// In Force Autopilot mode, ECUD randomizes the Engine Key command (Accessory and Ignition bits)
+#if defined(RAMN_SHOWCASE_MODE)
+	// In Showcase mode, ECUD randomizes the Engine Key command (Accessory and Ignition bits)
 	{
 		static uint32_t lastRandomTick = 0U;
 		if ((tick - lastRandomTick) >= 1000U)

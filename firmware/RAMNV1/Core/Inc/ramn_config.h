@@ -192,12 +192,12 @@
 
 // Common configuration ------------------------------------------------------
 
-// Enable this flag to force autopilot/fuzzer mode.
+// Enable this flag to activate Showcase Mode.
 // When enabled, ECU A will periodically randomize command values at 1 Hz
 // and other ECUs will follow those commands received via CAN, INSTEAD OF their
 // sensor inputs. This relies on the CARLA driving commands but
 // without requiring UDS activation or physical sensor inputs.
-// #define RAMN_FORCE_AUTOPILOT
+// #define RAMN_SHOWCASE_MODE
 
 // Loop time for the "simulator" that is executed periodically.
 #define SIM_LOOP_CLOCK_MS 10
