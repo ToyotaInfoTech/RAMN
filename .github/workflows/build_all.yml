@@ -4,9 +4,11 @@ on:
   push:
     branches: [main]
   pull_request:
+  release:
+    types: [published]
 
 permissions:
-  contents: read
+  contents: write
   pull-requests: write
   issues: write
 
@@ -63,12 +65,12 @@ jobs:
           name: build-metrics-${{ matrix.spice }}-${{ matrix.variant }}-${{ matrix.conf }}-${{ matrix.cubeide_docker_tag }}
           path: build-metrics/
 
-      - name: upload RAMN dir as artifact
+      - name: Upload firmware
         if: ${{ !env.ACT }}
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.spice }}-${{ matrix.variant }}-${{ matrix.conf }}-${{ matrix.cubeide_docker_tag }}
-          path: .
+          name: firmware-${{ matrix.variant }}-${{ matrix.conf }}
+          path: scripts/firmware/*.hex
 
   macro_coverage:
     name: ${{ matrix.variant }}
@@ -78,36 +80,28 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - ecu: TARGET_ECUA
-            variant: gsusb
+          - variant: gsusb
             enable: "ENABLE_GSUSB"
             disable: "ENABLE_CDC"
-          - ecu: TARGET_ECUA
-            variant: no_uds
+          - variant: no_uds
             enable: ""
             disable: "ENABLE_UDS ENABLE_UDS_REPROGRAMMING"
-          - ecu: TARGET_ECUA
-            variant: no_extras
+          - variant: no_extras
             enable: ""
             disable: "ENABLE_J1979 ENABLE_MINICTF ENABLE_CHIP8 ENABLE_SCREEN ENABLE_SPI"
-          - ecu: TARGET_ECUA
-            variant: no_debug
+          - variant: no_debug
             enable: ""
             disable: "ENABLE_USB_DEBUG ENABLE_JOYSTICK_CONTROLS ENABLE_SCREEN ENABLE_CHIP8 GENERATE_RUNTIME_STATS"
-          - ecu: TARGET_ECUB
-            variant: kwp
+          - variant: kwp
             enable: "ENABLE_KWP"
             disable: ""
-          - ecu: TARGET_ECUB
-            variant: no_dynamic_bitrate
+          - variant: no_dynamic_bitrate
             enable: ""
             disable: "ENABLE_DYNAMIC_BITRATE"
-          - ecu: TARGET_ECUB
-            variant: watchdog
+          - variant: watchdog
             enable: "WATCHDOG_ENABLE"
             disable: ""
-          - ecu: TARGET_ECUC
-            variant: uart
+          - variant: uart
             enable: "ENABLE_UART"
             disable: ""
 
@@ -119,47 +113,35 @@ jobs:
       - name: Modify ramn_config.h
         run: |
           python3 .github/modify_config.py \
-            --ecu "${{ matrix.ecu }}" \
             --variant "${{ matrix.variant }}" \
             --enable "${{ matrix.enable }}" \
             --disable "${{ matrix.disable }}"
 
-      - name: Macro-testing build ${{ matrix.ecu }}
+      - name: Macro-testing build all ECUs (${{ matrix.variant }})
         id: build
         continue-on-error: true
         run: |
           set -o pipefail
-          chmod +x scripts/build/_build_ecu.sh
-          source scripts/build/_version.sh
-          docker run --rm -e STM32_IMPORT_FLAG -v "$(pwd)":/workspace xanderhendriks/stm32cubeide:${DOCKER_STM32CUBEIDE_TAG} bash -c '
-            set -e
-            ECU='"'"'${{ matrix.ecu }}'"'"'
-            OUTPUT_FOLDER="/workspace/scripts/firmware"
-            PROJECT_NAME=RAMNV1
-            mkdir -p "${OUTPUT_FOLDER}"
-            bash /workspace/scripts/build/_build_ecu.sh "${ECU}" Release --no-quiet
-            ECU_NAME="${ECU#TARGET_}"
-            cp -pr "/workspace/firmware/${PROJECT_NAME}/Release/${PROJECT_NAME}.hex" "${OUTPUT_FOLDER}/${ECU_NAME}.hex"
-          ' 2>&1 | tee build-output.log
+          chmod +x scripts/build/docker_BUILD_Clean_Release.sh scripts/build/_build_ecu.sh
+          bash scripts/build/docker_BUILD_Clean_Release.sh --no-quiet 2>&1 | tee build-output.log
 
       - name: Collect build results
         if: always()
         run: |
           mkdir -p macro-results
           {
-            echo "ecu=${{ matrix.ecu }}"
             echo "variant=${{ matrix.variant }}"
             echo "enable=${{ matrix.enable }}"
             echo "disable=${{ matrix.disable }}"
             echo "outcome=${{ steps.build.outcome }}"
-            ecu_name="${{ matrix.ecu }}"
-            ecu_name="${ecu_name#TARGET_}"
-            hex="scripts/firmware/${ecu_name}.hex"
-            if [ -f "$hex" ]; then
-              echo "hex_size=$(wc -c < "$hex" | tr -d ' ')"
-            else
-              echo "hex_size=N/A"
-            fi
+            for ecu in ECUA ECUB ECUC ECUD; do
+              hex="scripts/firmware/${ecu}.hex"
+              if [ -f "$hex" ]; then
+                echo "hex_size_${ecu}=$(wc -c < "$hex" | tr -d ' ')"
+              else
+                echo "hex_size_${ecu}=N/A"
+              fi
+            done
             if [ -f build-output.log ]; then
               warn_count=$(grep -ci 'warning:' build-output.log || true)
             else
@@ -172,8 +154,15 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: macro-results-${{ matrix.ecu }}-${{ matrix.variant }}
+          name: macro-results-${{ matrix.variant }}
           path: macro-results/
+
+      - name: Upload firmware
+        if: steps.build.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-variant-${{ matrix.variant }}
+          path: scripts/firmware/*.hex
 
       - name: Report build result
         if: always()
@@ -184,7 +173,6 @@ jobs:
             echo "### ❌ Build FAILED" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "**Failed configuration details:**" >> $GITHUB_STEP_SUMMARY
-            echo "- **ECU:** \`${{ matrix.ecu }}\`" >> $GITHUB_STEP_SUMMARY
             echo "- **Variant:** \`${{ matrix.variant }}\`" >> $GITHUB_STEP_SUMMARY
             if [ -n "${{ matrix.enable }}" ]; then
               echo "- **Macros enabled:** \`${{ matrix.enable }}\`" >> $GITHUB_STEP_SUMMARY
@@ -265,3 +253,34 @@ jobs:
       - name: Fail if upstream builds failed
         if: always() && (needs.build_all.result == 'failure' || needs.macro_coverage.result == 'failure')
         run: exit 1
+
+  release:
+    name: Upload release firmware
+    needs: [build_all, macro_coverage]
+    if: always() && github.event_name == 'release' && needs.build_all.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download all firmware artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: firmware-*
+          path: all-firmware
+
+      - name: Package and upload release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          cd all-firmware
+          for dir in */; do
+            name="${dir%/}"
+            ( cd "$dir" && zip -j "../../${name}.zip" *.hex )
+          done
+          cd ..
+          for zipfile in firmware-*.zip; do
+            echo "Uploading ${zipfile}..."
+            gh release upload "$RELEASE_TAG" "$zipfile" --clobber --repo "$GH_REPO"
+          done
