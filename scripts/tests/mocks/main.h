@@ -240,6 +240,7 @@ void RAMN_J1979_ProcessMessage(const uint8_t* data, uint16_t size, uint8_t* answ
 // memcpy/memset
 void RAMN_memcpy(void* dst, const void* src, uint32_t size);
 void RAMN_memset(void* dst, uint8_t byte, uint32_t size);
+uint16_t RAMN_strlen(const char *str);
 
 // StreamBuffer stub
 #include "stream_buffer.h"

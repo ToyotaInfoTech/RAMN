@@ -394,12 +394,12 @@ class TestJ1939ModeGuard(unittest.TestCase):
         self.assertIn('#define ENABLE_J1939_MODE', content)
 
     def test_handlers_guarded(self):
-        """Protocol handlers in ramn_customize.c must be inside
+        """Protocol handlers in ramn_j1939.c must be inside
         #ifdef ENABLE_J1939_MODE blocks."""
         import os
         src_path = os.path.join(os.path.dirname(__file__), '..',
                                 '..', 'firmware', 'RAMNV1', 'Core',
-                                'Src', 'ramn_customize.c')
+                                'Src', 'ramn_j1939.c')
         src_path = os.path.normpath(src_path)
         with open(src_path) as f:
             content = f.read()

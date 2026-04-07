@@ -37,6 +37,7 @@ DIAG_SRCS="firmware/RAMNV1/Core/Src/ramn_uds.c \
            firmware/RAMNV1/Core/Src/ramn_xcp.c \
            firmware/RAMNV1/Core/Src/ramn_isotp.c \
            firmware/RAMNV1/Core/Src/ramn_customize.c \
+           firmware/RAMNV1/Core/Src/ramn_j1939.c \
            scripts/tests/mocks/ramn_diag_mocks.c"
 
 for ecu in A B C D; do
