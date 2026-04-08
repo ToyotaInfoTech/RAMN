@@ -339,7 +339,7 @@ void RAMN_SPI_RefreshUint32(uint16_t x, uint16_t y, uint16_t fgColor, uint16_t b
 
 #endif
 
-#if defined(EXPANSION_BODY)
+#if defined(EXPANSION_BODY) && defined(ENABLE_SPI)
 void RAMN_SPI_UpdateLED(uint8_t* pval)
 {
 	HAL_GPIO_WritePin(LCD_nCS_GPIO_Port, LCD_nCS_Pin, GPIO_PIN_RESET );
