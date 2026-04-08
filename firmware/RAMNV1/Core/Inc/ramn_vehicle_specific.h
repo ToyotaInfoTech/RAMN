@@ -54,7 +54,7 @@ RAMN_DefaultCANFrameFormat_t;
 #endif
 #if defined(ENABLE_KWP)
 #define KWP_RX_CANID 0x7e4
-#define KWP_TX_CANID KWP_TX_CANID+8
+#define KWP_TX_CANID KWP_RX_CANID+8
 #endif
 #if defined(ENABLE_XCP)
 #define XCP_RX_CANID 0x550

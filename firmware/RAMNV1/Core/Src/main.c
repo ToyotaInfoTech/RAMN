@@ -339,7 +339,7 @@ static StaticStreamBuffer_t KWP_ISOTP_RX_BUFFER_STRUCT;
 __attribute__ ((section (".buffers"))) static uint8_t KWP_ISOTP_RX_BUFFER[KWP_ISOTP_RX_BUFFER_SIZE];
 
 static StaticStreamBuffer_t KWP_ISOTP_TX_BUFFER_STRUCT;
-__attribute__ ((section (".buffers"))) static uint8_t KWP_ISOTP_TX_BUFFER[KWP_ISOTP_RX_BUFFER_SIZE];
+__attribute__ ((section (".buffers"))) static uint8_t KWP_ISOTP_TX_BUFFER[KWP_ISOTP_TX_BUFFER_SIZE];
 
 #endif
 
