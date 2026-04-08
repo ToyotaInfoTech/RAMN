@@ -103,7 +103,7 @@ jobs:
             disable: ""
           - variant: uart
             enable: "ENABLE_UART"
-            disable: ""
+            disable: "ENABLE_CDC ENABLE_USB"
 
     runs-on: ubuntu-latest
     steps:
