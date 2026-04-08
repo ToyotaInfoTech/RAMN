@@ -83,6 +83,9 @@ jobs:
           - variant: gsusb
             enable: "ENABLE_GSUSB"
             disable: "ENABLE_CDC"
+          - variant: gsusb_and_bb
+            enable: "ENABLE_GSUSB ENABLE_BITBANG"
+            disable: ""
           - variant: no_uds
             enable: ""
             disable: "ENABLE_UDS ENABLE_UDS_REPROGRAMMING"
