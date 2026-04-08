@@ -263,6 +263,64 @@ jobs:
         if: always() && (needs.build_all.result == 'failure' || needs.macro_coverage.result == 'failure')
         run: exit 1
 
+  commit_firmware:
+    name: Commit variant firmware to repo
+    needs: [build_all, macro_coverage]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.build_all.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Download default Release firmware
+        uses: actions/download-artifact@v4
+        with:
+          name: firmware-default-Release
+          path: dl/default
+
+      - name: Download macro-coverage variant firmware
+        uses: actions/download-artifact@v4
+        with:
+          pattern: firmware-variant-*
+          path: dl/variants
+
+      - name: Organise hex files
+        run: |
+          # Default Release → scripts/firmware/ (root)
+          cp dl/default/*.hex scripts/firmware/
+
+          # All variants (including gsusb) → scripts/firmware/<variant>/
+          if [ -d dl/variants ]; then
+            for dir in dl/variants/firmware-variant-*/; do
+              [ -d "$dir" ] || continue
+              variant="${dir##*/}"                       # firmware-variant-kwp
+              variant="${variant#firmware-variant-}"     # kwp
+              mkdir -p "scripts/firmware/${variant}"
+              cp "$dir"*.hex "scripts/firmware/${variant}/"
+            done
+          fi
+
+          echo "### Committed firmware tree" >> "$GITHUB_STEP_SUMMARY"
+          find scripts/firmware -name '*.hex' | sort | while read -r f; do
+            echo "- \`${f}\`" >> "$GITHUB_STEP_SUMMARY"
+          done
+
+      - name: Commit and push
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/firmware/
+          if git diff --cached --quiet; then
+            echo "No firmware changes to commit."
+          else
+            git commit -m "ci: update firmware hex files [skip ci]"
+            git push
+          fi
+
   release:
     name: Upload release firmware
     needs: [build_all, macro_coverage]
