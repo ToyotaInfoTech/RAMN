@@ -171,7 +171,7 @@ void RAMM_USB_ErrorCallback(USBD_HandleTypeDef* hUsbDeviceFS)
 }
 
 #ifdef ENABLE_USB_AUTODETECT
-void RAMM_USB_SerialOpenCallback(USBD_HandleTypeDef* hUsbDeviceFS)
+void RAMM_USB_SerialOpenCallback(USBD_HandleTypeDef* hUsbDeviceFS, uint8_t index)
 {
 	RAMN_USB_Config.serialOpened = True;
 }

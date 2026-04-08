@@ -92,6 +92,12 @@ jobs:
           - variant: no_extras
             enable: ""
             disable: "ENABLE_J1979 ENABLE_MINICTF ENABLE_CHIP8 ENABLE_SCREEN ENABLE_SPI"
+          - variant: usb_autodetect
+            enable: "ENABLE_USB_AUTODETECT"
+            disable: ""
+          - variant: i2c
+            enable: "ENABLE_I2C"
+            disable: ""
           - variant: no_debug
             enable: ""
             disable: "ENABLE_USB_DEBUG ENABLE_JOYSTICK_CONTROLS ENABLE_SCREEN ENABLE_CHIP8 GENERATE_RUNTIME_STATS"
