@@ -110,7 +110,7 @@ void 	RAMN_SPI_RefreshUint32(uint16_t x, uint16_t y, uint16_t fgColor, uint16_t 
 
 #endif
 
-#ifdef EXPANSION_BODY
+#if defined(EXPANSION_BODY) && defined(ENABLE_SPI)
 
 // Updates the value transmitted over SPI to the LED Shift register
 void 	RAMN_SPI_UpdateLED(uint8_t* pval);

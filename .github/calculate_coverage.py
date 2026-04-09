@@ -175,11 +175,11 @@ def main():
                         continue
                     key, value = line.split("=", 1)
                     rec[key] = value
-            ecu = rec.get("ecu", "")
             enable = set(rec.get("enable", "").split()) - {""}
             disable = set(rec.get("disable", "").split()) - {""}
-            if ecu in base:
-                all_configs.append(derive((base[ecu] | enable) - disable))
+            # Apply variant enable/disable to all 4 ECU base configs
+            for ecu_base in base.values():
+                all_configs.append(derive((ecu_base | enable) - disable))
 
     files = sorted(glob.glob(os.path.join(src_dir, "*.c")))
     total, compiled = coverage(files, all_configs)

@@ -120,15 +120,13 @@ def parse_macro_results(results_dir):
 def macro_results_table(results):
     """Return Markdown table rows for macro coverage results."""
     lines = []
-    lines.append("| ECU | Variant | Macros Changed | Result | Hex Size | Warnings |")
-    lines.append("|-----|---------|----------------|--------|----------|----------|")
+    lines.append("| Variant | Macros Changed | Result | Warnings |")
+    lines.append("|---------|----------------|--------|----------|")
     for rec in results:
-        ecu = rec.get("ecu", "")
         variant = rec.get("variant", "")
         enable = rec.get("enable", "")
         disable = rec.get("disable", "")
         outcome = rec.get("outcome", "")
-        hex_size = rec.get("hex_size", "N/A")
         warnings = rec.get("warnings", "0")
 
         mc_parts = []
@@ -142,18 +140,9 @@ def macro_results_table(results):
 
         res = "\u2705 Pass" if outcome == "success" else "\u274c Fail"
 
-        if hex_size and hex_size != "N/A":
-            try:
-                hf = f"{int(hex_size) // 1024} KiB"
-            except ValueError:
-                hf = hex_size
-        else:
-            hf = "N/A"
-
         wf = warnings if warnings else "0"
 
-        ecu_short = ecu.replace("TARGET_", "")
-        lines.append(f"| `{ecu_short}` | {variant} | {mc} | {res} | {hf} | {wf} |")
+        lines.append(f"| {variant} | {mc} | {res} | {wf} |")
     return "\n".join(lines)
 
 
@@ -257,11 +246,10 @@ def build_macro_coverage_table(macros, macro_results):
     # Parse variants from macro_results
     variants = []
     for rec in macro_results:
-        ecu = rec.get("ecu", "")
         variant = rec.get("variant", "")
         enable = set(rec.get("enable", "").split()) - {""}
         disable = set(rec.get("disable", "").split()) - {""}
-        variants.append((ecu, variant, enable, disable))
+        variants.append((variant, enable, disable))
 
     lines = []
     lines.append("| # | Macro | Tested ON | Tested OFF | Covered |")
@@ -278,11 +266,11 @@ def build_macro_coverage_table(macros, macro_results):
         # Variants that enable/disable this macro
         variant_on = []
         variant_off = []
-        for ecu, variant, enable, disable in variants:
+        for variant, enable, disable in variants:
             if macro in enable:
-                variant_on.append(f"variant: {variant} ({target_short.get(ecu, ecu)})")
+                variant_on.append(f"variant: {variant}")
             if macro in disable:
-                variant_off.append(f"variant: {variant} ({target_short.get(ecu, ecu)})")
+                variant_off.append(f"variant: {variant}")
 
         # Build "Tested ON" description
         on_parts = []
@@ -344,19 +332,18 @@ def main():
     targets = ["TARGET_ECUA", "TARGET_ECUB", "TARGET_ECUC", "TARGET_ECUD"]
     variants = []
     for rec in macro_results:
-        ecu = rec.get("ecu", "")
         variant = rec.get("variant", "")
         enable = set(rec.get("enable", "").split()) - {""}
         disable = set(rec.get("disable", "").split()) - {""}
-        variants.append((ecu, variant, enable, disable))
+        variants.append((variant, enable, disable))
 
     covered_count = 0
     total_macros = len(macros)
     for macro, states in macros:
         default_on = [t for t in targets if states.get(t, False)]
         default_off = [t for t in targets if not states.get(t, False)]
-        variant_on = any(macro in e for _, _, e, _ in variants)
-        variant_off = any(macro in d for _, _, _, d in variants)
+        variant_on = any(macro in e for _, e, _ in variants)
+        variant_off = any(macro in d for _, _, d in variants)
         has_on = bool(default_on) or variant_on
         has_off = bool(default_off) or variant_off
         if has_on and has_off:

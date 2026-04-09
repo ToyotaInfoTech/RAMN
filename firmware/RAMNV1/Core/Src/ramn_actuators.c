@@ -30,7 +30,9 @@ void RAMN_ACTUATORS_Init(void)
 {
 #ifdef EXPANSION_BODY
 	LEDState = (uint8_t)(RAMN_DBC_Handle.control_lights&0xFF);
+#ifdef ENABLE_SPI
 	RAMN_SPI_UpdateLED(&LEDState);
+#endif
 #endif
 }
 
@@ -68,6 +70,8 @@ void RAMN_ACTUATORS_ApplyControls(uint32_t tick)
 	else LEDTestOver = True;
 
 #endif
+#ifdef ENABLE_SPI
 	RAMN_SPI_UpdateLED((uint8_t*)&(RAMN_DBC_Handle.control_lights));
+#endif
 #endif
 }
