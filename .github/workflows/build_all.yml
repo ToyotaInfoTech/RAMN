@@ -305,7 +305,8 @@ jobs:
           if [ -d dl/variants ]; then
             for dir in dl/variants/firmware-variant-*/; do
               [ -d "$dir" ] || continue
-              variant="${dir##*/}"                       # firmware-variant-kwp
+              dirname="${dir%/}"                         # strip trailing slash
+              variant="${dirname##*/}"                   # firmware-variant-kwp
               variant="${variant#firmware-variant-}"     # kwp
               mkdir -p "scripts/firmware/${variant}"
               # Copy hex files from the variant directory (may be at root or nested)
