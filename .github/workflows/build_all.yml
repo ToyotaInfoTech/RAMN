@@ -258,7 +258,8 @@ jobs:
     name: Commit firmware to repo
     needs: [build_all, macro_coverage]
     if: >-
-      github.event_name == 'push' && github.ref == 'refs/heads/main'
+      always()
+      && github.event_name == 'push' && github.ref == 'refs/heads/main'
       && needs.build_all.result == 'success'
     runs-on: ubuntu-latest
     permissions:
@@ -287,7 +288,19 @@ jobs:
           # Default Release → scripts/firmware/ (root)
           cp dl/default/*.hex scripts/firmware/
 
-          # All variants (including gsusb) → scripts/firmware/<variant>/
+          # Show what the download step actually produced
+          echo "::group::Downloaded artifact layout"
+          echo "--- dl/default ---"
+          find dl/default -type f -name '*.hex' 2>/dev/null | head -20
+          echo "--- dl/variants ---"
+          if [ -d dl/variants ]; then
+            find dl/variants -type f -name '*.hex' 2>/dev/null | head -60
+          else
+            echo "dl/variants/ does not exist"
+          fi
+          echo "::endgroup::"
+
+          # All variants → scripts/firmware/<variant>/
           variant_count=0
           if [ -d dl/variants ]; then
             for dir in dl/variants/firmware-variant-*/; do
@@ -295,8 +308,17 @@ jobs:
               variant="${dir##*/}"                       # firmware-variant-kwp
               variant="${variant#firmware-variant-}"     # kwp
               mkdir -p "scripts/firmware/${variant}"
-              cp "$dir"*.hex "scripts/firmware/${variant}/"
-              variant_count=$((variant_count + 1))
+              # Copy hex files from the variant directory (may be at root or nested)
+              if compgen -G "$dir"'*.hex' > /dev/null 2>&1; then
+                cp "$dir"*.hex "scripts/firmware/${variant}/"
+              else
+                find "$dir" -name '*.hex' -type f -exec cp {} "scripts/firmware/${variant}/" \;
+              fi
+              copied=$(find "scripts/firmware/${variant}" -name '*.hex' -type f | wc -l)
+              echo "  ${variant}: ${copied} hex file(s)"
+              if [ "$copied" -gt 0 ]; then
+                variant_count=$((variant_count + 1))
+              fi
             done
           fi
 
