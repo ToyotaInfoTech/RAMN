@@ -107,9 +107,8 @@ jobs:
           - variant: j1939
             enable: "ENABLE_J1939_MODE"
             disable: ""
-          - ecu: TARGET_ECUA
-            variant: showcase_mode
-            enable: "RAMN_SHOWCASE_MODE"
+          - variant: j1939_showcase_mode
+            enable: "ENABLE_J1939_MODE RAMN_SHOWCASE_MODE"
             disable: ""
 
     runs-on: ubuntu-latest
