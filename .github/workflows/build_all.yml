@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   build_all:
-    name: ${{ matrix.variant == 'default' && matrix.conf || format('{0} ({1})', matrix.conf, matrix.variant) }} (tag ${{ matrix.cubeide_docker_tag }})
+    name: ${{ matrix.conf }} (tag ${{ matrix.cubeide_docker_tag }})
     permissions:
       contents: read
     strategy:
@@ -23,20 +23,11 @@ jobs:
         spice: [RAMNV1]
         conf: [Release, Debug]
         cubeide_docker_tag: ["15.0"]
-        variant: [default, gsusb]
 
     runs-on: ubuntu-latest
     steps:
       - name: checkout
         uses: actions/checkout@v4
-
-      - name: Modify ramn_config.h for ${{ matrix.variant }}
-        if: matrix.variant == 'gsusb'
-        run: |
-          python3 .github/modify_config.py \
-            --ecu TARGET_ECUA \
-            --variant "${{ matrix.variant }}" \
-            --enable "ENABLE_GSUSB"
 
       - name: Build all ECUs (${{ matrix.conf }})
         env:
@@ -62,14 +53,14 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: build-metrics-${{ matrix.spice }}-${{ matrix.variant }}-${{ matrix.conf }}-${{ matrix.cubeide_docker_tag }}
+          name: build-metrics-${{ matrix.spice }}-${{ matrix.conf }}-${{ matrix.cubeide_docker_tag }}
           path: build-metrics/
 
       - name: Upload firmware
         if: ${{ !env.ACT }}
         uses: actions/upload-artifact@v4
         with:
-          name: firmware-${{ matrix.variant }}-${{ matrix.conf }}
+          name: firmware-default-${{ matrix.conf }}
           path: scripts/firmware/*.hex
 
   macro_coverage:
@@ -264,9 +255,11 @@ jobs:
         run: exit 1
 
   commit_firmware:
-    name: Commit variant firmware to repo
+    name: Commit firmware to repo
     needs: [build_all, macro_coverage]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.build_all.result == 'success'
+    if: >-
+      github.event_name == 'push' && github.ref == 'refs/heads/main'
+      && needs.build_all.result == 'success'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -283,6 +276,7 @@ jobs:
           path: dl/default
 
       - name: Download macro-coverage variant firmware
+        continue-on-error: true
         uses: actions/download-artifact@v4
         with:
           pattern: firmware-variant-*
@@ -294,6 +288,7 @@ jobs:
           cp dl/default/*.hex scripts/firmware/
 
           # All variants (including gsusb) → scripts/firmware/<variant>/
+          variant_count=0
           if [ -d dl/variants ]; then
             for dir in dl/variants/firmware-variant-*/; do
               [ -d "$dir" ] || continue
@@ -301,10 +296,17 @@ jobs:
               variant="${variant#firmware-variant-}"     # kwp
               mkdir -p "scripts/firmware/${variant}"
               cp "$dir"*.hex "scripts/firmware/${variant}/"
+              variant_count=$((variant_count + 1))
             done
           fi
 
           echo "### Committed firmware tree" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$variant_count" -eq 0 ]; then
+            echo "⚠️ **No variant firmware found.** macro_coverage result: \`${{ needs.macro_coverage.result }}\`" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "✅ Found **${variant_count}** variant(s)" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          echo "" >> "$GITHUB_STEP_SUMMARY"
           find scripts/firmware -name '*.hex' | sort | while read -r f; do
             echo "- \`${f}\`" >> "$GITHUB_STEP_SUMMARY"
           done
