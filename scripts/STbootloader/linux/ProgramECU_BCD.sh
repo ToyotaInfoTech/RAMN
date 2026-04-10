@@ -1,6 +1,12 @@
+#!/bin/bash
+
 RAMN_PORT=AUTO
 
 ECU_FIRMWARE_PATH=../../firmware
+
+# Disable Showcase Mode on ECU A before flashing to prevent bus flooding.
+# Safe no-op if RAMN is not connected or Showcase Mode is not active.
+python3 ../disable_showcase.py $RAMN_PORT 2>/dev/null || true
 
 python3 ../canboot.py $RAMN_PORT B -i $ECU_FIRMWARE_PATH/ECUB.hex -e -p -v
 

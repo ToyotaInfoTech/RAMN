@@ -2282,7 +2282,7 @@ void RAMN_DiagTXFunc(void *argument)
 					{
 						while (RAMN_KWP_Continue_TX(xTaskGetTickCount()) != True)
 						{
-							if (xStreamBufferBytesAvailable(KwpTxDataStreamBufferHandle) >= sizeof(RAMN_UDS_ISOTPHandler.txSize))
+							if (xStreamBufferBytesAvailable(KwpTxDataStreamBufferHandle) >= sizeof(RAMN_KWP_ISOTPHandler.txSize))
 							{
 								// We received another TX request even though the ongoing transfer isn't over.
 								// User may be manually sending ISO-TP requests and forgot the FLOW CONTROL frames.

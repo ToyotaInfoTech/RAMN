@@ -18,6 +18,8 @@
 #include "ramn_canfd.h"
 #include "ramn_sensors.h"
 #include "ramn_dbc.h"
+#include "ramn_dtc.h"
+#include "ramn_j1939.h"
 
 #ifdef ENABLE_CDC
 #include "ramn_cdc.h"
@@ -53,6 +55,10 @@ void	RAMN_CUSTOM_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, const
 	// pHeader->FDFormat: FDCAN_CLASSIC_CAN or FDCAN_FD_CAN
 	// pHeader->RxTimestamp: 16-bit value for RX timestamp, MAY NOT BE CONFIGURED CORRECTLY
 	// See FilterIndex and IsFilterMatchingFrame for additional fields.
+
+#ifdef ENABLE_J1939_MODE
+	RAMN_J1939_ProcessRxCANMessage(pHeader, data);
+#endif
 }
 
 #ifdef ENABLE_CDC

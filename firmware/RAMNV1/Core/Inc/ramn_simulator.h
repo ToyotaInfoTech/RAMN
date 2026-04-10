@@ -32,6 +32,10 @@
 #include "ramn_canfd.h"
 #endif
 
+#ifdef RAMN_SHOWCASE_MODE
+#include "ramn_trng.h"
+#endif
+
 // Variable that must be set to 1 by UDS first to enable autopilot controls (otherwise ECU will ignore command messages)
 extern uint8_t RAMN_SIM_AutopilotEnabled;
 

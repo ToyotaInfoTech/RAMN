@@ -990,3 +990,63 @@ You can read these PIDs with the following commands:
 
 Note that if you have not written a VIN to the ECU, the answer will be only zeroes.
 
+J1939 Diagnostic Routing
+--------------------------
+
+When RAMN is operating in J1939 mode, diagnostic services are routed using J1939 PDU1 (Destination Specific) frames. 
+These protocols use ISO-TP (ISO 15765-2) as the transport layer, encapsulated within J1939 extended CAN IDs.
+
+The routing is determined by the **PDU Format (PF)** byte and the **Tester Source Address (TSA)**:
+
++----------------+------------+------------+----------------------------------+
+| Server Type    | Request PF | Response PF| Condition                        |
++================+============+============+==================================+
+| **UDS / J1979**| **0xDA**   | **0xDA**   | Physical (DA = ECU SA)           |
++----------------+------------+------------+----------------------------------+
+| **UDS / J1979**| **0xDB**   | N/A        | Functional (DA = 0xFF)           |
++----------------+------------+------------+----------------------------------+
+| **XCP**        | **0xEF**   | **0xEF**   | TSA = 0x3F or 0x5A               |
++----------------+------------+------------+----------------------------------+
+| **KWP2000**    | **0xEF**   | **0xEF**   | TSA = 0xF1 to 0xFA               |
++----------------+------------+------------+----------------------------------+
+
+*Note: The response priority always matches the priority of the request.*
+
+When sending physical requests to a specific ECU, the **Destination Address (DA)** in the J1939 identifier must match the **Source Address (SA)** of that ECU:
+
+- **ECU A** (Headway Control): DA = **42** (0x2A)
+- **ECU B** (Steering Control): DA = **19** (0x13)
+- **ECU C** (Powertrain Control): DA = **90** (0x5A)
+- **ECU D** (Body Control): DA = **33** (0x21)
+
+For example, to send a UDS TesterPresent request (Service 0x3E) to ECU D (DA 0x21) from a tester with SA 0xF9 and priority 6, the CAN ID would be ``0x18DA21F9``.
+
+The Proprietary A (PF 0xEF) range is shared between XCP and KWP2000. The ECU multiplexes these protocols based on the Source Address of the requester (the Tester). If a message arrives on PF 0xEF from an address not listed above, it is ignored by the diagnostic stack.
+
+.. _j1939_dm1:
+
+J1939 Active Diagnostic Trouble Codes (DM1)
+-------------------------------------------
+
+When RAMN is operating in J1939 mode, it supports the J1939 DM1 (Active Diagnostic Trouble Codes) message.
+A DM1 message requests an ECU to broadcast its currently active diagnostic trouble codes. The message is transmitted on PGN 65226 (0xFECA).
+
+While UDS represents DTCs as a 3-byte code plus a status byte, J1939 represents faults using a different structure consisting of:
+
+- **SPN** (Suspect Parameter Number): A 19-bit identifier defining the faulty component or system.
+- **FMI** (Failure Mode Indicator): A 5-bit identifier defining the nature of the fault (e.g., short circuit, erratic data).
+- **OC** (Occurrence Count): A 7-bit counter indicating how many times the fault has occurred.
+
+Because RAMN stores its DTCs internally using the UDS representation (to remain compatible with its UDS features), the firmware implements a translation layer to map these internal UDS codes to their closest J1939 SPN and FMI equivalents when a DM1 message is requested. The Occurrence Count (OC) is currently hardcoded to 1.
+
+The translation maps the default RAMN UDS codes as follows:
+
+- **ECUA** (U0029 - "Bus A Performance"): Maps to **SPN 639** (J1939 Network #1, Primary Vehicle Network) and **FMI 9** (Abnormal update rate).
+- **ECUB** (C0563 - "Calibration ROM Checksum Error"): Maps to **SPN 628** (Program Memory) and **FMI 13** (Out of Calibration).
+- **ECUC** (P0172 - "System too Rich"): Maps to **SPN 3055** (Engine Fuel System 1) and **FMI 0** (Data valid but above normal).
+- **ECUD** (B0091 - "Active switch wrong state"): Maps to **SPN 2872** (Generic Switch) and **FMI 2** (Data erratic, intermittent or incorrect).
+
+Any other dynamically injected UDS code will use a generic fallback where its underlying numeric fault code directly becomes the SPN, and the FMI is set to 31 ("Condition exists").
+
+When a single fault is present, the DM1 response is sent as a standard 8-byte J1939 frame. If an ECU has multiple active DTCs, the DM1 response dynamically expands beyond 8 bytes and is transmitted over J1939 Transport Protocol using a Broadcast Announce Message (BAM) sequence.
+
