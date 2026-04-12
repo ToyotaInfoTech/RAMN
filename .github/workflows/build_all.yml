@@ -73,7 +73,7 @@ jobs:
         include:
           - variant: gsusb
             enable: "ENABLE_GSUSB"
-            disable: "ENABLE_CDC"
+            disable: ""
           - variant: gsusb_and_bb
             enable: "ENABLE_GSUSB ENABLE_BITBANG"
             disable: ""
