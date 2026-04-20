@@ -123,9 +123,27 @@ uint8_t DLCtoUINT8(uint32_t dlc);
 uint32_t UINT8toDLC(uint8_t size);
 
 // External modules dependencies
-typedef struct {
-    float status_rpm;
-    uint8_t control_lights;
+typedef volatile struct
+{
+	volatile uint16_t control_brake; 			//CANID_CONTROL_BRAKE
+	volatile uint16_t command_brake; 			//CANID_COMMAND_BRAKE
+	volatile uint16_t control_accel; 			//CANID_CONTROL_ACCEL
+	volatile uint16_t command_accel; 			//CANID_COMMAND_ACCEL
+	volatile uint16_t control_steer; 			//CANID_CONTROL_STEERING
+	volatile uint16_t command_steer; 			//CANID_COMMAND_STEERING
+	volatile uint8_t  control_shift;			//CANID_CONTROL_SHIFT
+	volatile uint16_t command_shift;			//CANID_COMMAND_SHIFT
+	volatile uint16_t control_sidebrake; 		//CANID_CONTROL_SIDEBRAKE
+	volatile uint16_t command_sidebrake; 		//CANID_COMMAND_SIDEBRAKE
+	volatile uint16_t status_rpm; 				//CANID_STATUS_RPM
+	volatile uint8_t command_horn;				//CANID_COMMAND_HORN
+	volatile uint8_t control_horn; 				//CANID_CONTROL_HORN
+	volatile uint16_t command_lights; 			//CANID_COMMAND_LIGHTS
+	volatile uint16_t command_turnindicator;	//CANID_COMMAND_TURNINDICATOR
+	volatile uint16_t control_enginekey;		//CANID_CONTROL_ENGINEKEY
+	volatile uint16_t control_lights; 			//CANID_CONTROL_LIGHTS
+	volatile uint8_t joystick;					// Second byte of SHIFT, saved for convenience
+
 } RAMN_DBC_Handle_t;
 extern RAMN_DBC_Handle_t RAMN_DBC_Handle;
 extern uint8_t RAMN_DBC_RequestSilence;
@@ -198,8 +216,9 @@ typedef struct { uint32_t Instance; } TIM_HandleTypeDef;
        ((uint32_t)(sa) & 0xFF))
 
 // DBC Frame Data mock
-typedef struct {
-    uint8_t dummy;
+typedef union
+{
+	uint8_t rawData[8];
 } RAMN_CANFrameData_t;
 
 // Missing prototypes for Diag

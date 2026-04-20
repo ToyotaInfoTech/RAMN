@@ -202,8 +202,15 @@ void RAMN_DBC_ProcessCANMessage(uint32_t canid, uint32_t dlc, RAMN_CANFrameData_
 			break;
 		case CAN_SIM_CONTROL_SHIFT_CANID:
 			RAMN_DBC_Handle.control_shift = RAMN_Decode_Control_Shift(&dataframe->rawData[CAN_SIM_CONTROL_SHIFT_PAYLOAD_OFFSET / 8], dlc);
+			if (dlc >= 2U)
+			{
+				RAMN_DBC_Handle.joystick = RAMN_Decode_Joystick(&dataframe->rawData[CAN_SIM_CONTROL_SHIFT_PAYLOAD_OFFSET / 8], dlc);
+				#ifdef ENABLE_JOYSTICK_CONTROLS
+					RAMN_Joystick_Update(RAMN_DBC_Handle.joystick);
+				#endif
+			}
 			break;
-#ifdef ENABLE_J1939_MODE
+#ifdef CAN_SIM_JOYSTICK_BUTTONS_CANID
 		case CAN_SIM_JOYSTICK_BUTTONS_CANID:
 			RAMN_DBC_Handle.joystick = RAMN_Decode_JoystickButtons(&dataframe->rawData[CAN_SIM_JOYSTICK_BUTTONS_PAYLOAD_OFFSET / 8], dlc);
 			#ifdef ENABLE_JOYSTICK_CONTROLS
