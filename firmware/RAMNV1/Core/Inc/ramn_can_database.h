@@ -29,6 +29,7 @@ uint8_t RAMN_Decode_Command_Shift(const uint8_t* payload, uint32_t dlc);
 
 void RAMN_Encode_Control_Shift_Joystick(uint8_t shift_value, uint8_t joystick_value, uint8_t* payload);
 uint8_t RAMN_Decode_Control_Shift(const uint8_t* payload, uint32_t dlc);
+uint8_t RAMN_Decode_Joystick(const uint8_t* payload, uint32_t dlc);
 
 void RAMN_Encode_JoystickButtons(uint8_t joystick_state, uint8_t* payload);
 uint8_t RAMN_Decode_JoystickButtons(const uint8_t* payload, uint32_t dlc);
