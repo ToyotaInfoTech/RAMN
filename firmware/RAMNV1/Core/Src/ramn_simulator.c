@@ -166,7 +166,7 @@ void RAMN_SIM_UpdatePeriodic(uint32_t tick)
 		RAMN_DBC_Handle.control_sidebrake = RAMN_DBC_Handle.command_sidebrake;
 	}
 
-	if (RAMN_SENSORS_CHASSIS.lightsSwitch != RAMN_LIGHTSWITCH_POS1) RAMN_DBC_Handle.command_lights = (uint16_t)RAMN_SENSORS_CHASSIS.lightsSwitch;
+	if (RAMN_SENSORS_CHASSIS.lightsSwitch != RAMN_LIGHTSWITCH_UNKNOWNSTATE) RAMN_DBC_Handle.command_lights = (uint16_t)RAMN_SENSORS_CHASSIS.lightsSwitch;
 #endif
 #endif
 
