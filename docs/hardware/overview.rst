@@ -49,7 +49,7 @@ There are 4 ECUs on RAMN (ECU A, ECU B, ECU C, and ECU D), and they all share a 
 * :ref:`A CAN FD transceiver <canphy>`
 * :ref:`An expansion port <expansions>`
 
-ECU A additionally features a USB connection. The USB port is the main 5V power supply for the whole board, and is also used as a mean to reprogram all ECUs.
+ECU A additionally features a USB connection. The USB port is the main 5V power supply for the whole board, and is also used as a means to reprogram all ECUs.
 ECU A has 6 `GPIOs <https://en.wikipedia.org/wiki/General-purpose_input/output>`_ that are used to control:
 
 * The power supply of ECU B, ECU C, and ECU D
@@ -60,7 +60,7 @@ ECU D has an additional `shunt resistor <https://en.wikipedia.org/wiki/Shunt_(el
 CAN/CAN FD bus
 **************
 
-RAMN features a `CAN FD <https://en.wikipedia.org/wiki/CAN_FD>`_ bus that connects the 4 ECUs and is terminated on both side by `120ohm split-terminations <https://e2e.ti.com/blogs_/b/industrial_strength/posts/the-importance-of-termination-networks-in-can-transceivers>`_.
+RAMN features a `CAN FD <https://en.wikipedia.org/wiki/CAN_FD>`_ bus that connects the 4 ECUs and is terminated on both sides by `120 ohm split-terminations <https://e2e.ti.com/blogs_/b/industrial_strength/posts/the-importance-of-termination-networks-in-can-transceivers>`_.
 
 **By default, RAMN only uses classic CAN messages and can be used with classic CAN controllers.**
 
@@ -85,7 +85,7 @@ Hardware Design Rules
 Guidelines
 **********
 
-RAMN aims to promote education and research in automotive systems. To stay close to automotive electronics, we use AEC-Qxxx grade 0 (or equivalent) components for the ECU network board. To keep the board small and affordable, many protections (e.g. ESD protection, pull-up/pull-down resistors, etc.) are omitted, and the board would not meet reliabilily levels required in safety-critical systems.
+RAMN aims to promote education and research in automotive systems. To stay close to automotive electronics, we use AEC-Qxxx grade 0 (or equivalent) components for the ECU network board. To keep the board small and affordable, many protections (e.g. ESD protection, pull-up/pull-down resistors, etc.) are omitted, and the board would not meet reliability levels required in safety-critical systems.
 
 .. figure:: img/front_pcb.png
 
@@ -113,8 +113,8 @@ Since frequencies involved in RAMN are relatively low, proper impedance matching
 CAN/CAN-FD Bus
 ^^^^^^^^^^^^^^
 
-Although the quality of the CAN/CAN-FD bus line is limited by the tight layout, the many connections, and the use of only 2 layers, we tried to keep a 120ohm differential impedance on the CAN-FD bus.
-More precisely, we used a trace width of 0.45mm and a spacing of 0.2mm, which according to `EEWeb's Edge Coupled Microstrip Impedance calculation tool <http://eeweb.com/tools/edge-coupled-microstrip-impedance/>`_, should lead to a 120ohm differential impedance on a standard 35um copper 1.6mm FR-4 thick layout.
+Although the quality of the CAN/CAN-FD bus line is limited by the tight layout, the many connections, and the use of only 2 layers, we tried to keep a 120 ohm differential impedance on the CAN-FD bus.
+More precisely, we used a trace width of 0.45mm and a spacing of 0.2mm, which according to `EEWeb's Edge Coupled Microstrip Impedance calculation tool <http://eeweb.com/tools/edge-coupled-microstrip-impedance/>`_, should lead to a 120 ohm differential impedance on a standard 35um copper 1.6mm FR-4 thick layout.
 
 .. figure:: img/CANbus_layout.png
 

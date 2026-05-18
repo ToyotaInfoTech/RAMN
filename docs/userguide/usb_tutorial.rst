@@ -273,7 +273,7 @@ RAMN uses by default the "value and mask" filter explained in :ref:`can_filters`
 You can use the slightly modified command "W" to specify a different filter type.
 
 - W0 uses the "RANGE" filter type of STM32, which specifies a range of IDs that you want to receive.
-- W1 uses the "DUAL" filter type of STM32, which specifieds two IDs that you want to receive.
+- W1 uses the "DUAL" filter type of STM32, which specifies two IDs that you want to receive.
 - W2 uses the "value and mask" filter (default, also used when an invalid argument is provided).
 - W3 uses the "RANGE NO EIDM" STM32 filter type.
 
@@ -428,7 +428,7 @@ Send CAN FD frame without BRS - 0
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Start a frame with ``0`` to specify that you want to execute the rest of the command as CAN FD **without** BRS.
-For example, use the following command to send a **CAN FD frame without Bitrate Switching**, with CAN ID 0x24, DLC 2 and payload 0x01FF.
+For example, use the following command to send a **CAN FD frame without Bitrate Switching**, with CAN ID 0x24, DLC 2, and payload 0x01FF.
 
 .. parsed-literal::
 
@@ -440,7 +440,7 @@ Send CAN FD frame with BRS - 1
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Similarly, start a frame with ``1`` to specify that you want to execute the rest of the command as CAN FD **with** BRS.
-For example, use the following command to send a **CAN FD frame with Bitrate Switching**, with CAN ID 0x24, DLC 2 and payload 0x01FF.
+For example, use the following command to send a **CAN FD frame with Bitrate Switching**, with CAN ID 0x24, DLC 2, and payload 0x01FF.
 
 .. parsed-literal::
 
@@ -477,7 +477,7 @@ This command returns a random **integer** from ECU A's True Random Number Genera
 Enable Debug logs - d
 ^^^^^^^^^^^^^^^^^^^^^
 
-This command enable debug logs: errors will be displayed in a human-readable manner.
+This command enables debug logs: errors will be displayed in a human-readable manner.
 Type ``d1`` to enable debug logs and ``d0`` to disable them.
 
 Dump Status on Errors - @

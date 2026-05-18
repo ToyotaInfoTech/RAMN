@@ -3,7 +3,7 @@
 Body
 ====
 
-The BODY expansion is the expansion associated to ECU D, and is used to realize two simple functions usually in the BODY domain of a car:
+The BODY expansion is the expansion associated with ECU D, and is used to realize two simple functions usually in the BODY domain of a car:
 
 * Engine Key
 * Lights
@@ -40,7 +40,7 @@ A `TVS diode <https://en.wikipedia.org/wiki/Transient-voltage-suppression_diode>
 Lights
 ------
 
-The lights are simulated by 8 LEDs (D1~D8) located near silkcreen markings ressembling dashboard symbols:
+The lights are simulated by 8 LEDs (D1~D8) located near silkcreen markings resembling dashboard symbols:
 
 * Left Turn Indicator *(D1 - Output 6)*
 * Right Turn Indicator *(D2 - Output 7)*
@@ -55,7 +55,7 @@ The lights are simulated by 8 LEDs (D1~D8) located near silkcreen markings resse
 
 	Schematic of the Lights circuitry
 
-The LEDs are driven by a `STP08CP05 <https://www.st.com/resource/en/datasheet/stp08cp05.pdf>`_ IC. The STP08CP05 is a LED driver controlled by a simple `shift-register <https://en.wikipedia.org/wiki/Shift_register>`_ circuit. In practice, the STP08CP05 is controlled by the SPI output of ECU D, and is multiplexed with other SPI devices. The SPI signals can easily be accessed through external probes.
+The LEDs are driven by a `STP08CP05 <https://www.st.com/resource/en/datasheet/stp08cp05.pdf>`_ IC. The STP08CP05 is an LED driver controlled by a simple `shift-register <https://en.wikipedia.org/wiki/Shift_register>`_ circuit. In practice, the STP08CP05 is controlled by the SPI output of ECU D, and is multiplexed with other SPI devices. The SPI signals can easily be accessed through external probes.
 
 Communications are done in 3.3V, but the LEDs are powered from the 5V line. R15 is used to set the current (~10mA). 
 

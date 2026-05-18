@@ -38,7 +38,7 @@ If you have trouble reprogramming or debugging RAMN, use STM32CubeProgrammer to 
 
 The **RDP Option Byte** should be set to **0xAA** to make sure that no memory protection is enabled.
 
-After resetting option bytes, you may need to reflash the firmware again.
+After resetting option bytes, you may need to flash the firmware again.
 
 Failed Debugging
 ----------------
@@ -75,6 +75,6 @@ Driver Issues
 -------------
 
 The `DfuSe tool <https://www.st.com/en/development-tools/stsw-stm32080.html>`_ from STMicroelectronics can be used to program ECU A over USB (when ECU A is in DFU mode).
-If ECU A is recognized as "DFU in FS Mode" over USB by Windows, but device information are "Unknown" or "Unavailable", you may need to separately install STM32 DFU drivers, which are located in the DFuse installation folder, for example:
+If ECU A is recognized as "DFU in FS Mode" over USB by Windows, but device information is "Unknown" or "Unavailable", you may need to separately install STM32 DFU drivers, which are located in the DFuse installation folder, for example:
 
 :file:`C:\\Program Files (x86)\\STMicroelectronics\\Software\\DfuSe v3.0.6\\Bin\\Driver`

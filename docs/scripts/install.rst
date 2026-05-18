@@ -12,7 +12,7 @@ You can modify the following settings in ``scripts/settings/windows.ini`` (when 
 - **VERBOSE** specifies the verbose level of scripts (0 to only output errors, 4 to output everything including debug messages).
 - **TIMEOUT** specifies the timeout value for reading from the serial port.
 - **CAN_NAME** specifies the name of the **channel** for scripts that rely on CAN rather than serial.
-- **CAN_TYPE** specifies the name of the **interface type** for the above.
+- **CAN_TYPE** specifies the name of the **interface type** for the CAN connection above.
 - **CAN_REFRESH_RATE** specifies how often scripts should update the CAN bus (for scripts that use CAN).
 - **VCAND_HARDWARE_PORT** is the default hardware port used by the :ref:`vcand` scripts.
 

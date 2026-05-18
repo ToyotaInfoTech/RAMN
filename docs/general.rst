@@ -1,13 +1,13 @@
 General Information
 ===================
 	
-What is RAMN ?
---------------
+What is RAMN?
+-------------
 
 .. image:: gif/ramn_simple_on.gif
    :align: center
 
-RAMN (Resistant Automotive Miniature Network) is a credit-card size ECU testbed for safely studying and researching automotive systems.
+RAMN (Resistant Automotive Miniature Network) is a credit-card-sized ECU testbed for safely studying and researching automotive systems.
 
 RAMN is a set of PCBs (Printed Circuit Boards) that can be used together to simulate a CAN or CAN-FD network of ECUs (Electronic Control Units).
 
@@ -35,7 +35,7 @@ RAMN can be expanded with boards using Arduino-style pin headers. You can add se
 Plug and Learn
 **************
 
-RAMN implements the slcan protocol over USB. It is recognized as a standard CAN-to-USB adapter. No need to buy and connect other tools, just plug RAMN to a USB port to get started.
+RAMN implements the slcan protocol over USB. It is recognized as a standard CAN-to-USB adapter. No need to buy and connect other tools, just plug RAMN into a USB port to get started.
 
 .. image:: gif/usage.gif
    :align: center
@@ -88,7 +88,7 @@ All PCBs are designed with the open-source CAD tool `KiCad <https://kicad.org/>`
 Usage Examples
 --------------
 
-We make RAMN open source in hope of facilitating education and research of automotive systems. RAMN could be used:
+We make RAMN open source in the hope of facilitating education and research of automotive systems. RAMN could be used:
 
 * When providing training in electronics and automotive systems.
 * When developing and evaluating automotive technologies.
@@ -108,7 +108,7 @@ Research
 *********
 
 RAMN has the size of a credit card. It is inexpensive and is ideal for situations that require many boards, for example when evaluating the impact of manufacturing tolerances on a technology, or when subjecting the testbed to conditions likely to break it.
-Real ECUs are different from popular development boards because they are designed to resist the harsh environment in which they operate. RAMN is mostly made of automotive grade components that are designed to operate from -40 to 150 degrees Celsius. The microcontrollers are not automotive grade, but they can operate from -40 to 125 degrees Celsius. RAMN tries to keep a balance between open-source, cost, and fidelity to real ECU networks. The expansion boards are not automotive grade.
+Real ECUs are different from popular development boards because they are designed to resist the harsh environment in which they operate. RAMN is mostly made of automotive-grade components that are designed to operate from -40 to 150 degrees Celsius. The microcontrollers are not automotive grade, but they can operate from -40 to 125 degrees Celsius. RAMN tries to keep a balance between open-source, cost, and fidelity to real ECU networks. The expansion boards are not automotive grade.
 A terminal block at the end of the CAN/CAN-FD bus lets you add other nodes. It can be used to develop and evaluate ECUs. One limitation though: the CAN/CAN-FD bus is terminated, so it cannot be connected to a real car.
 
 
@@ -122,7 +122,7 @@ Refer to the contact section of the `RAMN Github repository <https://github.com/
 License
 -------
 
-RAMN is open-soure, with permissive licenses. Please check the `license file <https://github.com/ToyotaInfoTech/RAMN/blob/main/LICENSE.md>`_ for more information.
+RAMN is open-source, with permissive licenses. Please check the `license file <https://github.com/ToyotaInfoTech/RAMN/blob/main/LICENSE.md>`_ for more information.
 
 .. image:: gif/ramn_simple_style.gif
    :align: center

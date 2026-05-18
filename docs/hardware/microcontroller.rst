@@ -51,7 +51,7 @@ Clock
 *****
 
 A crystal from the NX3225GD is selected as the clock source of the microcontroller. The `NX3225GD family <https://www.ndk.com/en/products/search/crystal/1189074_1494.html>`_ is automotive-grade, is 	present on the `STM32 compatible crystals list <https://www.st.com/resource/en/application_note/cd00221665-oscillator-design-guide-for-stm8afals-stm32-mcus-and-mpus-stmicroelectronics.pdf>`_ and has also been selected on some `Nucleo designs <https://www.st.com/resource/en/user_manual/dm00231744-stm32-nucleo32-boards-mb1180-stmicroelectronics.pdf>`_ .
-NX3225GD crystals are widely available in 8MHz and 10MHz version. RAMN can be used with both, but because of the internal PLL circuitry, the 8MHz does not allow reaching the maximum system clock of 110MHz for the STM32L5 family. Therefore, the 10MHz crystal is preferred.
+NX3225GD crystals are widely available in 8MHz and 10MHz versions. RAMN can be used with both, but because of the internal PLL circuitry, the 8MHz does not allow reaching the maximum system clock of 110MHz for the STM32L5 family. Therefore, the 10MHz crystal is preferred.
 
 The NX3225GD crystal has a load capacitance of 8pF, which is relatively low compared to similar products. Assuming a stray capacitance of 3pF, two external 10pF capacitors were selected to approximate a 8pF load (3 + 10/2 = 8).
 
@@ -88,4 +88,4 @@ However, the BOOT0 pin is ignored by ECU A once a valid firmware has been flashe
 
    ECU A Boot0 test pad.
 
-The BOOT0 pin of ECUs B, C, and D are controlled by ECU A. ECU A should ensure the BOOT0 pin of each ECU is properly set before activating their power supply.
+The BOOT0 pin of ECUs B, C, and D are controlled by ECU A. ECU A should ensure the BOOT0 pin of each ECU is properly set before activating its power supply.

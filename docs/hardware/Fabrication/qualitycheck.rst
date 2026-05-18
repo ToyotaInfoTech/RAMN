@@ -53,7 +53,7 @@ Move the headlights switch (in D square) from the leftmost position to the right
 
 .. warning::
 
-	If the screen shows something else, then it is possible that your switch was soldered with the **wrong orientiation**. Refer to the picture above for the correct orientation when the switch is at the leftmost position.
+	If the screen shows something else, then it is possible that your switch was soldered with the **wrong orientation**. Refer to the picture above for the correct orientation when the switch is at the leftmost position.
 
 Step 6: Test Chassis
 ####################
@@ -64,7 +64,7 @@ Move the chassis potentiometer (in E square) to the leftmost position and verify
 Step 7: Test brake and accelerator
 ##################################
 
-Move the brake and accelerator potentiometers (in F&G square) all the way up. Verify that the screen now shows "98%" (or a value above 95%) for brake "BRAK" and "ACCL".
+Move the brake and accelerator potentiometers (in F&G square) all the way up. Verify that the screen now shows "98%" (or a value above 95%) for both brake "BRAK" and "ACCL".
 
 Step 8: Test the engine key
 ###########################

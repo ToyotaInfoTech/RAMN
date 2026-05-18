@@ -65,7 +65,7 @@ STM32L5 microcontrollers have two RAM areas: SRAM1 and SRAM2.
 SRAM2, however, can be temporarily protected.
 
 As a result, RAMN defines the RAM and INSECURE_RAM regions. By default, variables are put in the RAM region. However, that region is only 64kB.
-To avoid filling it too quickly, variables that are large but that do not hold critical data are put in the INSECURE_RAM region.
+To avoid filling it too quickly, variables that are large but do not hold critical data are put in the INSECURE_RAM region.
 This is done typically for USB, SPI, and CAN buffers, which only hold data that could be read by accessing those interfaces anyway.
 Concretely, this can be done by adding ``__attribute__ ((section (".buffers")))`` to the variable declarations.
 
@@ -86,7 +86,7 @@ Memory Analysis
 ---------------
 
 You can observe RAMN's memory usage by building the project and selecting **"Window"** > **"Show View"** > **"Build Analyzer"** (you may need to select **"File"** > **"Refresh"** then click the refresh icon in the build analyzer window to have it displayed correctly).
-This will show you how much percentage is currently in use. 
+This will show you what percentage is currently in use. 
 
 .. image:: img/memory_usage.png
    :align: center 

@@ -43,9 +43,9 @@ You can look at the silkscreen to identify the role of each control:
 Trying Out Controls
 -------------------
 
-Before going any further, you should verify that you board works correctly. Connect your board to the USB port of your computer, or to a USB power supply that can provide more than 300mA. The status of each control should be displayed at the bottom of the screen of ECU A.
+Before going any further, you should verify that your board works correctly. Connect your board to the USB port of your computer, or to a USB power supply that can provide more than 300mA. The status of each control should be displayed at the bottom of the screen of ECU A.
 Move each control and verify that its status is updated on the screen (and LEDs, when applicable).
-If that is not the case, you may need to reflash you board (See :ref:`flashing`).
+If that is not the case, you may need to reflash your board (See :ref:`flashing`).
 The LEDs on ECU D's expansion simulate a simple dashboard. They can help you verify that each control is working correctly.
 By default, the CAN bus is always active when the power is on, so you may leave the controls in whatever state you prefer (e.g., engine key OFF).
 
@@ -84,7 +84,7 @@ And also two options for (software) tools:
 
 If you want to use your own adapter, you only need to connect the "CANH" and "CANL" wires of your adapter to the terminal block of the CAN bus of RAMN, located at the top right of the board.
 Each pin of the terminal block consists of a large round hole, and a smaller rectangular hole. You should insert the wire that you want to connect in the round hole, and an internal spring will lock it in place.
-To remove a wire, insert something in the rectangular hole (e.g., a precision scew driver) and pull the wire.
+To remove a wire, insert something in the rectangular hole (e.g., a precision screw driver) and pull the wire.
 The terminal block has three pins, and the corresponding signals are labeled on the silkscreen next to it:
 
 - Top pin is GND (Ground).
@@ -94,12 +94,12 @@ The terminal block has three pins, and the corresponding signals are labeled on 
 You only need to connect the CANH and CANL pins of RAMN to the CANH and CANL pins of your CAN adapter.
 After that, you should be ready to use your favorite set of tools. The CAN bus is always active as long as the RAMN board is powered.
 
-The rest of this documentation focuses on built-in RAMN adapter and built-in Linux tools.
+The rest of this documentation focuses on the built-in RAMN adapter and built-in Linux tools.
 
 Using Built-in Tools
 --------------------
 
-To get started with CAN bus analysis on RAMN, we recommended that you prepare a Linux environment (virtual or native) with can-utils.
+To get started with CAN bus analysis on RAMN, we recommend that you prepare a Linux environment (virtual or native) with can-utils.
 
 .. _install_linux:
 
@@ -144,7 +144,7 @@ USB Connection
 Connect your board to your computer using a USB cable. On Windows, it should appear as a "USB Serial Device" (or Composite Device) and be attributed a COM port number (e.g., COM1).
 If that is not the case, you may need to install `STM32 Virtual COM Port Drivers <https://www.st.com/en/development-tools/stsw-stm32102.html>`_.
 
-Once the board is recognized by windows, you must forward the USB port to Virtual Box. Select Devices > USB and click Toyota Motor Corporation RAMN.
+Once the board is recognized by Windows, you must forward the USB port to Virtual Box. Select Devices > USB and click Toyota Motor Corporation RAMN.
 You can open Devices > USB > USB Settings..., then click the + icon to add RAMN so that Virtual Box will always automatically forward the USB port.
 
 On Linux, RAMN should appear at the end of the dmesg command, and be attributed a device file (typically, /dev/ttyACM0).
@@ -160,7 +160,7 @@ By default, RAMN acts as an slcan adapter. You can use the slcand command to sta
 
     $ sudo slcand -o -c /dev/ttyACM0 && sudo ip link set up can0
 
-Replace /dev/ttyACM0 by the device file that was attributed by your computer.
+Replace /dev/ttyACM0 with the device file that was attributed by your computer.
 
 After executing this command, you should be able to see the CAN interface as "can0" using ifconfig:
 
@@ -256,7 +256,7 @@ Finally, open a fourth terminal and type the following command to send your firs
     $ echo "3E 00" | isotpsend -s 7e1 -d 7e9 can0
 
 This command sends the 2-byte command "3E 00" to ECU B, which corresponds to the "Tester Present" command.
-This is an optional command to let the ECU now that you are currently diagnosing it and that it should wait for your commands.
+This is an optional command to let the ECU know that you are currently diagnosing it and that it should wait for your commands.
 You should see on your "isotprecv" terminal that ECU B has answered "7E 00", which means the command was accepted.
 You can look at your "isotpdump" terminal and observe the corresponding interaction in color (red is the request, blue is the answer).
 If you look at your "candump" terminal, you will observe the corresponding CAN messages. Notice that they are actually 3-bytes long: this is because the first byte is used to specify the length of the UDS payload, which is 2 bytes.

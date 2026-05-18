@@ -4,7 +4,7 @@ CTF Write-ups
 =============
 
 This page contains write-ups of past CTFs featuring RAMN. 
-You can download past CTF firmware and challenge prompts from the `misc folder <https://github.com/ToyotaInfoTech/RAMN/tree/main/misc/past_CTFs>`_ of the github repository.
+You can download past CTF firmware and challenge prompts from the `misc folder <https://github.com/ToyotaInfoTech/RAMN/tree/main/misc/past_CTFs>`_ of the GitHub repository.
 Feel free to contact us to add or remove your own write-ups.
 
 DEFCON Embedded Systems Village 2024
@@ -19,7 +19,7 @@ DEFCON Car Hacking Village 2024
 
 Flag format is flag{xxxx}. Ten RAMN boards were made available on a table at the CHV.
 It was specified that each ECU had a different diagnostics interface (either USB, UDS, KWP2000, or XCP).
-It was reminded that the Flash address range is 0x08000000-0x08040000 and that the RAM address range is 0x20000000-0x20040000.
+It was noted that the Flash address range is 0x08000000-0x08040000 and that the RAM address range is 0x20000000-0x20040000.
 
 This page contains simple write-ups. A jupyter notebook with very detailed solutions is available `in the misc folder <https://github.com/ToyotaInfoTech/RAMN/tree/main/misc/jupyter_notebooks>`_. 
 
@@ -84,7 +84,7 @@ The flag can be retrieved by inputting a username with a CRC of 0xDA5D344D, whic
 .. code-block:: text
 
 	Challenge Description: You wouldn't download a byte. 
-	(Note: Flag will be transmitted once on ID 0x777 when challenge is solved.)
+	(Note: Flag will be transmitted once on ID 0x777 when the challenge is solved.)
 	
 It can be identified that ECU B has an active XCP interface (at CAN IDs 0x552/0x553) by using scanning tools such as caringcaribou:
 
@@ -334,7 +334,7 @@ Tags: Forensics, Reverse.
 
 .. code-block:: text
 
-	The firmware of challenge “SWD 1” broadcasts every second two flags in plaintext over CAN, using the same function. 
+	The firmware of challenge “SWD 1” broadcasts two flags every second in plaintext over CAN, using the same function. 
 	CAN ID 0x12345678 is used to broadcast the (non-obfuscated) flag of "SWD 1".
 	The flag of this challenge is the one transmitted with ID 0x7777.
 	(Note: Flash starts at 0x08000000, RAM at 0x20000000. Reset_Handler() is at 0x08001570).
@@ -460,7 +460,7 @@ Tags: CAN, Hardware.
 
 .. code-block:: text
 
-	Many tools consider a CAN frame consists of arbitration, control, and data fields. 
+	Many tools consider that a CAN frame consists of arbitration, control, and data fields. 
 	ID 0x607 thinks they should check some more.
 
 The challenge prompt suggests that there is a "forgotten field" not displayed by most CAN tools such as candump.
@@ -544,7 +544,7 @@ Tags: CAN, USB.
 	Why does ramn_utils.c need such a large ascii_hashmap? 
 	We could use all those unused bytes to store a flag instead…
 
-The table ascii_hashmap in ramn_utils.c (which code is available on github) is used to convert ASCII hexadecimal strings to bytes. 
+The table ascii_hashmap in ramn_utils.c (the code for which is available on GitHub) is used to convert ASCII hexadecimal strings to bytes. 
 Because hexadecimal characters only consist of "0 to 9", "A to F", and "a to f", the table is mostly filled with 0x00.
 
 .. code-block:: C
@@ -783,7 +783,7 @@ Following references, and with help from ChatGPT, we can identify that:
 - 20032820h is loaded from 08000c64h, which value is 40023000h.
 
 Therefore, the password is read in 32-bit chunks from 40023000h. Reading the `reference manual <https://www.st.com/resource/en/reference_manual/dm00346336-stm32l552xx-and-stm32l562xx-advanced-arm-based-32-bit-mcus-stmicroelectronics.pdf>`_ again, we can identify that this address corresponds to a Special Function Register of the CRC engine peripheral.
-Although we could follow references to reverse engineer the parameters of the engine (initialized at FUN_08003580), there is no attempt limits, therefore we can also simply try all common CRC32 algorithms (with different endianness).
+Although we could follow references to reverse engineer the parameters of the engine (initialized at FUN_08003580), there are no attempt limits, therefore we can also simply try all common CRC32 algorithms (with different endianness).
 
 We can use https://crccalc.com/ with the default STM32 CRC engine algorithm (CRC-32/MPEG-2), which gives us 0x14b311c9, 0x6442CA33, 0xC25DE077, and 0x6DA5F0C1, and corresponds to the correct password.
 

@@ -153,7 +153,7 @@ RAMN's CAN messages are classified as either "command" or "control":
 If the self-driving algorithm is OFF, many command messages won't be seen, and you will therefore observe fewer CAN messages.
 
 By default, ECUs listen to command CAN messages, and immediately apply them as control CAN messages, except if the associated controls are not in their neutral position (brake and accelerator at 0%, steering wheel at its middle position).
-For example, if a command CAN messages says "Brake 50%" and the physical potentiometer is at 0%, then the control CAN message will say "Brake 50%".
+For example, if a command CAN message says "Brake 50%" and the physical potentiometer is at 0%, then the control CAN message will say "Brake 50%".
 However, if a command CAN message says "Brake 0%" but the physical potentiometer says "Brake 100%", then the control CAN message will say "Brake 100%".
 
 ECUs can also be reprogrammed to implement a control loop, such as a proportional–integral–derivative controller (PID).

@@ -3,7 +3,7 @@
 Powertrain
 ==========
 
-The POWERTRAIN expansion is used to simulate some functions usally found in the Powertrain domain of a car:
+The POWERTRAIN expansion is used to simulate some functions usually found in the Powertrain domain of a car:
 
 * Accelerator
 * Brake
@@ -37,7 +37,7 @@ The brake is simulated by a sliding potentiometer, with the same circuitry as th
 Shift lever
 -----------
 
-The shift lever is simulated by a 4-direction joystick, with center-push function. The selected component is a `SKRHADE010 <https://tech.alpsalpine.com/prod/e/html/multicontrol/switch/skrh/skrhade010.html>`_ from Alps Alpine.
+The shift lever is simulated by a 4-direction joystick, with a center-push function. The selected component is a `SKRHADE010 <https://tech.alpsalpine.com/prod/e/html/multicontrol/switch/skrh/skrhade010.html>`_ from Alps Alpine.
 
 We originally selected the SKQUCAA010, also from Alps Alpine, which is easier to manipulate, but that part is reaching its `EOL <https://en.wikipedia.org/wiki/End-of-life_product>`_ and might not be easy to find soon.
 

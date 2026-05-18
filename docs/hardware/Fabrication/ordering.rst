@@ -51,7 +51,7 @@ On PCBWay, you have two purchase options:
 
     Expansions Panel from PCBWay
 
-The bill of materials used in the above orders were tailored to match
+The bill of materials used in the above orders was tailored to match
 the components that are available from PCBWay, and some parts are
 removed (marked DNP) to reduce costs (e.g. test points).
 See :ref:`additional_components` for a list of optional components you may want.
@@ -129,7 +129,7 @@ You can identify the correct orientation of each component from the pictures abo
 
 .. warning:: 
 
-	Although there are silkscreen markings to indicate the correct orientation of each component, the two following components are susceptible to be soldered with the wrong orientation by the fab and therefore require extra attention:
+	Although there are silkscreen markings to indicate the correct orientation of each component, the two following components are susceptible to being soldered with the wrong orientation by the fab and therefore require extra attention:
 
 	- SW1 (Shift Joystick): the notch should be on the opposite side of the silkscreen word "SHIFT" (see :ref:`powertrain_details`).
 	- SW3 (Lighting Switch): see pictures below.

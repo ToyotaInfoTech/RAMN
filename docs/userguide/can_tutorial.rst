@@ -153,7 +153,7 @@ For these tools, you can execute the following command to convert an slcan inter
 After executing this command, you should be able to see a new "can0" interface with the :code:`ifconfig` command.
 This should allow you to use tools from the can-utils package, which are detailed in the following section.
 In some environments, you may encounter issues with the command above.
-If that is the case, try attributing a different name to the CAN interface, e.g., use "slcan0" instead of "can0" for all following commands.
+If that is the case, try using a different name for the CAN interface, e.g., use "slcan0" instead of "can0" for all following commands.
 
 .. code-block:: bash
 
@@ -557,7 +557,7 @@ For example, filter "1BB:7FF" used with candump will only display CAN messages w
 A mask of 0x000 would be 00000000000 in binary, and would indicate that you care about **none of the bits** in the identifier.
 This means that the CAN filter will accept every identifier (CAN controllers may require different filters for extended and standard identifiers, so you may still be rejecting extended identifiers).
 
-if you start candump with the filter "1BB:000", it will display all IDs - the 1BB does not have any impact here, because the mask says that none of the bit matters.
+if you start candump with the filter "1BB:000", it will display all IDs - the 1BB does not have any impact here, because the mask says that no bit matters.
 This mask is identical to "000:000" and "FFF:000".
 
 .. code-block:: text
@@ -611,7 +611,7 @@ The CAN protocol divides a single bit into several **time quanta**.
 A **time quantum** corresponds to the **period of the clock of the CAN controller**.
 RAMN's CAN controllers use a clock of 40 MHz, therefore the associated time quantum is 25 ns.
 
-CAN controller consider that a **bit** is the sum of **four segments**, each made of several time quanta:
+CAN controllers consider that a **bit** is the sum of **four segments**, each made of several time quanta:
 
 - The Synchronization Segment.
 - The Propagation Segment.

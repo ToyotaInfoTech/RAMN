@@ -77,7 +77,7 @@ Execute the script with the -p1 argument to provide the path to the first device
     $ sudo python RAMN_VCAND.py -p1 /dev/pts/3
 
 From this step, you can use the vcan0 interface while still being able to access RAMN's serial port.
-However, you should not use RAMN's hardware serial port (e.g., /dev/ttyACM0) anymore, but instead use the **second device** instead (in this case, /dev/pts/4).
+However, you should not use RAMN's hardware serial port (e.g., /dev/ttyACM0) anymore, but use the **second device** instead (in this case, /dev/pts/4).
 
 For example, you can observe CAN traffic on vcan0 while accessing the serial terminal on /dev/pts/4:
 
@@ -108,7 +108,7 @@ Execute the following command to spawn a new pair of virtual devices:
 .. image:: img/vcand3.png
    :align: center
 
-Then, provide the **first devices of each pair** as -p1 and -p2 arguments:
+Then, provide the **first device of each pair** as -p1 and -p2 arguments:
 
 .. code-block:: bash
 

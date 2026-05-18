@@ -92,7 +92,7 @@ You can also find the list of possible error codes in `ramn_uds.c <https://githu
 The error codes that you are the most likely to encounter are:
 
 - 0x11 - "Service not supported".
-- 0x12 - "Sub-Function not supported": this means that the service is likely supported, just not for the specific sub-function that you requested.
+- 0x12 - "Sub-Function not supported": this means that the service is likely supported, but not for the specific sub-function that you requested.
 - 0x13 - "Incorrect message length or invalid format": this means that the service (and sub-function if applicable) are supported, but your request has an invalid size (too many or not enough parameter bytes).
 - 0x31 - "Request out of range": this means that your request has a valid format and is supported, but your parameters are out of the valid range. For example, you tried to read a memory address that does not exist (but you did provide an address with a valid format).
 - 0x33 - "Security access denied": this means that you need to unlock the service (see :ref:`security_access`) before using it.
@@ -337,7 +337,7 @@ You should now be able to read whatever VIN you wrote to memory using Read Data 
    :align: center
 
 This value is written in flash, so it will persist even after a reset.
-If you reflash the ECU and reset its memory, the Read Data by Identifier may complain that your request is out of range.
+If you reflash the ECU and reset its memory, the Read Data by Identifier Service may complain that your request is out of range.
 
 You can install xxd to make easy conversions between readable ASCII text and hexadecimal strings used by isotpsend and isotprecv:
 
@@ -379,7 +379,7 @@ If the first digit is a zero, DTCs have a unique definition, but if it is a one,
 
 A DTC used to be stored as two bytes in the older KWP2000 protocol, that predates UDS.
 UDS added a third byte for a Failure Type Byte (FTB) to report even more information about the problem.
-The two bytes that defines the DTC values are called "High Byte" and "Middle Byte". The "Low byte" represents the FTB.
+The two bytes that define the DTC values are called "High Byte" and "Middle Byte". The "Low byte" represents the FTB.
 
 - First letter is represented with the two highest bits: 00 is P, 01 is C, 10 is B, 11 is U.
 - First number is represented with bits 5 to 4 of the High byte.
@@ -387,7 +387,7 @@ The two bytes that defines the DTC values are called "High Byte" and "Middle Byt
 - Third number is represented with bits 7 to 4 of the Middle Byte.
 - Fourth number is represented with bits 0 to 3 of the Middle Byte.
 
-For, example, The DTC **P0650** is represented in UDS as below:
+For example, The DTC **P0650** is represented in UDS as below:
 
 .. parsed-literal::
 
@@ -397,7 +397,7 @@ For, example, The DTC **P0650** is represented in UDS as below:
 
 which would appear as **"06 50 <FTB>"** in a UDS payload.
 
-Finally, a last byte indicates the status of the DTC. Each bit of that byte represent a flag with the following definitions:
+Finally, a last byte indicates the status of the DTC. Each bit of that byte represents a flag with the following definitions:
 
 - Bit 0 means "test failed".
 - Bit 1 means "test failed this operation cycle".
@@ -668,7 +668,7 @@ For example, you can write "01 02 03 04" to memory address 0x20000000 using the 
 .. image:: img/uds_writememorybyaddress.png
    :align: center
 
-This command will only be accepted if you first ask for a programming session and unlock the ECU with :ref:`security_access`.
+This command will only be accepted if you first ask for a programming session and unlock the ECU using :ref:`security_access`.
 You can check that the memory was correctly written by using Read Memory by Address before and after.
 Variable addresses depend on the exact version of the firmware that you use.
 In the version used in this example, 0x20000000 corresponds to the "error status" variable of the CAN adapter, which can be overwritten without impacting stability.

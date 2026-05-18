@@ -10,7 +10,7 @@ The SCREENS expansion is used to add a screen to an ECU. Although it can be used
    :align: center
    
 This expansion features various `pin sockets <https://en.wikipedia.org/wiki/Pin_header>`_ to connect screens from `Adafruit <https://www.adafruit.com/>`_.
-Our preferred choice is the 240x240 TFT color Screen `Adafruit 4313 <https://www.adafruit.com/product/4313>`_, since it has a good balance between size, readability, and cost.
+Our preferred choice is the 240x240 TFT color screen `Adafruit 4313 <https://www.adafruit.com/product/4313>`_, since it has a good balance between size, readability, and cost.
 
 We selected those screens mainly because they can be powered by 5V but controlled by 3.3V logic, without external components.
 

@@ -47,7 +47,7 @@ Dominant and Recessive
 Ultimately, the CAN bus is a simple serial bus: the bits representing a CAN frame are sent one by one according to a fixed clock (500 kbps for RAMN).
 Arbitrarily, a "0" bit is represented by a "**dominant**" signal, and a "1" bit is represented by a "**recessive**" signal.
 
-A CAN bus is a pair of two wires: **CANH** (*CAN High*) and **CANL** (*CAN Low*). 
+A CAN bus is a pair of wires: **CANH** (*CAN High*) and **CANL** (*CAN Low*). 
 
 - A 2V voltage difference between **CANH** and **CANL** represent a **"dominant"** state.
 - A 0V difference between **CANH** and **CANL** represent a **"recessive"** state.
@@ -636,7 +636,7 @@ When you swap bits of your own bit stream, you may generate different types of e
 - You may swap a reserved bit which **must** be set to a specific value ("**Form Error**").
 - You may swap a bit that leads to an invalid CRC ("**CRC Error**").
 
-Bit Stuffing Errors and Form Errors are detected and reported immediately, CRC Errors are reported after the CRC field.
+Bit Stuffing Errors and Form Errors are detected and reported immediately; CRC Errors are reported after the CRC field.
 
 First, let us start with bit stuffing. Let us observe what happens when we send a string of six zeroes.
 
@@ -1168,7 +1168,7 @@ Although not necessarily a critical problem, it may be pertinent to cybersecurit
 
 If we target EOF1, we can cause errors on a specific arbitration ID.
 This is ultimately similar to flooding the bus with the targeted arbitration ID, but it is more subtle since we are not flooding the bus.
-Therefore, we do not resource-starve lower priority IDs, and we do not directly send any message (so the total frame count do not change).
+Therefore, we do not resource-starve lower priority IDs, and we do not directly send any message (so the total frame count does not change).
 The same observations as previously discussed apply:
 
 - If auto-retransmission is ON, the ECU will reattempt transmission (and fail) and it will enter bus-off mode quickly (and you may observe priority inversion).

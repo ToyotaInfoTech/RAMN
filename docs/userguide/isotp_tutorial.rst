@@ -86,7 +86,7 @@ A Flow Control frame has the format "3X YY ZZ", containing the following paramet
 
 - **Flag [X, 4 bits]**: This contains actual flow control data. 1 is for "Continue", 2 is for "Wait", and 3 is for "Abort".
 - **Block Size [YY, 8 bits]**: This specifies how many frames the client should send before waiting for another Flow Control Frame. 0 means "send everything without waiting".
-- **Separation Time minimum (STmin) [ZZ, 8 bits]**: this specifies how long the client should wait between frame transmissions. 0 means "send as fast as possible", values between 1 to 127 specifies a delay in milliseconds. 0xF1 to 0xF9 are used to specify large delays between 100 and 900 milliseconds. Values in-between are reserved by the standard.
+- **Separation Time minimum (STmin) [ZZ, 8 bits]**: this specifies how long the client should wait between frame transmissions. 0 means "send as fast as possible", values between 1 to 127 specify a delay in milliseconds. 0xF1 to 0xF9 are used to specify large delays between 100 and 900 milliseconds. Values in between are reserved by the standard.
 
 Modern ECUs will often answer to a "First Frame" with "30 00 00", which means "send everything at maximum speed" - in that case, this would be the only Flow Control frame in the exchange.
 

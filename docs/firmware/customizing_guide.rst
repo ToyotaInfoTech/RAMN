@@ -8,10 +8,10 @@ If you want to learn what you can do with the default firmware, check the :ref:`
 
 **Summary:**
 
-- All ECUs share the same source code, only their configuration differ (either ``#define TARGET_ECUA``, ``#define TARGET_ECUB``, ``#define TARGET_ECUC``, or ``#define TARGET_ECUD``).
+- All ECUs share the same source code, only their configurations differ (either ``#define TARGET_ECUA``, ``#define TARGET_ECUB``, ``#define TARGET_ECUC``, or ``#define TARGET_ECUD``).
 - ``ramn_config.h`` holds the current configuration, ``ramn_customize.c`` provides hooks to common functions (e.g., a function that is called when a CAN message is received).
 - When you add new CAN identifiers to the network, you need to update CAN filters (both standard and extended), or disable filters entirely.
-- CAN peripherals are configured in CAN-FD mode but only use classic CAN messages. You can change the default traffic to CAN-FD following instructions on this page.
+- CAN peripherals are configured in CAN-FD mode but only use classic CAN messages. You can change the default traffic to CAN-FD, following instructions on this page.
 - You have a total of 256kB RAM, and either 256kB or 512kB Flash. If you run out of memory, you can reduce the size of CAN and USB buffers, enable compiler optimizations, or remove unused features (in ``ramn_config.h``).
 - If you use STM32 code generation (i.e., if you modify ``RAMNV1.ioc``) be careful not to let it overwrite your own code.
 
@@ -28,7 +28,7 @@ If you need information not present on this page, you can always search the Inte
 Modifying RAMN Firmware
 -----------------------
 
-The RAMN firmware is built with the GCC toolchain.
+The RAMN firmware is built using the GCC toolchain.
 Although you are free to use any IDE you like, it is recommended that you install the most recent `STM32CubeIDE <https://www.st.com/en/development-tools/stm32cubeide.html>`_ from STMicroelectronics' website.
 
 You can download RAMN's source code from `the Github repository <https://github.com/ToyotaInfoTech/RAMN>`_ (click "Code" then "Download ZIP").

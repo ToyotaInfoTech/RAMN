@@ -8,7 +8,7 @@ Introduction
 
 By default, RAMN ECUs implement small CTF challenges that can be used to practice for automotive Capture The Flag (CTF) events.
 
-The flags are in plaintext in both the firmware files and the source code; The goal is to develop the correct commands or scripts to extract flags without looking at the source code or binary files.
+The flags are in plaintext in both the firmware files and the source code; the goal is to develop the correct commands or scripts to extract flags without looking at the source code or binary files.
 The format of flags is **"flag{xxx}"**.
 
 Challenges
@@ -130,7 +130,7 @@ Can you exploit them to recover all the previous flags?
 The goal is not to recover the password or bypass the check. The goal is to overtake execution in order to dump memory (over USB, CAN, etc.).
 Check :ref:`write_shellcode` for guidance on how to get started. You can compile the source code yourself to generate .elf and .map files. Although a JTAG debugger isn't absolutely necessary, it will make exploitation easier.
 You will need to use the Routine Control service after performing a Security Access (see :ref:`diag_tutorial`).
-If you are already familiar with ARM exploitation, you may add yourself extra constraints that are not enforced (such as not executing any code in RAM).
+If you are already familiar with ARM exploitation, you may impose extra constraints that are not enforced (such as not executing any code in RAM).
  
 **Routine Control 0x20A**
 

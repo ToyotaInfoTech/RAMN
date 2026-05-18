@@ -1,12 +1,12 @@
 Chassis
 =======
 
-The CHASSIS expansion is used to simulate some functions usally found in the Chassis domain of a car:
+The CHASSIS expansion is used to simulate some functions usually found in the Chassis domain of a car:
 
 * Steering Wheel
 * Parking Brake
 
-Although not traditionally part of the Chassis domain, the lighting switch is also present on the Chassis domain.
+Although not traditionally part of the Chassis domain, the lighting switch is also present in the Chassis domain.
 
 .. image:: img/chassis/chassis.png
    :align: center
