@@ -43,4 +43,4 @@ Please check the LICENSE.md file for more details.
 Feel free to [contact us](mailto:camille.gay@toyota.global) if you have questions.
 Videos available [here](https://twitter.com/ramn_auto).
 
-Copyright (c) 2025 TOYOTA MOTOR CORPORATION. ALL RIGHTS RESERVED.
+Copyright (c) 2026 TOYOTA MOTOR CORPORATION. ALL RIGHTS RESERVED.
