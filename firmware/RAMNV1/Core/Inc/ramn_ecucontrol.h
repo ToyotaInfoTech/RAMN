@@ -39,6 +39,12 @@ void 	RAMN_ECU_SetBoot0All(uint8_t state);
 // Sets the ECUs to their default state (BOOT0=0, ENABLE=1)
 void 	RAMN_ECU_SetDefaultState(void);
 
+// PA9 can be pulled up or pulled down to differentiate between two hardware variants (two different configurations).
+// Default RAMN has PA9 floating (pulled-up internally).
+// RAMN hardware variants may pull down PA9 to let the firmware know it runs on a different hardware variant.
+// This function returns True if PA9 is pulled down, False if pulled up.
+RAMN_Bool_t RAMN_ECU_IsHardWareVariant();
+
 #endif
 
 #endif /* INC_RAMN_ECUCONTROL_H_ */

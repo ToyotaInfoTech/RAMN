@@ -53,4 +53,13 @@ void RAMN_ECU_SetDefaultState(void)
 	RAMN_ECU_SetEnableAll(GPIO_PIN_SET);
 }
 
+RAMN_Bool_t RAMN_ECU_IsHardWareVariant()
+{
+	if (HAL_GPIO_ReadPin(HW_TYPE_GPIO_Port, HW_TYPE_Pin) == GPIO_PIN_RESET)
+	{
+		return True;
+	}
+	else return False;
+}
+
 #endif

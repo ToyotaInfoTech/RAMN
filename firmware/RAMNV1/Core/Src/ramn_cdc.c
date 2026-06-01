@@ -1220,7 +1220,9 @@ RAMN_Bool_t RAMN_CDC_ProcessSLCANBuffer(uint8_t* USBRxBuffer, uint32_t commandLe
 			}
 			break;
 		case 'V': // Return SW version
-			RAMN_USB_SendFromTask((uint8_t*)"V1 SLCAN RAMN (",15U);
+			if(RAMN_ECU_IsHardWareVariant()) RAMN_USB_SendFromTask((uint8_t*)"V1 SLCAN R4MN (",15U);
+			else RAMN_USB_SendFromTask((uint8_t*)"V1 SLCAN RAMN (",15U);
+
 			RAMN_USB_SendFromTask((uint8_t*)__DATE__,sizeof(__DATE__));
 			RAMN_USB_SendFromTask((uint8_t*)" ",1U);
 			RAMN_USB_SendFromTask((uint8_t*)__TIME__,sizeof(__TIME__));

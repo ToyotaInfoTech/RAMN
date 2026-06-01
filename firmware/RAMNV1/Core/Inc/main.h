@@ -103,6 +103,8 @@ extern FDCAN_HandleTypeDef hfdcan1;
 #define LCD_DC_GPIO_Port GPIOB
 #define Other_nCS_Pin GPIO_PIN_8
 #define Other_nCS_GPIO_Port GPIOA
+#define HW_TYPE_Pin GPIO_PIN_9
+#define HW_TYPE_GPIO_Port GPIOA
 #define ECUB_EN_Pin GPIO_PIN_5
 #define ECUB_EN_GPIO_Port GPIOB
 #define FDCAN1_STB_Pin GPIO_PIN_6
