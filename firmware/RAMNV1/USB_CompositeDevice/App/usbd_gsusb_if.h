@@ -28,6 +28,7 @@
 #include "usbd_composite.h"
 
 /* USER CODE BEGIN INCLUDE */
+#include "FreeRTOS.h"
 #include "cmsis_os.h"
 #include "stream_buffer.h"
 /* USER CODE END INCLUDE */

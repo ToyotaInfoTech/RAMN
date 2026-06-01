@@ -574,7 +574,6 @@ Be aware that some views display sizes in words (32 bits), while others display 
 
 .. warning:: 
 
-	If you used the code generation features, you may need to add ``volatile`` to ``ulTotalRunTime`` (line 396 of ``tasks.c``) for stats to be correctly read in STM32CubeIDE.  
 	If you encounter runtime stats issues in STM32CubeIDE, follow the steps `here <http://community.st.com/t5/stm32-mcus/how-to-enable-freertos-run-time-and-stack-usage-view/ta-p/627524>`_.
 
 FreeRTOS stats are computed using **TIM7**. If you need better accuracy, you can modify TIM7's counter period value (e.g., from 7999 to 799), but this will increase CPU load.

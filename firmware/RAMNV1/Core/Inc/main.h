@@ -37,6 +37,7 @@ extern "C" {
 #include "ramn_config.h"
 #include "ramn_utils.h"
 #include "ramn_vehicle_specific.h"
+#include "FreeRTOS.h"
 #include "cmsis_os.h"
 #include "queue.h"
 
