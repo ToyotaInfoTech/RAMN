@@ -454,8 +454,10 @@ int main(void)
   /* USER CODE BEGIN Init */
 
 #if defined(TARGET_ECUA)
+#ifndef HARDWARE_BOOT0_CONTROL
 	// Check that ECU A BOOT option bytes are properly configured to hardware BOOT0, which should be pulled-up by default.
 	RAMN_FLASH_ConfigureOptionBytesApplicationMode();
+#endif
 #endif
 
 #if defined(MEMORY_AUTOLOCK)

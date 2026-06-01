@@ -119,6 +119,11 @@
 // Number of times to retry entering bootloader mode of another ECU before giving up
 #define BOOTLOADER_MAX_ATTEMPTS 20
 
+// Enable this define to prevent ECU A from overwriting its option bytes to force application mode.
+// This is in case you want to control the boot mode of ECU A using the BOOT0 pin (in hardware).
+// When this flag is enabled, ECU A will boot in DFU mode if BOOT0 is high (default), and in application mode if BOOT0 is low.
+//#define HARDWARE_BOOT0_CONTROL
+
 
 #ifdef ENABLE_GSUSB
 #define GSUSB_RECV_QUEUE_SIZE 	512 // Size of the GSUSB receive queue (uint32_t elements)
