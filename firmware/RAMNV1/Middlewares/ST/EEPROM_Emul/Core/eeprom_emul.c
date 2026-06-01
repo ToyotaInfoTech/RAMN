@@ -38,7 +38,7 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
+  * <h2><center>&copy; Copyright (c) 2025 STMicroelectronics.
   * All rights reserved.</center></h2>
   *
   * This software component is licensed by ST under BSD 3-Clause license,
@@ -51,7 +51,6 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "eeprom_emul.h"
-
 /** @defgroup EEPROM_Emulation EEPROM_Emulation
   * @{
   */
@@ -119,6 +118,8 @@ typedef enum {
   STATE_CORRUPTED
 } EE_State_Reliability;
 
+
+
 /**
   * @}
   */
@@ -132,12 +133,12 @@ typedef enum {
 uint16_t uhNbWrittenElements = 0U;                  /*!< Nb of elements written in valid and active pages */
 uint8_t ubCurrentActivePage = 0U;                   /*!< Current active page (can be active or receive state) */
 uint32_t uwAddressNextWrite = PAGE_HEADER_SIZE;     /*!< Initialize write position just after page header */
+
     
 /* During the cleanup phase in EE_Init, AddressRead is the address being read */ 
 __IO uint32_t AddressRead = 0;
 /* Flag equal to 1 when the cleanup phase is in progress, 0 if not */
 __IO uint8_t CleanupPhase = 0;
-
 
 /**
   * @}
@@ -148,20 +149,29 @@ __IO uint8_t CleanupPhase = 0;
   * @{
   */
 
+#ifndef FLASH_LINES_128B
 static EE_Status ReadVariable(uint16_t VirtAddress, EE_DATA_TYPE* pData);
 static EE_Status WriteVariable(uint16_t VirtAddress, EE_DATA_TYPE Data);
+static EE_Status PagesTransfer(uint16_t VirtAddress, EE_DATA_TYPE Data, EE_Transfer_type type);
+uint16_t CalculateCrc(EE_DATA_TYPE Data, uint16_t VirtAddress);
+#else
+static EE_Status ReadVariable(uint16_t VirtAddress, EE_DATA_TYPE* pData);
+static EE_Status WriteVariable(uint16_t VirtAddress, EE_DATA_TYPE* Data);
+static EE_Status PagesTransfer(uint16_t VirtAddress, EE_DATA_TYPE* Data, EE_Transfer_type type);
+uint16_t CalculateCrc(EE_DATA_TYPE Data1, EE_DATA_TYPE Data2);
+#endif
 static EE_Status VerifyPageFullyErased(uint32_t Address, uint32_t PageSize);
 static uint32_t FindPage(EE_Find_type Operation);
-static EE_Status PagesTransfer(uint16_t VirtAddress, EE_DATA_TYPE Data, EE_Transfer_type type);
-#ifdef DUALCORE_FLASH_SHARING
+#if defined (DUALCORE_FLASH_SHARING)
 static EE_Status VerifyPagesFullWriteVariable(uint16_t VirtAddress, EE_DATA_TYPE Data, EE_Write_type Write_type);
+#elif defined (FLASH_LINES_128B)
+static EE_Status VerifyPagesFullWriteVariable(uint16_t VirtAddress, EE_DATA_TYPE* Data, EE_Write_type Write_type);
 #else
 static EE_Status VerifyPagesFullWriteVariable(uint16_t VirtAddress, EE_DATA_TYPE Data);
 #endif
 static EE_Status SetPageState(uint32_t Page, EE_State_type State);
 static EE_State_type GetPageState(uint32_t Address);
 void ConfigureCrc(void);
-uint16_t CalculateCrc(EE_DATA_TYPE Data, uint16_t VirtAddress);
 
 /**
   * @}
@@ -192,7 +202,13 @@ EE_Status EE_Init(EE_Erase_type EraseType)
            lastvalidpage = 0U, firstvalidpage = 0U,
            recoverytransfer = 0U;
   EE_ELEMENT_TYPE addressvalue = 0U;
+#ifdef FLASH_LINES_128B
+  uint32_t Address = 0U;
+  EE_ELEMENT_TYPE addressvalue2 = 0U;
+  EE_DATA_TYPE dummy_data[2] = {0, 0};
+#endif
   EE_State_Reliability pagestate = STATE_RELIABLE;
+
   EE_Status status = EE_OK;
 
   /* Check if the configuration is 128-bits bank or 2*64-bits bank */
@@ -205,6 +221,7 @@ EE_Status EE_Init(EE_Erase_type EraseType)
   /* Step 0: Perform initial configuration     */
   /***************************************************************************/
   /* Configure CRC peripheral for eeprom emulation usage */
+
   ConfigureCrc();
 
   /***************************************************************************/
@@ -212,7 +229,10 @@ EE_Status EE_Init(EE_Erase_type EraseType)
   /*         delete corrupted lines detectable through NMI                   */
   /***************************************************************************/
   /* We set the flag indicating the cleanup phase is operating to 1 */
+
   CleanupPhase = 1;
+  
+#ifndef STM32C031xx
   for (page = START_PAGE; page < (START_PAGE + PAGES_NUMBER); page++)
   {
     pageaddress = PAGE_ADDRESS(page);
@@ -227,8 +247,28 @@ EE_Status EE_Init(EE_Erase_type EraseType)
       */
       AddressRead = pageaddress + varidx;
       addressvalue = (*(__IO EE_ELEMENT_TYPE*)(pageaddress + varidx));
+      
+#ifdef FLASH_LINES_128B
+      AddressRead = pageaddress + varidx + 8;
+      addressvalue = (*(__IO EE_ELEMENT_TYPE*)(pageaddress + varidx + 8));
+#endif
+
     }
   }
+#ifdef FLASH_LINES_128B
+  //If a reset occured when an ECCC was detected but not corrected
+  if (__HAL_FLASH_GET_FLAG(FLASH_FLAG_ECCC))
+  {
+    
+#ifdef STM32H563xx
+     Address=(0x8000000|(FLASH->ECCDR & 0x000FFFFF)); //Recovery of address where ECC error occured
+#else
+     Address=(0x8000000|(FLASH->ECCR & 0x000FFFFF)); //Recovery of address where ECC error occured
+#endif
+     EE_DeleteCorruptedFlashAddress(Address);     //Delete corrupted address  
+  }
+#endif
+#endif
   /* We set the flag indicating the cleanup phase is operating to 0 because it just ended */
   CleanupPhase = 0;
 
@@ -238,6 +278,7 @@ EE_Status EE_Init(EE_Erase_type EraseType)
   /***************************************************************************/
   /* Check if no active page and no receive page present */
   /* Browse all pages */
+
   for (page = START_PAGE; page < (START_PAGE + PAGES_NUMBER); page++)
   {
     pageaddress = PAGE_ADDRESS(page);
@@ -288,6 +329,7 @@ EE_Status EE_Init(EE_Erase_type EraseType)
   /* Step 3: Handle case of reset during transfer, by performing       */
   /*         transfer recovery                                         */
   /*********************************************************************/
+
   /* Browse all pages */
   for (page = START_PAGE; page < (START_PAGE + PAGES_NUMBER); page++)
   {
@@ -335,11 +377,17 @@ EE_Status EE_Init(EE_Erase_type EraseType)
         ubCurrentActivePage = page;
 
         /* Resume the interrupted page transfer, using dummy new data */
+#ifndef FLASH_LINES_128B  
         if (PagesTransfer(0U, 0U, EE_TRANSFER_RECOVER) != EE_CLEANUP_REQUIRED)
         {
           return EE_TRANSFER_ERROR;
         }
-
+#else 
+         if (PagesTransfer(0U, dummy_data, EE_TRANSFER_RECOVER) != EE_CLEANUP_REQUIRED)
+        {
+          return EE_TRANSFER_ERROR;
+        }
+#endif
         /* Memorize transfer recovery occured */
         recoverytransfer = 1U;
 
@@ -354,6 +402,7 @@ EE_Status EE_Init(EE_Erase_type EraseType)
   /*         If more than one active page, raise error                 */
   /*         If no active page present, set missing active page        */
   /*********************************************************************/
+
   /* Browse all pages to search for active pages */
   nbactivepage = 0U;
   for (page = START_PAGE; page < (START_PAGE + PAGES_NUMBER); page++)
@@ -431,6 +480,7 @@ EE_Status EE_Init(EE_Erase_type EraseType)
   /* Step 5: Initialize eeprom emulation global variables relative     */
   /*         to active page                                            */
   /*********************************************************************/
+
   /* Initialize global variables, with elements detected in active page */
   uhNbWrittenElements = 0U;
   uwAddressNextWrite = PAGE_HEADER_SIZE;
@@ -439,7 +489,12 @@ EE_Status EE_Init(EE_Erase_type EraseType)
   {
     /* Check elements present in active page */
     addressvalue = (*(__IO EE_ELEMENT_TYPE*)(PAGE_ADDRESS(ubCurrentActivePage) + varidx));
+#ifdef FLASH_LINES_128B
+    addressvalue2 = (*(__IO EE_ELEMENT_TYPE*)(PAGE_ADDRESS(ubCurrentActivePage) + varidx + 8));
+    if ((addressvalue != EE_MASK_FULL) || (addressvalue2 != EE_MASK_FULL))
+#else
     if (addressvalue != EE_MASK_FULL)
+#endif
     {
       /* Then increment uhNbWrittenElements and uwAddressNextWrite */
       uhNbWrittenElements++;
@@ -455,6 +510,7 @@ EE_Status EE_Init(EE_Erase_type EraseType)
   /* Step 6: Finalize eeprom emulation global variables relative       */
   /*         to valid pages, and check consistency of pages sequence   */
   /*********************************************************************/
+
   /* Check consistency of pages sequence: one active page, optionnally some valid pages before */
   /* Update global variable uhNbWrittenElements if valid pages are found */
   page = ubCurrentActivePage;
@@ -484,6 +540,7 @@ EE_Status EE_Init(EE_Erase_type EraseType)
   /*********************************************************************/
   /* Step 7: Ensure empty pages are erased                             */
   /*********************************************************************/
+
   /* Ensure all pages after active page, until first valid page, are erased */
   page = FOLLOWING_PAGE(ubCurrentActivePage);
   pageaddress = PAGE_ADDRESS(page);
@@ -526,23 +583,28 @@ EE_Status EE_Init(EE_Erase_type EraseType)
   /*         reset during write here                                   */
   /*         Only needed if recovery transfer did not occured          */
   /*********************************************************************/
-  if (recoverytransfer == 0U)
+
+if (recoverytransfer == 0U)
   {
 
 #ifdef DUALCORE_FLASH_SHARING
     status = VerifyPagesFullWriteVariable(0U, 0U, EE_INIT_WRITE);
     
-    /* The dummy write can be skipped in case pages are full
-      because in this case potential instability can not happen */
+    // The dummy write can be skipped in case pages are full
+     // because in this case potential instability can not happen 
     if ((status != EE_OK) && (status != EE_PAGE_FULL))
     {
       return EE_WRITE_ERROR;
     }
 #else
+#ifdef FLASH_LINES_128B
+    uint64_t to_write[2] = {0};
+    status = VerifyPagesFullWriteVariable(0U, to_write, EE_INIT_WRITE);
+#else
     status = VerifyPagesFullWriteVariable(0U, 0U);
-    
-    /* The dummy write can be skipped in case pages are full
-       because in this case potential instability can not happen */
+#endif
+    // The dummy write can be skipped in case pages are full
+     //  because in this case potential instability can not happen 
     if ((status != EE_OK) && (status != EE_PAGE_FULL))
     {
       return EE_WRITE_ERROR;
@@ -578,10 +640,10 @@ EE_Status EE_Format(EE_Erase_type EraseType)
     return EE_INVALID_BANK_CFG;
   }
   
-  #ifdef DUALCORE_FLASH_SHARING
+#ifdef DUALCORE_FLASH_SHARING
   /* Inform CPU2 about Erase Activity */
   SHCI_C2_FLASH_EraseActivity(ERASE_ACTIVITY_ON);
-  #endif
+#endif
   
   /* Erase All Pages */
   for (page = START_PAGE; page < (START_PAGE + PAGES_NUMBER); page++)
@@ -592,10 +654,10 @@ EE_Status EE_Format(EE_Erase_type EraseType)
       /* Force page erase independently of its content */
       if (FI_PageErase(page, 1U) != EE_OK)
       {
-        #ifdef DUALCORE_FLASH_SHARING
+#ifdef DUALCORE_FLASH_SHARING
         /* Inform CPU2 about end of Erase Activity */
         SHCI_C2_FLASH_EraseActivity(ERASE_ACTIVITY_OFF);
-        #endif
+#endif
         return EE_ERASE_ERROR;
       }
     }
@@ -608,10 +670,10 @@ EE_Status EE_Format(EE_Erase_type EraseType)
         /* If Erase operation was failed, a Flash error code is returned */
         if (FI_PageErase(page, 1U) != EE_OK)
         {
-          #ifdef DUALCORE_FLASH_SHARING
+#ifdef DUALCORE_FLASH_SHARING
           /* Inform CPU2 about end of Erase Activity */
           SHCI_C2_FLASH_EraseActivity(ERASE_ACTIVITY_OFF);
-          #endif
+#endif
           return EE_ERASE_ERROR;
         }
       }
@@ -621,10 +683,10 @@ EE_Status EE_Format(EE_Erase_type EraseType)
   /* To keep their coherency, flush the caches if needed depending on the product */
   FI_CacheFlush();
   
-  #ifdef DUALCORE_FLASH_SHARING
+#ifdef DUALCORE_FLASH_SHARING
   /* Inform CPU2 about end of Erase Activity */
   SHCI_C2_FLASH_EraseActivity(ERASE_ACTIVITY_OFF);
-  #endif
+#endif
 
   /* Set first Page in Active State */
   /* If program operation was failed, a Flash error code is returned */
@@ -640,6 +702,34 @@ EE_Status EE_Format(EE_Erase_type EraseType)
 
   return EE_OK;
 }
+
+#if defined(FLASH_LINES_128B)
+/**
+  * @brief  Returns the last stored variable data, if found, which correspond to
+  *         the passed virtual address
+  * @param VirtAddress Variable virtual address on 16 bits (can't be 0x0000 or 0xFFFF)
+  * @param  Data 96bits data to be written pointed by a uin64_t pointer
+  * @retval EE_Status
+  *           - EE_OK: if variable was found
+  *           - EE error code: if an error occurs
+  */
+EE_Status EE_ReadVariable96bits(uint16_t VirtAddress, uint64_t* pData)
+{
+  if((VirtAddress != 0x0000) && (VirtAddress != 0xFFFF))
+  {
+    EE_Status status = EE_OK;
+
+    /* Read variable of size EE_DATA_TYPE */
+    status = ReadVariable(VirtAddress, pData);
+    
+    return status;
+  }
+  else
+  {
+    return EE_INVALID_VIRTUALADDRESS;
+  } 
+}
+#endif
 
 #if defined(EE_ACCESS_32BITS)
 /**
@@ -727,6 +817,31 @@ EE_Status EE_ReadVariable8bits(uint16_t VirtAddress, uint8_t* pData)
   } 
 }
 
+#if defined(FLASH_LINES_128B)
+/**
+  * @brief  Writes/updates variable data in EEPROM.
+  *         Trig internal Pages transfer if half of the pages are full.
+  * @warning This function is not reentrant
+  * @param VirtAddress Variable virtual address on 16 bits (can't be 0x0000 or 0xFFFF)
+  * @param  Data 96bits data to be written pointed by a uin64_t pointer
+  * @retval EE_Status
+  *           - EE_OK: on success
+  *           - EE_CLEANUP_REQUIRED: success and user has to trig flash pages cleanup
+  *           - EE error code: if an error occurs
+  */
+EE_Status EE_WriteVariable96bits(uint16_t VirtAddress, uint64_t* Data)
+{
+  if((VirtAddress != 0x0000) && (VirtAddress != 0xFFFF))
+  {
+    return WriteVariable(VirtAddress, (EE_DATA_TYPE*)Data);
+  }
+  else
+  {
+    return EE_INVALID_VIRTUALADDRESS;
+  }
+}
+#endif
+
 #if defined(EE_ACCESS_32BITS)
 /**
   * @brief  Writes/updates variable data in EEPROM.
@@ -743,7 +858,11 @@ EE_Status EE_WriteVariable32bits(uint16_t VirtAddress, uint32_t Data)
 {
   if((VirtAddress != 0x0000) && (VirtAddress != 0xFFFF))
   {
+#ifndef FLASH_LINES_128B
     return WriteVariable(VirtAddress, (EE_DATA_TYPE) Data);
+#else
+    return WriteVariable(VirtAddress, (EE_DATA_TYPE*) &Data);
+#endif
   }
   else
   {
@@ -767,7 +886,11 @@ EE_Status EE_WriteVariable16bits(uint16_t VirtAddress, uint16_t Data)
 {
   if((VirtAddress != 0x0000) && (VirtAddress != 0xFFFF))
   {
+#ifndef FLASH_LINES_128B
     return WriteVariable(VirtAddress, (EE_DATA_TYPE) Data);
+#else
+    return WriteVariable(VirtAddress, (EE_DATA_TYPE*) &Data);
+#endif
   }
   else
   {
@@ -790,7 +913,11 @@ EE_Status EE_WriteVariable8bits(uint16_t VirtAddress, uint8_t Data)
 {
   if((VirtAddress != 0x0000) && (VirtAddress != 0xFFFF))
   {
+#ifndef FLASH_LINES_128B
     return WriteVariable(VirtAddress, (EE_DATA_TYPE) Data);
+#else
+    return WriteVariable(VirtAddress, (EE_DATA_TYPE*) &Data);
+#endif
   }
   else
   {
@@ -836,27 +963,27 @@ EE_Status EE_CleanUp(void)
         }
       }
       
-      #ifdef DUALCORE_FLASH_SHARING
+#ifdef DUALCORE_FLASH_SHARING
       /* Inform CPU2 about Erase Activity */
       SHCI_C2_FLASH_EraseActivity(ERASE_ACTIVITY_ON);
-      #endif
+#endif
 
       /* Erase all the pages of the group */
       /* If erase operation fails, a Flash error code is returned */
       if (FI_PageErase(firstpage, PAGES_NUMBER / 2U) != EE_OK)
       {
-        #ifdef DUALCORE_FLASH_SHARING
+#ifdef DUALCORE_FLASH_SHARING
         /* Inform CPU2 about end of Erase Activity */
         SHCI_C2_FLASH_EraseActivity(ERASE_ACTIVITY_OFF);
-        #endif
+#endif
         return EE_ERASE_ERROR;
       }
       else
       {
-        #ifdef DUALCORE_FLASH_SHARING
+#ifdef DUALCORE_FLASH_SHARING
         /* Inform CPU2 about end of Erase Activity */
         SHCI_C2_FLASH_EraseActivity(ERASE_ACTIVITY_OFF);
-        #endif
+#endif
         
         /* To keep their coherency, flush the caches if needed depending on the product */
         FI_CacheFlush();
@@ -908,10 +1035,10 @@ EE_Status EE_CleanUp_IT(void)
         }
       }
 
-      #ifdef DUALCORE_FLASH_SHARING
+#ifdef DUALCORE_FLASH_SHARING
       /* Inform CPU2 about Erase Activity */
       SHCI_C2_FLASH_EraseActivity(ERASE_ACTIVITY_ON);
-      #endif
+#endif
       
       /* Erase all the pages of the group */
       /* If erase operation fails, a Flash error code is returned */
@@ -973,9 +1100,16 @@ __weak void EE_EndOfCleanup_UserCallback(void)
   *           - EE_OK: if variable was found
   *           - EE error code: if an error occurs
   */
+#ifndef FLASH_LINES_128B
 static EE_Status ReadVariable(uint16_t VirtAddress, EE_DATA_TYPE* pData)
+#else
+static EE_Status ReadVariable(uint16_t VirtAddress, EE_DATA_TYPE* pData)
+#endif
 {
   EE_ELEMENT_TYPE addressvalue = 0U;
+#ifdef FLASH_LINES_128B
+  EE_ELEMENT_TYPE addressvalue2 = 0U;
+#endif
   uint32_t page = 0U, pageaddress = 0U, counter = 0U, crc = 0U;
   EE_State_type pagestate = STATE_PAGE_INVALID;
 
@@ -1002,6 +1136,7 @@ static EE_Status ReadVariable(uint16_t VirtAddress, EE_DATA_TYPE* pData)
     {
       /* Get the current location content to be compared with virtual address */
       addressvalue = (*(__IO EE_ELEMENT_TYPE*)(pageaddress + counter));
+#ifndef FLASH_LINES_128B
       if (addressvalue != EE_PAGESTAT_ERASED)
       {
         /* Compare the read address with the virtual address */
@@ -1009,7 +1144,7 @@ static EE_Status ReadVariable(uint16_t VirtAddress, EE_DATA_TYPE* pData)
         {
           /* Calculate crc of variable data and virtual address */
           crc = CalculateCrc(EE_DATA_VALUE(addressvalue), EE_VIRTUALADDRESS_VALUE(addressvalue));
-
+          
           /* if crc verification pass, data is correct and is returned.
              if crc verification fails, data is corrupted and has to be skip */
           if (crc == EE_CRC_VALUE(addressvalue))
@@ -1021,6 +1156,29 @@ static EE_Status ReadVariable(uint16_t VirtAddress, EE_DATA_TYPE* pData)
           }
         }
       }
+#else
+      addressvalue2 = (*(__IO EE_ELEMENT_TYPE*)(pageaddress + counter+8U));
+      if ((addressvalue != EE_PAGESTAT_ERASED) || (addressvalue2 != EE_PAGESTAT_ERASED))
+      {
+        /* Compare the read address with the virtual address */
+        if (EE_VIRTUALADDRESS_VALUE(addressvalue) == VirtAddress)
+        {
+          /* Calculate crc of variable data and virtual address */
+          crc = CalculateCrc((uint64_t)addressvalue2,(uint64_t)addressvalue);
+          
+          /* if crc verification pass, data is correct and is returned.
+             if crc verification fails, data is corrupted and has to be skip */
+          if (crc == EE_CRC_VALUE(addressvalue))
+          {
+            /* Get content of variable value */
+            pData[0] = (uint64_t)addressvalue2;
+            pData[1] = (uint64_t)(addressvalue >> EE_DATA_SHIFT);
+
+            return EE_OK;
+          }
+        }
+      }
+#endif
       /* Next address location */
       counter -= EE_ELEMENT_SIZE;
     }
@@ -1046,16 +1204,20 @@ static EE_Status ReadVariable(uint16_t VirtAddress, EE_DATA_TYPE* pData)
   *           - EE_FLASH_USED: flash currently used by CPU2
   *           - EE error code: if an error occurs
   */
+#ifndef FLASH_LINES_128B
 static EE_Status WriteVariable(uint16_t VirtAddress, EE_DATA_TYPE Data)
+#else
+static EE_Status WriteVariable(uint16_t VirtAddress, EE_DATA_TYPE* Data)
+#endif
 {
   EE_Status status = EE_OK;
 
   /* Write the variable virtual address and value in the EEPROM, if not full */
-  #ifdef DUALCORE_FLASH_SHARING
+#if defined (DUALCORE_FLASH_SHARING) || defined (FLASH_LINES_128B)
   status = VerifyPagesFullWriteVariable(VirtAddress, Data, EE_SIMPLE_WRITE);
-  #else
+#else
   status = VerifyPagesFullWriteVariable(VirtAddress, Data);
-  #endif
+#endif
   if (status == EE_PAGE_FULL)
   {
     /* In case the EEPROM pages are full, perform Pages transfer */
@@ -1083,8 +1245,12 @@ static EE_Status VerifyPageFullyErased(uint32_t Address, uint32_t PageSize)
   while (counter < PageSize)
   {
     /* Compare the read address with the virtual address */
-    if ((*(__IO EE_ELEMENT_TYPE*)(Address+counter)) != EE_PAGESTAT_ERASED)
-    {
+#ifndef FLASH_LINES_128B    
+	if ((*(__IO EE_ELEMENT_TYPE*)(Address+counter)) != EE_PAGESTAT_ERASED)
+#else
+	if ( ((*(__IO EE_ELEMENT_TYPE*)(Address+counter)) != EE_PAGESTAT_ERASED) && ((*(__IO EE_ELEMENT_TYPE*)(Address+counter+8U)) != EE_PAGESTAT_ERASED) )
+#endif    
+	{
       /* In case one element is not erased, reset readstatus flag */
       readstatus = EE_PAGE_NOTERASED;
     }
@@ -1259,16 +1425,25 @@ static uint32_t FindPage(EE_Find_type Operation)
   *           - EE_CLEANUP_REQUIRED: on success
   *           - EE error code: if an error occurs
   */
+#ifndef FLASH_LINES_128B
 static EE_Status PagesTransfer(uint16_t VirtAddress, EE_DATA_TYPE Data, EE_Transfer_type Type)
+#else
+static EE_Status PagesTransfer(uint16_t VirtAddress, EE_DATA_TYPE* Data, EE_Transfer_type Type)
+#endif
 {
   EE_State_type pagestatus = STATE_PAGE_INVALID;
   uint32_t pageaddress = 0U;
   uint32_t page = 0U;
   uint32_t varidx = 0U;
   EE_ELEMENT_TYPE addressvalue = 0U;
+#ifdef FLASH_LINES_128B
+  EE_ELEMENT_TYPE addressvalue2 = 0U;
+  uint16_t nb_dummy_lines=0U;
+#endif
   EE_Status status = EE_OK;
   EE_DATA_TYPE DataValue = 0U;
 
+    
   /* Get receive Page for transfer operation */
   page = FindPage((Type == EE_TRANSFER_NORMAL?FIND_ERASE_PAGE:FIND_WRITE_PAGE));
   if (page == EE_NO_PAGE_FOUND)
@@ -1351,14 +1526,29 @@ static EE_Status PagesTransfer(uint16_t VirtAddress, EE_DATA_TYPE Data, EE_Trans
   /* Update global variables to reflect current transfer status */
   if (Type == EE_TRANSFER_RECOVER)
   {
+#ifdef FLASH_LINES_128B
+    nb_dummy_lines=0;
+#endif
     /* Count number of elements already transferred in current receive page */
     for (varidx = PAGE_HEADER_SIZE; varidx < PAGE_SIZE; varidx += EE_ELEMENT_SIZE)
     {
       /* Get next element in receive page */
       addressvalue = (*(__IO EE_ELEMENT_TYPE*)(PAGE_ADDRESS(ubCurrentActivePage) + varidx));
 
+#ifdef FLASH_LINES_128B
+      addressvalue2 = (*(__IO EE_ELEMENT_TYPE*)(PAGE_ADDRESS(ubCurrentActivePage) + varidx + 8));
+      
       /* Check if element is valid */
+      if((addressvalue == 0x0000000000000000U)&& (addressvalue2 == 0x0000000000000000U))
+      {
+        nb_dummy_lines++;
+        uhNbWrittenElements++;
+        uwAddressNextWrite += EE_ELEMENT_SIZE;
+      }
+      else if ((addressvalue != EE_PAGESTAT_ERASED) || (addressvalue2 != EE_PAGESTAT_ERASED)&&(addressvalue != 0x0000000000000000U)|| (addressvalue2 != 0x0000000000000000U))
+#else
       if (addressvalue != EE_PAGESTAT_ERASED)
+#endif
       {
         /* Update global variables accordingly */
         uhNbWrittenElements++;
@@ -1383,6 +1573,9 @@ static EE_Status PagesTransfer(uint16_t VirtAddress, EE_DATA_TYPE Data, EE_Trans
       {
         /* Update uhNbWrittenElements with number of elements in page */
         uhNbWrittenElements += NB_MAX_ELEMENTS_BY_PAGE;
+#ifdef FLASH_LINES_128B
+        nb_dummy_lines=nb_dummy_lines+2;
+#endif
       }
       else
       {
@@ -1391,20 +1584,32 @@ static EE_Status PagesTransfer(uint16_t VirtAddress, EE_DATA_TYPE Data, EE_Trans
     }
   }
 
-#ifdef DUALCORE_FLASH_SHARING  
-  if (VerifyPagesFullWriteVariable(VirtAddress, Data, EE_TRANSFER) != EE_OK)
-  {
-    return EE_WRITE_ERROR;
-  }
-#else
-  /* Write the variable passed as parameter in the new active page */
-  /* If program operation was failed, a Flash error code is returned */
+#if defined (DUALCORE_FLASH_SHARING) || defined (FLASH_LINES_128B)  
+    if (VerifyPagesFullWriteVariable(VirtAddress, Data, EE_TRANSFER) != EE_OK)
+    {
+      return EE_WRITE_ERROR;
+    }
+  #ifdef FLASH_LINES_128B
+    else
+    {
+      if ((Data[0]==0)&&(Data[1]==0))
+      {
+        nb_dummy_lines++; //One 128bit line of zeros has been written
+      }
+    }
+  #endif
+#else  
+
+  // Write the variable passed as parameter in the new active page 
+  // If program operation was failed, a Flash error code is returned 
   if (VerifyPagesFullWriteVariable(VirtAddress, Data) != EE_OK)
   {
     return EE_WRITE_ERROR;
   }
-#endif
 
+#endif 
+
+      
   /* Transfer process: transfer variables from old to the new active page */
   /* First element in receive page can be any one, the following elements are */
   /* ordered from the beginning. */
@@ -1412,9 +1617,16 @@ static EE_Status PagesTransfer(uint16_t VirtAddress, EE_DATA_TYPE Data, EE_Trans
   /* corrupted if reset occured during write of this element, */
   /* and last element is dummy value that we have just written. */
   /* Transfer shall then resume from (uhNbWrittenElements-3) variable index */
+
+
+#ifdef FLASH_LINES_128B
+  varidx = (uhNbWrittenElements >= 3U?(uhNbWrittenElements-3U+1U):1U);
+  for (varidx = (varidx >= nb_dummy_lines?(varidx-nb_dummy_lines):1U); varidx < NB_OF_VARIABLES+1; varidx++)
+#else    
   for (varidx = (uhNbWrittenElements >= 3U?(uhNbWrittenElements-3U+1U):1U); varidx < NB_OF_VARIABLES+1; varidx++)
-  {
-    /* Check each variable except the one passed as parameter */
+#endif
+  {  
+       /* Check each variable except the one passed as parameter */
     if (varidx != VirtAddress)
     {
       /* Read the last variable updates */
@@ -1424,11 +1636,13 @@ static EE_Status PagesTransfer(uint16_t VirtAddress, EE_DATA_TYPE Data, EE_Trans
         /* In case variable corresponding to the virtual address was found */
         /* Transfer the variable to the new active page */
         /* If program operation was failed, a Flash error code is returned */
-        #ifdef DUALCORE_FLASH_SHARING
-        status = VerifyPagesFullWriteVariable(varidx, DataValue, EE_TRANSFER);
-        #else
-        status = VerifyPagesFullWriteVariable(varidx, DataValue);
-        #endif
+    #if defined (DUALCORE_FLASH_SHARING)
+            status = VerifyPagesFullWriteVariable(varidx, DataValue, EE_TRANSFER);
+    #elif defined (FLASH_LINES_128B)
+            status = VerifyPagesFullWriteVariable(varidx, &DataValue, EE_TRANSFER);
+    #else
+            status = VerifyPagesFullWriteVariable(varidx, DataValue);
+    #endif
         if (status != EE_OK)
         {
           return status;
@@ -1445,7 +1659,6 @@ static EE_Status PagesTransfer(uint16_t VirtAddress, EE_DATA_TYPE Data, EE_Trans
       }
     }
   }
-
   /* Transfer is now done, mark the receive state page as active */
   if (SetPageState(ubCurrentActivePage, STATE_PAGE_ACTIVE) != EE_OK)
   {
@@ -1468,13 +1681,20 @@ static EE_Status PagesTransfer(uint16_t VirtAddress, EE_DATA_TYPE Data, EE_Trans
   *           - EE_FLASH_USED: flash currently used by CPU2
   *           - EE error code: if an error occurs
   */
-#ifdef DUALCORE_FLASH_SHARING
+#if defined (DUALCORE_FLASH_SHARING)
 static EE_Status VerifyPagesFullWriteVariable(uint16_t VirtAddress, EE_DATA_TYPE Data, EE_Write_type Write_type)
+#elif defined (FLASH_LINES_128B)
+static EE_Status VerifyPagesFullWriteVariable(uint16_t VirtAddress, EE_DATA_TYPE* Data, EE_Write_type Write_type)
 #else
 static EE_Status VerifyPagesFullWriteVariable(uint16_t VirtAddress, EE_DATA_TYPE Data)
 #endif
 {
+#ifndef FLASH_LINES_128B
   uint32_t crc = 0U;
+#else
+  uint64_t pData64[2] = {0,0};
+  uint64_t crc = 0U;
+#endif
 
   /* Check if pages are full, i.e. max number of written elements achieved */
   if (uhNbWrittenElements >= NB_MAX_WRITTEN_ELEMENTS)
@@ -1495,23 +1715,50 @@ static EE_Status VerifyPagesFullWriteVariable(uint16_t VirtAddress, EE_DATA_TYPE
   activepageaddress = PAGE_ADDRESS(activepage);
 
   /* Force crc to 0 in case of Data/VirtAddress are 0*/
+#ifndef FLASH_LINES_128B
   if ((Data == 0U) && (VirtAddress == 0U))
+#else
+  if ((Data[0] == 0U) && (Data[1] == 0U) && (VirtAddress == 0U))
+
+#endif
   {
     crc = 0U;
   }
   else
   {
+#ifndef FLASH_LINES_128B 
     /* Calculate crc of variable data and virtual address */
     crc = CalculateCrc(Data, VirtAddress);
+#else        
+    pData64[0] = (uint64_t)((Data[1] << EE_DATA_SHIFT) | VirtAddress);
+    /* Calculate crc of variable data and virtual address */
+    crc = CalculateCrc(Data[0], pData64[0]);
+#endif
   }
 
-#ifdef DUALCORE_FLASH_SHARING
+
+#if defined (DUALCORE_FLASH_SHARING)
   /* Program variable data + virtual address + crc */
   /* If program operation was failed, a Flash error code or the information
       about the semaphore monitoring flash being taken is returned */
   EE_Status ee_status = FI_WriteDoubleWord(activepageaddress+uwAddressNextWrite, EE_ELEMENT_VALUE(VirtAddress,Data,crc), Write_type);
   if (ee_status != EE_OK) return ee_status;  
-#else
+#elif defined (FLASH_LINES_128B)
+  pData64[0] = 0;
+  pData64[1] = 0;
+  pData64[0] = (uint64_t)((Data[1]<< EE_DATA_SHIFT) | (crc << EE_CRC_SHIFT) | VirtAddress);
+  pData64[1] = (uint64_t)Data[0];
+
+  EE_Status ee_status = FI_WriteDoubleWord(activepageaddress+uwAddressNextWrite, pData64, Write_type);
+  if (ee_status != EE_OK) return ee_status;
+#elif defined (EDATA_ENABLED)
+  /* Program variable data + virtual address + crc */
+  /* If program operation was failed, a Flash error code is returned */
+  if (FI_WriteDoubleWord(activepageaddress+uwAddressNextWrite, EE_ELEMENT_VALUE(VirtAddress,Data,crc)) != EE_OK)
+  {
+    return EE_WRITE_ERROR;
+  }
+#else  
   /* Program variable data + virtual address + crc */
   /* If program operation was failed, a Flash error code is returned */
   if (FI_WriteDoubleWord(activepageaddress+uwAddressNextWrite, EE_ELEMENT_VALUE(VirtAddress,Data,crc)) != HAL_OK)
@@ -1544,7 +1791,7 @@ static EE_Status SetPageState(uint32_t Page, EE_State_type State)
   header3 = PAGE_ADDRESS(Page) + (EE_ELEMENT_SIZE*2U);
   header4 = PAGE_ADDRESS(Page) + (EE_ELEMENT_SIZE*3U);
 
-#ifdef DUALCORE_FLASH_SHARING
+#if defined (DUALCORE_FLASH_SHARING)
   EE_Status ee_status;
   switch(State)
   {
@@ -1576,6 +1823,92 @@ static EE_Status SetPageState(uint32_t Page, EE_State_type State)
       /* Set new Page status to STATE_PAGE_ERASING status */
       ee_status = FI_WriteDoubleWord(header4, EE_PAGESTAT_ERASING, EE_SET_PAGE);
       if (ee_status != EE_OK) return ee_status;
+    }
+    break;
+  default:
+    break;
+  }
+#elif defined (FLASH_LINES_128B)
+  EE_Status ee_status;
+  uint64_t pagestat = 0;
+  switch(State)
+  {
+  case STATE_PAGE_RECEIVE:
+    {
+      /* Set new Page status to STATE_PAGE_RECEIVE status */
+      pagestat = EE_PAGESTAT_RECEIVE;
+      ee_status = FI_WriteDoubleWord(header1, &pagestat, EE_SET_PAGE);
+      if (ee_status != EE_OK) return ee_status;
+      ubCurrentActivePage = Page;
+    }
+    break;
+  case STATE_PAGE_ACTIVE:
+    {
+      /* Set new Page status to STATE_PAGE_ACTIVE status */
+      pagestat = EE_PAGESTAT_ACTIVE;
+      ee_status = FI_WriteDoubleWord(header2, &pagestat, EE_SET_PAGE);
+      if (ee_status != EE_OK) return ee_status;
+      ubCurrentActivePage = Page;
+    }
+    break;
+  case STATE_PAGE_VALID:
+    {
+      /* Set new Page status to STATE_PAGE_VALID status */
+      pagestat = EE_PAGESTAT_VALID;
+      ee_status = FI_WriteDoubleWord(header3, &pagestat, EE_SET_PAGE);
+      if (ee_status != EE_OK) return ee_status;
+    }
+    break;
+  case STATE_PAGE_ERASING:
+    {
+      /* Set new Page status to STATE_PAGE_ERASING status */
+      pagestat = EE_PAGESTAT_ERASING;
+      ee_status = FI_WriteDoubleWord(header4, &pagestat, EE_SET_PAGE);
+      if (ee_status != EE_OK) return ee_status;
+    }
+    break;
+  default:
+    break;
+  }
+#elif defined (EDATA_ENABLED)
+	switch(State)
+  {
+  case STATE_PAGE_RECEIVE:
+    {
+      /* Set new Page status to STATE_PAGE_RECEIVE status */
+      if (FI_WriteDoubleWord(header1, EE_PAGESTAT_RECEIVE) != EE_OK)
+      {
+        return EE_WRITE_ERROR;
+      }
+      ubCurrentActivePage = Page;
+    }
+    break;
+  case STATE_PAGE_ACTIVE:
+    {
+      /* Set new Page status to STATE_PAGE_ACTIVE status */
+      if (FI_WriteDoubleWord(header2, EE_PAGESTAT_ACTIVE) != EE_OK)
+      {
+        return EE_WRITE_ERROR;
+      }
+      ubCurrentActivePage = Page;
+    }
+    break;
+  case STATE_PAGE_VALID:
+    {
+      /* Set new Page status to STATE_PAGE_VALID status */
+      if (FI_WriteDoubleWord(header3, EE_PAGESTAT_VALID) != EE_OK)
+      {
+        return EE_WRITE_ERROR;
+      }
+    }
+    break;
+  case STATE_PAGE_ERASING:
+    {
+      /* Set new Page status to STATE_PAGE_ERASING status */
+      if (FI_WriteDoubleWord(header4, EE_PAGESTAT_ERASING) != EE_OK)
+      {
+        return EE_WRITE_ERROR;
+      }
     }
     break;
   default:
@@ -1636,6 +1969,7 @@ static EE_Status SetPageState(uint32_t Page, EE_State_type State)
   * @param  Address Address of the FLASH Memory page
   * @retval State State of the page
   */
+#ifndef FLASH_LINES_128B
 static EE_State_type GetPageState(uint32_t Address)
 {
   EE_ELEMENT_TYPE status1 = 0U, status2 = 0U, status3 = 0U, status4 = 0U;
@@ -1673,6 +2007,50 @@ static EE_State_type GetPageState(uint32_t Address)
   /* Return erased status, if 4 first elements are EE_PAGESTAT_ERASED value */
   return STATE_PAGE_ERASED;
 }
+#else
+static EE_State_type GetPageState(uint32_t Address)
+{
+  EE_ELEMENT_TYPE status1 = 0U, status2 = 0U, status3 = 0U, status4 = 0U;
+  EE_ELEMENT_TYPE status1bis = 0U, status2bis = 0U, status3bis = 0U, status4bis = 0U;
+
+  /* Get page state information from page header (3 first elements) */
+  status1 = (*(__IO EE_ELEMENT_TYPE*)Address);
+  status2 = (*(__IO EE_ELEMENT_TYPE*)(Address + EE_ELEMENT_SIZE));
+  status3 = (*(__IO EE_ELEMENT_TYPE*)(Address + (EE_ELEMENT_SIZE*2U)));
+  status4 = (*(__IO EE_ELEMENT_TYPE*)(Address + (EE_ELEMENT_SIZE*3U)));
+  status1bis = (*(__IO EE_ELEMENT_TYPE*)(Address + 8));
+  status2bis = (*(__IO EE_ELEMENT_TYPE*)(Address + EE_ELEMENT_SIZE + 8));
+  status3bis = (*(__IO EE_ELEMENT_TYPE*)(Address + (EE_ELEMENT_SIZE*2U) + 8));
+  status4bis = (*(__IO EE_ELEMENT_TYPE*)(Address + (EE_ELEMENT_SIZE*3U) + 8));
+
+  /* Return erasing status, if element4 is not EE_PAGESTAT_ERASED value */
+  if ((status4 != EE_PAGESTAT_ERASED) && (status4bis != EE_PAGESTAT_ERASED))
+  {
+    return STATE_PAGE_ERASING;
+  }
+
+  /* Return valid status, if element3 is not EE_PAGESTAT_ERASED value */
+  if ((status3 != EE_PAGESTAT_ERASED) && (status3bis != EE_PAGESTAT_ERASED))
+  {
+    return STATE_PAGE_VALID;
+  }
+
+  /* Return active status, if element2 is not EE_PAGESTAT_ERASED value */
+  if ((status2 != EE_PAGESTAT_ERASED) && (status2bis != EE_PAGESTAT_ERASED))
+  {
+    return STATE_PAGE_ACTIVE;
+  }
+
+  /* Return receive status, if element1 is not EE_PAGESTAT_ERASED value */
+  if ((status1 != EE_PAGESTAT_ERASED) && (status1bis != EE_PAGESTAT_ERASED))
+  {
+    return STATE_PAGE_RECEIVE;
+  }
+
+  /* Return erased status, if 4 first elements are EE_PAGESTAT_ERASED value */
+  return STATE_PAGE_ERASED;
+}	
+#endif
 
 /**
   * @brief  This function configures CRC Instance.
@@ -1715,14 +2093,26 @@ void ConfigureCrc(void)
   * @param  VirtAddress address of the eeprom variable.
   * @retval 16-bit CRC value computed on Data and Virtual Address.
   */
+#ifndef FLASH_LINES_128B
 uint16_t CalculateCrc(EE_DATA_TYPE Data, uint16_t VirtAddress)
+#else
+uint16_t CalculateCrc(EE_DATA_TYPE Data1, EE_DATA_TYPE Data2)
+#endif
 {
   /* Reset CRC calculation unit */
   LL_CRC_ResetCRCCalculationUnit(CRC);
 
   /* Feed Data and Virtual Address */
+#ifndef FLASH_LINES_128B
   LL_CRC_FeedData32(CRC, Data);
   LL_CRC_FeedData16(CRC, VirtAddress);
+#else
+  LL_CRC_FeedData32(CRC, ((uint32_t)Data1));
+  LL_CRC_FeedData32(CRC, ((uint32_t)(Data1>>32)));
+  LL_CRC_FeedData32(CRC, ((uint32_t)((Data2 & 0xFFFFFFFF00000000)>>32)));
+  LL_CRC_FeedData16(CRC, ((uint16_t)Data2));
+   
+#endif
 
   /* Return computed CRC value */
   return(LL_CRC_ReadData16(CRC));

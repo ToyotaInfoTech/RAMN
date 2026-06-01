@@ -85,7 +85,7 @@ typedef enum {
    EE_CONDITIONAL_ERASE
 } EE_Erase_type;
 
-#ifdef DUALCORE_FLASH_SHARING
+#if (defined DUALCORE_FLASH_SHARING) || (defined FLASH_LINES_128B) 
 /* Type of write operations:
        EE_TRANSFER         --> Used by WriteDoubleWord to know when the operation ongoing is a transfer
        EE_SIMPLE_WRITE     --> Used by WriteDoubleWord to know when the operation ongoing is a simple writing */

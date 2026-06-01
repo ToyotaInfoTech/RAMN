@@ -7,7 +7,7 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
+  * <h2><center>&copy; Copyright (c) 2025s STMicroelectronics.
   * All rights reserved.</center></h2>
   *
   * This software component is licensed by ST under BSD 3-Clause license,
@@ -44,10 +44,8 @@
 #define PAGE_SIZE               FLASH_PAGE_SIZE                                  /*!< Page size */
 #define PAGE_HEADER_SIZE        EE_ELEMENT_SIZE * 4U                             /*!< Page Header is 4 elements to save page state */
 #define NB_MAX_ELEMENTS_BY_PAGE ((PAGE_SIZE - PAGE_HEADER_SIZE) / EE_ELEMENT_SIZE) /*!< Max number of elements by page */
-#define PAGES_NUMBER            (((((NB_OF_VARIABLES + NB_MAX_ELEMENTS_BY_PAGE) / NB_MAX_ELEMENTS_BY_PAGE) * 2U) * CYCLES_NUMBER) + GUARD_PAGES_NUMBER)
-
-
-/*!< Number of consecutives pages used by the application */
+#define PAGES_NUMBER            (((((NB_OF_VARIABLES + NB_MAX_ELEMENTS_BY_PAGE - 1U) / NB_MAX_ELEMENTS_BY_PAGE) * 2U) * CYCLES_NUMBER) + GUARD_PAGES_NUMBER )
+                                                                                 /*!< Number of consecutives pages used by the application */
 #define NB_MAX_WRITTEN_ELEMENTS ((NB_MAX_ELEMENTS_BY_PAGE * PAGES_NUMBER) / 2U)  /*!< Max number of elements written before triggering pages transfer */
 #define START_PAGE              PAGE(START_PAGE_ADDRESS)                         /*!< Page index of the 1st page used for EEPROM emul, in the bank */
 #define END_EEPROM_ADDRESS      (START_PAGE_ADDRESS + (PAGES_NUMBER * FLASH_PAGE_SIZE) - 1) /*!< Last address of EEPROM emulation flash pages */
@@ -74,11 +72,21 @@
 
 /* Macros to manipulate pages */
 #ifdef SECURE_FEATURES
+#ifdef EDATA_ENABLED
+    #define PAGE_ADDRESS(__PAGE__)   (uint32_t)(FLASH_EDATA_BASE_NS + (__PAGE__) * PAGE_SIZE + ((START_PAGE_ADDRESS - FLASH_EDATA_BASE_NS) / BANK_SIZE) * BANK_SIZE) /*!< Get page address from page index */
+	#define PAGE(__ADDRESS__)        (uint32_t)((((__ADDRESS__) - FLASH_EDATA_BASE_NS) % BANK_SIZE) / FLASH_PAGE_SIZE) /*!< Get page index from page address */
+#else
 	#define PAGE_ADDRESS(__PAGE__)   (uint32_t)(FLASH_BASE_NS + (__PAGE__) * PAGE_SIZE + ((START_PAGE_ADDRESS - FLASH_BASE_NS) / BANK_SIZE) * BANK_SIZE) /*!< Get page address from page index */
 	#define PAGE(__ADDRESS__)        (uint32_t)((((__ADDRESS__) - FLASH_BASE_NS) % BANK_SIZE) / FLASH_PAGE_SIZE) /*!< Get page index from page address */
+#endif
+#else
+#ifdef EDATA_ENABLED
+    #define PAGE_ADDRESS(__PAGE__)   (uint32_t)(FLASH_EDATA_BASE + (__PAGE__) * PAGE_SIZE + ((START_PAGE_ADDRESS - FLASH_EDATA_BASE) / BANK_SIZE) * BANK_SIZE) /*!< Get page address from page index */
+	#define PAGE(__ADDRESS__)        (uint32_t)((((__ADDRESS__) - FLASH_EDATA_BASE) % BANK_SIZE) / FLASH_PAGE_SIZE) /*!< Get page index from page address */
 #else
 	#define PAGE_ADDRESS(__PAGE__)   (uint32_t)(FLASH_BASE + (__PAGE__) * PAGE_SIZE + ((START_PAGE_ADDRESS - FLASH_BASE) / BANK_SIZE) * BANK_SIZE) /*!< Get page address from page index */
 	#define PAGE(__ADDRESS__)        (uint32_t)((((__ADDRESS__) - FLASH_BASE) % BANK_SIZE) / FLASH_PAGE_SIZE) /*!< Get page index from page address */	
+#endif
 #endif
 #define PREVIOUS_PAGE(__PAGE__)  (uint32_t)((((__PAGE__) - START_PAGE - 1U + PAGES_NUMBER) % PAGES_NUMBER) + START_PAGE) /*!< Get page index of previous page, among circular page list */
 #define FOLLOWING_PAGE(__PAGE__) (uint32_t)((((__PAGE__) - START_PAGE + 1U) % PAGES_NUMBER) + START_PAGE) /*!< Get page index of following page, among circular page list */
@@ -117,6 +125,10 @@ EE_Status EE_Init(EE_Erase_type EraseType);
 #if defined(EE_ACCESS_32BITS)
 EE_Status EE_ReadVariable32bits(uint16_t VirtAddress, uint32_t* pData);
 EE_Status EE_WriteVariable32bits(uint16_t VirtAddress, uint32_t Data);
+#endif
+#if defined(FLASH_LINES_128B)
+EE_Status EE_ReadVariable96bits(uint16_t VirtAddress, uint64_t* pData);
+EE_Status EE_WriteVariable96bits(uint16_t VirtAddress, uint64_t* Data);
 #endif
 EE_Status EE_ReadVariable16bits(uint16_t VirtAddress, uint16_t* pData);
 EE_Status EE_WriteVariable16bits(uint16_t VirtAddress, uint16_t Data);
