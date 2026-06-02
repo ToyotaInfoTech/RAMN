@@ -40,7 +40,7 @@ jobs:
         if: always()
         run: |
           mkdir -p build-metrics
-          for ecu in ECUA ECUB ECUC ECUD; do
+          for ecu in ECUA ECUB ECUB_LINEAR ECUC ECUD; do
             hex="scripts/firmware/${ecu}.hex"
             if [ -f "$hex" ]; then
               echo "${ecu}=$(wc -c < "$hex" | tr -d ' ')" >> build-metrics/hex-sizes.txt
@@ -134,7 +134,7 @@ jobs:
             echo "enable=${{ matrix.enable }}"
             echo "disable=${{ matrix.disable }}"
             echo "outcome=${{ steps.build.outcome }}"
-            for ecu in ECUA ECUB ECUC ECUD; do
+            for ecu in ECUA ECUB ECUB_LINEAR ECUC ECUD; do
               hex="scripts/firmware/${ecu}.hex"
               if [ -f "$hex" ]; then
                 echo "hex_size_${ecu}=$(wc -c < "$hex" | tr -d ' ')"
