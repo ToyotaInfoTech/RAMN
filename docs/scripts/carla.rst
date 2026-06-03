@@ -103,7 +103,7 @@ Configuring your RAMN environment
 
 		$ pip3 install -r requirements.txt
 
-- Open ``RAMN/script/settings/CARLA_PATH.txt`` and replace its content with the path to the folder where ``CARLAUE4.exe`` (or ``CarlaUnreal.exe``) is located on your computer.
+- Open ``RAMN/scripts/settings/CARLA_PATH.txt`` and replace its content with the path to the folder where ``CARLAUE4.exe`` (or ``CarlaUnreal.exe``) is located on your computer.
 - (Optional) Modify ``0_CARLA_SERVER_start.bat`` with your preferred settings (resolution, etc.). Read `CARLA's documentation <https://carla.readthedocs.io/en/latest/adv_rendering_options/>`_ for more information about CARLA's options. Specify the quality of graphics using :code:`-quality-level=Epic` (best graphics) or :code:`-quality-level=Low` (best performances). Specify the resolution of the server using :code:`-windowed -ResX=N -ResY=N`.
 
 - (Optional) Modify ``CarlaSettings.ini`` to edit default settings (weather, etc.)

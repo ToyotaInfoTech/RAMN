@@ -243,7 +243,7 @@ You should be able to observe a slow transmission in your candump terminal.
 isotprecv
 """""""""
 
-The command isotpsend allows you to send ISO-TP frames, but it does not listen to the answer from the server (the ECU). For this, you need to use isotprecv in another terminal with the same parameters:
+The command isotpsend does not listen to answers from the server (the ECU). For this, you need to use isotprecv in another terminal with the same parameters:
 
 .. code-block:: bash
 

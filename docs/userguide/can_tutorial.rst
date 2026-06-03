@@ -366,7 +366,7 @@ Or if you want to flood the CAN bus with the same message for 2 seconds:
 
 .. code-block:: bash
 
-    $ timeout 2s bash -c 'while [ $SECONDS -lt 10 ]; do cansend can0 1d3#01008A754AC9B735; done'
+    $ timeout 2s bash -c 'while true; do cansend can0 1d3#01008A754AC9B735; done'
 
 .. warning::
     If you send CAN messages normally transmitted by another ECU, and that other ECU is still actively transmitting, you may generate CAN errors.

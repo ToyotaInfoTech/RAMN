@@ -69,7 +69,7 @@ Move the brake and accelerator potentiometers (in F&G square) all the way up. Ve
 Step 8: Test the engine key
 ###########################
 
-Move the engine key (in A square) from left, to middle, to center. Verify that the text at the bottom-right of the screen goes from "OFF" to "ACC" to "IGN".
+Move the engine key (in A square) from left, to middle, to right. Verify that the text at the bottom-right of the screen goes from "OFF" to "ACC" to "IGN".
   
 Step 9: Test SHIFT joystick
 ###########################

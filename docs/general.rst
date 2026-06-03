@@ -80,7 +80,7 @@ RAMN only consists of Printed Circuit Boards designed with high tolerances. PCBs
 Built with Open-Source Tools
 ****************************
 
-All PCBs are designed with the open-source CAD tool `KiCad <https://kicad.org/>`_. The firmware of the microcontrollers is based on the open-source RTOS `freeRTOS <https://www.freertos.org/>`_, and the open-source library STM32 HAL.
+All PCBs are designed with the open-source CAD tool `KiCad <https://kicad.org/>`_. The firmware of the microcontrollers is based on the open-source RTOS `FreeRTOS <https://www.freertos.org/>`_, and the open-source library STM32 HAL.
 
 .. image:: gif/kicad.gif
    :align: center

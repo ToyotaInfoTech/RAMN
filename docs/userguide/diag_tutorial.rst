@@ -89,7 +89,7 @@ Negative responses
 If the ECU rejected your request, it will answer to it with a three-byte payload that starts with 0x7F.
 The second byte represents the service that it rejected, and the third byte represents the error code.
 You can also find the list of possible error codes in `ramn_uds.c <https://github.com/ToyotaInfoTech/RAMN/blob/main/firmware/RAMNV1/Core/Src/ramn_uds.c#L22>`_.
-The error codes that you are the most likely to encounter are:
+The error codes you are most likely to encounter are:
 
 - 0x11 - "Service not supported".
 - 0x12 - "Sub-Function not supported": this means that the service is likely supported, but not for the specific sub-function that you requested.
@@ -426,7 +426,7 @@ The ECU answers with six bytes:
 - Fourth byte is the "DTC Format Identifier" (e.g., 0x00 for the ISO 15031-6 DTC format or 0x01 for the ISO 14229-1 DTC format)
 - The last two bytes are the number of DTCs.
 
-For demonstration purpose, RAMN ECUs ensure that they have at least one DTC in memory when they reset. Its flag is always mark as pending, and the ECU does not allow you to filter by mask.
+For demonstration purposes, RAMN ECUs ensure that they have at least one DTC in memory when they reset. Its flag is always mark as pending, and the ECU does not allow you to filter by mask.
 
 You can ask ECU B how many DTCs is has in memory with the following command:
 

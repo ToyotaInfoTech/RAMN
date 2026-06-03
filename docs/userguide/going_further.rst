@@ -87,7 +87,7 @@ You can find out which services are supported by ECU B using the "services" modu
 
 
 
-In a different window, you can use ``$ isotpdump can0 -s 7e1 -d 7e9 -c -u`` to observe traffic.
+In a different window, you can use ``$ isotpdump -s 7e1 -d 7e9 -c can0 -u`` to observe traffic.
 
 .. image:: img/caringcaribou_uds_services.png
    :align: center

@@ -304,7 +304,7 @@ You can also use TIM16 to access a high-accuracy free-running timer, which is no
 You can modify TIM6 and TIM16 without impacting RAMN features.
 
 ECU A's bitbang module actively uses TIM2 and TIM17 as timers when it is used.
-You can disable the bitbang module of ECU A (uncomment ``ENABLE_BITBANG`` in ``ramn_config.h``) if you want to use these timers in your code.
+You can disable the bitbang module of ECU A (comment out ``ENABLE_BITBANG`` in ``ramn_config.h``) if you want to use these timers in your code.
 
 Read ``ramn_customize.c`` for examples, e.g., how to send CAN messages.
 

@@ -60,7 +60,7 @@ On some screens, you can further interact by pressing UP, DOWN, or CENTER.
 - LED D8 is the "parking brake" LED. It is ON when the parking brake is active. Contrary to a real vehicle, this LED is also ON when the brake pedal is pressed.
 
 .. note::
-    Although the "battery" and "check engine" are scary in a real vehicle, they do not indicate a problem of failure with your RAMN board.
+    Although the "battery" and "check engine" are scary in a real vehicle, they do not indicate a problem or failure with your RAMN board.
 
 .. warning::
     If the screen does not say "STEER 0%" when you center the steering wheel, it means that you have installed a logarithmic firmware for a board with linear potentiometers, or vice-versa.
