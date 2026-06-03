@@ -16,7 +16,7 @@
 
 #include "ramn_bitbang.h"
 
-#ifdef ENABLE_BITBANG
+#if defined(ENABLE_BITBANG) && defined(ENABLE_CDC)
 
 #include "ramn_canfd.h"
 #include "ramn_usb.h"
