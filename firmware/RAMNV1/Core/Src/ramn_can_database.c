@@ -541,48 +541,62 @@ uint8_t RAMN_Decode_Control_EngineKey(const uint8_t* payload, uint32_t dlc) {
 // -- Command Lights --
 #ifndef ENABLE_J1939_MODE
 void RAMN_Encode_Command_Lights(uint16_t value, uint8_t* payload) {
-    uint8_t packed = (uint8_t)PACK_SIGNAL(value, COMMAND_LIGHTS_MASK, COMMAND_LIGHTS_OFFSET);
-    payload[0] = packed;
+    payload[0] = (uint8_t)(value & 0xFF);
+    payload[1] = (uint8_t)((value >> 8) & 0xFF);
 }
 
 uint16_t RAMN_Decode_Command_Lights(const uint8_t* payload, uint32_t dlc) {
-    if (dlc < 1U) return 0;
-    uint8_t packed = payload[0];
-    return (uint16_t)UNPACK_SIGNAL(packed, COMMAND_LIGHTS_MASK, COMMAND_LIGHTS_OFFSET);
+    uint16_t result = (uint16_t)payload[0];
+    if (dlc >= 2U) result |= ((uint16_t)payload[1] << 8);
+    return result;
 }
 #else
 void RAMN_Encode_Command_Lights(uint16_t value, uint8_t* payload) {
     /* PGN 65089 (Lighting Command). Byte 1. */
     /* J1939 SPN 2403 (Running), 2351 (Alt), 2349 (Low), 2347 (High) */
     /* Bits: 1-2 (Running), 3-4 (Alt), 5-6 (Low), 7-8 (High) */
+    /* Alt bits (3-4) are repurposed to carry the engine warning flag (high byte of value). */
     RAMN_memset(payload, 0xFF, 8); // Bytes 2-8 remain "Not Available" (0xFF)
 
-    uint8_t byte1 = 0xFF; // Start with "Not Available" (11b) for all 2-bit fields
+    uint8_t byte1 = 0x00; // Start with all de-activated
 
-    if (value == RAMN_LIGHTSWITCH_POS1) { // Off
-        byte1 = 0x00; // All de-activated
-    } else if (value == RAMN_LIGHTSWITCH_POS2) { // Park
-        byte1 = 0x01; // Running = 1 (Activate), others = 0
-    } else if (value == RAMN_LIGHTSWITCH_POS3) { // Lowbeam
-        byte1 = 0x11; // Running = 1, Low = 1, others = 0
-    } else if (value == RAMN_LIGHTSWITCH_POS4) { // Highbeam
-        byte1 = 0x51; // Running = 1, Low = 1, High = 1, others = 0
+    // Encode light switch position from the low byte
+    uint8_t pos = (uint8_t)(value & 0x00FF);
+    if (pos == RAMN_LIGHTSWITCH_POS2) {       // Park
+        byte1 = 0x01; // Running = 1
+    } else if (pos == RAMN_LIGHTSWITCH_POS3) { // Lowbeam
+        byte1 = 0x11; // Running = 1, Low = 1
+    } else if (pos == RAMN_LIGHTSWITCH_POS4) { // Highbeam
+        byte1 = 0x51; // Running = 1, Low = 1, High = 1
     }
+    // else POS1 (off) or unknown: byte1 = 0x00
+
+    // Encode engine warning flag from the high byte using Alt bits (bits 3-2 = 01)
+    if (value & 0xFF00) byte1 |= 0x04;
+
     payload[0] = byte1;
 }
 
 uint16_t RAMN_Decode_Command_Lights(const uint8_t* payload, uint32_t dlc) {
     if (dlc < 1U) return 0;
     /* PGN 65089 (Lighting Command). Byte 1. */
-    uint8_t byte1 = payload[0];
+    uint8_t byte1   = payload[0];
     uint8_t running = byte1 & 0x03;
+    uint8_t alt     = (byte1 >> 2) & 0x03; // Engine warning flag
     uint8_t low     = (byte1 >> 4) & 0x03;
     uint8_t high    = (byte1 >> 6) & 0x03;
 
-    if (high == 1) return RAMN_LIGHTSWITCH_POS4;
-    if (low == 1)  return RAMN_LIGHTSWITCH_POS3;
-    if (running == 1) return RAMN_LIGHTSWITCH_POS2;
-    return RAMN_LIGHTSWITCH_POS1;
+    // Decode light switch position into the low byte
+    uint16_t result;
+    if (high == 1)    result = RAMN_LIGHTSWITCH_POS4;
+    else if (low == 1) result = RAMN_LIGHTSWITCH_POS3;
+    else if (running == 1) result = RAMN_LIGHTSWITCH_POS2;
+    else              result = RAMN_LIGHTSWITCH_POS1;
+
+    // Restore engine warning flag into the high byte
+    if (alt == 1) result |= 0xFF00;
+
+    return result;
 }
 #endif
 
