@@ -22,7 +22,9 @@
 #include "main.h"
 
 #if defined(ENABLE_DIAG)
-
+#ifdef ENABLE_EEPROM_EMULATION
+#include "ramn_dtc.h"
+#endif
 #include "ramn_uds.h"
 
 #ifdef ENABLE_KWP

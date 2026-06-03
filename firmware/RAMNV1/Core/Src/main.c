@@ -68,6 +68,9 @@
 #ifdef TARGET_ECUA
 #include "ramn_memory.h"
 #endif
+#ifdef ENABLE_EEPROM_EMULATION
+#include "ramn_dtc.h"
+#endif
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -2067,7 +2070,9 @@ void RAMN_DiagRXFunc(void *argument)
 	RAMN_CUSTOM_CustomTask5(argument);
 #else
 	uint16_t diagRxSize;
+#ifdef ENABLE_UDS
 	uint8_t addressing = 0;
+#endif
 	uint16_t index;
 	uint16_t diagTxSize;
 	size_t xBytesSent;
