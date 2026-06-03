@@ -443,7 +443,7 @@ And you can ask ECU B to send you all its DTCs using the following command:
 .. image:: img/uds_readdtc.png
    :align: center
 
-The "59 01 04 00 00 00 01" means that the ECU accepted your request for service 0x19 and sub-function 0x01 (read number of DTCs), it only supports 0x04 mask (for pending DTCs), it uses DTC format 0x00, and there are 0x0001 DTC stored  in memory.
+The "59 01 04 00 00 01" means that the ECU accepted your request for service 0x19 and sub-function 0x01 (read number of DTCs), it only supports 0x04 mask (for pending DTCs), it uses DTC format 0x00, and there are 0x0001 DTC stored  in memory.
 
 The "59 02 04 45 63 00 04" means that the ECU accepted your request for service 0x19 and sub-function 0x02 (read DTCs), it supports a 0x04 mask, and there is one DTC: 0x4563 with FTB 0x00 and status 0x04 (pending).
 0x4563 starts with "01", which means this is a DTC for the chassis domain ("C"), so the corresponding DTC is "C0563" (arbitrary set for demonstration purpose).
