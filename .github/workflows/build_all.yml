@@ -13,8 +13,40 @@ permissions:
   issues: write
 
 jobs:
+  warm_cache:
+    name: Warm Docker image cache
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    outputs:
+      docker-tag: ${{ steps.docker-tag.outputs.tag }}
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: Get Docker image tag
+        id: docker-tag
+        run: |
+          source scripts/build/_version.sh
+          echo "tag=${DOCKER_STM32CUBEIDE_TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Restore Docker image cache
+        id: docker-cache
+        uses: actions/cache@v4
+        with:
+          path: /tmp/stm32cubeide-docker.tar
+          key: docker-stm32cubeide-${{ steps.docker-tag.outputs.tag }}
+
+      - name: Pull Docker image and save for cache
+        if: steps.docker-cache.outputs.cache-hit != 'true'
+        run: |
+          docker pull xanderhendriks/stm32cubeide:${{ steps.docker-tag.outputs.tag }}
+          docker save xanderhendriks/stm32cubeide:${{ steps.docker-tag.outputs.tag }} \
+            -o /tmp/stm32cubeide-docker.tar
+
   build_all:
-    name: ${{ matrix.conf }} (tag ${{ matrix.cubeide_docker_tag }})
+    name: ${{ matrix.conf }} (tag ${{ needs.warm_cache.outputs.docker-tag }})
+    needs: [warm_cache]
     permissions:
       contents: read
     strategy:
@@ -22,7 +54,6 @@ jobs:
       matrix:
         spice: [RAMNV1]
         conf: [Release, Debug]
-        cubeide_docker_tag: ["15.0"]
 
     runs-on: ubuntu-latest
     steps:
@@ -30,26 +61,17 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Restore Docker image cache
-        id: docker-cache
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: /tmp/stm32cubeide-docker.tar
-          key: docker-stm32cubeide-${{ matrix.cubeide_docker_tag }}
+          key: docker-stm32cubeide-${{ needs.warm_cache.outputs.docker-tag }}
 
-      - name: Load Docker image from cache
-        if: steps.docker-cache.outputs.cache-hit == 'true'
+      - name: Load Docker image
         run: docker load -i /tmp/stm32cubeide-docker.tar
-
-      - name: Pull Docker image and save for cache
-        if: steps.docker-cache.outputs.cache-hit != 'true'
-        run: |
-          docker pull xanderhendriks/stm32cubeide:${{ matrix.cubeide_docker_tag }}
-          docker save xanderhendriks/stm32cubeide:${{ matrix.cubeide_docker_tag }} \
-            -o /tmp/stm32cubeide-docker.tar
 
       - name: Build all ECUs (${{ matrix.conf }})
         env:
-          DOCKER_STM32CUBEIDE_TAG: ${{ matrix.cubeide_docker_tag }}
+          DOCKER_STM32CUBEIDE_TAG: ${{ needs.warm_cache.outputs.docker-tag }}
         run: |
           chmod +x scripts/build/docker_BUILD_Clean_${{ matrix.conf }}.sh scripts/build/_build_ecu.sh
           bash scripts/build/docker_BUILD_Clean_${{ matrix.conf }}.sh --no-quiet
@@ -71,7 +93,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: build-metrics-${{ matrix.spice }}-${{ matrix.conf }}-${{ matrix.cubeide_docker_tag }}
+          name: build-metrics-${{ matrix.spice }}-${{ matrix.conf }}-${{ needs.warm_cache.outputs.docker-tag }}
           path: build-metrics/
 
       - name: Upload firmware
@@ -83,6 +105,7 @@ jobs:
 
   macro_coverage:
     name: ${{ matrix.variant }}
+    needs: [warm_cache]
     permissions:
       contents: read
     strategy:
@@ -134,29 +157,14 @@ jobs:
       - name: checkout
         uses: actions/checkout@v4
 
-      - name: Get Docker image tag
-        id: docker-tag
-        run: |
-          source scripts/build/_version.sh
-          echo "tag=${DOCKER_STM32CUBEIDE_TAG}" >> "$GITHUB_OUTPUT"
-
       - name: Restore Docker image cache
-        id: docker-cache
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: /tmp/stm32cubeide-docker.tar
-          key: docker-stm32cubeide-${{ steps.docker-tag.outputs.tag }}
+          key: docker-stm32cubeide-${{ needs.warm_cache.outputs.docker-tag }}
 
-      - name: Load Docker image from cache
-        if: steps.docker-cache.outputs.cache-hit == 'true'
+      - name: Load Docker image
         run: docker load -i /tmp/stm32cubeide-docker.tar
-
-      - name: Pull Docker image and save for cache
-        if: steps.docker-cache.outputs.cache-hit != 'true'
-        run: |
-          docker pull xanderhendriks/stm32cubeide:${{ steps.docker-tag.outputs.tag }}
-          docker save xanderhendriks/stm32cubeide:${{ steps.docker-tag.outputs.tag }} \
-            -o /tmp/stm32cubeide-docker.tar
 
       - name: Modify ramn_config.h
         run: |
