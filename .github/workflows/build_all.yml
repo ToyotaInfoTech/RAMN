@@ -29,6 +29,24 @@ jobs:
       - name: checkout
         uses: actions/checkout@v4
 
+      - name: Restore Docker image cache
+        id: docker-cache
+        uses: actions/cache@v4
+        with:
+          path: /tmp/stm32cubeide-docker.tar
+          key: docker-stm32cubeide-${{ matrix.cubeide_docker_tag }}
+
+      - name: Load Docker image from cache
+        if: steps.docker-cache.outputs.cache-hit == 'true'
+        run: docker load -i /tmp/stm32cubeide-docker.tar
+
+      - name: Pull Docker image and save for cache
+        if: steps.docker-cache.outputs.cache-hit != 'true'
+        run: |
+          docker pull xanderhendriks/stm32cubeide:${{ matrix.cubeide_docker_tag }}
+          docker save xanderhendriks/stm32cubeide:${{ matrix.cubeide_docker_tag }} \
+            -o /tmp/stm32cubeide-docker.tar
+
       - name: Build all ECUs (${{ matrix.conf }})
         env:
           DOCKER_STM32CUBEIDE_TAG: ${{ matrix.cubeide_docker_tag }}
@@ -115,6 +133,30 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v4
+
+      - name: Get Docker image tag
+        id: docker-tag
+        run: |
+          source scripts/build/_version.sh
+          echo "tag=${DOCKER_STM32CUBEIDE_TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Restore Docker image cache
+        id: docker-cache
+        uses: actions/cache@v4
+        with:
+          path: /tmp/stm32cubeide-docker.tar
+          key: docker-stm32cubeide-${{ steps.docker-tag.outputs.tag }}
+
+      - name: Load Docker image from cache
+        if: steps.docker-cache.outputs.cache-hit == 'true'
+        run: docker load -i /tmp/stm32cubeide-docker.tar
+
+      - name: Pull Docker image and save for cache
+        if: steps.docker-cache.outputs.cache-hit != 'true'
+        run: |
+          docker pull xanderhendriks/stm32cubeide:${{ steps.docker-tag.outputs.tag }}
+          docker save xanderhendriks/stm32cubeide:${{ steps.docker-tag.outputs.tag }} \
+            -o /tmp/stm32cubeide-docker.tar
 
       - name: Modify ramn_config.h
         run: |
