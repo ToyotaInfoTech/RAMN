@@ -91,7 +91,7 @@ To build the firmware for all ECUs at once, you can use the build scripts in the
 
 .. note:: RAMN is configured by default to support memory protection. If your application requires strict memory protection (e.g., because you want to use RAMN for a Capture The Flag event where participants must not be able to dump memory), read the :ref:`about_security` section. 
 
-	If memory protection isn't a concern (e.g., because you are using RAMN as a research or education platform), you can replace the content of ``STM32L552CETX_FLASH.ld`` with the content of ``STM32L552CETX_FLASH_INSECURE.ld`` (in `RAMNV1` folder) to free more memory for your application.
+	If memory protection isn't a concern (e.g., because you are using RAMN as a research or education platform), you can replace the content of ``STM32L5_FLASH.ld`` with the content of ``STM32L5_FLASH_INSECURE.ld`` (in `RAMNV1` folder) to free more memory for your application.
 
 Flashing RAMN Firmware
 ----------------------
@@ -304,7 +304,7 @@ You can also use TIM16 to access a high-accuracy free-running timer, which is no
 You can modify TIM6 and TIM16 without impacting RAMN features.
 
 ECU A's bitbang module actively uses TIM2 and TIM17 as timers when it is used.
-You can disable the bitbang module of ECU A (uncomment ``ENABLE_BITBANG`` in ``ramn_config.h``) if you want to use these timers in your code.
+You can disable the bitbang module of ECU A (comment out ``ENABLE_BITBANG`` in ``ramn_config.h``) if you want to use these timers in your code.
 
 Read ``ramn_customize.c`` for examples, e.g., how to send CAN messages.
 
@@ -521,7 +521,7 @@ Linker Settings
 
 To increase the main stack and main heap sizes (which are different from the FreeRTOS heap and stack sizes described in :ref:`freeRTOS_settings`), select the **"Project Manager"** tab (top menu), and update "Minimum Heap Size" and "Minimum Stack Size".
 
-For other settings, you will need to modify ``STM32L552CETX_FLASH.ld`` directly.
+For other settings, you will need to modify ``STM32L5_FLASH.ld`` directly.
 
 Other Tools
 ^^^^^^^^^^^
@@ -593,7 +593,7 @@ Understanding RAMN's Memory
 
 Please read :ref:`memory_layout`, especially if you need memory protection.
 
-If you run out of memory and do not need memory protection, try replacing the content of ``STM32L552CETX_FLASH.ld`` with the content of ``STM32L552CETX_FLASH_INSECURE.ld``.
+If you run out of memory and do not need memory protection, try replacing the content of ``STM32L5_FLASH.ld`` with the content of ``STM32L5_FLASH_INSECURE.ld``.
 Also try enabling :ref:`compiler_optimizations`.
 
 If you run out of memory in the **INSECURE_RAM region**, try reducing the value of the following definitions in ``ramn_config.h`` (some definitions may be different for ECU A and for ECU B/C/D):
@@ -607,7 +607,7 @@ If you run out of memory in the **INSECURE_RAM region**, try reducing the value 
 If you run out of memory in the **RAM region**, you should try reducing heap and stack sizes, as explained in the :ref:`modify_ioc` section.
 If you do not know which size to reduce, start with "Minimum Heap Size" (in :ref:`linker_settings`).
 
-If you use the default ``STM32L552CETX_FLASH.ld`` linker script, you can move a variable from RAM to INSECURE_RAM by adding ``__attribute__ ((section (".buffers")))`` to its definition.
+If you use the default ``STM32L5_FLASH.ld`` linker script, you can move a variable from RAM to INSECURE_RAM by adding ``__attribute__ ((section (".buffers")))`` to its definition.
 If there is a large variable that you consider does not need protection (e.g., non-critical FreeRTOS task stacks), you can move them to INSECURE_RAM and use the freed space for your own application.
 
 Refer to the :ref:`implementing_vulns` section if you want to learn how to modify the layout to implement memory vulnerabilities.
@@ -718,7 +718,7 @@ For example, you should use ``arm-none-eabi-strip`` instead of just ``strip``.
 
 When you load a .hex file in Ghidra, it may struggle to analyze it because it misses information about the memory map.
 The firmware's default start address (Flash) is 0x08000000.
-You should open "**Tools**" > "**Memory Map**", and add regions as defined in ``STM32L552CETX_FLASH.ld``.
+You should open "**Tools**" > "**Memory Map**", and add regions as defined in ``STM32L5_FLASH.ld``.
 You can also add information about special registers (e.g., peripherals) based on the `STM32L5 reference manual <https://www.st.com/resource/en/reference_manual/dm00346336-stm32l552xx-and-stm32l562xx-advanced-arm-based-32-bit-mcus-stmicroelectronics.pdf>`_.
 Search for **Memory map and register boundary addresses** and **peripheral register boundary**.
 You can find online resources to help you automate this.
@@ -888,13 +888,13 @@ If your goal is to implement a proof of concept (e.g., OTA, secure boot, etc.) f
 - Write your custom bootloader at **0x08000000** (you can use RAMN's original source code, or any STM32CubeIDE template project).
 - Write application(s) at **0x08000000 + bootloader max length** (use a copy of RAMN's default source code and modify it as explained below).
 
-You can modify the memory layout used by your application by modifying the line ``FLASH (rx) : ORIGIN = 0x8000000, LENGTH = 248K`` in ``STM32L552CETX_FLASH.ld``.
+You can modify the memory layout used by your application by modifying the line ``FLASH (rx) : ORIGIN = 0x8000000, LENGTH = 248K`` in ``STM32L5_FLASH.ld``.
 If you modify the origin address of the project, you also need to make sure that the interrupt table vector points to the new origin. This is done by modifying the very first lines of ``main()`` in ``main.c``:
 
 .. code-block:: C
 
 	__disable_irq();
-	SCB->VTOR =  /* interrupt table location, whatever you set ORIGIN to in STM32L552CETX_FLASH.ld*/ ;
+	SCB->VTOR =  /* interrupt table location, whatever you set ORIGIN to in STM32L5_FLASH.ld*/ ;
 	__DSB();
 	__enable_irq();
 
@@ -926,7 +926,7 @@ For example, if you want to make sure that ``variable1`` and ``variable2`` are l
 	
 	__attribute__((section(".variable2"))) char variable2[SIZE2];
 
-Then, you can modify the linker script ``STM32L552CETX_FLASH.ld`` and use the ``KEEP`` directive if you want these variables to be in a specific region.
+Then, you can modify the linker script ``STM32L5_FLASH.ld`` and use the ``KEEP`` directive if you want these variables to be in a specific region.
 For example, if you want ``variable2`` to be just before ``variable1``, at the end of the ``.bss`` region, add the following lines just after ``*(.bss*)``:
 
 .. code-block::
@@ -934,7 +934,7 @@ For example, if you want ``variable2`` to be just before ``variable1``, at the e
 	KEEP(*(.variable2))
 	KEEP(*(.variable1))
 
-Alternatively, you can create new regions for these variables by defining a custom region in ``STM32L552CETX_FLASH.ld``:
+Alternatively, you can create new regions for these variables by defining a custom region in ``STM32L5_FLASH.ld``:
 
 .. code-block::
 

@@ -20,7 +20,6 @@
 #include "ramn_vehicle_specific.h"
 #include "ramn_sensors.h"
 #include "ramn_dbc.h"
-#include <string.h>
 
 #ifdef EXPANSION_BODY
 // Byte that store the state of each LED of ECU D.

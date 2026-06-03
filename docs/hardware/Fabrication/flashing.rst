@@ -21,7 +21,7 @@ Important Knowledge
 -------------------
 
 - ECU A controls the power supply and boot mode of ECU B, C, and D. **ECU A must always be flashed first**, otherwise ECU B, C, and D will not be powered.
-- ECU B has a steering wheel potentiometer that may be either "linear" or "algorithmic", depending on component availability. If the LCD screen does not show "STEER 0%" when the steering wheel is centered, it means you must replace "ECUB.hex" with "ECUB_LINEAR.hex" (simply delete ECUB.hex and rename ECUB_LINEAR.hex with ECUB.hex).
+- ECU B has a steering wheel potentiometer that may be either "linear" or "logarithmic", depending on component availability. If the LCD screen does not show "STEER 0%" when the steering wheel is centered, it means you must replace "ECUB.hex" with "ECUB_LINEAR.hex" (simply delete ECUB.hex and rename ECUB_LINEAR.hex with ECUB.hex).
 - When you reprogram an ECU using the UDS interface, the new firmware is actually written to a different memory bank, and the option bytes of the microcontroller are set so that that memory bank becomes the new application firmware (memory bank swap). Some tools, including ST's official tools, may not understand this memory swap and generate errors because of it. If that is the case, reflash the ECU over UDS to revert to the other, "default" memory bank\ [#f1]_.
 - ECU A and ECU B, C, and D have different option bytes. If you accidentally flash ECU B, C, or D with a firmware file for ECU A, they will no longer accept going into bootloader mode\ [#f2]_.
 - You can follow instructions at :ref:`try_out_controls` to verify that your board is fully functional.

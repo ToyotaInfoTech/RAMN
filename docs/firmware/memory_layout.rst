@@ -22,7 +22,7 @@ You can use the RDP option byte (with level 1), which can be reversed at any tim
 
 If you want to enable memory protection, see :ref:`memory_protection`.
 
-.. note:: If you do not plan to use any of the memory protection features, you can (and should) replace the content of ``STM32L552CETX_FLASH.ld`` with ``STM32L552CETX_FLASH_INSECURE.ld``, which only defines one large 256kB RAM region (considered insecure) when compiling.
+.. note:: If you do not plan to use any of the memory protection features, you can (and should) replace the content of ``STM32L5_FLASH.ld`` with ``STM32L5_FLASH_INSECURE.ld``, which only defines one large 256kB RAM region (considered insecure) when compiling.
 
 
 FLASH
@@ -44,7 +44,7 @@ Once the copy is completed, the ECU will switch the **SWAP_BANK** Option Bytes t
 
 .. warning:: Swapping banks may confuse many external tools, such as STM32CubeIDE or STM32CubeProgrammer. Before using those tools, you should ensure that the **SWAP_BANK** Option Byte is unchecked.
 
-If you do not need EEPROM emulation and want to use the entirety of the flash for your own application, you can disable the ``ENABLE_EEPROM_EMULATION`` flag in ``ramn_config.h``. Then you can modify ``STM32L552CETX_FLASH.ld`` and replace ``LENGTH = 248K`` with ``LENGTH = 256K``.
+If you do not need EEPROM emulation and want to use the entirety of the flash for your own application, you can disable the ``ENABLE_EEPROM_EMULATION`` flag in ``ramn_config.h``. Then you can modify ``STM32L5_FLASH.ld`` and replace ``LENGTH = 248K`` with ``LENGTH = 256K``.
 
 Similarly, if you do not need UDS reprogramming and your microcontroller has 512kB flash (microcontroller reference ending with CET6), you can also disable the ``ENABLE_UDS_REPROGRAMMING`` flag in ``ramn_config.h`` and use ``LENGTH = 512K``.
 You will also need to make sure that the **SWAP_BANK** Option Byte is unchecked in STM32CubeProgrammer (see :ref:`optionbyte_check`).
@@ -69,14 +69,14 @@ To avoid filling it too quickly, variables that are large but do not hold critic
 This is done typically for USB, SPI, and CAN buffers, which only hold data that could be read by accessing those interfaces anyway.
 Concretely, this can be done by adding ``__attribute__ ((section (".buffers")))`` to the variable declarations.
 
-.. warning:: INSECURE_RAM has the "NOLOAD" parameter set, meaning you cannot initialize them when you declare them (e.g., if you write ``__attribute__ ((section (".buffers"))) uint8_t example = 1``, example will not hold 1 but it will hold whatever was in memory during boot). You can disable this behavior by removing ``(NOLOAD)`` in ``STM32L552CETX_FLASH.ld``, but this will result in the generation of very large .bin files.
+.. warning:: INSECURE_RAM has the "NOLOAD" parameter set, meaning you cannot initialize them when you declare them (e.g., if you write ``__attribute__ ((section (".buffers"))) uint8_t example = 1``, example will not hold 1 but it will hold whatever was in memory during boot). You can disable this behavior by removing ``(NOLOAD)`` in ``STM32L5_FLASH.ld``, but this will result in the generation of very large .bin files.
 
 Heaps and Stacks
 ^^^^^^^^^^^^^^^^
 
 Because RAMN relies on FreeRTOS, there are two heaps and several stacks:
 
-- **STM32 main Heap and Stack** (**._user_heap_stack**, defined in ``STM32L552CETX_FLASH.ld``).
+- **STM32 main Heap and Stack** (**._user_heap_stack**, defined in ``STM32L5_FLASH.ld``).
 - **FreeRTOS Heap** (**ucHeap** in **.bss**), used to dynamically allocate tasks.
 - **FreeRTOS Stacks** (**Timer_Stack.0**, **Idle_stack.2**, and an **independent stack** for each task, in **.bss**).
 

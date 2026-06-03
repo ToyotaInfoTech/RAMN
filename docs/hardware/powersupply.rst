@@ -22,6 +22,6 @@ While it is designed to handle a maximum 250 mA output current, the small packag
    When a 3.3V power supply is needed on an expansion board, we usually add another NCV8163 dedicated to it, ensuring stacking many boards would not lead to over-temperature conditions.
 
 During our evaluation tests, we did not notice abnormal temperature increase, even at full CPU speed and many peripherals activated. The NCV8163 features protection against current overload, output short-circuit and overheating.
-According to the `datasheet's recommendations <https://www.onsemi.com/pdf/datasheet/ncv8163-d.pdf#page=14>`_, we added an external Shottky diode to protect the NCV8163 against reverse currents. 
+According to the `datasheet's recommendations <https://www.onsemi.com/pdf/datasheet/ncv8163-d.pdf#page=14>`_, we added an external Schottky diode to protect the NCV8163 against reverse currents. 
 
 .. note::  Except for ECU A, all power supplies have their ENABLE pin pulled-down (= power supply OFF). ECU A must actively enable the power supply of ECU B, C, and D. ECU B, C, and D will stay unpowered if ECU A is not programmed correctly.

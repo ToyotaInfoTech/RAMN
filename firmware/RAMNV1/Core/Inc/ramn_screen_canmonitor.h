@@ -23,6 +23,7 @@
 
 #ifdef ENABLE_SCREEN
 
+#include <stdlib.h>
 #include "ramn_screen_utils.h"
 #include "cmsis_os.h"
 #include "stream_buffer.h"

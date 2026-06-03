@@ -366,7 +366,7 @@ Or if you want to flood the CAN bus with the same message for 2 seconds:
 
 .. code-block:: bash
 
-    $ timeout 2s bash -c 'while [ $SECONDS -lt 10 ]; do cansend can0 1d3#01008A754AC9B735; done'
+    $ timeout 2s bash -c 'while true; do cansend can0 1d3#01008A754AC9B735; done'
 
 .. warning::
     If you send CAN messages normally transmitted by another ECU, and that other ECU is still actively transmitting, you may generate CAN errors.
@@ -660,7 +660,7 @@ Therefore, you can select any TSEG1 and TSEG2 as long as:
      {T_{SEG1} + T_{SEG2} = Multiplier - 1 = 79}
 
 RAMN uses TSEG1 = 60 and TSEG2 = 19. The sample point is therefore located at 76% (60 + 1 divided by 80).
-However, it could use other pairs, e.g., TSEG1 = 69 and TSEG = 10, and it would still have the exact same baudrate.
+However, it could use other pairs, e.g., TSEG1 = 69 and TSEG2 = 10, and it would still have the exact same baudrate.
 
 For the SJW value, start with the lowest value and increase it if you encounter CAN errors.
 

@@ -60,11 +60,11 @@ On some screens, you can further interact by pressing UP, DOWN, or CENTER.
 - LED D8 is the "parking brake" LED. It is ON when the parking brake is active. Contrary to a real vehicle, this LED is also ON when the brake pedal is pressed.
 
 .. note::
-    Although the "battery" and "check engine" are scary in a real vehicle, they do not indicate a problem of failure with your RAMN board.
+    Although the "battery" and "check engine" are scary in a real vehicle, they do not indicate a problem or failure with your RAMN board.
 
 .. warning::
-    If the screen does not say "STEER 0%" when you center the steering wheel, it means that you have installed a logarithmic firmware for a board with linear potentiometers, of vice-versa.
-    The board is still usable as is, but you will probably need to update the firmware of ECU B if you want the drive a vehicle in the simulator.
+    If the screen does not say "STEER 0%" when you center the steering wheel, it means that you have installed a logarithmic firmware for a board with linear potentiometers, or vice-versa.
+    The board is still usable as is, but you will probably need to update the firmware of ECU B if you want to drive a vehicle in the simulator.
 
 The caps of the Lighting switch and Steering potentiometer may fall off during rough handling - be sure not to lose them. 
 Be also careful with the screen, which is rather fragile.

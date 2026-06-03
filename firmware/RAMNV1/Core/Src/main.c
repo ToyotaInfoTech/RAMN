@@ -68,6 +68,9 @@
 #ifdef TARGET_ECUA
 #include "ramn_memory.h"
 #endif
+#ifdef ENABLE_EEPROM_EMULATION
+#include "ramn_dtc.h"
+#endif
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -567,23 +570,19 @@ int main(void)
 		if (dtcCnt == 0U)
 		{
 			// No DTC, add one per ECU
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wpedantic" // needed bc 0b binary constants are an extension
 #ifdef TARGET_ECUA
-			uint32_t dtcVal = 0b11 << 30; // "11" for network ("U")
+			uint32_t dtcVal = 0x3u << 30; // 0b11 << 30, "11" for network ("U")
 			dtcVal |= 0x0029 << 16; // Bus A Performance, FTB 0
 #elif defined(TARGET_ECUB)
-			uint32_t dtcVal = 0b01 << 30;// "01" for chassis ("C")
+			uint32_t dtcVal = 0x1u << 30; // 0b01 << 30,  "01" for chassis ("C")
 			dtcVal |= 0x0563 << 16; // Calibration ROM Checksum Error, FTB 0
 #elif defined(TARGET_ECUC)
-			uint32_t dtcVal = 0b00 << 30;// "00" for powertrain ("P")
+			uint32_t dtcVal = 0x0u << 30; // 0b00 << 30, "00" for powertrain ("P")
 			dtcVal |= 0x0172 << 16; // System too Rich, FTB 0
 #elif defined(TARGET_ECUD)
-			uint32_t dtcVal = 0b10 << 30;// "10" for body ("B")
+			uint32_t dtcVal = 0x2u << 30; // 0b10 << 30, "10" for body ("B")
 			dtcVal |= 0x0091 << 16; // Active switch wrong state, FTB 0
 #endif
-#pragma GCC diagnostic pop
-
 			dtcVal |= 1 << 2; //mark DTC as pending.
 			RAMN_DTC_AddNew(dtcVal);
 		}
@@ -1575,10 +1574,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 		}
 		uart_current_index = 0;
 	}
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wincompatible-pointer-types" // needed to avoid passing the technically correct (but strange looking) uart_rx_data
-	HAL_UART_Receive_IT(&hlpuart1, &uart_rx_data, 1);
-#pragma GCC diagnostic pop
+	HAL_UART_Receive_IT(&hlpuart1, uart_rx_data, 1);
 }
 #endif
 
@@ -1631,10 +1627,7 @@ void RAMN_ReceiveUSBFunc(void *argument)
 		}
 	}
 #elif defined(ENABLE_UART)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wincompatible-pointer-types" //needed to avoid passing the technically correct (but strange looking) uart_rx_data
-	HAL_UART_Receive_IT(&hlpuart1, &uart_rx_data, 1); // Start receiving characters, one by one by default (slow)
-#pragma GCC diagnostic pop
+	HAL_UART_Receive_IT(&hlpuart1, uart_rx_data, 1); // Start receiving characters, one by one by default (slow)
 
 	for(;;)
 	{
@@ -2071,7 +2064,9 @@ void RAMN_DiagRXFunc(void *argument)
 	RAMN_CUSTOM_CustomTask5(argument);
 #else
 	uint16_t diagRxSize;
+#ifdef ENABLE_UDS
 	uint8_t addressing = 0;
+#endif
 	uint16_t index;
 	uint16_t diagTxSize;
 	size_t xBytesSent;

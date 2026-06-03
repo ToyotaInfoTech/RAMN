@@ -109,7 +109,7 @@ The following components are not in the PCBWay order, because they are not absol
 If you want them, consider requesting them to PCBWay or ordering them separately yourself:
 
 - 1x Micro type B USB cable: any maker, but avoid power-only cables.
-- 1x Terminal block (for external CAN/CAN-FD tools): **Phoenix Contact	1770966**.
+- 1x Terminal block (for external CAN/CAN-FD tools): **Phoenix Contact 1770966**.
 - Test probes: **Vero Technologies 20-313143** (as many as you need).
 - 1x Steering wheel potentiometer knob: **Davies Molding 1231-M**.
 - 4x Hex spacers: **Keystone 24313** (male) and **Keystone 24390** (female) (8 pieces total).

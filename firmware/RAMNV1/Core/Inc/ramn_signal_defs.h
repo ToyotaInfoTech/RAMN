@@ -140,6 +140,7 @@
 
 // Command Lights
 // ID: CAN_SIM_COMMAND_LIGHTS_CANID (0x150)
+// High byte (0xFF00): engine warning flags. Low byte (0x00FF): light switch position (RAMN_LIGHTSWITCH_POSx).
 #define COMMAND_LIGHTS_MASK      0xFFFF
 #define COMMAND_LIGHTS_OFFSET    0
 #define COMMAND_LIGHTS_SCALE     1.0f

@@ -80,7 +80,7 @@ RAMN only consists of Printed Circuit Boards designed with high tolerances. PCBs
 Built with Open-Source Tools
 ****************************
 
-All PCBs are designed with the open-source CAD tool `KiCad <https://kicad.org/>`_. The firmware of the microcontrollers is based on the open-source RTOS `freeRTOS <https://www.freertos.org/>`_, and the open-source library STM32 HAL.
+All PCBs are designed with the open-source CAD tool `KiCad <https://kicad.org/>`_. The firmware of the microcontrollers is based on the open-source RTOS `FreeRTOS <https://www.freertos.org/>`_, and the open-source library STM32 HAL.
 
 .. image:: gif/kicad.gif
    :align: center
@@ -108,7 +108,7 @@ Research
 *********
 
 RAMN has the size of a credit card. It is inexpensive and is ideal for situations that require many boards, for example when evaluating the impact of manufacturing tolerances on a technology, or when subjecting the testbed to conditions likely to break it.
-Real ECUs are different from popular development boards because they are designed to resist the harsh environment in which they operate. RAMN is mostly made of automotive-grade components that are designed to operate from -40 to 150 degrees Celsius. The microcontrollers are not automotive grade, but they can operate from -40 to 125 degrees Celsius. RAMN tries to keep a balance between open-source, cost, and fidelity to real ECU networks. The expansion boards are not automotive grade.
+Real ECUs are different from popular development boards because they are designed to resist the harsh environment in which they operate. RAMN is mostly made of automotive-grade components that are designed to operate from -40 to 150 degrees Celsius. The microcontrollers are not automotive grade, but they can operate from -40 to 85 degrees Celsius. RAMN tries to keep a balance between open-source, cost, and fidelity to real ECU networks. The expansion boards are not automotive grade.
 A terminal block at the end of the CAN/CAN-FD bus lets you add other nodes. It can be used to develop and evaluate ECUs. One limitation though: the CAN/CAN-FD bus is terminated, so it cannot be connected to a real car.
 
 

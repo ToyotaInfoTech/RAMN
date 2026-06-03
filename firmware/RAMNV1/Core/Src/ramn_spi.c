@@ -340,10 +340,15 @@ void RAMN_SPI_RefreshUint32(uint16_t x, uint16_t y, uint16_t fgColor, uint16_t b
 #endif
 
 #if defined(EXPANSION_BODY) && defined(ENABLE_SPI)
+// Note that we are waiting for SPI transmission to be over before continuing. This is in order to avoid ghosting on the LEDs.
+// You may consider setting LCD_nCS_Pin permanently high and skip the TaskNotifyTake to avoid waiting.
 void RAMN_SPI_UpdateLED(uint8_t* pval)
 {
-	HAL_GPIO_WritePin(LCD_nCS_GPIO_Port, LCD_nCS_Pin, GPIO_PIN_RESET );
-	HAL_SPI_Transmit_IT(hspi, pval, 1);
+	HAL_StatusTypeDef result;
+
+	HAL_GPIO_WritePin(LCD_nCS_GPIO_Port, LCD_nCS_Pin, GPIO_PIN_RESET);
+	result = HAL_SPI_Transmit_IT(hspi, pval, 1);
+	if (result == HAL_OK) ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 	HAL_GPIO_WritePin(LCD_nCS_GPIO_Port, LCD_nCS_Pin, GPIO_PIN_SET);
 }
 

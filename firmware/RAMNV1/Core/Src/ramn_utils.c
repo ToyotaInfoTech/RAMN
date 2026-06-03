@@ -235,6 +235,24 @@ void RAMN_memcpy(void* dst, const void* src, uint32_t size)
 	for(uint32_t i = 0; i < size; i++) d[i] = s[i];
 }
 
+int8_t RAMN_memcmp(const void *a, const void *b, uint32_t n)
+{
+	const uint8_t *pa = (const uint8_t*)a;
+	const uint8_t *pb = (const uint8_t*)b;
+	for (uint32_t i = 0; i < n; i++)
+	{
+		if (pa[i] != pb[i]) return (pa[i] > pb[i]) ? 1 : -1;
+	}
+	return 0;
+}
+
+char* RAMN_strcpy(char *dst, const char *src)
+{
+	char *d = dst;
+	while ((*d++ = *src++) != '\0');
+	return dst;
+}
+
 uint16_t RAMN_strlen(const char *str)
 {
 	uint32_t i;
@@ -259,6 +277,48 @@ RAMN_Bool_t RAMN_streq(const char *a, const char *b)
 	}
 
 	return (*a == *b) ? True : False;
+}
+
+int8_t RAMN_strncmp(const char *a, const char *b, uint32_t n)
+{
+	for (uint32_t i = 0; i < n; i++)
+	{
+		if (a[i] != b[i]) return (a[i] > b[i]) ? 1 : -1;
+		if (a[i] == '\0') return 0;
+	}
+	return 0;
+}
+
+static RAMN_Bool_t strtok_is_delim(char c, const char *delim)
+{
+	while (*delim) { if (c == *delim++) return True; }
+	return False;
+}
+
+char* RAMN_strtok_r(char *str, const char *delim, char **saveptr)
+{
+	char *start, *end;
+
+	start = (str != NULL) ? str : *saveptr;
+	if (start == NULL) return NULL;
+
+	while (*start && strtok_is_delim(*start, delim)) start++;
+	if (*start == '\0') { *saveptr = NULL; return NULL; }
+
+	end = start + 1;
+	while (*end && !strtok_is_delim(*end, delim)) end++;
+
+	if (*end != '\0')
+	{
+		*end = '\0';
+		*saveptr = end + 1;
+	}
+	else
+	{
+		*saveptr = NULL;
+	}
+
+	return start;
 }
 
 uint32_t RAMN_strtoul(const char *s, uint8_t base, RAMN_Bool_t *ok)

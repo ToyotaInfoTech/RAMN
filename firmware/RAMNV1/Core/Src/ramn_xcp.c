@@ -15,7 +15,6 @@
  */
 
 #include "ramn_xcp.h"
-#include <stdio.h>
 
 #if defined(ENABLE_XCP)
 

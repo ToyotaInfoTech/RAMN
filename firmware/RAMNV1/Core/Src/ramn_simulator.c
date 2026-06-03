@@ -145,11 +145,12 @@ void RAMN_SIM_UpdatePeriodic(uint32_t tick)
 		if((RAMN_SENSORS_CHASSIS.steeringPotentiometer <= 0x7E0) || (RAMN_SENSORS_CHASSIS.steeringPotentiometer >= 0x820))
 		{
 			RAMN_DBC_Handle.control_steer = RAMN_SENSORS_CHASSIS.steeringPotentiometer;
-			RAMN_DBC_Handle.command_lights = 0xFF00; //Engine Warning LED ON
+			RAMN_DBC_Handle.command_lights = (RAMN_DBC_Handle.command_lights & 0x00FF) | 0xFF00; //Engine Warning LED ON, preserve light switch position
 		}
 		else
 		{
 			RAMN_DBC_Handle.control_steer  = RAMN_DBC_Handle.command_steer;
+			RAMN_DBC_Handle.command_lights = (RAMN_DBC_Handle.command_lights & 0x00FF);
 			RAMN_DBC_Handle.control_sidebrake = RAMN_DBC_Handle.command_sidebrake;
 		}
 	}
@@ -166,7 +167,7 @@ void RAMN_SIM_UpdatePeriodic(uint32_t tick)
 		RAMN_DBC_Handle.control_sidebrake = RAMN_DBC_Handle.command_sidebrake;
 	}
 
-	if (RAMN_SENSORS_CHASSIS.lightsSwitch != RAMN_LIGHTSWITCH_UNKNOWNSTATE) RAMN_DBC_Handle.command_lights = (uint16_t)RAMN_SENSORS_CHASSIS.lightsSwitch;
+	if (RAMN_SENSORS_CHASSIS.lightsSwitch != RAMN_LIGHTSWITCH_UNKNOWNSTATE) RAMN_DBC_Handle.command_lights = (RAMN_DBC_Handle.command_lights & 0xFF00) | (uint16_t)RAMN_SENSORS_CHASSIS.lightsSwitch; //preserve engine warning high byte
 #endif
 #endif
 
