@@ -12,41 +12,69 @@ permissions:
   pull-requests: write
   issues: write
 
+# Additional CubeIDE Docker tags to build against (in addition to _version.sh).
+# The version from scripts/build/_version.sh is always included automatically.
+# To add more versions, append to CUBEIDE_EXTRA_TAGS (space-separated).
+env:
+  CUBEIDE_EXTRA_TAGS: "15.0"
+
 jobs:
-  warm_cache:
-    name: Warm Docker image cache
+  prepare:
+    name: Prepare build matrix
     permissions:
       contents: read
     runs-on: ubuntu-latest
     outputs:
-      docker-tag: ${{ steps.docker-tag.outputs.tag }}
+      all-tags: ${{ steps.merge-tags.outputs.all_tags }}
+      default-tag: ${{ steps.merge-tags.outputs.default_tag }}
     steps:
       - name: checkout
         uses: actions/checkout@v4
 
-      - name: Get Docker image tag
-        id: docker-tag
+      - name: Merge version.sh tag with extra tags
+        id: merge-tags
         run: |
           source scripts/build/_version.sh
-          echo "tag=${DOCKER_STM32CUBEIDE_TAG}" >> "$GITHUB_OUTPUT"
+          default_tag="${DOCKER_STM32CUBEIDE_TAG}"
+          echo "default_tag=${default_tag}" >> "$GITHUB_OUTPUT"
 
+          # Build deduplicated JSON array: _version.sh tag + extra tags from workflow
+          python3 -c "
+          import json
+          default = '${default_tag}'
+          extra = '${CUBEIDE_EXTRA_TAGS}'.split()
+          tags = list(dict.fromkeys([default] + extra))  # deduplicate, preserve order
+          print(f'all_tags={json.dumps(tags)}')
+          " >> "$GITHUB_OUTPUT"
+
+  warm_cache:
+    name: Cache Docker ${{ matrix.cubeide_docker_tag }}
+    needs: [prepare]
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        cubeide_docker_tag: ${{ fromJson(needs.prepare.outputs.all-tags) }}
+    steps:
       - name: Restore Docker image cache
         id: docker-cache
         uses: actions/cache@v4
         with:
-          path: /tmp/stm32cubeide-docker.tar
-          key: docker-stm32cubeide-${{ steps.docker-tag.outputs.tag }}
+          path: /tmp/stm32cubeide-${{ matrix.cubeide_docker_tag }}.tar
+          key: docker-stm32cubeide-${{ matrix.cubeide_docker_tag }}
 
       - name: Pull Docker image and save for cache
         if: steps.docker-cache.outputs.cache-hit != 'true'
         run: |
-          docker pull xanderhendriks/stm32cubeide:${{ steps.docker-tag.outputs.tag }}
-          docker save xanderhendriks/stm32cubeide:${{ steps.docker-tag.outputs.tag }} \
-            -o /tmp/stm32cubeide-docker.tar
+          docker pull xanderhendriks/stm32cubeide:${{ matrix.cubeide_docker_tag }}
+          docker save xanderhendriks/stm32cubeide:${{ matrix.cubeide_docker_tag }} \
+            -o /tmp/stm32cubeide-${{ matrix.cubeide_docker_tag }}.tar
 
   build_all:
-    name: ${{ matrix.conf }} (tag ${{ needs.warm_cache.outputs.docker-tag }})
-    needs: [warm_cache]
+    name: ${{ matrix.conf }} (tag ${{ matrix.cubeide_docker_tag }})
+    needs: [prepare, warm_cache]
     permissions:
       contents: read
     strategy:
@@ -54,6 +82,7 @@ jobs:
       matrix:
         spice: [RAMNV1]
         conf: [Release, Debug]
+        cubeide_docker_tag: ${{ fromJson(needs.prepare.outputs.all-tags) }}
 
     runs-on: ubuntu-latest
     steps:
@@ -63,15 +92,15 @@ jobs:
       - name: Restore Docker image cache
         uses: actions/cache/restore@v4
         with:
-          path: /tmp/stm32cubeide-docker.tar
-          key: docker-stm32cubeide-${{ needs.warm_cache.outputs.docker-tag }}
+          path: /tmp/stm32cubeide-${{ matrix.cubeide_docker_tag }}.tar
+          key: docker-stm32cubeide-${{ matrix.cubeide_docker_tag }}
 
       - name: Load Docker image
-        run: docker load -i /tmp/stm32cubeide-docker.tar
+        run: docker load -i /tmp/stm32cubeide-${{ matrix.cubeide_docker_tag }}.tar
 
       - name: Build all ECUs (${{ matrix.conf }})
         env:
-          DOCKER_STM32CUBEIDE_TAG: ${{ needs.warm_cache.outputs.docker-tag }}
+          DOCKER_STM32CUBEIDE_TAG: ${{ matrix.cubeide_docker_tag }}
         run: |
           chmod +x scripts/build/docker_BUILD_Clean_${{ matrix.conf }}.sh scripts/build/_build_ecu.sh
           bash scripts/build/docker_BUILD_Clean_${{ matrix.conf }}.sh --no-quiet
@@ -93,19 +122,19 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: build-metrics-${{ matrix.spice }}-${{ matrix.conf }}-${{ needs.warm_cache.outputs.docker-tag }}
+          name: build-metrics-${{ matrix.spice }}-${{ matrix.conf }}-${{ matrix.cubeide_docker_tag }}
           path: build-metrics/
 
       - name: Upload firmware
         if: ${{ !env.ACT }}
         uses: actions/upload-artifact@v4
         with:
-          name: firmware-default-${{ matrix.conf }}
+          name: firmware-default-${{ matrix.conf }}-${{ matrix.cubeide_docker_tag }}
           path: scripts/firmware/*.hex
 
   macro_coverage:
     name: ${{ matrix.variant }}
-    needs: [warm_cache]
+    needs: [prepare, warm_cache]
     permissions:
       contents: read
     strategy:
@@ -160,11 +189,11 @@ jobs:
       - name: Restore Docker image cache
         uses: actions/cache/restore@v4
         with:
-          path: /tmp/stm32cubeide-docker.tar
-          key: docker-stm32cubeide-${{ needs.warm_cache.outputs.docker-tag }}
+          path: /tmp/stm32cubeide-${{ needs.prepare.outputs.default-tag }}.tar
+          key: docker-stm32cubeide-${{ needs.prepare.outputs.default-tag }}
 
       - name: Load Docker image
-        run: docker load -i /tmp/stm32cubeide-docker.tar
+        run: docker load -i /tmp/stm32cubeide-${{ needs.prepare.outputs.default-tag }}.tar
 
       - name: Modify ramn_config.h
         run: |
@@ -176,6 +205,8 @@ jobs:
       - name: Macro-testing build all ECUs (${{ matrix.variant }})
         id: build
         continue-on-error: true
+        env:
+          DOCKER_STM32CUBEIDE_TAG: ${{ needs.prepare.outputs.default-tag }}
         run: |
           set -o pipefail
           chmod +x scripts/build/docker_BUILD_Clean_Release.sh scripts/build/_build_ecu.sh
@@ -312,7 +343,7 @@ jobs:
 
   commit_firmware:
     name: Commit firmware to repo
-    needs: [build_all, macro_coverage]
+    needs: [prepare, build_all, macro_coverage]
     if: >-
       always()
       && github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -329,7 +360,7 @@ jobs:
       - name: Download default Release firmware
         uses: actions/download-artifact@v4
         with:
-          name: firmware-default-Release
+          name: firmware-default-Release-${{ needs.prepare.outputs.default-tag }}
           path: dl/default
 
       - name: Download macro-coverage variant firmware
