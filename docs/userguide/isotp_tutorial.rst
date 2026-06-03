@@ -332,7 +332,7 @@ You can use it with the syntax below:
 
     $ isotpsniffer -s 7e1 -d 7e9 can0 -c
 
-which should only display the recontructed payload, e.g., when using isotpsend with a large payload:
+which should only display the reconstructed payload, e.g., when using isotpsend with a large payload:
 
 .. code-block:: bash
 

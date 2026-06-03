@@ -342,7 +342,7 @@ You can observe the **raw bitstream** and the same **bitstream after removing bi
 The module also details the value of each bitfield.
 
 The last bits (CRC Delimiter, ACK, ACK delimiter, EOF, and IFS) are merged in a single field that we call "Tail" (not a standard term).
-During normal conditions, it should be equal to 1011111111111: "1" for CRC Delimiter, "0" for ACK, and "1"s for CRC delimiter, EOF and IFS.
+During normal conditions, it should be equal to 1011111111111: "1" for CRC Delimiter, "0" for ACK, and "1"s for ACK delimiter, EOF and IFS.
 Any other value would indicate an Acknowledgement error, CRC error, or overload condition.
 
 .. warning::

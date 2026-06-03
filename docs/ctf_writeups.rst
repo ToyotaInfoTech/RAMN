@@ -647,7 +647,7 @@ Participant `write-up available here <https://laysakura.github.io/2024/10/24/aut
 [A/C] Ramen Clicker (1 solve)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Intended difficulty: Medium/Difficulty. 
+Intended difficulty: Medium/Difficult. 
 Tags: CAN, Hardware.
 
 .. code-block:: text

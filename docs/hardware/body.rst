@@ -40,7 +40,7 @@ A `TVS diode <https://en.wikipedia.org/wiki/Transient-voltage-suppression_diode>
 Lights
 ------
 
-The lights are simulated by 8 LEDs (D1~D8) located near silkcreen markings resembling dashboard symbols:
+The lights are simulated by 8 LEDs (D1~D8) located near silkscreen markings resembling dashboard symbols:
 
 * Left Turn Indicator *(D1 - Output 6)*
 * Right Turn Indicator *(D2 - Output 7)*

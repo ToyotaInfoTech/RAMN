@@ -61,7 +61,7 @@ Typically, you can use the following interfaces:
 
 - **LPUART1** (UART interface).
 - **I2C2** (I2C interface, master or device).
-- **SPI2** (SPI interface. On ECU A and D, you must share the bus with the exisiting application).
+- **SPI2** (SPI interface. On ECU A and D, you must share the bus with the existing application).
 - **OCTOSPI1** (**NOT** regular SPI, but an interface typically used for external flash).
 - **ADCs** (Analog-to-digital converters)
 - **Timers/PWMs** (input or output).

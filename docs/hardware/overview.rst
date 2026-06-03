@@ -89,11 +89,11 @@ RAMN aims to promote education and research in automotive systems. To stay close
 
 .. figure:: img/front_pcb.png
 
-   Picture of RAMN PCB's front size, before components soldering.
+   Picture of RAMN PCB's front side, before components soldering.
 
 .. figure:: img/back_pcb.png
 
-   Picture of RAMN's PCB's back size, before components soldering.
+   Picture of RAMN's PCB's back side, before components soldering.
 
 All boards are designed using only two layers, with all components on the same side. 
 The boards have large manufacturing tolerances (e.g. large track width and clearance), and we restrict components to those with visible external pins, unless there really is no viable alternative.
