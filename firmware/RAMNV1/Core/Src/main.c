@@ -1574,10 +1574,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 		}
 		uart_current_index = 0;
 	}
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wincompatible-pointer-types" // needed to avoid passing the technically correct (but strange looking) uart_rx_data
-	HAL_UART_Receive_IT(&hlpuart1, &uart_rx_data, 1);
-#pragma GCC diagnostic pop
+	HAL_UART_Receive_IT(&hlpuart1, uart_rx_data, 1);
 }
 #endif
 
@@ -1630,10 +1627,7 @@ void RAMN_ReceiveUSBFunc(void *argument)
 		}
 	}
 #elif defined(ENABLE_UART)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wincompatible-pointer-types" //needed to avoid passing the technically correct (but strange looking) uart_rx_data
-	HAL_UART_Receive_IT(&hlpuart1, &uart_rx_data, 1); // Start receiving characters, one by one by default (slow)
-#pragma GCC diagnostic pop
+	HAL_UART_Receive_IT(&hlpuart1, uart_rx_data, 1); // Start receiving characters, one by one by default (slow)
 
 	for(;;)
 	{
