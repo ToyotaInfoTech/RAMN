@@ -64,7 +64,7 @@
 
 #define USBD_LANGID_STRING            	1033
 #define USBD_MANUFACTURER_STRING      	"Toyota Motor Corporation"
-#define USBD_PRODUCT_STRING           	"RAMN gs_usb Device"
+#define USBD_PRODUCT_STRING           	"RAMN Composite Device"
 #define USBD_CONFIGURATION_STRING     	"MDC Config"
 #define USBD_INTERFACE_STRING         	"MDC Interface"
 
@@ -326,7 +326,8 @@
 #define ISOTP_CONSECUTIVE_BLOCK_SIZE 	0
 #define ISOTP_CONSECUTIVE_ST 			0
 
-// ISO-TP Timeout values. Both should be set to 1000 to mimic real ECUs.
+// ISO-TP Timeout values. Set to a large value intentionally to prevent timeouts during manual experimentation.
+// Set both to 1000 to better mimic real ECUs.
 #define ISOTP_RX_TIMEOUT_MS 			200000
 #define ISOTP_TX_TIMEOUT_MS 			200000
 
