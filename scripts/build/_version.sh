@@ -13,16 +13,22 @@ _version_bat="$(dirname "${BASH_SOURCE[0]}")/_version.bat"
 if [ -f "${_version_bat}" ]; then
 	_default_tag=$(sed -n 's/^SET DOCKER_STM32CUBEIDE_TAG=//p' "${_version_bat}" | tr -d '\r')
 else
-	_default_tag="15.0"
+	_default_tag="2.1.1"
 fi
 DOCKER_STM32CUBEIDE_TAG="${DOCKER_STM32CUBEIDE_TAG:-${_default_tag}}"
 unset _default_tag _version_bat
 
 # STM32CubeIDE >= 1.18.0 (docker tag >= 15.0) replaced -import with -importAll
-_major="${DOCKER_STM32CUBEIDE_TAG%%.*}"
-if [ "${_major}" -ge 15 ] 2>/dev/null; then
-	export STM32_IMPORT_FLAG="-importAll"
+# Newer tags use semantic versioning (e.g. 2.1.1) and should use -importAll.
+
+if [[ "${DOCKER_STM32CUBEIDE_TAG}" == *.*.* ]]; then
+    export STM32_IMPORT_FLAG="-importAll"
 else
-	export STM32_IMPORT_FLAG="-import"
+    _major="${DOCKER_STM32CUBEIDE_TAG%%.*}"
+    if [ "${_major}" -ge 15 ] 2>/dev/null; then
+        export STM32_IMPORT_FLAG="-importAll"
+    else
+        export STM32_IMPORT_FLAG="-import"
+    fi
+    unset _major
 fi
-unset _major
