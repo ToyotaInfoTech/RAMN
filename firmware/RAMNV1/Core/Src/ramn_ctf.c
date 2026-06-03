@@ -15,7 +15,6 @@
  */
 
 #include "ramn_ctf.h"
-#include <string.h>
 
 #ifdef ENABLE_MINICTF
 
@@ -197,7 +196,7 @@ void	RAMN_CTF_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, const ui
 	{
 		if (pHeader->Identifier == CTF_STANDARD_ID_3)
 		{
-			if (memcmp(data,"GIVEFLAG",8) == 0) sendFlagOverCAN(0x771, FLAG_CAN_3);
+			if (RAMN_memcmp(data,"GIVEFLAG",8) == 0) sendFlagOverCAN(0x771, FLAG_CAN_3);
 		}
 	}
 

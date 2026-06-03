@@ -222,22 +222,22 @@ void RAMN_SCREENUTILS_DrawSubconsoleUpdate()
 		switch(RAMN_DBC_Handle.joystick)
 		{
 		case RAMN_SHIFT_UP:
-			strcpy(cntStr, "UP");
+			RAMN_strcpy(cntStr, "UP");
 			break;
 		case RAMN_SHIFT_DOWN:
-			strcpy(cntStr, "DW");
+			RAMN_strcpy(cntStr, "DW");
 			break;
 		case RAMN_SHIFT_RIGHT:
-			strcpy(cntStr, "RT");
+			RAMN_strcpy(cntStr, "RT");
 			break;
 		case RAMN_SHIFT_LEFT:
-			strcpy(cntStr, "LT");
+			RAMN_strcpy(cntStr, "LT");
 			break;
 		case RAMN_SHIFT_PUSH:
-			strcpy(cntStr, "MD");
+			RAMN_strcpy(cntStr, "MD");
 			break;
 		default:
-			strcpy(cntStr, "  ");
+			RAMN_strcpy(cntStr, "  ");
 			break;
 		}
 		RAMN_SPI_DrawString(170,CONTROL_WINDOW_Y+16,RAMN_SCREENUTILS_COLORTHEME.WHITE,RAMN_SCREENUTILS_COLORTHEME.BACKGROUND,cntStr);
@@ -245,8 +245,8 @@ void RAMN_SCREENUTILS_DrawSubconsoleUpdate()
 	if (RAMN_DBC_Handle.control_sidebrake != prevSidebrake)
 	{
 		prevSidebrake = RAMN_DBC_Handle.control_sidebrake;
-		if (RAMN_DBC_Handle.control_sidebrake != RAMN_SIDEBRAKE_DOWN) strcpy(cntStr, "SB");
-		else strcpy(cntStr, "  ");
+		if (RAMN_DBC_Handle.control_sidebrake != RAMN_SIDEBRAKE_DOWN) RAMN_strcpy(cntStr, "SB");
+		else RAMN_strcpy(cntStr, "  ");
 		RAMN_SPI_DrawString(210,CONTROL_WINDOW_Y,RAMN_SCREENUTILS_COLORTHEME.WHITE,RAMN_SCREENUTILS_COLORTHEME.BACKGROUND,cntStr);
 	}
 
@@ -256,16 +256,16 @@ void RAMN_SCREENUTILS_DrawSubconsoleUpdate()
 		switch((RAMN_DBC_Handle.command_lights&0xFF))
 		{
 		case RAMN_LIGHTSWITCH_POS2:
-			strcpy(cntStr, "CL");
+			RAMN_strcpy(cntStr, "CL");
 			break;
 		case RAMN_LIGHTSWITCH_POS3:
-			strcpy(cntStr, "LB");
+			RAMN_strcpy(cntStr, "LB");
 			break;
 		case RAMN_LIGHTSWITCH_POS4:
-			strcpy(cntStr, "HB");
+			RAMN_strcpy(cntStr, "HB");
 			break;
 		default:
-			strcpy(cntStr, "  ");
+			RAMN_strcpy(cntStr, "  ");
 			break;
 		}
 		RAMN_SPI_DrawString(180,CONTROL_WINDOW_Y,RAMN_SCREENUTILS_COLORTHEME.WHITE,RAMN_SCREENUTILS_COLORTHEME.BACKGROUND,cntStr);
@@ -277,16 +277,16 @@ void RAMN_SCREENUTILS_DrawSubconsoleUpdate()
 		switch((RAMN_DBC_Handle.control_enginekey &0xFF))
 		{
 		case RAMN_ENGINEKEY_LEFT:
-			strcpy(cntStr, "OFF");
+			RAMN_strcpy(cntStr, "OFF");
 			break;
 		case RAMN_ENGINEKEY_MIDDLE:
-			strcpy(cntStr, "ACC");
+			RAMN_strcpy(cntStr, "ACC");
 			break;
 		case RAMN_ENGINEKEY_RIGHT:
-			strcpy(cntStr, "IGN");
+			RAMN_strcpy(cntStr, "IGN");
 			break;
 		default:
-			strcpy(cntStr, "???");
+			RAMN_strcpy(cntStr, "???");
 			break;
 		}
 		RAMN_SPI_DrawString(200,CONTROL_WINDOW_Y+16,RAMN_SCREENUTILS_COLORTHEME.WHITE,RAMN_SCREENUTILS_COLORTHEME.BACKGROUND,cntStr);

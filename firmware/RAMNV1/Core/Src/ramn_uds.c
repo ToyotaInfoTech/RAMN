@@ -15,7 +15,6 @@
  */
 
 #include "ramn_uds.h"
-#include <string.h>
 
 #if defined(ENABLE_UDS)
 
@@ -1181,8 +1180,8 @@ static void RAMN_UDS_RoutineControlVulnerabilityExample(uint8_t* data, uint16_t 
 		if ((size > 4U) && (size < ISOTP_RXBUFFER_SIZE))
 		{
 			data[size] = 0U; //zero-terminate buffer
-			strcpy(stack_password, (char*)&data[4U]); //copy string
-			if (strcmp(stack_password, expected_password) == 0U) RAMN_UDS_FormatPositiveResponseEcho(data, 4U);
+			RAMN_strcpy(stack_password, (char*)&data[4U]); //copy string
+			if (RAMN_streq(stack_password, expected_password)) RAMN_UDS_FormatPositiveResponseEcho(data, 4U);
 			else RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_ROOR);
 		}
 		else RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
@@ -1199,8 +1198,8 @@ static void RAMN_UDS_RoutineControlVulnerabilityExample2(uint8_t* data, uint16_t
 		if ((size > 4U) && (size < ISOTP_RXBUFFER_SIZE))
 		{
 			data[size] = 0U; //zero-terminate buffer
-			strcpy(ctf_global_password, (char*)&data[4U]); //copy string
-			if (strcmp(ctf_global_password, expected_password) == 0U) RAMN_UDS_FormatPositiveResponseEcho(data, 4U);
+			RAMN_strcpy(ctf_global_password, (char*)&data[4U]); //copy string
+			if (RAMN_streq(ctf_global_password, expected_password)) RAMN_UDS_FormatPositiveResponseEcho(data, 4U);
 			else RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_ROOR);
 		}
 		else RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);

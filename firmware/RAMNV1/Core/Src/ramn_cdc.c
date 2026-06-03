@@ -1,4 +1,4 @@
-/*
+﻿/*
  * ramn_cdc.c
  ******************************************************************************
  * @attention
@@ -126,8 +126,9 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 		else
 		{
 			char *token;
+			char *strtok_save;
 
-			token = strtok((char*)USBRxBuffer, " ");
+			token = RAMN_strtok_r((char*)USBRxBuffer, " ", &strtok_save);
 
 			if (token == NULL) {
 				RAMN_USB_SendStringFromTask("No command found. Type \"help\" for help.\r");
@@ -135,12 +136,12 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 			else
 			{
 				// Compare the command to a set of possible commands
-				if (strcmp(token, "help") == 0 || strcmp(token, "Help") == 0 || strcmp(token, "HELP") == 0 || strcmp(token, "man") == 0) {
+				if (RAMN_streq(token, "help") || RAMN_streq(token, "Help") || RAMN_streq(token, "HELP") || RAMN_streq(token, "man")) {
 
 					if (elementCount >= 2)
 					{
-						token = strtok(NULL, " ");
-						if (strcmp(token, "theme") == 0) {
+						token = RAMN_strtok_r(NULL, " ", &strtok_save);
+						if (RAMN_streq(token, "theme")) {
 							RAMN_USB_SendStringFromTask("-------------------------------------------------------------\r");
 							RAMN_USB_SendStringFromTask("                      RAMN Command Help\r");
 							RAMN_USB_SendStringFromTask("-------------------------------------------------------------\r");
@@ -162,7 +163,7 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 							RAMN_USB_SendStringFromTask("\r");
 							RAMN_USB_SendStringFromTask("-------------------------------------------------------------\r");
 						}
-						else if (strcmp(token, "enable") == 0) {
+						else if (RAMN_streq(token, "enable")) {
 							RAMN_USB_SendStringFromTask("-------------------------------------------------------------\r");
 							RAMN_USB_SendStringFromTask("                      RAMN Command Help\r");
 							RAMN_USB_SendStringFromTask("-------------------------------------------------------------\r");
@@ -190,7 +191,7 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 							RAMN_USB_SendStringFromTask("\r");
 							RAMN_USB_SendStringFromTask("-------------------------------------------------------------\r");
 						}
-						else if (strcmp(token, "disable") == 0) {
+						else if (RAMN_streq(token, "disable")) {
 							RAMN_USB_SendStringFromTask("-------------------------------------------------------------\r");
 							RAMN_USB_SendStringFromTask("                      RAMN Command Help\r");
 							RAMN_USB_SendStringFromTask("-------------------------------------------------------------\r");
@@ -259,14 +260,14 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 						RAMN_USB_SendStringFromTask("-------------------------------------------------------------\r");
 					}
 				}
-				else if ( strcmp(token, "disable") == 0) {
+				else if ( RAMN_streq(token, "disable")) {
 					if (elementCount != 2)
 					{
 						RAMN_USB_SendStringFromTask("Invalid number of arguments. Type \"help disable\" for help using this command.\r");
 					}
 					else
 					{
-						token = strtok(NULL, " ");
+						token = RAMN_strtok_r(NULL, " ", &strtok_save);
 
 						for (uint8_t i = 0; ((token[i] != 0) && (i < 4)); i++)
 						{
@@ -298,14 +299,14 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 						}
 					}
 				}
-				else if ( strcmp(token, "enable") == 0) {
+				else if ( RAMN_streq(token, "enable")) {
 					if (elementCount != 2)
 					{
 						RAMN_USB_SendStringFromTask("Invalid number of arguments. Type \"help enable\" for help using this command.\r");
 					}
 					else
 					{
-						token = strtok(NULL, " ");
+						token = RAMN_strtok_r(NULL, " ", &strtok_save);
 						for (uint8_t i = 0; ((token[i] != 0) && (i < 4)); i++)
 						{
 							switch(token[i])
@@ -336,7 +337,7 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 						}
 					}
 				}
-				else if (strcmp(token, "asap") == 0) {
+				else if (RAMN_streq(token, "asap")) {
 					if (elementCount == 1U)
 					{
 						ReplaceTxHeader.Identifier = 0xFFFFFFFF;
@@ -351,7 +352,7 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 						uint16_t len = 0;
 						uint8_t data_len = 0;
 
-						token = strtok(NULL, " ");
+						token = RAMN_strtok_r(NULL, " ", &strtok_save);
 						uint32_t can_id = ASCIItoUint12((uint8_t*)token);
 
 						if (can_id > 0x7FF)
@@ -369,7 +370,7 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 							}
 							else
 							{
-								token = strtok(NULL, " ");
+								token = RAMN_strtok_r(NULL, " ", &strtok_save);
 								len = RAMN_strlen(token);
 
 								if ((len % 2 != 0) || (len > 16))
@@ -390,7 +391,7 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 						}
 					}
 				}
-				else if (strcmp(token, "flood") == 0) {
+				else if (RAMN_streq(token, "flood")) {
 					if (elementCount == 1U)
 					{
 						FloodTxHeader.Identifier = 0xFFFFFFFF;
@@ -406,7 +407,7 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 						uint16_t len = 0;
 						uint8_t data_len = 0;
 
-						token = strtok(NULL, " ");
+						token = RAMN_strtok_r(NULL, " ", &strtok_save);
 						uint32_t can_id = ASCIItoUint12((uint8_t*)token);
 
 						if (can_id > 0x7FF)
@@ -427,7 +428,7 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 								// Set this thread priority high to make sure to know when to stop.
 								osThreadSetPriority(osThreadGetId(), osPriorityHigh);
 
-								token = strtok(NULL, " ");
+								token = RAMN_strtok_r(NULL, " ", &strtok_save);
 								len = RAMN_strlen(token);
 
 								if ((len % 2 != 0) || (len > 16))
@@ -448,7 +449,7 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 						}
 					}
 				}
-				else if (strcmp(token, "can") == 0) {
+				else if (RAMN_streq(token, "can")) {
 					if (elementCount != 3)
 					{
 						RAMN_USB_SendStringFromTask("Usage: can <param> <value>\r");
@@ -457,48 +458,48 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 					{
 						uint32_t value;
 
-						token = strtok(NULL, " ");
+						token = RAMN_strtok_r(NULL, " ", &strtok_save);
 						char *param = token;
 
-						token = strtok(NULL, " ");
-						value = (uint32_t)strtoul(token, NULL, 10);
+						token = RAMN_strtok_r(NULL, " ", &strtok_save);
+						value = RAMN_strtoul(token, 10, NULL);
 
-						if (strcmp(param, "prescaler") == 0)
+						if (RAMN_streq(param, "prescaler"))
 						{
 							hfdcan1.Init.NominalPrescaler = value;
 							RAMN_USB_SendStringFromTask("CAN prescaler updated.\r");
 						}
-						else if (strcmp(param, "tseg1") == 0)
+						else if (RAMN_streq(param, "tseg1"))
 						{
 							hfdcan1.Init.NominalTimeSeg1 = value;
 							RAMN_USB_SendStringFromTask("CAN TSEG1 updated.\r");
 						}
-						else if (strcmp(param, "tseg2") == 0)
+						else if (RAMN_streq(param, "tseg2"))
 						{
 							hfdcan1.Init.NominalTimeSeg2 = value;
 							RAMN_USB_SendStringFromTask("CAN TSEG2 updated.\r");
 						}
-						else if (strcmp(param, "sjw") == 0)
+						else if (RAMN_streq(param, "sjw"))
 						{
 							hfdcan1.Init.NominalSyncJumpWidth = value;
 							RAMN_USB_SendStringFromTask("CAN SJW updated.\r");
 						}
-						else if (strcmp(param, "autoretry") == 0)
+						else if (RAMN_streq(param, "autoretry"))
 						{
 							hfdcan1.Init.AutoRetransmission = value ? ENABLE : DISABLE;
 							RAMN_USB_SendStringFromTask("CAN transmission autoretry updated.\r");
 						}
-						else if (strcmp(param, "transmitpause") == 0)
+						else if (RAMN_streq(param, "transmitpause"))
 						{
 							hfdcan1.Init.TransmitPause = value ? ENABLE : DISABLE;
 							RAMN_USB_SendStringFromTask("CAN TransmitPause updated.\r");
 						}
-						else if (strcmp(param, "autorecover") == 0)
+						else if (RAMN_streq(param, "autorecover"))
 						{
 							g_autoRecoverBusOff = value ? 1 : 0;
 							RAMN_USB_SendStringFromTask("BusOff auto recovery updated.\r");
 						}
-						else if (strcmp(param, "ack") == 0)
+						else if (RAMN_streq(param, "ack"))
 						{
 							if (value == 0U)
 							{
@@ -519,7 +520,7 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 						RAMN_FDCAN_ResetPeripheral();
 					}
 				}
-				else if (strcmp(token, "uds") == 0) {
+				else if (RAMN_streq(token, "uds")) {
 					if (elementCount != 3)
 					{
 						RAMN_USB_SendStringFromTask("Usage: uds <B|C|D|*> <hex_payload>. Use * for broadcast.\r");
@@ -528,25 +529,25 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 					{
 						uint16_t can_id = 0;
 
-						token = strtok(NULL, " ");
+						token = RAMN_strtok_r(NULL, " ", &strtok_save);
 						can_id = 0;
-						if (strcmp(token, "*") == 0)
+						if (RAMN_streq(token, "*"))
 						{
 							can_id = 0x7DF;
 						}
-						else if (strcmp(token, "B") == 0)
+						else if (RAMN_streq(token, "B"))
 						{
 							can_id = 0x7E1;
 						}
-						else if (strcmp(token, "C") == 0)
+						else if (RAMN_streq(token, "C"))
 						{
 							can_id = 0x7E2;
 						}
-						else if (strcmp(token, "D") == 0)
+						else if (RAMN_streq(token, "D"))
 						{
 							can_id = 0x7E3;
 						}
-						else if (strcmp(token, "A") == 0)
+						else if (RAMN_streq(token, "A"))
 						{
 							RAMN_USB_SendStringFromTask("Error: Use slcan to send UDS commands to ECU A.\r");
 						}
@@ -556,7 +557,7 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 						}
 						if (0x7E1 != 0)
 						{
-							token = strtok(NULL, " ");
+							token = RAMN_strtok_r(NULL, " ", &strtok_save);
 
 							uint16_t len = RAMN_strlen(token);
 
@@ -572,7 +573,7 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 						}
 					}
 				}
-				else if (strcmp(token, "silence") == 0) {
+				else if (RAMN_streq(token, "silence")) {
 
 					if (elementCount != 2)
 					{
@@ -580,7 +581,7 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 					}
 					else
 					{
-						token = strtok(NULL, " ");
+						token = RAMN_strtok_r(NULL, " ", &strtok_save);
 
 						for (uint8_t i = 0; ((token[i] != 0) && (i < 4)); i++)
 						{
@@ -612,14 +613,14 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 						}
 					}
 				}
-				else if (strcmp(token, "talk") == 0) {
+				else if (RAMN_streq(token, "talk")) {
 					if (elementCount != 2)
 					{
 						RAMN_USB_SendStringFromTask("Usage: talk <B|C|D|*>\r");
 					}
 					else
 					{
-						token = strtok(NULL, " ");
+						token = RAMN_strtok_r(NULL, " ", &strtok_save);
 
 						for (uint8_t i = 0; ((token[i] != 0) && (i < 4)); i++)
 						{
@@ -651,14 +652,14 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 						}
 					}
 				}
-				else if (strcmp(token, "randomize") == 0) {
+				else if (RAMN_streq(token, "randomize")) {
 					if (elementCount != 1)
 					{
 						RAMN_USB_SendStringFromTask("Too many arguments. Usage: randomize.\r");
 					}
 					else
 					{
-						token = strtok(NULL, " ");
+						token = RAMN_strtok_r(NULL, " ", &strtok_save);
 						RAMN_USB_SendStringFromTask("Randomizing boot delays for ECU B/C/D. Note that boot order is always the same (B->C->D).\r");
 						RAMN_ECU_SetEnableAll(GPIO_PIN_RESET);
 						osDelay(50);
@@ -669,7 +670,7 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 						RAMN_ECU_SetEnable('D', GPIO_PIN_SET);
 					}
 				}
-				else if (strcmp(token, "resetcan") == 0) {
+				else if (RAMN_streq(token, "resetcan")) {
 
 					if (elementCount != 2)
 					{
@@ -677,7 +678,7 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 					}
 					else
 					{
-						token = strtok(NULL, " ");
+						token = RAMN_strtok_r(NULL, " ", &strtok_save);
 
 						for (uint8_t i = 0; ((token[i] != 0) && (i < 4)); i++)
 						{
@@ -706,7 +707,7 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 					}
 				}
 #ifdef ENABLE_BITBANG
-				else if ((strcmp(token, "bb") == 0) || (strcmp(token, "bitbang") == 0)) {
+				else if ((RAMN_streq(token, "bb")) || (RAMN_streq(token, "bitbang"))) {
 
 					if (elementCount < 2)
 					{
@@ -714,11 +715,11 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 					}
 					else
 					{
-						token = strtok(NULL, " ");
+						token = RAMN_strtok_r(NULL, " ", &strtok_save);
 
 						if (token != NULL)
 						{
-							if (strcmp(token, "help") == 0)
+							if (RAMN_streq(token, "help"))
 							{
 								RAMN_USB_SendStringFromTask(
 										"Bitbang commands:\r"
@@ -742,17 +743,17 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 								);
 							}
 
-							else if (strcmp(token, "read") == 0) {
+							else if (RAMN_streq(token, "read")) {
 								RAMN_BITBANG_Read();
 							}
 
-							else if (strcmp(token, "jam") == 0) {
+							else if (RAMN_streq(token, "jam")) {
 								RAMN_USB_SendStringFromTask("Jamming...");
 								RAMN_BITBANG_Jam();
 								RAMN_USB_SendStringFromTask("Done!\r");
 							}
 
-							else if (strcmp(token, "busload") == 0) {
+							else if (RAMN_streq(token, "busload")) {
 
 								RAMN_USB_SendStringFromTask("Measuring bus load...\r");
 
@@ -780,19 +781,19 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 								RAMN_USB_SendStringFromTask(buffer);
 							}
 
-							else if (strcmp(token, "dump") == 0) {
+							else if (RAMN_streq(token, "dump")) {
 								RAMN_USB_SendStringFromTask("Dumping bus bits...\r");
 								RAMN_BITBANG_Dump();
 							}
 
-							else if (strcmp(token, "deny") == 0) {
+							else if (RAMN_streq(token, "deny")) {
 
 								if (elementCount != 3U) {
 									RAMN_USB_SendStringFromTask("Error: deny requires 1 parameter.\r");
 								}
 								else {
 
-									char *param = strtok(NULL, " ");
+									char *param = RAMN_strtok_r(NULL, " ", &strtok_save);
 									RAMN_Bool_t ok = False;
 
 									uint8_t n = (uint8_t)RAMN_strtoul(param, 10, &ok);
@@ -810,14 +811,14 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 								}
 							}
 
-							else if (strcmp(token, "denyonce") == 0) {
+							else if (RAMN_streq(token, "denyonce")) {
 
 								if (elementCount != 3U) {
 									RAMN_USB_SendStringFromTask("Error: denyonce requires 1 parameter.\r");
 								}
 								else {
 
-									char *param = strtok(NULL, " ");
+									char *param = RAMN_strtok_r(NULL, " ", &strtok_save);
 									RAMN_Bool_t ok = False;
 
 									uint8_t n = (uint8_t)RAMN_strtoul(param, 10, &ok);
@@ -834,13 +835,13 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 								}
 							}
 
-							else if (strcmp(token, "send") == 0) {
+							else if (RAMN_streq(token, "send")) {
 
 								RAMN_USB_SendStringFromTask("Sending...\r");
 
 								if (elementCount == 3U)
 								{
-									token = strtok(NULL, " ");
+									token = RAMN_strtok_r(NULL, " ", &strtok_save);
 									RAMN_BITBANG_Send(token);
 								}
 								else {
@@ -848,16 +849,16 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 								}
 							}
 
-							else if (strcmp(token, "loopof") == 0) {
+							else if (RAMN_streq(token, "loopof")) {
 								RAMN_USB_SendStringFromTask("Looping Overload Frames...\r");
 								RAMN_BITBANG_LoopOF();
 							}
 
-							else if (strcmp(token, "set") == 0) {
+							else if (RAMN_streq(token, "set")) {
 
 								if (elementCount == 4U)
 								{
-									token = strtok(NULL, " ");
+									token = RAMN_strtok_r(NULL, " ", &strtok_save);
 
 									if (RAMN_BITBANG_Set(token) == RAMN_OK) {
 										RAMN_USB_SendStringFromTask("Done.\r");
@@ -871,7 +872,7 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 								}
 							}
 
-							else if (strcmp(token, "show") == 0) {
+							else if (RAMN_streq(token, "show")) {
 								RAMN_BITBANG_Show();
 							}
 
@@ -883,21 +884,21 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 				}
 #endif
 #ifdef ENABLE_SCREEN
-				else if ( strcmp(token, "theme") == 0) {
+				else if ( RAMN_streq(token, "theme")) {
 					if (elementCount != 2)
 					{
 						RAMN_USB_SendStringFromTask("Invalid number of arguments. Type \"help theme\" for help using this command.\r");
 					}
 					else
 					{
-						token = strtok(NULL, " ");
-						if (strcmp(token, "1") == 0) {  RAMN_SCREENUTILS_UpdateTheme(1); RAMN_USB_SendStringFromTask("Updated.\r");
-						} else if (strcmp(token, "2") == 0) {  RAMN_SCREENUTILS_UpdateTheme(2); RAMN_USB_SendStringFromTask("Updated.\r");
-						} else if (strcmp(token, "3") == 0) {  RAMN_SCREENUTILS_UpdateTheme(3); RAMN_USB_SendStringFromTask("Updated.\r");
-						} else if (strcmp(token, "4") == 0) {  RAMN_SCREENUTILS_UpdateTheme(4); RAMN_USB_SendStringFromTask("Updated.\r");
-						} else if (strcmp(token, "5") == 0) {  RAMN_SCREENUTILS_UpdateTheme(5); RAMN_USB_SendStringFromTask("Updated.\r");
-						} else if (strcmp(token, "6") == 0) {  RAMN_SCREENUTILS_UpdateTheme(6); RAMN_USB_SendStringFromTask("Updated.\r");
-						} else if (strcmp(token, "7") == 0) {  RAMN_SCREENUTILS_UpdateTheme(7); RAMN_USB_SendStringFromTask("Updated.\r");
+						token = RAMN_strtok_r(NULL, " ", &strtok_save);
+						if (RAMN_streq(token, "1")) {  RAMN_SCREENUTILS_UpdateTheme(1); RAMN_USB_SendStringFromTask("Updated.\r");
+						} else if (RAMN_streq(token, "2")) {  RAMN_SCREENUTILS_UpdateTheme(2); RAMN_USB_SendStringFromTask("Updated.\r");
+						} else if (RAMN_streq(token, "3")) {  RAMN_SCREENUTILS_UpdateTheme(3); RAMN_USB_SendStringFromTask("Updated.\r");
+						} else if (RAMN_streq(token, "4")) {  RAMN_SCREENUTILS_UpdateTheme(4); RAMN_USB_SendStringFromTask("Updated.\r");
+						} else if (RAMN_streq(token, "5")) {  RAMN_SCREENUTILS_UpdateTheme(5); RAMN_USB_SendStringFromTask("Updated.\r");
+						} else if (RAMN_streq(token, "6")) {  RAMN_SCREENUTILS_UpdateTheme(6); RAMN_USB_SendStringFromTask("Updated.\r");
+						} else if (RAMN_streq(token, "7")) {  RAMN_SCREENUTILS_UpdateTheme(7); RAMN_USB_SendStringFromTask("Updated.\r");
 
 						}
 						else
@@ -907,11 +908,11 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 					}
 				}
 #endif
-				else if (strcmp(token, "b") == 0  || strcmp(token, "exit") == 0 || strcmp(token, "quit") == 0 || strcmp(token, "slcan") == 0) {
+				else if (RAMN_streq(token, "b")  || RAMN_streq(token, "exit") || RAMN_streq(token, "quit") || RAMN_streq(token, "slcan")) {
 					mustSwitch = True;
 				}
 
-				else if (strcmp(token, "reset") == 0) {
+				else if (RAMN_streq(token, "reset")) {
 					if (elementCount == 1U)
 					{
 #ifdef START_IN_CLI_MODE
@@ -928,7 +929,7 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 					}
 					else
 					{
-						token = strtok(NULL, " ");
+						token = RAMN_strtok_r(NULL, " ", &strtok_save);
 
 						for (uint8_t i = 0; ((token[i] != 0) && (i < 3)); i++)
 						{
@@ -962,11 +963,11 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 						}
 					}
 				}
-				else if (strcmp(token, "clear") == 0) {
+				else if (RAMN_streq(token, "clear")) {
 					RAMN_USB_SendStringFromTask("\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r");
 				}
 #if defined(ENABLE_SCREEN) && defined(ENABLE_CHIP8)
-				else if (strcmp(token, "play") == 0)
+				else if (RAMN_streq(token, "play"))
 				{
 					if (elementCount != 2)
 					{
@@ -974,10 +975,10 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 					}
 					else
 					{
-						token = strtok(NULL, " ");
-						if (strcmp(token, "1") == 0) {  RAMN_SCREENMANAGER_StartGameFromIndex(1); RAMN_USB_SendStringFromTask("Starting game 1.\r");
-						} else if (strcmp(token, "2") == 0) {  RAMN_SCREENMANAGER_StartGameFromIndex(2); RAMN_USB_SendStringFromTask("Starting game 2.\r");
-						} else if (strcmp(token, "3") == 0) {  RAMN_SCREENMANAGER_StartGameFromIndex(3); RAMN_USB_SendStringFromTask("Starting game 3.\r");
+						token = RAMN_strtok_r(NULL, " ", &strtok_save);
+						if (RAMN_streq(token, "1")) {  RAMN_SCREENMANAGER_StartGameFromIndex(1); RAMN_USB_SendStringFromTask("Starting game 1.\r");
+						} else if (RAMN_streq(token, "2")) {  RAMN_SCREENMANAGER_StartGameFromIndex(2); RAMN_USB_SendStringFromTask("Starting game 2.\r");
+						} else if (RAMN_streq(token, "3")) {  RAMN_SCREENMANAGER_StartGameFromIndex(3); RAMN_USB_SendStringFromTask("Starting game 3.\r");
 						}
 						else
 						{
@@ -986,7 +987,7 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 					}
 
 				}
-				else if (strcmp(token, "stop") == 0U)
+				else if (RAMN_streq(token, "stop"))
 				{
 					if (RAMN_CHIP8_IsGameActive() != False)
 					{
@@ -1532,7 +1533,7 @@ RAMN_Bool_t RAMN_CDC_ProcessSLCANBuffer(uint8_t* USBRxBuffer, uint32_t commandLe
 			// Note that we do not worry about potential timing analysis as this is not a security feature.
 			if (commandLength == (RAMN_strlen(DFU_COMMAND_STRING)+1U))
 			{
-				if(strncmp((char*)&USBRxBuffer[1],DFU_COMMAND_STRING, RAMN_strlen(DFU_COMMAND_STRING)) == 0U)
+				if(RAMN_strncmp((char*)&USBRxBuffer[1],DFU_COMMAND_STRING, RAMN_strlen(DFU_COMMAND_STRING)) == 0)
 				{
 					RAMN_USB_SendFromTask((uint8_t*)"\r",1U);
 					osDelay(200);
@@ -1672,7 +1673,7 @@ RAMN_Bool_t RAMN_CDC_ProcessSLCANBuffer(uint8_t* USBRxBuffer, uint32_t commandLe
 					RAMN_USB_SendStringFromTask((char*)smallResponseBuffer);
 					RAMN_USB_SendStringFromTask(":\t");
 					RAMN_USB_SendStringFromTask(pxTaskStatusArray[i].pcTaskName);
-					if(strlen(pxTaskStatusArray[i].pcTaskName) < 8) RAMN_USB_SendStringFromTask("\t\t");
+					if(RAMN_strlen(pxTaskStatusArray[i].pcTaskName) < 8) RAMN_USB_SendStringFromTask("\t\t");
 					else RAMN_USB_SendStringFromTask("\t");
 
 					// Send task state
@@ -1750,7 +1751,7 @@ RAMN_Bool_t RAMN_CDC_ProcessSLCANBuffer(uint8_t* USBRxBuffer, uint32_t commandLe
 		case '&':
 			if (commandLength == 6)
 			{
-				if (memcmp(&USBRxBuffer[1],"27762",5) == 0)
+				if (RAMN_memcmp(&USBRxBuffer[1],"27762",5) == 0)
 				{
 					RAMN_USB_SendStringFromTask(FLAG_USB_2);
 					RAMN_USB_SendFromTask((uint8_t*)"\r",1);

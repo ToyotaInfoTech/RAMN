@@ -23,7 +23,6 @@
 
 #ifdef ENABLE_SCREEN
 
-#include <string.h>
 #include "ramn_spi.h"
 #include "ramn_dbc.h"
 #include "ramn_joystick.h"

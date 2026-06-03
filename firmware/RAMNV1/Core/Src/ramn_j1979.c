@@ -15,7 +15,6 @@
  */
 
 #include "ramn_j1979.h"
-#include <string.h>
 
 #if defined(ENABLE_UDS) || defined(ENABLE_KWP)
 
@@ -574,16 +573,16 @@ static void requestVehicleInfo(const uint8_t* data, uint16_t size, uint8_t* answ
 			result |= RAMN_EEPROM_Read32(VIN_BYTES17_20_INDEX,(uint32_t*)&answerData[19U]); // Only one byte read
 			if (result != EE_OK)
 			{
-				memset(&(answerData[3U]), 0U, 17U);
+				RAMN_memset(&(answerData[3U]), 0U, 17U);
 			}
 #else
-			memset((uint8_t*)&(answerData[3U]),0U, 17U);
+			RAMN_memset((uint8_t*)&(answerData[3U]),0U, 17U);
 #endif
 			break;
 		case 0x04:
 			// Calibration ID
 			answerData[2U] = 0x01;
-			strcpy((char*)&answerData[3U],"CALIBRATION ID0"); // 15 chars and zero terminator -> 16 bytes
+			RAMN_strcpy((char*)&answerData[3U],"CALIBRATION ID0"); // 15 chars and zero terminator -> 16 bytes
 			*answerSize = 0x13U;
 			break;
 		case 0x06:
@@ -600,13 +599,13 @@ static void requestVehicleInfo(const uint8_t* data, uint16_t size, uint8_t* answ
 			answerData[2U] = 0x01;
 			RAMN_memset((char*)&answerData[3U], 0U, 20U); // set all to zero
 #if		defined(TARGET_ECUA)
-			strcpy((char*)&answerData[3U],"ECUA-Infotainment");
+			RAMN_strcpy((char*)&answerData[3U],"ECUA-Infotainment");
 #elif 	defined(TARGET_ECUB)
-			strcpy((char*)&answerData[3U],"ECUB-Chassis");
+			RAMN_strcpy((char*)&answerData[3U],"ECUB-Chassis");
 #elif 	defined(TARGET_ECUC)
-			strcpy((char*)&answerData[3U],"ECUC-Powertrain");
+			RAMN_strcpy((char*)&answerData[3U],"ECUC-Powertrain");
 #elif 	defined(TARGET_ECUD)
-			strcpy((char*)&answerData[3U],"ECUD-Body");
+			RAMN_strcpy((char*)&answerData[3U],"ECUD-Body");
 #endif
 			*answerSize = 0x17U;
 			break;

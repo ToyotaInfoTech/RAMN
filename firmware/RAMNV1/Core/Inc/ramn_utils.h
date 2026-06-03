@@ -77,6 +77,12 @@ void RAMN_memcpy(void* dst, const void* src, uint32_t size);
 // Regular strlen operation
 uint16_t RAMN_strlen(const char *str);
 
+// Regular memcmp operation. Returns 0 if equal, non-zero otherwise.
+int8_t RAMN_memcmp(const void *a, const void *b, uint32_t n);
+
+// Regular strcpy operation. No bounds check; intentionally mirrors strcpy behavior.
+char* RAMN_strcpy(char *dst, const char *src);
+
 // Apply required endian, used if CAN data should use Big Endian
 // Refactored to data-driven offsets and masks in ramn_vehicle_specific.h
 #ifdef USE_BIG_ENDIAN_CAN
@@ -90,6 +96,12 @@ void     RAMN_TaskDelay(uint32_t msec);
 
 // Strings equal check (assumes string length check already done)
 RAMN_Bool_t RAMN_streq(const char *a, const char *b);
+
+// Compare up to n characters of two strings. Returns 0 if equal, >0 or <0 otherwise.
+int8_t RAMN_strncmp(const char *a, const char *b, uint32_t n);
+
+// Reentrant string tokenizer (equivalent to strtok_r). Modifies str in place.
+char* RAMN_strtok_r(char *str, const char *delim, char **saveptr);
 
 // More general version of ASCIItoUint32
 uint32_t RAMN_strtoul(const char *s, uint8_t base, RAMN_Bool_t *ok);
