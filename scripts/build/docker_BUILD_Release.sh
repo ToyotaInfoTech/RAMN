@@ -12,6 +12,8 @@ if [ -e /workspace ]; then
 	cp -pr "/workspace/firmware/${PROJECT_NAME}/Release/${PROJECT_NAME}.hex" "${OUTPUT_FOLDER}/ECUA.hex"
 	bash "${SCRIPT_DIR}/_build_ecu.sh" TARGET_ECUB Release --skip-import --no-clean "$@"
 	cp -pr "/workspace/firmware/${PROJECT_NAME}/Release/${PROJECT_NAME}.hex" "${OUTPUT_FOLDER}/ECUB.hex"
+	bash "${SCRIPT_DIR}/_build_ecu.sh" TARGET_ECUB Release --skip-import --no-clean -D CHASSIS_LINEAR_POTENTIOMETER "$@"
+	cp -pr "/workspace/firmware/${PROJECT_NAME}/Release/${PROJECT_NAME}.hex" "${OUTPUT_FOLDER}/ECUB_LINEAR.hex"
 	bash "${SCRIPT_DIR}/_build_ecu.sh" TARGET_ECUC Release --skip-import --no-clean "$@"
 	cp -pr "/workspace/firmware/${PROJECT_NAME}/Release/${PROJECT_NAME}.hex" "${OUTPUT_FOLDER}/ECUC.hex"
 	bash "${SCRIPT_DIR}/_build_ecu.sh" TARGET_ECUD Release --skip-import --no-clean "$@"
