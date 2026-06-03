@@ -538,15 +538,14 @@ uint8_t RAMN_Decode_Control_EngineKey(const uint8_t* payload, uint32_t dlc) {
 // -- Command Lights --
 #ifndef ENABLE_J1939_MODE
 void RAMN_Encode_Command_Lights(uint16_t value, uint8_t* payload) {
-    uint16_t packed = PACK_SIGNAL(value, COMMAND_LIGHTS_MASK, COMMAND_LIGHTS_OFFSET);
-    RAMN_memcpy(payload, (uint8_t*)&packed, sizeof(packed));
+    uint8_t packed = (uint8_t)PACK_SIGNAL(value, COMMAND_LIGHTS_MASK, COMMAND_LIGHTS_OFFSET);
+    payload[0] = packed;
 }
 
 uint16_t RAMN_Decode_Command_Lights(const uint8_t* payload, uint32_t dlc) {
-    uint16_t packed = 0;
-    RAMN_memcpy((uint8_t*)&packed, payload, sizeof(packed));
-    if (dlc <= 1U) packed = packed & 0xFF;
-    return UNPACK_SIGNAL(packed, COMMAND_LIGHTS_MASK, COMMAND_LIGHTS_OFFSET);
+    if (dlc < 1U) return 0;
+    uint8_t packed = payload[0];
+    return (uint16_t)UNPACK_SIGNAL(packed, COMMAND_LIGHTS_MASK, COMMAND_LIGHTS_OFFSET);
 }
 #else
 void RAMN_Encode_Command_Lights(uint16_t value, uint8_t* payload) {
