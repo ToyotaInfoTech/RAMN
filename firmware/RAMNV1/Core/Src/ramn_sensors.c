@@ -79,12 +79,12 @@ RAMN_SENSORS_BodySensors_t RAMN_SENSORS_BODY = {
 static RAMN_LeverState_t SENSORS_ConvertLeverADC(uint16_t adcval)
 {
 	RAMN_LeverState_t         result = RAMN_SHIFT_UNKNOWNSTATE;
-	if      (adcval >= 0x0D00)  result = RAMN_SHIFT_RELEASED;
-	else if (adcval >= 0x0C00)  result = RAMN_SHIFT_DOWN;
-	else if (adcval >= 0x0B00)  result = RAMN_SHIFT_RIGHT;
-	else if (adcval >= 0x0A00)  result = RAMN_SHIFT_LEFT;
-	else if (adcval >= 0x0700)  result = RAMN_SHIFT_PUSH;
-	else if (adcval <= 0x0100)  result = RAMN_SHIFT_UP;
+	if      (adcval >= 0x0D10)  result = RAMN_SHIFT_RELEASED;
+	else if (adcval >= 0x0C65)  result = RAMN_SHIFT_DOWN;
+	else if (adcval >= 0x0B54)  result = RAMN_SHIFT_RIGHT;
+	else if (adcval >= 0x0954)  result = RAMN_SHIFT_LEFT;
+	else if (adcval >= 0x0400)  result = RAMN_SHIFT_PUSH;
+	else if (adcval <= 0x03FF)  result = RAMN_SHIFT_UP;
 	return result;
 }
 
