@@ -38,8 +38,8 @@ static const uint16_t loglookupt[] = {
 };
 #endif
 
-static const uint16_t SENSORS_STEER_LINEAR_MIN = 0x040;
-static const uint16_t SENSORS_STEER_LINEAR_MAX = 0xFFF;
+static const uint16_t SENSORS_STEER_LINEAR_MIN = 0x000;
+static const uint16_t SENSORS_STEER_LINEAR_MAX = 0xFB0;
 
 RAMN_SENSORS_ChassisSensors_t RAMN_SENSORS_CHASSIS = {
 		.steeringPotentiometer = 0x7FF,
@@ -52,9 +52,9 @@ RAMN_SENSORS_ChassisSensors_t RAMN_SENSORS_CHASSIS = {
 #if defined(EXPANSION_POWERTRAIN)
 
 static const uint16_t SENSORS_BRAKE_MIN = 0x000;
-static const uint16_t SENSORS_BRAKE_MAX = 0xFC0;
+static const uint16_t SENSORS_BRAKE_MAX = 0xFB0;
 static const uint16_t SENSORS_ACCEL_MIN = 0x000;
-static const uint16_t SENSORS_ACCEL_MAX = 0xFC0;
+static const uint16_t SENSORS_ACCEL_MAX = 0xFB0;
 
 RAMN_SENSORS_PowertrainSensors_t RAMN_SENSORS_POWERTRAIN_PREVIOUS = {
 		.brakePotentiometer = 0U,
