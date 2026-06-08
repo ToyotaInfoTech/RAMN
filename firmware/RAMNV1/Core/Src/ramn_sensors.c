@@ -41,8 +41,6 @@ static const uint16_t loglookupt[] = {
 static const uint16_t SENSORS_STEER_LINEAR_MIN = 0x040;
 static const uint16_t SENSORS_STEER_LINEAR_MAX = 0xFFF;
 
-static uint16_t SENSORS_STEER_FILTERED = 0U;
-
 RAMN_SENSORS_ChassisSensors_t RAMN_SENSORS_CHASSIS = {
 		.steeringPotentiometer = 0x7FF,
 		.sidebrakeSwitch = RAMN_SIDEBRAKE_UNKNOWN,
@@ -57,10 +55,6 @@ static const uint16_t SENSORS_BRAKE_MIN = 0x000;
 static const uint16_t SENSORS_BRAKE_MAX = 0xFC0;
 static const uint16_t SENSORS_ACCEL_MIN = 0x000;
 static const uint16_t SENSORS_ACCEL_MAX = 0xFC0;
-
-static uint16_t SENSORS_BRAKE_FILTERED = 0U;
-static uint16_t SENSORS_ACCEL_FILTERED = 0U;
-static uint16_t SENSORS_SHIFT_FILTERED = 0U;
 
 RAMN_SENSORS_PowertrainSensors_t RAMN_SENSORS_POWERTRAIN_PREVIOUS = {
 		.brakePotentiometer = 0U,
@@ -88,13 +82,6 @@ RAMN_SENSORS_BodySensors_t RAMN_SENSORS_BODY = {
 
 // Private Functions  --------------------------------------------
 
-#define SENSORS_EMA_SHIFT  3U
-
-static uint16_t SENSORS_EMAFilter(uint16_t filtered, uint16_t raw)
-{
-	return filtered - (filtered >> SENSORS_EMA_SHIFT) + (raw >> SENSORS_EMA_SHIFT);
-}
-
 static uint16_t SENSORS_ScaleADC(uint16_t raw, uint16_t min, uint16_t max)
 {
 	if (raw <= min) return 0x000;
@@ -118,12 +105,9 @@ static RAMN_LeverState_t SENSORS_ConvertLeverADC(uint16_t adcval)
 
 static void SENSORS_UpdatePowertrain(uint32_t tick)
 {
-	SENSORS_BRAKE_FILTERED = SENSORS_EMAFilter(SENSORS_BRAKE_FILTERED, RAMN_SENSORS_ADCValues[0]);
-	SENSORS_ACCEL_FILTERED = SENSORS_EMAFilter(SENSORS_ACCEL_FILTERED, RAMN_SENSORS_ADCValues[1]);
-	SENSORS_SHIFT_FILTERED = SENSORS_EMAFilter(SENSORS_SHIFT_FILTERED, RAMN_SENSORS_ADCValues[2]);
-	RAMN_SENSORS_POWERTRAIN.brakePotentiometer = SENSORS_ScaleADC(SENSORS_BRAKE_FILTERED, SENSORS_BRAKE_MIN, SENSORS_BRAKE_MAX);
-	RAMN_SENSORS_POWERTRAIN.accelPotentiometer = SENSORS_ScaleADC(SENSORS_ACCEL_FILTERED, SENSORS_ACCEL_MIN, SENSORS_ACCEL_MAX);
-	RAMN_SENSORS_POWERTRAIN.shiftJoystick = SENSORS_ConvertLeverADC(SENSORS_SHIFT_FILTERED);
+	RAMN_SENSORS_POWERTRAIN.brakePotentiometer = SENSORS_ScaleADC(RAMN_SENSORS_ADCValues[0], SENSORS_BRAKE_MIN, SENSORS_BRAKE_MAX);
+	RAMN_SENSORS_POWERTRAIN.accelPotentiometer = SENSORS_ScaleADC(RAMN_SENSORS_ADCValues[1], SENSORS_ACCEL_MIN, SENSORS_ACCEL_MAX);
+	RAMN_SENSORS_POWERTRAIN.shiftJoystick = SENSORS_ConvertLeverADC(RAMN_SENSORS_ADCValues[2]);
 
 	if (tick - lastUpdateTick > 100U) //TODO: replace this by better debounce
 	{
@@ -177,11 +161,10 @@ static uint16_t SENSORS_LogToLinear(uint16_t val ) {
 static void SENSORS_UpdateChassis(uint32_t tick)
 {
 	RAMN_LightSwitchState_t currentLightSwitch;
-	SENSORS_STEER_FILTERED = SENSORS_EMAFilter(SENSORS_STEER_FILTERED, RAMN_SENSORS_ADCValues[0]);
 #ifdef CHASSIS_LOGARITHMIC_POTENTIOMETER
-	RAMN_SENSORS_CHASSIS.steeringPotentiometer = SENSORS_LogToLinear(SENSORS_STEER_FILTERED);
+	RAMN_SENSORS_CHASSIS.steeringPotentiometer = SENSORS_LogToLinear(RAMN_SENSORS_ADCValues[0]);
 #else
-	RAMN_SENSORS_CHASSIS.steeringPotentiometer = (0xFFF - SENSORS_ScaleADC(SENSORS_STEER_FILTERED, SENSORS_STEER_LINEAR_MIN, SENSORS_STEER_LINEAR_MAX));
+	RAMN_SENSORS_CHASSIS.steeringPotentiometer = (0xFFF - SENSORS_ScaleADC(RAMN_SENSORS_ADCValues[0], SENSORS_STEER_LINEAR_MIN, SENSORS_STEER_LINEAR_MAX));
 #endif
 	RAMN_SENSORS_CHASSIS.sidebrakeSwitch = SENSORS_ConvertSideBrakeADC(RAMN_SENSORS_ADCValues[1]);
 
