@@ -38,6 +38,9 @@ static const uint16_t loglookupt[] = {
 };
 #endif
 
+static const uint16_t SENSORS_STEER_LINEAR_MIN = 0x040;
+static const uint16_t SENSORS_STEER_LINEAR_MAX = 0xFFF;
+
 RAMN_SENSORS_ChassisSensors_t RAMN_SENSORS_CHASSIS = {
 		.steeringPotentiometer = 0x7FF,
 		.sidebrakeSwitch = RAMN_SIDEBRAKE_UNKNOWN,
@@ -47,6 +50,11 @@ RAMN_SENSORS_ChassisSensors_t RAMN_SENSORS_CHASSIS = {
 #endif
 
 #if defined(EXPANSION_POWERTRAIN)
+
+static const uint16_t SENSORS_BRAKE_MIN = 0x000;
+static const uint16_t SENSORS_BRAKE_MAX = 0xFC0;
+static const uint16_t SENSORS_ACCEL_MIN = 0x000;
+static const uint16_t SENSORS_ACCEL_MAX = 0xFC0;
 
 RAMN_SENSORS_PowertrainSensors_t RAMN_SENSORS_POWERTRAIN_PREVIOUS = {
 		.brakePotentiometer = 0U,
@@ -74,6 +82,13 @@ RAMN_SENSORS_BodySensors_t RAMN_SENSORS_BODY = {
 
 // Private Functions  --------------------------------------------
 
+static uint16_t SENSORS_ScaleADC(uint16_t raw, uint16_t min, uint16_t max)
+{
+	if (raw <= min) return 0x000;
+	if (raw >= max) return 0xFFF;
+	return (uint16_t)(((uint32_t)(raw - min) * 0xFFF) / (max - min));
+}
+
 #if defined(EXPANSION_POWERTRAIN)
 
 static RAMN_LeverState_t SENSORS_ConvertLeverADC(uint16_t adcval)
@@ -90,8 +105,8 @@ static RAMN_LeverState_t SENSORS_ConvertLeverADC(uint16_t adcval)
 
 static void SENSORS_UpdatePowertrain(uint32_t tick)
 {
-	RAMN_SENSORS_POWERTRAIN.brakePotentiometer = RAMN_SENSORS_ADCValues[0];
-	RAMN_SENSORS_POWERTRAIN.accelPotentiometer = RAMN_SENSORS_ADCValues[1];
+	RAMN_SENSORS_POWERTRAIN.brakePotentiometer = SENSORS_ScaleADC(RAMN_SENSORS_ADCValues[0], SENSORS_BRAKE_MIN, SENSORS_BRAKE_MAX);
+	RAMN_SENSORS_POWERTRAIN.accelPotentiometer = SENSORS_ScaleADC(RAMN_SENSORS_ADCValues[1], SENSORS_ACCEL_MIN, SENSORS_ACCEL_MAX);
 	RAMN_SENSORS_POWERTRAIN.shiftJoystick = SENSORS_ConvertLeverADC(RAMN_SENSORS_ADCValues[2]);
 
 	if (tick - lastUpdateTick > 100U) //TODO: replace this by better debounce
@@ -149,7 +164,7 @@ static void SENSORS_UpdateChassis(uint32_t tick)
 #ifdef CHASSIS_LOGARITHMIC_POTENTIOMETER
 	RAMN_SENSORS_CHASSIS.steeringPotentiometer = SENSORS_LogToLinear(RAMN_SENSORS_ADCValues[0]);
 #else
-	RAMN_SENSORS_CHASSIS.steeringPotentiometer = (0xFFF-RAMN_SENSORS_ADCValues[0]);
+	RAMN_SENSORS_CHASSIS.steeringPotentiometer = (0xFFF - SENSORS_ScaleADC(RAMN_SENSORS_ADCValues[0], SENSORS_STEER_LINEAR_MIN, SENSORS_STEER_LINEAR_MAX));
 #endif
 	RAMN_SENSORS_CHASSIS.sidebrakeSwitch = SENSORS_ConvertSideBrakeADC(RAMN_SENSORS_ADCValues[1]);
 
