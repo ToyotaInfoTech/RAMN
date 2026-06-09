@@ -26,12 +26,12 @@ static void report_Error(RAMN_ISOTPHandler_t* handler, uint8_t dir, RAMN_ISOTP_N
 {
 	if (dir & ISOTP_RX)
 	{
-		// TODO: RX error processing
+		handler->lastRxResult = errCode;   // Record error for upper layer inspection
 		handler->rxStatus = ISOTP_RX_IDLE; // Get ready for what is next
 	}
 	if (dir & ISOTP_TX)
 	{
-		// TODO: TX error processing
+		handler->lastTxResult = errCode;   // Record error for upper layer inspection
 		handler->txStatus = ISOTP_TX_FINISHED; // Needs to be put back to "IDLE" manually
 	}
 }
@@ -141,18 +141,21 @@ static void ISOTP_ReceiveCF(RAMN_ISOTPHandler_t* handler, uint8_t dlc, const uin
 	}
 }
 
-static void ISOTP_ReceiveFC(RAMN_ISOTPHandler_t* handler, uint8_t dlc, const uint8_t* data)
+static void ISOTP_ReceiveFC(RAMN_ISOTPHandler_t* handler, uint8_t dlc, const uint8_t* data, uint32_t tick)
 {
-	handler->targetFCFlag = data[0]&0xF;
+	// A FC frame is only meaningful while a TX is ongoing. Ignore otherwise.
+	RAMN_Bool_t txOngoing = (RAMN_Bool_t)((handler->txStatus == ISOTP_TX_WAITING_FLAG) || (handler->txStatus == ISOTP_TX_TRANSFERRING));
 
-	if (dlc > 1) handler->targetBlockSize = data[1];
-	else handler->targetBlockSize = 0U;
-	if (dlc > 2) handler->targetST = data[2];
-	else handler->targetST = 0U;
+	handler->targetFCFlag = data[0]&0xF;
 
 	switch(handler->targetFCFlag)
 	{
 	case 0U:   // "Continue To Send"
+		// BS and STmin are only relevant for ContinueToSend (ISO 15765-2 9.6.5.1)
+		if (dlc > 1) handler->targetBlockSize = data[1];
+		else handler->targetBlockSize = 0U;
+		if (dlc > 2) handler->targetST = data[2];
+		else handler->targetST = 0U;
 		// ISO_TP says we should just ignore if not expecting
 		if(handler->txStatus == ISOTP_TX_WAITING_FLAG)
 		{
@@ -161,19 +164,22 @@ static void ISOTP_ReceiveFC(RAMN_ISOTPHandler_t* handler, uint8_t dlc, const uin
 		break;
 
 	case 1U:  // "WAIT"
+		// BS and STmin shall be ignored for WAIT (ISO 15765-2 9.6.5.1)
 		// Ignore if not expecting
-		if((handler->txStatus == ISOTP_TX_WAITING_FLAG) || (handler->txStatus == ISOTP_TX_TRANSFERRING))
+		if(txOngoing)
 		{
 			handler->txStatus = ISOTP_TX_WAITING_FLAG;
+			handler->txLastTimestamp = tick; // WAIT restarts the N_Bs timer
 		}
 		break;
 
 	case 2U:  // "Abort"
-		report_Error(handler, ISOTP_TX, N_BUFFER_OVFLW);
+		// Only meaningful while transmitting; a stray OVFLW must not disturb an idle TX
+		if(txOngoing) report_Error(handler, ISOTP_TX, N_BUFFER_OVFLW);
 		break;
 
-	default:
-		report_Error(handler, ISOTP_TX, N_INVALID_FS);
+	default:  // Reserved/invalid FlowStatus
+		if(txOngoing) report_Error(handler, ISOTP_TX, N_INVALID_FS);
 		break;
 	}
 }
@@ -197,6 +203,9 @@ void RAMN_ISOTP_Init(RAMN_ISOTPHandler_t* handler, FDCAN_TxHeaderTypeDef* FCMsgH
 	handler->targetFCFlag = 0U;
 	handler->targetBlockSize = 0U;
 	handler->targetST = 0U;
+
+	handler->lastRxResult = N_OK;
+	handler->lastTxResult = N_OK;
 
 	handler->selfFCFlag = 0U;
 	handler->selfBlockSize = ISOTP_CONSECUTIVE_BLOCK_SIZE;
@@ -239,7 +248,7 @@ void RAMN_ISOTP_ProcessRxMsg(RAMN_ISOTPHandler_t* handler, uint8_t dlc, const ui
 			break;
 
 		case 0x3U: // FLOW CONTROL FRAME (FC)
-			ISOTP_ReceiveFC(handler, dlc, data);
+			ISOTP_ReceiveFC(handler, dlc, data, tick);
 			break;
 
 		default:  // INVALID HEADER
@@ -291,7 +300,13 @@ RAMN_Bool_t RAMN_ISOTP_GetNextTxMsg(RAMN_ISOTPHandler_t* handler, uint8_t* dlc, 
 	if( handler->txStatus == ISOTP_TX_TRANSFERRING)
 	{
 		uint8_t minDelayMs = handler->targetST;
-		if (minDelayMs >= 0xF1) minDelayMs = 1U ; // Consider "microseconds" values as 1ms
+		// 0x00-0x7F are ms, 0xF1-0xF9 are 100-900us.
+		// All other (reserved) values must be treated as the longest STmin (0x7F = 127ms).
+		if (minDelayMs > 0x7F)
+		{
+			if ((minDelayMs >= 0xF1) && (minDelayMs <= 0xF9)) minDelayMs = 1U; // Consider "microseconds" values as 1ms
+			else minDelayMs = 0x7FU;
+		}
 		if ((tick - handler->txLastTimestamp) >= (uint32_t) minDelayMs)
 		{
 			if(handler->txIndex == 0)
@@ -382,7 +397,7 @@ RAMN_Result_t RAMN_ISOTP_Update(RAMN_ISOTPHandler_t* pHandler, uint32_t tick)
 		int32_t lapse = 	tick - pHandler->rxLastTimestamp;
 		if (lapse > ISOTP_RX_TIMEOUT_MS)
 		{
-			report_Error(pHandler, ISOTP_RX,N_TIMEOUT_Cr); // TODO: better report ?
+			report_Error(pHandler, ISOTP_RX,N_TIMEOUT_Cr);
 		}
 	}
 	return RAMN_OK;
@@ -399,7 +414,7 @@ RAMN_Bool_t RAMN_ISOTP_Continue_TX(RAMN_ISOTPHandler_t* pHandler, uint32_t tick,
 		uint32_t lapse = 	tick - pHandler->txLastTimestamp;
 		if (lapse > ISOTP_TX_TIMEOUT_MS)
 		{
-			report_Error(pHandler, ISOTP_TX,N_TIMEOUT_Bs); // TODO: better report ?
+			report_Error(pHandler, ISOTP_TX,N_TIMEOUT_Bs);
 		}
 	}
 
@@ -421,13 +436,14 @@ RAMN_Bool_t RAMN_ISOTP_Continue_TX(RAMN_ISOTPHandler_t* pHandler, uint32_t tick,
 
 RAMN_Result_t RAMN_ISOTP_RequestTx(RAMN_ISOTPHandler_t* handler, uint32_t tick)
 {
-	uint8_t result = RAMN_ERROR;
-	if(handler->txSize <= ISOTP_TXBUFFER_SIZE)
+	RAMN_Result_t result = RAMN_ERROR;
+	// FF_DL (without escape sequence) should not exceed 4095 bytes.
+	if((handler->txSize <= ISOTP_TXBUFFER_SIZE) && (handler->txSize <= 0xFFFU))
 	{
 		if (handler->txStatus != ISOTP_TX_IDLE)
 		{
 			// New request even though ongoing transfer wasn't over
-			report_Error(handler, ISOTP_TX, N_TIMEOUT_A);
+			report_Error(handler, ISOTP_TX, N_ERROR);
 		}
 		handler->txIndex = 0U;
 		handler->txFrameCount = 0U;

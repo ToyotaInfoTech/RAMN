@@ -90,6 +90,9 @@ typedef struct
 	uint8_t targetBlockSize;		  		// Block Size requested by target
 	uint8_t targetST;						// ST (Time between frames) requested by target
 
+	RAMN_ISOTP_N_RESULT lastRxResult;		// Result code of last RX error (N_OK if none)
+	RAMN_ISOTP_N_RESULT lastTxResult;		// Result code of last TX error (N_OK if none)
+
 	FDCAN_TxHeaderTypeDef* pFC_CANHeader;	// Header of the CAN Message to use for Flow Control Frames
 
 } RAMN_ISOTPHandler_t;
