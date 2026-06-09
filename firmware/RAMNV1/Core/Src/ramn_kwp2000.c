@@ -392,7 +392,7 @@ RAMN_Bool_t RAMN_KWP_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, c
 			RAMN_KWP_ISOTPHandler.rxStatus = ISOTP_RX_IDLE;
 		}
 
-		RAMN_ISOTP_ProcessRxMsg(&RAMN_KWP_ISOTPHandler,DLCtoUINT8(pHeader->DataLength),data, tick);
+		RAMN_ISOTP_ProcessRxMsg(&RAMN_KWP_ISOTPHandler,DLCtoUINT8(pHeader->DataLength),data, (RAMN_Bool_t)(pHeader->FDFormat == FDCAN_FD_CAN), tick);
 
 		//If a ISO-TP has been received, copy it to buffer
 		if (RAMN_KWP_ISOTPHandler.rxStatus == ISOTP_RX_FINISHED)

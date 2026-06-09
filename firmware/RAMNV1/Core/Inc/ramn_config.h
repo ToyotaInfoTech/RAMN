@@ -326,6 +326,14 @@
 #define ISOTP_CONSECUTIVE_BLOCK_SIZE 	0
 #define ISOTP_CONSECUTIVE_ST 			0
 
+// Maximum CAN frame payload (CAN_DL) used when transmitting ISO-TP frames.
+// This is only used when you send an ISO-TP request with CAN-FD - if you use classic CAN, the ECU will answer with classic CAN (max payload 8).
+// Note that the CAN-FD version is still experimental
+#define ISOTP_TX_DL 					64
+#if (ISOTP_TX_DL != 8) && (ISOTP_TX_DL != 12) && (ISOTP_TX_DL != 16) && (ISOTP_TX_DL != 20) && (ISOTP_TX_DL != 24) && (ISOTP_TX_DL != 32) && (ISOTP_TX_DL != 48) && (ISOTP_TX_DL != 64)
+#error "ISOTP_TX_DL must be a valid CAN_DL (8, 12, 16, 20, 24, 32, 48 or 64)"
+#endif
+
 // ISO-TP Timeout values. Set to a large value intentionally to prevent timeouts during manual experimentation.
 // Set both to 1000 to better mimic real ECUs.
 #define ISOTP_RX_TIMEOUT_MS 			200000

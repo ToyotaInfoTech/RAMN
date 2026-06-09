@@ -22,6 +22,28 @@
 
 #define ISOTP_RX 0x1
 #define ISOTP_TX 0x2
+
+// Padding byte used to fill CAN-FD frames up to a valid CAN_DL.
+#ifdef ISOTP_ANSWER_PADDING_BYTE
+#define ISOTP_FD_PAD_BYTE ISOTP_ANSWER_PADDING_BYTE
+#else
+#define ISOTP_FD_PAD_BYTE 0x00U
+#endif
+
+// Rounds a raw payload length (0..64) up to the next valid CAN_DL and returns the FDCAN DLC enum.
+// For len <= 8 the enum equals the byte count, so classic-CAN framing is unaffected.
+static uint32_t isotp_len_to_dlc(uint8_t len)
+{
+	if (len <= 8U)  return (uint32_t)len;
+	if (len <= 12U) return 9U;
+	if (len <= 16U) return 10U;
+	if (len <= 20U) return 11U;
+	if (len <= 24U) return 12U;
+	if (len <= 32U) return 13U;
+	if (len <= 48U) return 14U;
+	return 15U; // up to 64 bytes
+}
+
 static void report_Error(RAMN_ISOTPHandler_t* handler, uint8_t dir, RAMN_ISOTP_N_RESULT errCode)
 {
 	if (dir & ISOTP_RX)
@@ -38,25 +60,36 @@ static void report_Error(RAMN_ISOTPHandler_t* handler, uint8_t dir, RAMN_ISOTP_N
 
 static void ISOTP_ReceiveSF(RAMN_ISOTPHandler_t* handler, uint8_t dlc, const uint8_t* data)
 {
-	uint8_t size;
+	uint16_t size;
+	uint8_t  offset;
 
-	size = data[0]&0xF;
 	if(handler->rxStatus != ISOTP_RX_IDLE)
 	{
 		// Should report error, but proceed with receiving
 		report_Error(handler, ISOTP_RX, N_UNEXP_PDU);
 	}
 
-	// Standard says to not report, just ignore invalid lengths
-	if ((size > 0) && (size <= 7U))
+	if (dlc <= 8U)
 	{
-		if (size <= (dlc-1U)) // Standard says to just ignore invalid DLCs
-		{
-			// Valid data received, copy to buffer and signal buffer ready
-			RAMN_memcpy(handler->rxData,&data[1],size);
-			handler->rxCount = size;
-			handler->rxStatus = ISOTP_RX_FINISHED;
-		}
+		// CLASSICAL CAN / CAN_DL <= 8: SF_DL in the low nibble, payload from byte #1
+		size = data[0]&0xF;
+		offset = 1U;
+	}
+	else
+	{
+		// CAN_DL > 8: must use the escape sequence (low nibble 0), SF_DL in byte #1, payload from byte #2
+		if ((data[0]&0xF) != 0U) return; // Standard says to just ignore (9.6.2.2)
+		size = data[1];
+		offset = 2U;
+	}
+
+	// Standard says to not report, just ignore invalid lengths/DLCs
+	if ((size > 0U) && (size <= (dlc - offset)) && (size <= ISOTP_RXBUFFER_SIZE))
+	{
+		// Valid data received, copy to buffer and signal buffer ready
+		RAMN_memcpy(handler->rxData,&data[offset],size);
+		handler->rxCount = size;
+		handler->rxStatus = ISOTP_RX_FINISHED;
 	}
 }
 
@@ -70,15 +103,33 @@ static void ISOTP_ReceiveFF(RAMN_ISOTPHandler_t* handler, uint8_t dlc, const uin
 
 	if(dlc >= 8) // Standard says to just ignore invalid DLC
 	{
-		handler->rxExpectedSize = ((data[0]&0xF) << 8) | data[1];
+		uint32_t ffdl;
+		uint8_t  offset;
+
+		if (((data[0]&0xF) == 0U) && (data[1] == 0U))
+		{
+			// Escape sequence: 32-bit FF_DL in bytes #2..#5, payload from byte #6
+			ffdl = ((uint32_t)data[2] << 24) | ((uint32_t)data[3] << 16) | ((uint32_t)data[4] << 8) | (uint32_t)data[5];
+			offset = 6U;
+		}
+		else
+		{
+			// 12-bit FF_DL, payload from byte #2
+			ffdl = (uint32_t)((data[0]&0xF) << 8) | data[1];
+			offset = 2U;
+		}
+
 		// Standard says to just ignore invalid payload sizes
-		if (handler->rxExpectedSize > 7)
+		if (ffdl > 7)
 		{
 			// Prepare to receive data
-			if(handler->rxExpectedSize <= ISOTP_RXBUFFER_SIZE)
+			if(ffdl <= ISOTP_RXBUFFER_SIZE)
 			{
-				RAMN_memcpy(handler->rxData, &data[2], 6);
-				handler->rxCount      = 6;
+				uint8_t firstChunk = dlc - offset; // RX_DL is the FF's CAN_DL (9.5.4)
+				handler->rxExpectedSize = (uint16_t)ffdl;
+				handler->rxDL         = dlc;
+				RAMN_memcpy(handler->rxData, &data[offset], firstChunk);
+				handler->rxCount      = firstChunk;
 				handler->rxStatus     = ISOTP_RX_TRANSFERRING;
 				handler->selfFCFlag   = 0U;
 				handler->rxMustSendCF = 1U;
@@ -109,19 +160,20 @@ static void ISOTP_ReceiveCF(RAMN_ISOTPHandler_t* handler, uint8_t dlc, const uin
 		return;
 	}
 
+	uint16_t maxCFData = (handler->rxDL > 0U) ? (uint16_t)(handler->rxDL - 1U) : 7U; // RX_DL - 1
 	waitingBytes = handler->rxExpectedSize - handler->rxCount;
-	if ((waitingBytes > 7) && dlc != 8)
+	if ((waitingBytes > maxCFData) && (dlc != handler->rxDL))
 	{
-		// Should ignore
+		// Should ignore (a non-final CF must use the full RX_DL)
 	}
-	else if ((waitingBytes <= 7) && dlc < (waitingBytes +1))
+	else if ((waitingBytes <= maxCFData) && dlc < (waitingBytes +1))
 	{
-		// Should ignore
+		// Should ignore (final CF too short)
 	}
 	else
 	{
 		handler->rxFrameCount++;
-		size = waitingBytes < 7 ? waitingBytes : dlc - 1;
+		size = (waitingBytes <= maxCFData) ? (uint8_t)waitingBytes : (uint8_t)(dlc - 1);
 		RAMN_memcpy(&(handler->rxData[handler->rxCount]),&data[1],size);
 		handler->rxCount += size;
 		if (handler->rxCount == handler->rxExpectedSize)
@@ -213,6 +265,9 @@ void RAMN_ISOTP_Init(RAMN_ISOTPHandler_t* handler, FDCAN_TxHeaderTypeDef* FCMsgH
 
 	handler->rxFrameCount = 0U;
 	handler->txFrameCount = 0U;
+	handler->rxDL = 0U;
+	handler->rxWasFD = 0U;
+	handler->txIsFD = 0U;
 
 	handler->pFC_CANHeader = FCMsgHeader;
 
@@ -221,7 +276,7 @@ void RAMN_ISOTP_Init(RAMN_ISOTPHandler_t* handler, FDCAN_TxHeaderTypeDef* FCMsgH
 
 }
 
-void RAMN_ISOTP_ProcessRxMsg(RAMN_ISOTPHandler_t* handler, uint8_t dlc, const uint8_t* data, const uint32_t tick)
+void RAMN_ISOTP_ProcessRxMsg(RAMN_ISOTPHandler_t* handler, uint8_t dlc, const uint8_t* data, RAMN_Bool_t isCanFD, const uint32_t tick)
 {
 	handler->rxLastTimestamp = tick; // Consider any message good to update the "alive" timer
 
@@ -235,10 +290,13 @@ void RAMN_ISOTP_ProcessRxMsg(RAMN_ISOTPHandler_t* handler, uint8_t dlc, const ui
 		switch((data[0] & 0xF0) >> 4) // Header: first 4 bits of message
 		{
 		case 0x0U: // SINGLE FRAME (SF)
+			// Remember the request format so the answer can mirror it. Only request frames (SF/FF)
+			handler->rxWasFD = (isCanFD != False) ? 1U : 0U;
 			ISOTP_ReceiveSF(handler, dlc, data);
 			break;
 
 		case 0x1U: // FIRST FRAME (FF)
+			handler->rxWasFD = (isCanFD != False) ? 1U : 0U;
 			ISOTP_ReceiveFF(handler, dlc, data);
 			break;
 
@@ -263,6 +321,8 @@ void RAMN_ISOTP_ProcessRxMsg(RAMN_ISOTPHandler_t* handler, uint8_t dlc, const ui
 		uint8_t data[8U];
 		RAMN_ISOTP_GetFCFrame(handler,&dlc,data);
 		handler->pFC_CANHeader->DataLength = UINT8toDLC(dlc);
+		// Mirror the request's frame format for the FlowControl frame
+		handler->pFC_CANHeader->FDFormat = handler->rxWasFD ? FDCAN_FD_CAN : FDCAN_CLASSIC_CAN;
 		// Ignore potential error. If we miss the answer window, it is up to the diag tool to reduce speed.
 		RAMN_FDCAN_SendMessage(handler->pFC_CANHeader,data);
 	}
@@ -309,15 +369,29 @@ RAMN_Bool_t RAMN_ISOTP_GetNextTxMsg(RAMN_ISOTPHandler_t* handler, uint8_t* dlc, 
 		}
 		if ((tick - handler->txLastTimestamp) >= (uint32_t) minDelayMs)
 		{
+			// Effective CAN_DL: mirror the request's format. A classic request must be answered with
+			// classic (<=8 byte) frames regardless of the configured ISOTP_TX_DL.
+			uint8_t txDL = handler->txIsFD ? (uint8_t)ISOTP_TX_DL : 8U;
 			if(handler->txIndex == 0)
 			{
 				// Single frame
-				if(handler->txSize <= 7)
+				if(handler->txSize <= 7U)
 				{
-					// Fits in a single frame (FM)
+					// Fits in a CLASSICAL SingleFrame (SF_DL in the low nibble)
 					data[0] = (uint8_t)handler->txSize;
 					RAMN_memcpy(&data[1],handler->txData,handler->txSize);
-					*dlc = handler->txSize +1U;      // *dlc = 8U; if padding preferred
+					*dlc = (uint8_t)handler->txSize + 1U;      // *dlc = 8U; if padding preferred
+					handler->txIndex = handler->txSize;
+					handler->txFrameCount = 1U;
+					handler->txStatus = ISOTP_TX_FINISHED;
+				}
+				else if ((txDL > 8U) && (handler->txSize <= (uint16_t)(txDL - 2U)))
+				{
+					// Fits in a CAN-FD SingleFrame using the escape sequence (SF_DL in byte #1)
+					data[0] = 0x00U;
+					data[1] = (uint8_t)handler->txSize;
+					RAMN_memcpy(&data[2],handler->txData,handler->txSize);
+					*dlc = (uint8_t)handler->txSize + 2U;
 					handler->txIndex = handler->txSize;
 					handler->txFrameCount = 1U;
 					handler->txStatus = ISOTP_TX_FINISHED;
@@ -328,9 +402,9 @@ RAMN_Bool_t RAMN_ISOTP_GetNextTxMsg(RAMN_ISOTPHandler_t* handler, uint8_t* dlc, 
 					// First sent a "First Frame" (FF)
 					data[0] = (0x10) | ((handler->txSize >> 8) & 0xF);
 					data[1] = handler->txSize & 0xFF;
-					RAMN_memcpy(&data[2],handler->txData,6);
-					*dlc = 8U;
-					handler->txIndex = 6U;
+					RAMN_memcpy(&data[2],handler->txData,(txDL - 2U));
+					*dlc = txDL;
+					handler->txIndex = (txDL - 2U);
 					handler->txFrameCount = 1U;
 					handler->txStatus = ISOTP_TX_WAITING_FLAG; // Wait for Flow Control "FC" frame
 				}
@@ -341,12 +415,12 @@ RAMN_Bool_t RAMN_ISOTP_GetNextTxMsg(RAMN_ISOTPHandler_t* handler, uint8_t* dlc, 
 				uint16_t remainingBytesCount = handler->txSize - handler->txIndex;
 				data[0] = 0x20 | ((handler->txFrameCount % 0x10) & 0xFF);
 
-				if (remainingBytesCount > 7U)
+				if (remainingBytesCount > (txDL - 1U))
 				{
-					// Not Last Frame
-					RAMN_memcpy(&data[1],&(handler->txData[handler->txIndex]),7);
-					*dlc = 8U;
-					handler->txIndex += 7;
+					// Not Last Frame: fill the full CAN_DL
+					RAMN_memcpy(&data[1],&(handler->txData[handler->txIndex]),(txDL - 1U));
+					*dlc = txDL;
+					handler->txIndex += (txDL - 1U);
 					if (handler->targetBlockSize != 0)
 					{
 						if ((handler->txFrameCount % handler->targetBlockSize) == 0U)
@@ -420,7 +494,13 @@ RAMN_Bool_t RAMN_ISOTP_Continue_TX(RAMN_ISOTPHandler_t* pHandler, uint32_t tick,
 
 	if (RAMN_ISOTP_GetNextTxMsg(pHandler,&dlc,data,tick) != False)
 	{
-		pTxHeader->DataLength = UINT8toDLC(dlc);
+		uint32_t dlcEnum   = isotp_len_to_dlc(dlc);
+		uint8_t  paddedLen = DLCtoUINT8(dlcEnum);
+		// Round a CAN-FD frame up to the next valid CAN_DL (12/16/.../64) and fill the gap
+		for (uint8_t i = dlc; i < paddedLen; i++) data[i] = ISOTP_FD_PAD_BYTE;
+		pTxHeader->DataLength = dlcEnum;
+		// Mirror the request's frame format for the answer
+		pTxHeader->FDFormat = pHandler->txIsFD ? FDCAN_FD_CAN : FDCAN_CLASSIC_CAN;
 		while (RAMN_FDCAN_SendMessage(pTxHeader,data) != RAMN_OK) RAMN_TaskDelay(1U); // Queue is full, need to wait
 	}
 
@@ -448,6 +528,9 @@ RAMN_Result_t RAMN_ISOTP_RequestTx(RAMN_ISOTPHandler_t* handler, uint32_t tick)
 		handler->txIndex = 0U;
 		handler->txFrameCount = 0U;
 		handler->txLastTimestamp = tick;
+		// Snapshot the request format now so the whole response stays consistent even if a new
+		// request (of a different format) arrives mid-transmission and mutates rxWasFD
+		handler->txIsFD = handler->rxWasFD;
 		handler->txStatus = ISOTP_TX_TRANSFERRING;
 		result = RAMN_OK;
 	}

@@ -1881,7 +1881,7 @@ RAMN_Bool_t RAMN_UDS_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, c
 		udsFCMsgHeader.Identifier = udsMsgHeader.Identifier;
 		udsFCMsgHeader.IdType = FDCAN_EXTENDED_ID;
 #endif
-		RAMN_ISOTP_ProcessRxMsg(&RAMN_UDS_ISOTPHandler,DLCtoUINT8(pHeader->DataLength),data, tick);
+		RAMN_ISOTP_ProcessRxMsg(&RAMN_UDS_ISOTPHandler,DLCtoUINT8(pHeader->DataLength),data, (RAMN_Bool_t)(pHeader->FDFormat == FDCAN_FD_CAN), tick);
 
 		// If a ISO-TP has been received, copy it to buffer
 		if (RAMN_UDS_ISOTPHandler.rxStatus == ISOTP_RX_FINISHED)
@@ -1911,6 +1911,9 @@ RAMN_Bool_t RAMN_UDS_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, c
 					// Valid frame
 					functionalAddressing = 1U;
 					requestSize = data[0]&0xF;
+
+					// Functional requests bypass the ISO-TP RX engine; record the frame format so the response mirrors it
+					RAMN_UDS_ISOTPHandler.rxWasFD = (pHeader->FDFormat == FDCAN_FD_CAN) ? 1U : 0U;
 
 #ifdef ENABLE_J1939_MODE
 					// Functional responses are physical (PF 0xDA)

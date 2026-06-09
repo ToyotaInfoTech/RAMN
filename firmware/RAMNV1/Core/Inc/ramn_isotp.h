@@ -74,6 +74,7 @@ typedef struct
 	uint8_t  rxMustSendCF;					// Target is expecting a CF
 	uint8_t  rxData[ISOTP_RXBUFFER_SIZE];	// Buffer for Outgoing Data
 	uint16_t rxFrameCount;  				// Frame count (current number of CAN Messages received, not whole ISO-TP frames received)
+	uint8_t  rxDL;							// RX_DL: CAN_DL retrieved from the FF, used to validate ConsecutiveFrame lengths (ISO 15765-2 9.5.4)
 
 	RAMN_ISOTP_TXStatus_t txStatus;    		// Current Status of TX Communication
 	uint16_t txIndex;				   		// Number of bytes currently sent
@@ -93,6 +94,9 @@ typedef struct
 	RAMN_ISOTP_N_RESULT lastRxResult;		// Result code of last RX error (N_OK if none)
 	RAMN_ISOTP_N_RESULT lastTxResult;		// Result code of last TX error (N_OK if none)
 
+	uint8_t rxWasFD;						// Frame format of the last received request (1 if CAN-FD), used to mirror the response
+	uint8_t txIsFD;							// Frame format of the response in progress (snapshot of rxWasFD taken at RequestTx)
+
 	FDCAN_TxHeaderTypeDef* pFC_CANHeader;	// Header of the CAN Message to use for Flow Control Frames
 
 } RAMN_ISOTPHandler_t;
@@ -102,7 +106,7 @@ typedef struct
 void 			RAMN_ISOTP_Init(RAMN_ISOTPHandler_t* handler, FDCAN_TxHeaderTypeDef* FCMsgHeader);
 
 // Adds a message for process by the ISO TP Engine. It assumes CAN ID has already been checked.
-void		 	RAMN_ISOTP_ProcessRxMsg(RAMN_ISOTPHandler_t* handler, uint8_t dlc, const uint8_t* data, const uint32_t tick);
+void		 	RAMN_ISOTP_ProcessRxMsg(RAMN_ISOTPHandler_t* handler, uint8_t dlc, const uint8_t* data, RAMN_Bool_t isCanFD, const uint32_t tick);
 
 // Formats the next "FC Frame" CAN Message to be sent next. User must call this function periodically and send the message if it returns True.
 RAMN_Bool_t 	RAMN_ISOTP_GetFCFrame(RAMN_ISOTPHandler_t* handler, uint8_t* dlc, uint8_t* data);

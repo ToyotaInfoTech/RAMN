@@ -49,6 +49,7 @@ typedef struct {
 #define FDCAN_ESI_ACTIVE    0x00000000U
 #define FDCAN_BRS_OFF       0x00000000U
 #define FDCAN_CLASSIC_CAN   0x00000000U
+#define FDCAN_FD_CAN        0x00200000U
 #define FDCAN_NO_TX_EVENTS  0x00000000U
 #define FDCAN_DLC_BYTES_0   0
 #define FDCAN_DLC_BYTES_8   8
@@ -60,6 +61,7 @@ typedef struct {
 #define ISOTP_TX_TIMEOUT_MS 1000
 #define ISOTP_CONSECUTIVE_BLOCK_SIZE 0
 #define ISOTP_CONSECUTIVE_ST 0
+#define ISOTP_TX_DL 8
 
 #define ISOTP_RX 0x1
 #define ISOTP_TX 0x2
@@ -94,6 +96,7 @@ typedef struct {
 	uint8_t  rxMustSendCF;
 	uint8_t  rxData[ISOTP_RXBUFFER_SIZE];
 	uint16_t rxFrameCount;
+	uint8_t  rxDL;
 	RAMN_ISOTP_TXStatus_t txStatus;
 	uint16_t txIndex;
 	uint16_t txSize;
@@ -106,12 +109,16 @@ typedef struct {
 	uint8_t targetFCFlag;
 	uint8_t targetBlockSize;
 	uint8_t targetST;
+	RAMN_ISOTP_N_RESULT lastRxResult;
+	RAMN_ISOTP_N_RESULT lastTxResult;
+	uint8_t rxWasFD;
+	uint8_t txIsFD;
 	FDCAN_TxHeaderTypeDef* pFC_CANHeader;
 } RAMN_ISOTPHandler_t;
 
 // ISO-TP Prototypes
 void RAMN_ISOTP_Init(RAMN_ISOTPHandler_t* handler, FDCAN_TxHeaderTypeDef* FCMsgHeader);
-void RAMN_ISOTP_ProcessRxMsg(RAMN_ISOTPHandler_t* handler, uint8_t dlc, const uint8_t* data, const uint32_t tick);
+void RAMN_ISOTP_ProcessRxMsg(RAMN_ISOTPHandler_t* handler, uint8_t dlc, const uint8_t* data, RAMN_Bool_t isCanFD, const uint32_t tick);
 RAMN_Bool_t RAMN_ISOTP_GetFCFrame(RAMN_ISOTPHandler_t* handler, uint8_t* dlc, uint8_t* data);
 RAMN_Bool_t RAMN_ISOTP_GetNextTxMsg(RAMN_ISOTPHandler_t* handler, uint8_t* dlc, uint8_t* data, uint32_t tick);
 RAMN_Result_t RAMN_ISOTP_Update(RAMN_ISOTPHandler_t* pHandler, uint32_t tick);
