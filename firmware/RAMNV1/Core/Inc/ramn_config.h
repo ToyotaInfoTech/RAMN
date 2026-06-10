@@ -321,8 +321,8 @@
 #endif
 #endif
 
-#define ISOTP_RXBUFFER_SIZE 			4096
-#define ISOTP_TXBUFFER_SIZE 			4096
+#define ISOTP_RXBUFFER_SIZE 			4224
+#define ISOTP_TXBUFFER_SIZE 			4224
 #define ISOTP_CONSECUTIVE_BLOCK_SIZE 	0
 #define ISOTP_CONSECUTIVE_ST 			0
 
@@ -359,9 +359,12 @@
 // This only applies to requests - see flag below for answers.
 // #define ISOTP_REQUIRE_PADDING
 
-// Define this flag to make the ECU pad its ISO-TP answers with the defined byte (until ISO-TP CAN messages reach a size of 8).
+// Define this flag to make the ECU pad its (classic CAN) ISO-TP answers with the defined byte (until ISO-TP CAN messages reach a size of 8).
 // This only applies to answers - see flag above for requests.
 // #define ISOTP_ANSWER_PADDING_BYTE 0x00
+
+// Define this flag to pad CAN-FD ISO-TP answer frames up to the full configured ISOTP_TX_DL (64 bytes by default) instead of the smallest.
+// #define ISOTP_FD_FULL_PADDING
 
 #ifdef ENABLE_CDC
 #define APP_RX_DATA_SIZE  2048

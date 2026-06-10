@@ -317,10 +317,11 @@ __attribute__ ((section (".buffers"))) uint8_t i2c_txBuf[I2C_TX_BUFFER_SIZE] = {
 #if defined(ENABLE_DIAG)
 
 // Holds currently processed Diag Command from CAN.
-// Aligned to enable easy shell code execution.
-__attribute__ ((section (".buffers"), aligned(4)))  uint8_t diagRxbuf[0xFFF+2];
-// Holds currently generated Diag Command Answer for CAN.
-__attribute__ ((section (".buffers")))  uint8_t diagTxbuf[0xFFF];
+// Aligned to enable easy shell code execution. Sized to the ISO-TP buffers so a full reassembled
+// request fits (+2 headroom for the zero-terminator some routines write at data[size]).
+__attribute__ ((section (".buffers"), aligned(4)))  uint8_t diagRxbuf[ISOTP_RXBUFFER_SIZE+2];
+// Holds currently generated Diag Command Answer for CAN (sized to the ISO-TP TX buffer).
+__attribute__ ((section (".buffers")))  uint8_t diagTxbuf[ISOTP_TXBUFFER_SIZE+2];
 
 #endif
 
@@ -2083,7 +2084,7 @@ void RAMN_DiagRXFunc(void *argument)
 				{
 					if (xStreamBufferReceive(UdsRxDataStreamBufferHandle, (void *)&diagRxSize,sizeof(diagRxSize), portMAX_DELAY) == sizeof(diagRxSize))
 					{
-						if (diagRxSize <= 0xFFF)
+						if (diagRxSize <= ISOTP_RXBUFFER_SIZE)
 						{
 							index = 0;
 							if (diagRxSize > 0U)
@@ -2153,7 +2154,7 @@ void RAMN_DiagRXFunc(void *argument)
 		{
 			if (xStreamBufferReceive(KwpRxDataStreamBufferHandle, (void *)&diagRxSize,sizeof(diagRxSize), portMAX_DELAY) == sizeof(diagRxSize))
 			{
-				if (diagRxSize <= 0xFFF)
+				if (diagRxSize <= ISOTP_RXBUFFER_SIZE)
 				{
 					index = 0;
 					while (index != diagRxSize)
@@ -2240,7 +2241,7 @@ void RAMN_DiagTXFunc(void *argument)
 		{
 			if (xStreamBufferReceive(UdsTxDataStreamBufferHandle, (void *)&(RAMN_UDS_ISOTPHandler.txSize),sizeof(RAMN_UDS_ISOTPHandler.txSize), portMAX_DELAY) == sizeof(RAMN_UDS_ISOTPHandler.txSize))
 			{
-				if (RAMN_UDS_ISOTPHandler.txSize <= 0xFFF) //TODO: empty buffer securely if overflow
+				if (RAMN_UDS_ISOTPHandler.txSize <= ISOTP_TXBUFFER_SIZE) //TODO: empty buffer securely if overflow
 				{
 					index = 0U;
 					while (index != RAMN_UDS_ISOTPHandler.txSize)
@@ -2273,7 +2274,7 @@ void RAMN_DiagTXFunc(void *argument)
 		{
 			if (xStreamBufferReceive(KwpTxDataStreamBufferHandle, (void *)&(RAMN_KWP_ISOTPHandler.txSize),sizeof(RAMN_KWP_ISOTPHandler.txSize), portMAX_DELAY) == sizeof(RAMN_KWP_ISOTPHandler.txSize))
 			{
-				if (RAMN_KWP_ISOTPHandler.txSize <= 0xFFF) //TODO: empty buffer securely if overflow
+				if (RAMN_KWP_ISOTPHandler.txSize <= ISOTP_TXBUFFER_SIZE) //TODO: empty buffer securely if overflow
 				{
 					index = 0U;
 					while (index != RAMN_KWP_ISOTPHandler.txSize)

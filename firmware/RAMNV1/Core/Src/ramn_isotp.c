@@ -318,9 +318,18 @@ void RAMN_ISOTP_ProcessRxMsg(RAMN_ISOTPHandler_t* handler, uint8_t dlc, const ui
 	if (handler->rxMustSendCF == True)
 	{
 		uint8_t dlc;
-		uint8_t data[8U];
+		uint8_t data[64U]; // large enough to optionally pad a CAN-FD FlowControl up to ISOTP_TX_DL
 		RAMN_ISOTP_GetFCFrame(handler,&dlc,data);
-		handler->pFC_CANHeader->DataLength = UINT8toDLC(dlc);
+#ifdef ISOTP_FD_FULL_PADDING
+		// Optionally pad a CAN-FD FlowControl frame up to the configured ISOTP_TX_DL.
+		if ((handler->rxWasFD != 0U) && (dlc < (uint8_t)ISOTP_TX_DL))
+		{
+			for (uint8_t i = dlc; i < (uint8_t)ISOTP_TX_DL; i++) data[i] = ISOTP_FD_PAD_BYTE;
+			dlc = (uint8_t)ISOTP_TX_DL;
+		}
+#endif
+		// isotp_len_to_dlc maps any valid CAN_DL to its DLC (UINT8toDLC is identity, only valid for <=8)
+		handler->pFC_CANHeader->DataLength = isotp_len_to_dlc(dlc);
 		// Mirror the request's frame format for the FlowControl frame
 		handler->pFC_CANHeader->FDFormat = handler->rxWasFD ? FDCAN_FD_CAN : FDCAN_CLASSIC_CAN;
 		// Ignore potential error. If we miss the answer window, it is up to the diag tool to reduce speed.
@@ -396,10 +405,23 @@ RAMN_Bool_t RAMN_ISOTP_GetNextTxMsg(RAMN_ISOTPHandler_t* handler, uint8_t* dlc, 
 					handler->txFrameCount = 1U;
 					handler->txStatus = ISOTP_TX_FINISHED;
 				}
+				else if (handler->txSize > 0xFFFU)
+				{
+					// Large message (> 4095 bytes): First Frame with the 32-bit escape sequence
+					data[0] = 0x10U;
+					data[1] = 0x00U;
+					data[2] = (uint8_t)(((uint32_t)handler->txSize >> 24) & 0xFFU);
+					data[3] = (uint8_t)(((uint32_t)handler->txSize >> 16) & 0xFFU);
+					data[4] = (uint8_t)(((uint32_t)handler->txSize >> 8) & 0xFFU);
+					data[5] = (uint8_t)(handler->txSize & 0xFFU);
+					RAMN_memcpy(&data[6],handler->txData,(txDL - 6U));
+					*dlc = txDL;
+					handler->txIndex = (txDL - 6U);
+					handler->txFrameCount = 1U;
+					handler->txStatus = ISOTP_TX_WAITING_FLAG; // Wait for Flow Control "FC" frame
+				}
 				else
 				{
-					// Large message, requires several messages
-					// First sent a "First Frame" (FF)
 					data[0] = (0x10) | ((handler->txSize >> 8) & 0xF);
 					data[1] = handler->txSize & 0xFF;
 					RAMN_memcpy(&data[2],handler->txData,(txDL - 2U));
@@ -494,7 +516,12 @@ RAMN_Bool_t RAMN_ISOTP_Continue_TX(RAMN_ISOTPHandler_t* pHandler, uint32_t tick,
 
 	if (RAMN_ISOTP_GetNextTxMsg(pHandler,&dlc,data,tick) != False)
 	{
-		uint32_t dlcEnum   = isotp_len_to_dlc(dlc);
+		uint8_t  targetLen = dlc;
+#ifdef ISOTP_FD_FULL_PADDING
+		// Optionally pad a CAN-FD answer frame all the way to the configured ISOTP_TX_DL.
+		if (pHandler->txIsFD && (targetLen < (uint8_t)ISOTP_TX_DL)) targetLen = (uint8_t)ISOTP_TX_DL;
+#endif
+		uint32_t dlcEnum   = isotp_len_to_dlc(targetLen);
 		uint8_t  paddedLen = DLCtoUINT8(dlcEnum);
 		// Round a CAN-FD frame up to the next valid CAN_DL (12/16/.../64) and fill the gap
 		for (uint8_t i = dlc; i < paddedLen; i++) data[i] = ISOTP_FD_PAD_BYTE;
@@ -517,8 +544,9 @@ RAMN_Bool_t RAMN_ISOTP_Continue_TX(RAMN_ISOTPHandler_t* pHandler, uint32_t tick,
 RAMN_Result_t RAMN_ISOTP_RequestTx(RAMN_ISOTPHandler_t* handler, uint32_t tick)
 {
 	RAMN_Result_t result = RAMN_ERROR;
-	// FF_DL (without escape sequence) should not exceed 4095 bytes.
-	if((handler->txSize <= ISOTP_TXBUFFER_SIZE) && (handler->txSize <= 0xFFFU))
+	// Any message up to the TX buffer can be sent: <= 4095 bytes uses a 12-bit FF_DL, larger uses the
+	// 32-bit escape sequence FirstFrame (both encoded in RAMN_ISOTP_GetNextTxMsg).
+	if(handler->txSize <= ISOTP_TXBUFFER_SIZE)
 	{
 		if (handler->txStatus != ISOTP_TX_IDLE)
 		{
