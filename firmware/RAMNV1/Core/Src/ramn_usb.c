@@ -65,32 +65,41 @@ void RAMN_USB_Init(StreamBufferHandle_t* buffer,  osThreadId_t* pSendTask)
 
 void RAMN_USB_SendFromTask_Blocking(uint8_t* data, uint32_t length)
 {
-	// Start sending
-	if(CDC_Transmit_FS((uint8_t*)data,length) != USBD_OK)
+	// Zero-copy IN transfer: the DMA reads directly from 'data', so we must not return until the
+	// hardware is done. Poll the real endpoint state (RAMN_CDC_GetTXStatus); the Cplt notification is
+	// only a wake-up. The notification counts, so trusting it as the buffer-free signal can desync by one (e.g. a ZLP) and overwrite the buffer mid-DMA.
+
+	// Drop any stale token so the wait below pairs with this transfer only.
+	(void)ulTaskNotifyTake(pdTRUE, 0U);
+
+	if (CDC_Transmit_FS((uint8_t*)data, length) != USBD_OK)
 	{
-		// Should not Happen if serial is still opened
-#ifdef ENABLE_USB_AUTODETECT
-		if (RAMN_USB_Config.serialOpened == True)
-		{
-			RAMN_USB_Config.USBTxOverflowCnt++;
-			RAMN_USB_Config.serialOpened = False;
-		}
-#else
+		// Transfer did not start, so 'data' is already free to reuse.
 		RAMN_USB_Config.USBTxOverflowCnt++;
-#endif
+		return;
 	}
-	if (ulTaskNotifyTake(pdTRUE, USB_TX_TIMEOUT_MS) == 0U)
+
+	// Block until the IN endpoint is idle, bounded by USB_TX_TIMEOUT_MS.
+	uint32_t waited = 0U;
+	while (RAMN_CDC_GetTXStatus() != USBD_OK)
 	{
-		// Timeout Occurred, report if serial port is still opened
+		(void)ulTaskNotifyTake(pdTRUE, 1U);   // sleep on Cplt notify or 1 tick, then re-poll TxState
 #ifdef ENABLE_USB_AUTODETECT
-		if (RAMN_USB_Config.serialOpened == True)
+		// Port closed mid-transfer: the close callback clears serialOpened and wakes us. The transfer
+		// never completes, so abort now instead of waiting out the full timeout.
+		if (RAMN_USB_Config.serialOpened == False)
 		{
-			RAMN_USB_Config.USBErrCnt++;
-			RAMN_USB_Config.serialOpened = False;
+			RAMN_CDC_AbortTx();
+			break;
 		}
-#else
-		RAMN_USB_Config.USBErrCnt++;
 #endif
+		if (++waited >= USB_TX_TIMEOUT_MS)
+		{
+			// Stuck transfer: abort so the buffer can be reused safely.
+			RAMN_USB_Config.USBErrCnt++;
+			RAMN_CDC_AbortTx();
+			break;
+		}
 	}
 }
 
@@ -101,13 +110,17 @@ RAMN_Result_t RAMN_USB_SendFromTask(const uint8_t* data, uint32_t length)
 
 	while (xSemaphoreTake(USB_TX_SEMAPHORE, portMAX_DELAY ) != pdTRUE);
 
-	xBytesSent = xStreamBufferSend(*usbTxBuffer, data, length, 2000U);
+	// Frame-atomic: only enqueue if the whole frame fits, else drop it to keep the SLCAN stream
+	// frame-aligned. Single writer (mutex held) + consumer only frees space, so the send writes in full.
+	if (xStreamBufferSpacesAvailable(*usbTxBuffer) >= length)
+	{
+		xBytesSent = xStreamBufferSend(*usbTxBuffer, data, length, 0U);
+	}
 	xSemaphoreGive(USB_TX_SEMAPHORE);
 	if (xBytesSent != length)
 	{
 		RAMN_USB_Config.USBTxOverflowCnt++;
 		result = RAMN_ERROR;
-		while( xStreamBufferReset(*usbTxBuffer) != pdPASS) osDelay(10); //Clear buffer
 	}
 
 	return result;
@@ -128,12 +141,15 @@ RAMN_Result_t RAMN_USB_SendFromTask_Locked(const uint8_t* data, uint32_t length)
 	size_t xBytesSent = 0;
 	RAMN_Result_t result = RAMN_OK;
 
-	xBytesSent = xStreamBufferSend(*usbTxBuffer, data, length, 2000U);
+	// Caller already holds USB_TX_SEMAPHORE. Frame-atomic: see RAMN_USB_SendFromTask.
+	if (xStreamBufferSpacesAvailable(*usbTxBuffer) >= length)
+	{
+		xBytesSent = xStreamBufferSend(*usbTxBuffer, data, length, 0U);
+	}
 	if (xBytesSent != length)
 	{
 		RAMN_USB_Config.USBTxOverflowCnt++;
 		result = RAMN_ERROR;
-		while( xStreamBufferReset(*usbTxBuffer) != pdPASS) osDelay(10); //Clear buffer
 	}
 
 	return result;

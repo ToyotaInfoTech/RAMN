@@ -130,6 +130,9 @@ void RAMN_CDC_Init(StreamBufferHandle_t* pBuffer, osThreadId_t* pRecvTask, osThr
 
 //Returns current transmit Status of USB module
 uint8_t RAMN_CDC_GetTXStatus();
+
+//Aborts a stuck CDC IN transfer (flush EP + mark idle) so the shared TX buffer can be reused safely
+void RAMN_CDC_AbortTx(void);
 /* USER CODE END EXPORTED_FUNCTIONS */
 
 /**
