@@ -152,6 +152,18 @@ uint8_t RAMN_CDC_GetTXStatus()
 		return USBD_OK;
 	}
 }
+
+// Abort a stuck CDC IN transfer: flush the endpoint FIFO and mark the channel idle so the shared
+// zero-copy TX buffer can be reused. Called only on the hard timeout in RAMN_USB_SendFromTask_Blocking.
+void RAMN_CDC_AbortTx(void)
+{
+	USBD_Composite_HandleTypeDef *hcdc = (USBD_Composite_HandleTypeDef*)hUsbDeviceFS.pClassData;
+	(void)USBD_LL_FlushEP(&hUsbDeviceFS, CDC_IN_EP);
+	if (hcdc != NULL)
+	{
+		hcdc->TxState[0] = 0U;
+	}
+}
 /* USER CODE END PRIVATE_FUNCTIONS_DECLARATION */
 
 /**
@@ -331,24 +343,17 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 				{
 					if(USBD_recvBuffer != NULL)
 					{
-						if (xStreamBufferSendFromISR(*USBD_recvBuffer, &currentIndex, 2U, NULL ) != 2U)
+						// Frame-atomic: only enqueue if both the 2-byte length prefix and the body fit, else drop the whole command
+						if (xStreamBufferSpacesAvailable(*USBD_recvBuffer) < (2U + (size_t)currentIndex))
 						{
-							//If a callback function has been registered, report issue
-							//if (USBD_errorCallback_ptr != NULL) (*USBD_errorCallback_ptr)(&hUsbDeviceFS);
 							RAMN_USB_Config.USBErrCnt++;
 						}
 						else
 						{
-							if (xStreamBufferSendFromISR(*USBD_recvBuffer, recvBuf, currentIndex, NULL ) != currentIndex)
-							{
-								//if (USBD_errorCallback_ptr != NULL) (*USBD_errorCallback_ptr)(&hUsbDeviceFS);
-								RAMN_USB_Config.USBErrCnt++;
-							}
-							else
-							{
-								vTaskNotifyGiveFromISR(*USBD_recvTask, &xHigherPriorityTaskWoken);
-								portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
-							}
+							xStreamBufferSendFromISR(*USBD_recvBuffer, &currentIndex, 2U, NULL );
+							xStreamBufferSendFromISR(*USBD_recvBuffer, recvBuf, currentIndex, NULL );
+							vTaskNotifyGiveFromISR(*USBD_recvTask, &xHigherPriorityTaskWoken);
+							portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
 						}
 					}
 				}

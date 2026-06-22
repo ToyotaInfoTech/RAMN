@@ -409,23 +409,24 @@ USBD_StatusTypeDef USBD_LL_Init(USBD_HandleTypeDef *pdev)
 #endif /* USE_HAL_PCD_REGISTER_CALLBACKS */
 	/* USER CODE BEGIN EndPoint_Configuration */
 
-	epaddr = hpcd_USB_FS.Init.dev_endpoints * 16 / 2; // 16 bytes BDT per endpoint, and convert to half-words
+	// On the STM32L5 (unlike F1/F3) USB IP the PMA is byte-addressed (PMA_ACCESS == 1), not word-addressed.
+	epaddr = hpcd_USB_FS.Init.dev_endpoints * 16 / 2; // BTABLE: 8 bytes per endpoint
 
 	HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , 0x00 ,        PCD_SNG_BUF, epaddr);
-	epaddr += USB_MAX_EP0_SIZE / 2;
+	epaddr += USB_MAX_EP0_SIZE;
 	HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , 0x80 ,        PCD_SNG_BUF, epaddr);
-	epaddr += USB_MAX_EP0_SIZE / 2;
+	epaddr += USB_MAX_EP0_SIZE;
 	HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , CDC_IN_EP  ,  PCD_SNG_BUF, epaddr);
-	epaddr += CDC_DATA_FS_IN_PACKET_SIZE / 2;
+	epaddr += CDC_DATA_FS_IN_PACKET_SIZE;
 	HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , CDC_OUT_EP ,  PCD_SNG_BUF, epaddr);
-	epaddr += CDC_DATA_FS_OUT_PACKET_SIZE / 2;
+	epaddr += CDC_DATA_FS_OUT_PACKET_SIZE;
 	HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , CDC_CMD_EP ,  PCD_SNG_BUF, epaddr);
-	epaddr += CDC_CMD_PACKET_SIZE / 2;
+	epaddr += CDC_CMD_PACKET_SIZE;
 	HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , GSUSB_IN_EP , PCD_SNG_BUF, epaddr);
-	epaddr += GSUSB_TX_DATA_SIZE / 2;
+	epaddr += GSUSB_TX_DATA_SIZE;
 	HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , GSUSB_OUT_EP, PCD_SNG_BUF, epaddr);
-	epaddr += GSUSB_RX_DATA_SIZE / 2;
-	if(epaddr > 320) {
+	epaddr += GSUSB_RX_DATA_SIZE;
+	if(epaddr > 1024) {   // STM32L5 USB PMA is 1024 bytes
 		USBD_ErrLog("PMA buffers too big")
 	}
 	/* USER CODE END EndPoint_Configuration_CDC */
