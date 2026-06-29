@@ -18,6 +18,8 @@
 
 #if defined(ENABLE_XCP)
 
+#include "ramn_trng.h"
+
 /* XCP ERRROR CODES */
 #define XCP_ERR_CMD_SYNCH 						0x00
 #define XCP_ERR_CMD_BUSY						0x10
@@ -95,6 +97,9 @@
 #define XCP_COMMAND_PROGRAM_NEXT				0xCA
 #define XCP_COMMAND_PROGRAM_MAX					0xC9
 #define XCP_COMMAND_PROGRAM_VERIFY				0xC8
+
+/* XCP CHECKSUM TYPES (BUILD_CHECKSUM) */
+#define XCP_CHECKSUM_TYPE_ADD_14				0x03 // add BYTE into a DWORD
 
 // Exported variables ----------------------------------
 
@@ -267,6 +272,105 @@ static void XCP_SetMTA(const uint8_t* data, uint16_t size)
 	}
 }
 
+static void XCP_GetCommModeInfo(const uint8_t* data, uint16_t size)
+{
+	xcp_answerData[1] = 0x00; // reserved
+	xcp_answerData[2] = 0x00; // COMM_MODE_OPTIONAL (no master block mode, no interleaved)
+	xcp_answerData[3] = 0x00; // reserved
+	xcp_answerData[4] = 0x00; // MAX_BS (block mode unsupported)
+	xcp_answerData[5] = 0x00; // MIN_ST
+	xcp_answerData[6] = 0x00; // QUEUE_SIZE
+	xcp_answerData[7] = 0x01; // XCP driver version
+	*xcp_answerSize = 8U;
+}
+
+static void XCP_BuildChecksum(const uint8_t* data, uint16_t size)
+{
+	if (size < 8U) XCP_FormatNegativeAnswer(XCP_ERR_CMD_SYNTAX);
+	else
+	{
+		uint32_t blockSize = ((uint32_t)data[4] << 24) | ((uint32_t)data[5] << 16) | ((uint32_t)data[6] << 8) | (uint32_t)data[7];
+		// CheckAreaReadable uses an exclusive end and rejects empty/overflowing ranges.
+		if (RAMN_MEMORY_CheckAreaReadable(RAMN_XCP_Handler.mtaPointer, RAMN_XCP_Handler.mtaPointer + blockSize) != True)
+		{
+			XCP_FormatNegativeAnswer(XCP_ERR_OUT_OF_RANGE);
+		}
+		else
+		{
+			uint32_t checksum = 0U;
+			for (uint32_t i = 0U; i < blockSize; i++)
+			{
+				checksum += (uint32_t)*(uint8_t*)(uintptr_t)(RAMN_XCP_Handler.mtaPointer);
+				RAMN_XCP_Handler.mtaPointer++;
+			}
+			xcp_answerData[1] = XCP_CHECKSUM_TYPE_ADD_14; // checksum type
+			xcp_answerData[2] = 0x00; // reserved
+			xcp_answerData[3] = 0x00; // reserved
+			xcp_answerData[4] = (uint8_t)((checksum >> 24) & 0xFF); // big-endian
+			xcp_answerData[5] = (uint8_t)((checksum >> 16) & 0xFF);
+			xcp_answerData[6] = (uint8_t)((checksum >> 8 ) & 0xFF);
+			xcp_answerData[7] = (uint8_t)((checksum      ) & 0xFF);
+			*xcp_answerSize = 8U;
+		}
+	}
+}
+
+static void XCP_GetSeed(const uint8_t* data, uint16_t size)
+{
+	if (size < 2U) XCP_FormatNegativeAnswer(XCP_ERR_CMD_SYNTAX);
+	else if (RAMN_XCP_Handler.authenticated == True)
+	{
+		// Resource already unlocked/unprotected: seed length 0
+		xcp_answerData[1] = 0x00;
+		*xcp_answerSize = 2U;
+	}
+	else if (data[1] == 0x00) // mode 0x00: request (first part of) seed
+	{
+		RAMN_XCP_Handler.currentSeed = RAMN_RNG_Pop32();
+		RAMN_XCP_Handler.seedRequested = True;
+		xcp_answerData[1] = 0x04; // seed length
+		xcp_answerData[2] = (uint8_t)((RAMN_XCP_Handler.currentSeed >> 24) & 0xFF); // big-endian
+		xcp_answerData[3] = (uint8_t)((RAMN_XCP_Handler.currentSeed >> 16) & 0xFF);
+		xcp_answerData[4] = (uint8_t)((RAMN_XCP_Handler.currentSeed >> 8 ) & 0xFF);
+		xcp_answerData[5] = (uint8_t)((RAMN_XCP_Handler.currentSeed      ) & 0xFF);
+		*xcp_answerSize = 6U;
+	}
+	else // mode 0x01: remaining part, but seed fits in one packet
+	{
+		xcp_answerData[1] = 0x00;
+		*xcp_answerSize = 2U;
+	}
+}
+
+static void XCP_Unlock(const uint8_t* data, uint16_t size)
+{
+	if (size < 6U) XCP_FormatNegativeAnswer(XCP_ERR_CMD_SYNTAX); // need 4 key bytes
+	else if (RAMN_XCP_Handler.seedRequested != True) XCP_FormatNegativeAnswer(XCP_ERR_SEQUENCE);
+	else
+	{
+		uint32_t key = ((uint32_t)data[2] << 24) | ((uint32_t)data[3] << 16) | ((uint32_t)data[4] << 8) | (uint32_t)data[5];
+		if (key == (RAMN_XCP_Handler.currentSeed ^ 0x12345678))
+		{
+			RAMN_XCP_Handler.authenticated = True;
+			RAMN_XCP_Handler.seedRequested = False;
+			xcp_answerData[1] = 0x00; // nothing still protected
+			*xcp_answerSize = 2U;
+		}
+		else
+		{
+			// Wrong key: reset the session so the client must reconnect (per spec).
+			XCP_FormatNegativeAnswer(XCP_ERR_ACCESS_LOCKED);
+			XCP_ResetSession(RAMN_XCP_Handler.lastRXTimestamp);
+		}
+	}
+}
+
+static void XCP_RespondZeroInfo(uint16_t answerSize)
+{
+	for (uint16_t i = 1U; i < answerSize; i++) xcp_answerData[i] = 0x00;
+	*xcp_answerSize = answerSize;
+}
+
 // Exported Functions ----------------------------------
 
 RAMN_Result_t RAMN_XCP_Init(uint32_t tick)
@@ -371,8 +475,17 @@ void RAMN_XCP_ProcessDiagPayload(uint32_t tick, const uint8_t* data, uint16_t si
 			case XCP_COMMAND_SYNCH:
 				XCP_FormatNegativeAnswer(XCP_ERR_CMD_SYNCH);
 				break;
+			case XCP_COMMAND_GET_COMM_MODE_INFO:
+				XCP_GetCommModeInfo(data,size);
+				break;
 			case XCP_COMMAND_GET_ID:
 				RAMN_XCP_GetID(data,size);
+				break;
+			case XCP_COMMAND_GET_SEED:
+				XCP_GetSeed(data,size);
+				break;
+			case XCP_COMMAND_UNLOCK:
+				XCP_Unlock(data,size);
 				break;
 			case XCP_COMMAND_UPLOAD:
 				XCP_Upload(data,size);
@@ -382,6 +495,21 @@ void RAMN_XCP_ProcessDiagPayload(uint32_t tick, const uint8_t* data, uint16_t si
 				break;
 			case XCP_COMMAND_SET_MTA:
 				XCP_SetMTA(data,size);
+				break;
+			case XCP_COMMAND_BUILD_CHECKSUM:
+				XCP_BuildChecksum(data,size);
+				break;
+			case XCP_COMMAND_GET_DAQ_PROCESSOR_INFO:
+				XCP_RespondZeroInfo(8U);
+				break;
+			case XCP_COMMAND_GET_DAQ_RESOLUTION_INFO:
+				XCP_RespondZeroInfo(8U);
+				break;
+			case XCP_COMMAND_GET_PAG_PROCESSOR_INFO:
+				XCP_RespondZeroInfo(3U);
+				break;
+			case XCP_COMMAND_GET_PGM_PROCESSOR_INFO:
+				XCP_RespondZeroInfo(3U);
 				break;
 			default:
 				XCP_FormatNegativeAnswer(XCP_ERR_CMD_UNKNOWN);
