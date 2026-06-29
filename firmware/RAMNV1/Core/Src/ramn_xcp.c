@@ -163,7 +163,7 @@ static void XCP_Connect(const uint8_t* data, uint16_t size)
 		XCP_ResetSession(RAMN_XCP_Handler.lastRXTimestamp);
 		RAMN_XCP_Handler.connected = True;
 		xcp_answerData[1] = 0x00; // No Resource
-		xcp_answerData[2] = 0x00; // Intel format
+		xcp_answerData[2] = 0x01; // Motorola (big-endian) format
 		xcp_answerData[3] = 0x08; // 8-bytes max CTO
 		xcp_answerData[4] = 0x08; // 8-bytes max DTO
 		xcp_answerData[5] = 0x00; // 8-bytes max DTO
@@ -207,10 +207,10 @@ static void RAMN_XCP_GetID(const uint8_t* data, uint16_t size)
 			xcp_answerData[1] = data[1];
 			xcp_answerData[2] = 0;
 			xcp_answerData[3] = 0;
-			xcp_answerData[4] = sizeof(XCP_DEVICE_NAME)-1; //non-null terminated
-			xcp_answerData[5] = 0; //sizeof(XCP_DEVICE_NAME)-1; //non-null terminated
-			xcp_answerData[6] = 0; //sizeof(XCP_DEVICE_NAME)-1; //non-null terminated
-			xcp_answerData[7] = 0; //sizeof(XCP_DEVICE_NAME)-1; //non-null terminated
+			xcp_answerData[4] = 0; // length is big-endian (MSB first)
+			xcp_answerData[5] = 0;
+			xcp_answerData[6] = 0;
+			xcp_answerData[7] = sizeof(XCP_DEVICE_NAME)-1; //non-null terminated, big-endian LSB
 			*xcp_answerSize = 8U;
 			RAMN_XCP_Handler.mtaPointer = (uint32_t)(uintptr_t)&XCP_DEVICE_NAME;
 			break;
@@ -247,12 +247,22 @@ static void XCP_Upload(const uint8_t* data, uint16_t size)
 	}
 }
 
+static void XCP_ShortUpload(const uint8_t* data, uint16_t size)
+{
+	if (size < 8U) XCP_FormatNegativeAnswer(XCP_ERR_CMD_SYNTAX);
+	else
+	{
+		RAMN_XCP_Handler.mtaPointer = ((uint32_t)data[4] << 24) | ((uint32_t)data[5] << 16) | ((uint32_t)data[6] << 8) | (uint32_t)data[7];
+		XCP_Upload(data, size); 
+	}
+}
+
 static void XCP_SetMTA(const uint8_t* data, uint16_t size)
 {
 	if (size != 8U) XCP_FormatNegativeAnswer(XCP_ERR_CMD_SYNTAX);
 	else
 	{
-		RAMN_XCP_Handler.mtaPointer = (uint32_t)((data[4] << 24) + (data[5] << 16) + (data[6] << 8) + (data[7]));
+		RAMN_XCP_Handler.mtaPointer = ((uint32_t)data[4] << 24) | ((uint32_t)data[5] << 16) | ((uint32_t)data[6] << 8) | (uint32_t)data[7];
 		*xcp_answerSize = 1U;
 	}
 }
@@ -366,6 +376,9 @@ void RAMN_XCP_ProcessDiagPayload(uint32_t tick, const uint8_t* data, uint16_t si
 				break;
 			case XCP_COMMAND_UPLOAD:
 				XCP_Upload(data,size);
+				break;
+			case XCP_COMMAND_SHORT_UPLOAD:
+				XCP_ShortUpload(data,size);
 				break;
 			case XCP_COMMAND_SET_MTA:
 				XCP_SetMTA(data,size);
