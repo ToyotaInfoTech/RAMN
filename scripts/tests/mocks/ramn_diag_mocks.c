@@ -104,6 +104,15 @@ size_t xStreamBufferSend(StreamBufferHandle_t xStreamBuffer, const void *pvTxDat
                     RAMN_UDS_ISOTPHandler.txSize = ans_size;
                     RAMN_UDS_ISOTPHandler.txStatus = ISOTP_TX_TRANSFERRING;
                     RAMN_UDS_Continue_TX(0);
+                    // Complete any multi-frame transfer the same way a tester would: after the
+                    // FirstFrame, feed a FlowControl "Continue To Send" and pump ConsecutiveFrames.
+                    for (int guard = 0; (RAMN_UDS_ISOTPHandler.txStatus != ISOTP_TX_IDLE) && (guard < 8192); guard++) {
+                        if (RAMN_UDS_ISOTPHandler.txStatus == ISOTP_TX_WAITING_FLAG) {
+                            uint8_t fc[3] = {0x30, 0x00, 0x00}; // FlowControl: CTS, BS=0, STmin=0
+                            RAMN_ISOTP_ProcessRxMsg(&RAMN_UDS_ISOTPHandler, 3, fc, False, 0);
+                        }
+                        RAMN_UDS_Continue_TX(0);
+                    }
                 }
                 uds_expected = 0;
                 uds_state = 0;
@@ -195,8 +204,9 @@ uint16_t RAMN_strlen(const char *str) {
 
 // DLC Helpers
 uint8_t DLCtoUINT8(uint32_t dlc_enum) {
-    if (dlc_enum <= 8) return (uint8_t)dlc_enum;
-    return 8;
+    // The test harness stores the raw byte count in DataLength (see RAMNFirmwareBus.process_msg),
+    // so return it directly, including CAN-FD lengths (> 8) needed for escape SingleFrames.
+    return (uint8_t)dlc_enum;
 }
 
 uint32_t UINT8toDLC(uint8_t size) {
