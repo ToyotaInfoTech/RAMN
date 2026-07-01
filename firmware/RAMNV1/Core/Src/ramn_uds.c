@@ -1902,33 +1902,57 @@ RAMN_Bool_t RAMN_UDS_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, c
 	else if(pHeader->Identifier == UDS_FUNCTIONAL_RX_CANID)
 #endif
 	{
-		if (DLCtoUINT8(pHeader->DataLength) > 0)
+		uint8_t dlc = DLCtoUINT8(pHeader->DataLength);
+		if (dlc > 0)
 		{
-			if(((data[0]&0xF0) >> 4) == 0x0U) // SingleFrame
+			// ISO 15765-2 forbids multi-frame functional requests, so only SingleFrames are accepted.
+			// Both the classic SF and the CAN-FD escape SF (up to ISOTP_TX_DL-2 bytes) are decoded here.
+			const uint8_t* reqPayload = NULL;
+			if ((data[0] & 0xF0U) == 0x00U) // SingleFrame (PCI type nibble 0)
 			{
-				if (((data[0]&0xF) > 0) && ((data[0]&0xF) <= 7U) && ((data[0]&0xF) <= (DLCtoUINT8(pHeader->DataLength)-1U)))
+				if ((data[0] & 0x0FU) != 0U)
 				{
-					// Valid frame
-					functionalAddressing = 1U;
-					requestSize = data[0]&0xF;
+					// Classic SingleFrame: length in low nibble, payload at data[1]
+					uint16_t sz = data[0] & 0x0FU;
+					if ((sz <= 7U) && (sz <= (dlc - 1U)))
+					{
+						requestSize = sz;
+						reqPayload = &data[1];
+					}
+				}
+				else if ((pHeader->FDFormat == FDCAN_FD_CAN) && (dlc > 8U))
+				{
+					// CAN-FD escape SingleFrame: data[0]==0x00, real length in data[1], payload at data[2]
+					uint16_t sz = data[1];
+					if ((sz >= 1U) && (sz <= (dlc - 2U)) && (sz <= ISOTP_RXBUFFER_SIZE))
+					{
+						requestSize = sz;
+						reqPayload = &data[2];
+					}
+				}
+			}
 
-					// Functional requests bypass the ISO-TP RX engine; record the frame format so the response mirrors it
-					RAMN_UDS_ISOTPHandler.rxWasFD = (pHeader->FDFormat == FDCAN_FD_CAN) ? 1U : 0U;
+			if (reqPayload != NULL)
+			{
+				// Valid frame
+				functionalAddressing = 1U;
+
+				// Functional requests bypass the ISO-TP RX engine; record the frame format so the response mirrors it
+				RAMN_UDS_ISOTPHandler.rxWasFD = (pHeader->FDFormat == FDCAN_FD_CAN) ? 1U : 0U;
 
 #ifdef ENABLE_J1939_MODE
-					// Functional responses are physical (PF 0xDA)
-					udsMsgHeader.Identifier = J1939_UCAST_ID(prio, 0xDA00, sa, J1939_ECU_SA);
-					udsMsgHeader.IdType = FDCAN_EXTENDED_ID;
-					udsFCMsgHeader.Identifier = udsMsgHeader.Identifier;
-					udsFCMsgHeader.IdType = FDCAN_EXTENDED_ID;
+				// Functional responses are physical (PF 0xDA)
+				udsMsgHeader.Identifier = J1939_UCAST_ID(prio, 0xDA00, sa, J1939_ECU_SA);
+				udsMsgHeader.IdType = FDCAN_EXTENDED_ID;
+				udsFCMsgHeader.Identifier = udsMsgHeader.Identifier;
+				udsFCMsgHeader.IdType = FDCAN_EXTENDED_ID;
 #endif
 
-					xBytesSent = xStreamBufferSend(*strbuf, (void *) &(functionalAddressing), sizeof(functionalAddressing), portMAX_DELAY );
-					xBytesSent += xStreamBufferSend(*strbuf, (void *) &(requestSize), sizeof(requestSize), portMAX_DELAY );
-					xBytesSent += xStreamBufferSend(*strbuf, (void *) &data[1], requestSize, portMAX_DELAY );
-					if( xBytesSent != (sizeof(functionalAddressing) + requestSize + sizeof(RAMN_UDS_ISOTPHandler.rxCount))) Error_Handler();
-					result = True;
-				}
+				xBytesSent = xStreamBufferSend(*strbuf, (void *) &(functionalAddressing), sizeof(functionalAddressing), portMAX_DELAY );
+				xBytesSent += xStreamBufferSend(*strbuf, (void *) &(requestSize), sizeof(requestSize), portMAX_DELAY );
+				xBytesSent += xStreamBufferSend(*strbuf, (void *) reqPayload, requestSize, portMAX_DELAY );
+				if( xBytesSent != (sizeof(functionalAddressing) + requestSize + sizeof(requestSize))) Error_Handler();
+				result = True;
 			}
 		}
 	}
@@ -1937,20 +1961,15 @@ RAMN_Bool_t RAMN_UDS_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, c
 	return result;
 }
 
-void RAMN_UDS_ProcessDiagPayload(uint32_t tick, uint8_t* data, uint16_t size, uint8_t* answerData, uint16_t* answerSize)
+static void RAMN_UDS_DispatchService(uint32_t tick, uint8_t* data, uint16_t size)
 {
-	uds_answerData = answerData;
-	uds_answerSize = answerSize;
-
-	*uds_answerSize = 0U; // Empty Response by default
-
 	udsSessionHandler.lastMessageTimestamp = tick;
 	if (size > 0U)
 	{
 		if (data[0] < 0x10)
 		{
 			// J1979 command
-			RAMN_J1979_ProcessMessage(data, size, answerData, answerSize);
+			RAMN_J1979_ProcessMessage(data, size, uds_answerData, uds_answerSize);
 		}
 		else // ISO14229 command
 		{
@@ -2074,61 +2093,26 @@ void RAMN_UDS_ProcessDiagPayload(uint32_t tick, uint8_t* data, uint16_t size, ui
 	}
 }
 
-
-void RAMN_UDS_ProcessDiagPayloadFunctional(uint32_t tick, uint8_t* data, uint16_t size, uint8_t* answerData, uint16_t* answerSize)
+void RAMN_UDS_ProcessDiagPayload(uint32_t tick, uint8_t* data, uint16_t size, uint8_t* answerData, uint16_t* answerSize)
 {
 	uds_answerData = answerData;
 	uds_answerSize = answerSize;
 
 	*uds_answerSize = 0U; // Empty Response by default
 
-	udsSessionHandler.lastMessageTimestamp = tick;
-	if (size > 0U)
-	{
-		if (data[0] < 0x10)
-		{
-			// J1979 command
-			RAMN_J1979_ProcessMessage(data, size, answerData, answerSize);
-		}
-		else // ISO14229 command
-		{
-			switch (data[0]) {
-			case 0x10: // DIAGNOSTIC SESSION CONTROL:
-				RAMN_UDS_DiagnosticSessionControl(data, size);
-				break;
-			case 0x11: // ECU RESET
-				RAMN_UDS_ECUReset(data, size);
-				break;
-#ifndef HARDENING
-			case 0x14: // CLEAR DIAGNOSTIC INFORMATION
-				RAMN_UDS_ClearDTC(data, size);
-				break;
-			case 0x27: // SECURITY ACCESS
-				RAMN_UDS_SecurityAccess(data, size);
-				break;
-#endif
-			case 0x3E: // TESTER PRESENT
-				RAMN_UDS_TesterPresent(data, size);
-				break;
-#ifndef HARDENING
-			case 0x85: // CONTROL DTC SETTINGS
-				RAMN_UDS_ControlDTCSettings(data, size);
-				break;
-#endif
-			case 0x87: // LINK CONTROL
-				RAMN_UDS_LinkControl(data, size);
-				break;
-			default:  // UNSUPPORTED SERVICES
-				RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SNS);
-				break;
-			}
-		}
-	}
-	else
-	{
-		data[0] = 0U;
-		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
-	}
+	RAMN_UDS_DispatchService(tick, data, size);
+}
+
+void RAMN_UDS_ProcessDiagPayloadFunctional(uint32_t tick, uint8_t* data, uint16_t size, uint8_t* answerData, uint16_t* answerSize)
+{
+	// Functionally-addressed requests use the same full service dispatcher as physical requests.
+	// The functional NRC suppression in main.c keeps non-supporting servers quiet on the broadcast.
+	uds_answerData = answerData;
+	uds_answerSize = answerSize;
+
+	*uds_answerSize = 0U; // Empty Response by default
+
+	RAMN_UDS_DispatchService(tick, data, size);
 }
 
 void RAMN_UDS_PerformPostAnswerActions(uint32_t tick, const uint8_t* data, uint16_t size, uint8_t* answerData, uint16_t* answerSize)
