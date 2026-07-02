@@ -66,14 +66,17 @@ void RAMN_ACTUATORS_ApplyControls(uint32_t tick)
 	g_trafficProfile->codec[SIG_CONTROL_BRAKE].encode((uint16_t)RAMN_DBC_Handle.control_brake, &txRuntime[TXIDX_CONTROL_BRAKE].data->rawData[0]);
 	g_trafficProfile->codec[SIG_CONTROL_ACCEL].encode((uint16_t)RAMN_DBC_Handle.control_accel, &txRuntime[TXIDX_CONTROL_ACCEL].data->rawData[0]);
 	// Control_Shift + Joystick are combined into one message (special, not a codec-table row).
-	g_trafficProfile->encodeShiftJoystick((uint8_t)RAMN_DBC_Handle.control_shift, (uint8_t)RAMN_DBC_Handle.joystick, &txRuntime[TXIDX_CONTROL_SHIFT].data->rawData[0]);
+	if (g_trafficProfile->usesExtendedId)
+		RAMN_Encode_Control_Shift_Joystick_J1939((uint8_t)RAMN_DBC_Handle.control_shift, (uint8_t)RAMN_DBC_Handle.joystick, &txRuntime[TXIDX_CONTROL_SHIFT].data->rawData[0]);
+	else
+		RAMN_Encode_Control_Shift_Joystick_Default((uint8_t)RAMN_DBC_Handle.control_shift, (uint8_t)RAMN_DBC_Handle.joystick, &txRuntime[TXIDX_CONTROL_SHIFT].data->rawData[0]);
 	g_trafficProfile->codec[SIG_COMMAND_HORN].encode((uint16_t)RAMN_DBC_Handle.command_horn, &txRuntime[TXIDX_COMMAND_HORN].data->rawData[0]);
 	g_trafficProfile->codec[SIG_COMMAND_TURNINDICATOR].encode((uint16_t)RAMN_DBC_Handle.command_turnindicator, &txRuntime[TXIDX_COMMAND_TURNINDICATOR].data->rawData[0]);
 	// In J1939 the joystick buttons ship as their own PGN message (special, not a codec-table row).
 	// The slot exists in both modes; only encode it when the active profile actually transmits it.
 	if (g_trafficProfile->usesExtendedId)
 	{
-		g_trafficProfile->encodeJoystickButtons((uint8_t)RAMN_SENSORS_POWERTRAIN.shiftJoystick, &txRuntime[TXIDX_JOYSTICK_BUTTONS].data->rawData[0]);
+		RAMN_Encode_JoystickButtons_J1939((uint8_t)RAMN_SENSORS_POWERTRAIN.shiftJoystick, &txRuntime[TXIDX_JOYSTICK_BUTTONS].data->rawData[0]);
 	}
 
 #elif defined(EXPANSION_BODY) //BODY

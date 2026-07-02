@@ -180,10 +180,6 @@ const RAMN_TrafficProfile_t profile_default = {
 	.rxMap          = rxMap_default,
 	.rxCount        = (uint16_t)(sizeof(rxMap_default) / sizeof(rxMap_default[0])),
 	.usesExtendedId = 0,
-	.encodeShiftJoystick   = RAMN_Encode_Control_Shift_Joystick_Default,
-	.decodeJoystick        = RAMN_Decode_Joystick_Default,
-	.encodeJoystickButtons = RAMN_Encode_JoystickButtons_Default,
-	.decodeJoystickButtons = RAMN_Decode_JoystickButtons_Default,
 };
 
 const RAMN_TrafficProfile_t profile_j1939 = {
@@ -193,10 +189,6 @@ const RAMN_TrafficProfile_t profile_j1939 = {
 	.rxMap          = rxMap_j1939,
 	.rxCount        = (uint16_t)(sizeof(rxMap_j1939) / sizeof(rxMap_j1939[0])),
 	.usesExtendedId = 1,
-	.encodeShiftJoystick   = RAMN_Encode_Control_Shift_Joystick_J1939,
-	.decodeJoystick        = RAMN_Decode_Joystick_J1939,
-	.encodeJoystickButtons = RAMN_Encode_JoystickButtons_J1939,
-	.decodeJoystickButtons = RAMN_Decode_JoystickButtons_J1939,
 };
 
 /* Power-on default profile selected by the compile-time DEFAULT_TRAFFIC_MODE knob. This is the only

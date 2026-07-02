@@ -234,7 +234,7 @@ void RAMN_DBC_ProcessCANMessage(uint32_t canid, uint32_t dlc, RAMN_CANFrameData_
 			}
 			if (key == J1939_PGN_PROPB_65282)
 			{
-				RAMN_DBC_Handle.joystick = g_trafficProfile->decodeJoystickButtons(p, dlc);
+				RAMN_DBC_Handle.joystick = RAMN_Decode_JoystickButtons_J1939(p, dlc);
 #ifdef ENABLE_JOYSTICK_CONTROLS
 				RAMN_Joystick_Update(RAMN_DBC_Handle.joystick);
 #endif
@@ -256,7 +256,7 @@ void RAMN_DBC_ProcessCANMessage(uint32_t canid, uint32_t dlc, RAMN_CANFrameData_
 				RAMN_DBC_Handle.control_shift = (uint8_t)g_trafficProfile->codec[SIG_CONTROL_SHIFT].decode(p, dlc);
 				if (dlc >= 2U)
 				{
-					RAMN_DBC_Handle.joystick = g_trafficProfile->decodeJoystick(p, dlc);
+					RAMN_DBC_Handle.joystick = RAMN_Decode_Joystick_Default(p, dlc);
 #ifdef ENABLE_JOYSTICK_CONTROLS
 					RAMN_Joystick_Update(RAMN_DBC_Handle.joystick);
 #endif

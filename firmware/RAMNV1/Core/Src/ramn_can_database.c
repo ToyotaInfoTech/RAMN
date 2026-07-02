@@ -138,14 +138,6 @@ uint8_t RAMN_Decode_Joystick_Default(const uint8_t* payload, uint32_t dlc) {
     }
     return 0;
 }
-void RAMN_Encode_JoystickButtons_Default(uint8_t joystick_state, uint8_t* payload) {
-    RAMN_memset(payload, 0xFF, 8);
-    payload[0] = joystick_state;
-}
-uint8_t RAMN_Decode_JoystickButtons_Default(const uint8_t* payload, uint32_t dlc) {
-    if (dlc < 1U) return 0;
-    return payload[0];
-}
 
 void RAMN_Encode_Command_Horn_Default(uint16_t value, uint8_t* payload) {
     uint8_t packed = (uint8_t)PACK_SIGNAL(value, COMMAND_HORN_MASK, COMMAND_HORN_OFFSET);

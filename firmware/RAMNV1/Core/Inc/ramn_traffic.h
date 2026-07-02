@@ -57,12 +57,6 @@ typedef struct
 	RAMN_SignalDecode_t decode;
 } RAMN_SignalCodec_t;
 
-// "Special" codec signatures: signals that don't fit the uniform shape (two inputs, or a u8 result kept separate from the table).
-// Made part of the profile so a live mode switch picks the right body. 
-typedef void    (*RAMN_EncodeShiftJoystick_t)(uint8_t shift_value, uint8_t joystick_value, uint8_t* payload);
-typedef void    (*RAMN_EncodeU8_t)(uint8_t value, uint8_t* payload);
-typedef uint8_t (*RAMN_DecodeU8_t)(const uint8_t* payload, uint32_t dlc);
-
 // One entry per periodically-sent message.
 typedef struct
 {
@@ -94,10 +88,6 @@ typedef struct
 	const RAMN_RxMapEntry_t*    rxMap;
 	uint16_t                    rxCount;
 	uint8_t                     usesExtendedId; /* drives CAN filter setup + RX key extraction */
-	RAMN_EncodeShiftJoystick_t  encodeShiftJoystick;   /* combined Control_Shift + Joystick TX */
-	RAMN_DecodeU8_t             decodeJoystick;        /* joystick position from the shift message */
-	RAMN_EncodeU8_t             encodeJoystickButtons; /* J1939 joystick-buttons PGN TX */
-	RAMN_DecodeU8_t             decodeJoystickButtons; /* joystick buttons RX */
 } RAMN_TrafficProfile_t;
 
 // signalId sentinel for periodic messages whose payload is produced by a special encode hook (not a plain codec-table entry), e.g. the J1939 joystick-buttons message. */

@@ -11,9 +11,7 @@ void    RAMN_Encode_Control_Shift_Joystick_Default(uint8_t shift_value, uint8_t 
 void    RAMN_Encode_Control_Shift_Joystick_J1939(uint8_t shift_value, uint8_t joystick_value, uint8_t* payload);
 uint8_t RAMN_Decode_Joystick_Default(const uint8_t* payload, uint32_t dlc);
 uint8_t RAMN_Decode_Joystick_J1939(const uint8_t* payload, uint32_t dlc);
-void    RAMN_Encode_JoystickButtons_Default(uint8_t joystick_state, uint8_t* payload);
 void    RAMN_Encode_JoystickButtons_J1939(uint8_t joystick_state, uint8_t* payload);
-uint8_t RAMN_Decode_JoystickButtons_Default(const uint8_t* payload, uint32_t dlc);
 uint8_t RAMN_Decode_JoystickButtons_J1939(const uint8_t* payload, uint32_t dlc);
 
 #endif // RAMN_CAN_DATABASE_H
