@@ -33,7 +33,6 @@
 
 // Data-driven definitions for default message format fields
 #define RAMN_MSG_PAYLOAD_MASK        0xFFFF
-#define RAMN_MSG_PAYLOAD_OFFSET      0
 #define RAMN_MSG_COUNTER_MASK        0xFFFF
 #define RAMN_MSG_COUNTER_OFFSET      16
 #define RAMN_MSG_CRC_MASK            0xFFFFFFFF
@@ -226,7 +225,6 @@ typedef struct
 	uint32_t periodms; // Target period for periodic transmission
 	uint32_t counter;  // Number of time the message has been sent
 	uint32_t lastSent; // Timestamp of last transmission
-	int16_t payloadOffset;
 	int16_t counterOffset;
 	int16_t crcOffset;
 } RAMN_PeriodicFDCANTx_t;

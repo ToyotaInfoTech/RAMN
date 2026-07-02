@@ -66,7 +66,6 @@ typedef struct
 	uint32_t brs;
 	uint32_t dlc;
 	uint32_t periodMs;
-	int16_t  payloadOffset; /* bits; -1 == none */
 	int16_t  counterOffset; /* bits; -1 == none */
 	int16_t  crcOffset;     /* bits; -1 == none */
 	uint8_t  signalId;      /* RAMN_SignalId_t: index into codec table + DBC field */

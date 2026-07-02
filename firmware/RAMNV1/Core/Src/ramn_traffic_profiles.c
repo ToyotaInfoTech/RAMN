@@ -31,18 +31,18 @@
 
 /* -------------------------------------------------------------------------------------------------
  * Row builders. Field order matches RAMN_MsgDescriptor_t:
- * { canId, idType, fdFormat, brs, dlc, periodMs, payloadOffset, counterOffset, crcOffset, signalId }
+ * { canId, idType, fdFormat, brs, dlc, periodMs, counterOffset, crcOffset, signalId }
  * ---------------------------------------------------------------------------------------------- */
 
 /* Default row: standard 11-bit ID, classic CAN, 8 bytes, counter@16 / CRC@32. */
 #define DEF_ROW(canid, period, sig) \
 	{ (canid), CAN_SIM_IDTYPE_DEFAULT, CAN_SIM_FORMAT_DEFAULT, CAN_SIM_BRS_DEFAULT, CAN_SIM_DLC_DEFAULT, \
-	  (period), RAMN_MSG_PAYLOAD_OFFSET, RAMN_MSG_COUNTER_OFFSET, RAMN_MSG_CRC_OFFSET, (sig) }
+	  (period), RAMN_MSG_COUNTER_OFFSET, RAMN_MSG_CRC_OFFSET, (sig) }
 
 /* J1939 row: extended 29-bit ID, no counter/CRC (offsets -1). */
 #define J1939_ROW(canid, period, dlc, sig) \
 	{ (canid), CAN_SIM_J1939_IDTYPE, CAN_SIM_J1939_FORMAT, CAN_SIM_J1939_BRS, (dlc), \
-	  (period), -1, -1, -1, (sig) }
+	  (period), -1, -1, (sig) }
 
 /* Default-mode 11-bit CAN IDs (DID_*) now live in ramn_vehicle_specific.h so the TX catalog / RX map
  * here, the hardware RX filters (ramn_canfd.c), and the screen filter list (ramn_screen_canlog.c) all

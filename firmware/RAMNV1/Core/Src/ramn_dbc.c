@@ -96,7 +96,6 @@ static void RAMN_DBC_LoadRuntimeFromProfile(void)
 		m->header.DataLength    = d->dlc;
 		m->header.TxFrameType   = FDCAN_DATA_FRAME;
 		m->periodms             = d->periodMs;
-		m->payloadOffset        = d->payloadOffset;
 		m->counterOffset        = d->counterOffset;
 		m->crcOffset            = d->crcOffset;
 	}
