@@ -15,6 +15,8 @@
  */
 
 #include "ramn_cdc.h"
+#include "ramn_dbc.h"
+#include "ramn_traffic.h"
 
 #ifdef ENABLE_CDC
 
@@ -251,6 +253,7 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 						RAMN_USB_SendStringFromTask("    - slcan: Alias for the \"exit\" command.\r");
 						RAMN_USB_SendStringFromTask("    - uds <ECU> <payload>: Command to quickly send a uds payload (up to 7 bytes only).\r");
 						RAMN_USB_SendStringFromTask("    - theme: Set the color theme for ECU A's LCD screen. Usage: theme <theme number>.\r");
+						RAMN_USB_SendStringFromTask("    - trafficmode: Switch the CAN traffic profile live on all ECUs. Usage: trafficmode [<default|j1939>].\r");
 #ifdef ENABLE_CHIP8
 						RAMN_USB_SendStringFromTask("    - play: Play a game on ECU A's LCD screen. Usage: play <game number>.\r");
 						RAMN_USB_SendStringFromTask("    - stop: Stop any ongoing game. Usage: stop.\r");
@@ -650,6 +653,41 @@ RAMN_Bool_t RAMN_CDC_ProcessCLIBuffer(uint8_t* USBRxBuffer, uint32_t commandLeng
 								break;
 							}
 						}
+					}
+				}
+				else if (RAMN_streq(token, "trafficmode")) {
+					if (elementCount == 1)
+					{
+						// No argument: report ECU A's active mode.
+						if (g_trafficProfile == &profile_j1939) RAMN_USB_SendStringFromTask("Active traffic mode (ECU A): j1939.\r");
+						else RAMN_USB_SendStringFromTask("Active traffic mode (ECU A): default.\r");
+					}
+					else if (elementCount == 2)
+					{
+						// Parse the requested mode.
+						token = RAMN_strtok_r(NULL, " ", &strtok_save);
+						const RAMN_TrafficProfile_t* newProfile = 0;
+						// RoutineControl 0x0224 startRoutine payload: mode byte 0x00 default / 0x01 J1939.
+						char* udsHex = 0;
+						if (RAMN_streq(token, "default"))    { newProfile = &profile_default; udsHex = "3101022400"; }
+						else if (RAMN_streq(token, "j1939")) { newProfile = &profile_j1939;   udsHex = "3101022401"; }
+
+						if (newProfile == 0)
+						{
+							RAMN_USB_SendStringFromTask("Invalid mode. Usage: trafficmode <default|j1939>.\r");
+						}
+						else
+						{
+							// Switch ECU A locally, then push the same mode to all other ECUs
+							// via the UDS functional broadcast (0x7DF, routine 0x0224).
+							RAMN_DBC_SetProfile(newProfile);
+							sendUDSAsciiHex(0x7DF, udsHex);
+							RAMN_USB_SendStringFromTask("Switched traffic mode on all ECUs.\r");
+						}
+					}
+					else
+					{
+						RAMN_USB_SendStringFromTask("Usage: trafficmode [<default|j1939>].\r");
 					}
 				}
 				else if (RAMN_streq(token, "randomize")) {

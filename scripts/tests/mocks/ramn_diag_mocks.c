@@ -252,3 +252,19 @@ void RAMN_SCREEN_Refresh(void) {}
 void RAMN_SCREEN_SetForceRefresh(uint8_t f) {}
 
 void vTaskDelete(void* handle) {}
+
+// Traffic profile mocks: the diag libs compile ramn_uds.c / ramn_customize.c, which reference the
+// active traffic profile, but not ramn_traffic_profiles.c / ramn_dbc.c which define it in firmware.
+// Only usesExtendedId is consulted here (it gates the J1939 transport in ramn_customize.c); the
+// codec/catalog pointers can stay NULL. The J1939 lib variant is built with
+// -DDEFAULT_TRAFFIC_MODE=TRAFFIC_MODE_J1939, so its presence selects the J1939 boot profile,
+// mirroring the firmware's power-on selection.
+#include "ramn_traffic.h"
+const RAMN_TrafficProfile_t profile_default = { .usesExtendedId = 0 };
+const RAMN_TrafficProfile_t profile_j1939   = { .usesExtendedId = 1 };
+#ifdef DEFAULT_TRAFFIC_MODE
+const RAMN_TrafficProfile_t* g_trafficProfile = &profile_j1939;
+#else
+const RAMN_TrafficProfile_t* g_trafficProfile = &profile_default;
+#endif
+void RAMN_DBC_SetProfile(const RAMN_TrafficProfile_t* p) { if (p != NULL) g_trafficProfile = p; }

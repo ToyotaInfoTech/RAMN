@@ -20,7 +20,6 @@
 #include "ramn_dtc.h"
 #include "ramn_utils.h"
 
-#ifdef ENABLE_J1939_MODE
 
 /* ---------- J1939 helper: extract fields from 29-bit extended CAN ID ------ */
 static uint8_t J1939_GetPF(uint32_t canId)  { return (uint8_t)((canId >> 16) & 0xFFU); }
@@ -330,5 +329,3 @@ void RAMN_J1939_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, const 
 		}
 	}
 }
-
-#endif /* ENABLE_J1939_MODE */

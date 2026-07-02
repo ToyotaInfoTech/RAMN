@@ -71,8 +71,18 @@ def main():
         with open(frc_path, "w") as f:
             f.write(frc)
 
-    # Enable macros: uncomment //#define or // #define lines
+    # Enable macros: uncomment //#define or // #define lines. A "MACRO=VALUE" token
+    # instead sets the value of an existing #define (used for DEFAULT_TRAFFIC_MODE).
     for macro in enable_macros:
+        if "=" in macro:
+            name, value = macro.split("=", 1)
+            content = re.sub(
+                rf"^(\s*)#define {name}\s+\S+",
+                rf"\1#define {name} {value}",
+                content,
+                flags=re.MULTILINE,
+            )
+            continue
         content = re.sub(
             rf"^(\s*)//\s*#define {macro}([^A-Za-z0-9_]|$)",
             rf"\1#define {macro}\2",

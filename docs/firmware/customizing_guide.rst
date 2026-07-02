@@ -159,8 +159,8 @@ ECU C may decide to apply 100% accelerator based on this message.
 However, if ECU C detects that the current speed exceeds a certain threshold or the brake pedal is pressed, it can choose to ignore the command and apply 0% accelerator instead.  
 This approach can be used to implement various closed-loop control algorithms (For example, to implement `PID and bang-bang controllers <https://github.com/ToyotaInfoTech/RAMN/blob/main/misc/PID_example.pdf>`_).
 
-You can modify ``ramn_vehicle_specific.h`` to update the basic properties of RAMN's CAN traffic.  
-For instance, if you want to use ID 0x25 instead of 0x24 to represent the brake message, change ``CAN_SIM_CONTROL_BRAKE_CANID`` from ``0x24`` to ``0x25``.
+You can modify ``ramn_vehicle_specific.h`` to update the basic properties of RAMN's CAN traffic.
+For instance, if you want to use ID 0x25 instead of 0x24 to represent the brake control message, change ``DID_CONTROL_BRAKE`` from ``0x24`` to ``0x25`` (the default-mode 11-bit CAN IDs are the ``DID_*`` constants there; per-message period/format/offsets live in the traffic profile catalogs in ``ramn_traffic_profiles.c``).
 
 .. _canfd_upgrade:
 
@@ -192,39 +192,37 @@ This ensures that all ECUs have access to all RAMN controls, even if a control b
 For example, if you want to know the status of ECU C's joystick from ECU A, you can simply read the value of ``RAMN_DBC_Handle.joystick``.
 
 - The function ``RAMN_ACTUATORS_ApplyControls`` in ``ramn_actuators.c`` is responsible for determining the payload to set for outgoing periodic CAN/CAN-FD messages.  
-- The function ``RAMN_DBC_FormatDefaultPeriodicMessage`` in ``ramn_dbc.c`` formats the message by adding a counter and a CRC32 checksum. The position of these fields is defined per message in ``ramn_vehicle_specific.c`` (using ``counterOffset`` and ``crcOffset``). Setting these offsets to -1 will disable the corresponding field for that message.  
+- The function ``RAMN_DBC_FormatDefaultPeriodicMessage`` in ``ramn_dbc.c`` formats the message by adding a counter and a CRC32 checksum. The position of these fields is defined per message in the traffic profile catalogs in ``ramn_traffic_profiles.c`` (using ``counterOffset`` and ``crcOffset``). Setting these offsets to -1 will disable the corresponding field for that message.
 - The function ``RAMN_DBC_Send`` actually transmits the CAN messages.  
 - The function ``RAMN_DBC_ProcessCANMessage`` interprets and records incoming CAN messages in the RAMN_DBC module.
 
 
 If you want an ECU to stop sending messages, simply comment out the call to ``RAMN_DBC_Send``.
 
-.. _showcase_mode:
+.. _traffic_modes:
 
-Showcase Mode
--------------
+Traffic Modes (Default vs. J1939)
+---------------------------------
 
-RAMN includes a "Showcase Mode" (enabled via ``#define RAMN_SHOWCASE_MODE`` in ``ramn_config.h``) designed for testing and demonstrations where physical user input is not available or should be ignored.
+RAMN can emulate two different CAN traffic specifications ("traffic profiles"):
 
-In this mode, the vehicle's control flow is significantly altered:
+- **Default mode**: RAMN-native signals on 11-bit identifiers (the ``DID_*`` constants in ``ramn_vehicle_specific.h``), with a freshness counter and a CRC32 checksum in each periodic message.
+- **J1939 mode**: the same signals encoded as SAE J1939 SPNs on 29-bit identifiers (PGN-based), without counters and checksums. Unused payload bytes carry the J1939 "Not Available" pattern (0xFF). This mode also activates the reactive J1939 transport in ``ramn_j1939.c`` (Address Claim, ECU ID over TP, DM1).
 
-1. **ECU A (Headway Controller) becomes the Master:**
-   - It randomizes all command signals (Brake, Accel, Steering, Gear, Lights, Horn, Turn Indicators) at a 1 Hz frequency.
-   - It transmits these commands periodically to the rest of the bus.
-   - It will not remain silent at startup (the default behavior for ECU A).
+Both profiles are always compiled into the firmware. Each profile bundles a signal codec table (``ramn_can_database.c``), the per-ECU periodic TX catalog, and the RX decode map (both in ``ramn_traffic_profiles.c``); the active profile is designated by a single pointer (``g_trafficProfile``).
+``DEFAULT_TRAFFIC_MODE`` in ``ramn_config.h`` (``TRAFFIC_MODE_DEFAULT`` or ``TRAFFIC_MODE_J1939``) only selects the profile active at power-on.
 
-2. **ECU B and ECU C ignore physical sensors:**
-   - **ECU B (Chassis):** Completely ignores the physical steering wheel potentiometer and sidebrake switch. It will follow the ``Command_Steering`` and ``Command_Sidebrake`` received via CAN regardless of noise or manual movement.
-   - **ECU C (Powertrain):** Completely ignores the physical brake and accelerator pedals, as well as the shift joystick state. It will follow the ``Command_Brake``, ``Command_Accel``, and ``Command_Shift`` received via CAN.
+The active profile can also be switched live, without reflashing or rebooting:
 
-3. **ECU C acts as a Horn Proxy:**
-   - ECU C receives the ``Command_Horn`` from ECU A and combines it with its own physical button state.
-   - It then transmits a ``Control_Horn`` message to ECU D to report the final horn status.
+- Type ``trafficmode <default|j1939>`` in ECU A's USB CLI. ECU A switches itself, then broadcasts the same request to ECU B, C, and D over UDS functional addressing (CAN ID 0x7DF). ``trafficmode`` without an argument reports ECU A's active mode.
+- Individual ECUs can be switched with UDS RoutineControl routine ``0x0224`` (startRoutine, one option byte: ``0x00`` for default, ``0x01`` for J1939), e.g. payload ``31 01 02 24 01`` to switch to J1939 mode. This is the same routine the ``trafficmode`` command broadcasts.
+
+Diagnostic protocols (UDS/KWP2000/XCP) accept both their standard 11-bit identifiers and J1939 (PF 0xDA/0xDB) addressing at all times, independently of the active traffic profile, so ECUs remain diagnosable (and switchable back) in either mode.
 
 Standard vs. J1939 Message Mapping
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The signal distribution changes depending on whether ``ENABLE_J1939_MODE`` is active:
+The signal distribution changes depending on the active traffic profile:
 
 +----------------------+--------------------+-----------+-----------------------------------+-----------------------------------+
 | Signal               | Source ECU         | Target    | Standard Mode (11-bit ID)         | J1939 Mode (29-bit ID / PGN)      |
@@ -249,7 +247,6 @@ The signal distribution changes depending on whether ``ENABLE_J1939_MODE`` is ac
 .. note::
    In J1939 mode, the horn signals are strictly unicast to their respective targets (DA 90 for the command, DA 33 for the status) using Proprietary A. In Standard mode, these are broadcasted using functional IDs.
 
-This mode is strictly for development and should be disabled for any scenario involving real-world user interaction or safety-critical testing.
 
 See :ref:`example_MAC` for a customization example.
 
@@ -826,12 +823,12 @@ To implement your own message authentication or encryption mechanism over CAN (o
 Read the :ref:`canfd_upgrade` section if you want to use CAN-FD instead of CAN. Read the :ref:`advanced_can_modifications` section to learn more about the ``ramn_dbc.c`` module.
 
 To modify only a specific CAN/CAN-FD message (e.g., the brake control message) instead of all messages, update ``RAMN_DBC_Send`` to call your function instead of ``RAMN_DBC_FormatDefaultPeriodicMessage``.
-Note that if you only want to change the position (or existence) of the counter and CRC, you do not need to modify this function; you can simply update the message definition in ``ramn_vehicle_specific.c`` (by modifying ``counterOffset`` and ``crcOffset``).  
+Note that if you only want to change the position (or existence) of the counter and CRC, you do not need to modify this function; you can simply update the message descriptor in the traffic profile catalogs in ``ramn_traffic_profiles.c`` (by modifying ``counterOffset`` and ``crcOffset``).
 For example:
 
 .. code-block:: C
 
-	if (periodicTxCANMsgs[i]->header->Identifier == CAN_SIM_CONTROL_BRAKE_CANID) 
+	if (txRuntime[i].header.Identifier == DID_CONTROL_BRAKE)
 	{
 	// Your custom code, for the brake control message
 	}

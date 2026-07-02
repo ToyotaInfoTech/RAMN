@@ -15,6 +15,7 @@
  */
 
 #include "ramn_uds.h"
+#include "ramn_traffic.h" // profile_default/profile_j1939 + RAMN_DBC_SetProfile (routine 0x0210)
 
 #if defined(ENABLE_UDS)
 
@@ -50,7 +51,7 @@ struct {
 } transferManager;
 
 struct {
-	uint8_t newSettings;
+	uint32_t newSettings; // Target baud rate (0 = none selected)
 } linkControlManager;
 
 // Common pointer to avoid passing answer data as argument each sub-function
@@ -814,6 +815,36 @@ static void RAMN_UDS_RoutineControlRequestSilence(const uint8_t* data, uint16_t 
 	}
 }
 
+// Routine 0x0224: Set the active traffic profile (0x00 = default/RAMN-native, 0x01 = J1939).
+// RAMN_DBC_SetProfile handles the full switch: TX catalog, RX decode map, and hardware RX filters.
+static void RAMN_UDS_RoutineControlSetTrafficMode(const uint8_t* data, uint16_t size)
+{
+	if( size != 5U )
+	{
+		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_IMLOIF);
+	}
+	else if (data[1] != 0x01) // only startRoutine is supported
+	{
+		RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_SFNS);
+	}
+	else
+	{
+		switch (data[4]){
+		case 0x00: // default (RAMN-native) traffic
+			RAMN_DBC_SetProfile(&profile_default);
+			RAMN_UDS_FormatPositiveResponseEcho(data, size);
+			break;
+		case 0x01: // J1939 traffic
+			RAMN_DBC_SetProfile(&profile_j1939);
+			RAMN_UDS_FormatPositiveResponseEcho(data, size);
+			break;
+		default:
+			RAMN_UDS_FormatNegativeResponse(data, UDS_NRC_ROOR);
+			break;
+		}
+	}
+}
+
 // Emergency Routine to reset BOOT0 option bytes
 // Used to salvage a board on which the wrong firmware was flashed, that refuses to go to bootloader mode
 // Note that this command should reset board automatically, so it should not answer
@@ -1251,6 +1282,9 @@ static void RAMN_UDS_RoutineControl(uint8_t* data, uint16_t size)
 #endif
 		case 0x0200: // Request Silence
 			RAMN_UDS_RoutineControlRequestSilence(data, size);
+			break;
+		case 0x0224: // Set Traffic Mode (default / J1939)
+			RAMN_UDS_RoutineControlSetTrafficMode(data, size);
 			break;
 #ifdef ENABLE_UDS_REPROGRAMMING
 		case 0x0201: // Erase EEPROM
@@ -1744,16 +1778,16 @@ static void RAMN_UDS_LinkControl(const uint8_t* data, uint16_t size)
 		}
 		switch (data[2]) {
 		case 0x10: // 125000
-			linkControlManager.newSettings = '4';
+			linkControlManager.newSettings = 125000U;
 			break;
 		case 0x11: // 250000
-			linkControlManager.newSettings = '5';
+			linkControlManager.newSettings = 250000U;
 			break;
 		case 0x12: // 500000
-			linkControlManager.newSettings = '6';
+			linkControlManager.newSettings = 500000U;
 			break;
 		case 0x13: // 1000000
-			linkControlManager.newSettings = '8';
+			linkControlManager.newSettings = 1000000U;
 			break;
 		case 0x01: // 9600
 		case 0x02: // 19200
@@ -1865,22 +1899,31 @@ RAMN_Bool_t RAMN_UDS_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, c
 	uint8_t functionalAddressing = 0U;
 	RAMN_Bool_t result = False;
 	uint16_t requestSize = 0;
-#ifdef ENABLE_J1939_MODE
+	// Diagnostic addressing is accepted in BOTH forms regardless of the live traffic profile, so the
+	// ECU stays diagnosable (and traffic-mode-switchable over UDS) in either mode: J1939 proprietary-A
+	// (extended) physical addressing, or the standard 11-bit UDS_RX_CANID. The reply header matches the
+	// request that arrived.
 	uint8_t prio = (pHeader->Identifier >> 26) & 0x7;
 	uint8_t pf = (pHeader->Identifier >> 16) & 0xFF;
 	uint8_t da = (pHeader->Identifier >> 8) & 0xFF;
 	uint8_t sa = pHeader->Identifier & 0xFF;
-	if (pHeader->IdType == FDCAN_EXTENDED_ID && pf == 0xDA && da == J1939_ECU_SA)
-#else
-	if (pHeader->Identifier == UDS_RX_CANID)
-#endif
+	if ((pHeader->IdType == FDCAN_EXTENDED_ID && pf == 0xDA && da == J1939_ECU_SA)
+	    || (pHeader->IdType == FDCAN_STANDARD_ID && pHeader->Identifier == UDS_RX_CANID))
 	{
-#ifdef ENABLE_J1939_MODE
-		udsMsgHeader.Identifier = J1939_UCAST_ID(prio, 0xDA00, sa, J1939_ECU_SA);
-		udsMsgHeader.IdType = FDCAN_EXTENDED_ID;
-		udsFCMsgHeader.Identifier = udsMsgHeader.Identifier;
-		udsFCMsgHeader.IdType = FDCAN_EXTENDED_ID;
-#endif
+		if (pHeader->IdType == FDCAN_EXTENDED_ID)
+		{
+			udsMsgHeader.Identifier = J1939_UCAST_ID(prio, 0xDA00, sa, J1939_ECU_SA);
+			udsMsgHeader.IdType = FDCAN_EXTENDED_ID;
+			udsFCMsgHeader.Identifier = udsMsgHeader.Identifier;
+			udsFCMsgHeader.IdType = FDCAN_EXTENDED_ID;
+		}
+		else
+		{
+			udsMsgHeader.Identifier = UDS_TX_CANID;
+			udsMsgHeader.IdType = FDCAN_STANDARD_ID;
+			udsFCMsgHeader.Identifier = UDS_TX_CANID;
+			udsFCMsgHeader.IdType = FDCAN_STANDARD_ID;
+		}
 		RAMN_ISOTP_ProcessRxMsg(&RAMN_UDS_ISOTPHandler,DLCtoUINT8(pHeader->DataLength),data, (RAMN_Bool_t)(pHeader->FDFormat == FDCAN_FD_CAN), tick);
 
 		// If a ISO-TP has been received, copy it to buffer
@@ -1896,11 +1939,8 @@ RAMN_Bool_t RAMN_UDS_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, c
 		}
 	}
 #ifdef UDS_ACCEPT_FUNCTIONAL_ADDRESSING
-#ifdef ENABLE_J1939_MODE
-	else if (pHeader->IdType == FDCAN_EXTENDED_ID && pf == 0xDB && da == 0xFF)
-#else
-	else if(pHeader->Identifier == UDS_FUNCTIONAL_RX_CANID)
-#endif
+	else if ((pHeader->IdType == FDCAN_EXTENDED_ID && pf == 0xDB && da == 0xFF)
+	         || (pHeader->IdType == FDCAN_STANDARD_ID && pHeader->Identifier == UDS_FUNCTIONAL_RX_CANID))
 	{
 		uint8_t dlc = DLCtoUINT8(pHeader->DataLength);
 		if (dlc > 0)
@@ -1940,13 +1980,21 @@ RAMN_Bool_t RAMN_UDS_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, c
 				// Functional requests bypass the ISO-TP RX engine; record the frame format so the response mirrors it
 				RAMN_UDS_ISOTPHandler.rxWasFD = (pHeader->FDFormat == FDCAN_FD_CAN) ? 1U : 0U;
 
-#ifdef ENABLE_J1939_MODE
-				// Functional responses are physical (PF 0xDA)
-				udsMsgHeader.Identifier = J1939_UCAST_ID(prio, 0xDA00, sa, J1939_ECU_SA);
-				udsMsgHeader.IdType = FDCAN_EXTENDED_ID;
-				udsFCMsgHeader.Identifier = udsMsgHeader.Identifier;
-				udsFCMsgHeader.IdType = FDCAN_EXTENDED_ID;
-#endif
+				// Functional responses are physical: J1939 PF 0xDA (extended) or standard UDS_TX_CANID.
+				if (pHeader->IdType == FDCAN_EXTENDED_ID)
+				{
+					udsMsgHeader.Identifier = J1939_UCAST_ID(prio, 0xDA00, sa, J1939_ECU_SA);
+					udsMsgHeader.IdType = FDCAN_EXTENDED_ID;
+					udsFCMsgHeader.Identifier = udsMsgHeader.Identifier;
+					udsFCMsgHeader.IdType = FDCAN_EXTENDED_ID;
+				}
+				else
+				{
+					udsMsgHeader.Identifier = UDS_TX_CANID;
+					udsMsgHeader.IdType = FDCAN_STANDARD_ID;
+					udsFCMsgHeader.Identifier = UDS_TX_CANID;
+					udsFCMsgHeader.IdType = FDCAN_STANDARD_ID;
+				}
 
 				xBytesSent = xStreamBufferSend(*strbuf, (void *) &(functionalAddressing), sizeof(functionalAddressing), portMAX_DELAY );
 				xBytesSent += xStreamBufferSend(*strbuf, (void *) &(requestSize), sizeof(requestSize), portMAX_DELAY );

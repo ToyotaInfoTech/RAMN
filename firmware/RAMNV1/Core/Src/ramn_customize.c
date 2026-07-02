@@ -20,6 +20,7 @@
 #include "ramn_dbc.h"
 #include "ramn_dtc.h"
 #include "ramn_j1939.h"
+#include "ramn_traffic.h"
 
 #ifdef ENABLE_CDC
 #include "ramn_cdc.h"
@@ -56,9 +57,10 @@ void	RAMN_CUSTOM_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, const
 	// pHeader->RxTimestamp: 16-bit value for RX timestamp, MAY NOT BE CONFIGURED CORRECTLY
 	// See FilterIndex and IsFilterMatchingFrame for additional fields.
 
-#ifdef ENABLE_J1939_MODE
-	RAMN_J1939_ProcessRxCANMessage(pHeader, data);
-#endif
+	// J1939 transport is reactive (Address-Claim / ECU-ID / DM1 requests, TP aborts); run it only when
+	// the active traffic profile uses extended (J1939) IDs, so it stays inert in default mode and can
+	// be switched on/off live via RAMN_DBC_SetProfile.
+	if (g_trafficProfile->usesExtendedId) RAMN_J1939_ProcessRxCANMessage(pHeader, data);
 }
 
 #ifdef ENABLE_CDC

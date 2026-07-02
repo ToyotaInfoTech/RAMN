@@ -14,6 +14,7 @@
  ******************************************************************************
  */
 #include "ramn_canfd.h"
+#include "ramn_traffic.h" // g_trafficProfile: selects which RX filters are active (default vs J1939)
 
 // FDCAN peripheral parameters
 #define TSEG1_MAX 16
@@ -81,114 +82,76 @@ RAMN_FDCAN_Status_t RAMN_FDCAN_Status = {
 // List of Standard CAN IDs that can be received when hardware filters are ON
 static const uint16_t recvStdCANIDList[] =
 {
+// The DBC standard-ID 11-bit filters are always installed (in BOTH traffic modes) so that a live switch
+// to default traffic is received even on an image that booted in J1939 mode. They are harmless while
+// J1939 is active (that traffic is 29-bit extended). RECEIVE_JOYSTICK_BUTTONS has no default 11-bit ID
+// (it is a J1939-only PGN), so it is intentionally absent here.
 #ifdef RECEIVE_CONTROL_BRAKE
-#ifndef ENABLE_J1939_MODE
-		CAN_SIM_CONTROL_BRAKE_CANID,
-#endif
+		DID_CONTROL_BRAKE,
 #endif
 #ifdef RECEIVE_COMMAND_BRAKE
-#ifndef ENABLE_J1939_MODE
-		CAN_SIM_COMMAND_BRAKE_CANID,
-#endif
+		DID_COMMAND_BRAKE,
 #endif
 #ifdef RECEIVE_CONTROL_ACCEL
-#ifndef ENABLE_J1939_MODE
-		CAN_SIM_CONTROL_ACCEL_CANID,
-#endif
+		DID_CONTROL_ACCEL,
 #endif
 #ifdef RECEIVE_COMMAND_ACCEL
-#ifndef ENABLE_J1939_MODE
-		CAN_SIM_COMMAND_ACCEL_CANID,
-#endif
+		DID_COMMAND_ACCEL,
 #endif
 #ifdef RECEIVE_STATUS_RPM
-#ifndef ENABLE_J1939_MODE
-		CAN_SIM_STATUS_RPM_CANID,
-#endif
+		DID_STATUS_RPM,
 #endif
 #ifdef RECEIVE_CONTROL_STEERING
-#ifndef ENABLE_J1939_MODE
-		CAN_SIM_CONTROL_STEERING_CANID,
-#endif
+		DID_CONTROL_STEERING,
 #endif
 #ifdef RECEIVE_COMMAND_STEERING
-#ifndef ENABLE_J1939_MODE
-		CAN_SIM_COMMAND_STEERING_CANID,
-#endif
+		DID_COMMAND_STEERING,
 #endif
 #ifdef RECEIVE_CONTROL_SHIFT
-#ifndef ENABLE_J1939_MODE
-		CAN_SIM_CONTROL_SHIFT_CANID,
-#endif
-#endif
-#ifdef RECEIVE_JOYSTICK_BUTTONS
-#ifndef ENABLE_J1939_MODE
-		CAN_SIM_JOYSTICK_BUTTONS_CANID,
-#endif
+		DID_CONTROL_SHIFT,
 #endif
 #ifdef RECEIVE_COMMAND_SHIFT
-#ifndef ENABLE_J1939_MODE
-		CAN_SIM_COMMAND_SHIFT_CANID,
-#endif
+		DID_COMMAND_SHIFT,
 #endif
 #ifdef RECEIVE_COMMAND_HORN
-#ifndef ENABLE_J1939_MODE
-		CAN_SIM_COMMAND_HORN_CANID,
-#endif
+		DID_COMMAND_HORN,
 #endif
 #ifdef RECEIVE_CONTROL_HORN
-#ifndef ENABLE_J1939_MODE
-		CAN_SIM_CONTROL_HORN_CANID,
-#endif
+		DID_CONTROL_HORN,
 #endif
 #ifdef RECEIVE_CONTROL_SIDEBRAKE
-#ifndef ENABLE_J1939_MODE
-		CAN_SIM_CONTROL_SIDEBRAKE_CANID,
-#endif
+		DID_CONTROL_SIDEBRAKE,
 #endif
 #ifdef RECEIVE_COMMAND_SIDEBRAKE
-#ifndef ENABLE_J1939_MODE
-		CAN_SIM_COMMAND_SIDEBRAKE_CANID,
-#endif
+		DID_COMMAND_SIDEBRAKE,
 #endif
 #ifdef RECEIVE_COMMAND_TURNINDICATOR
-#ifndef ENABLE_J1939_MODE
-		CAN_SIM_COMMAND_TURNINDICATOR_CANID,
-#endif
+		DID_COMMAND_TURNINDICATOR,
 #endif
 #ifdef RECEIVE_CONTROL_ENGINEKEY
-#ifndef ENABLE_J1939_MODE
-		CAN_SIM_CONTROL_ENGINEKEY_CANID,
-#endif
+		DID_CONTROL_ENGINEKEY,
 #endif
 #ifdef RECEIVE_COMMAND_LIGHTS
-#ifndef ENABLE_J1939_MODE
-		CAN_SIM_COMMAND_LIGHTS_CANID,
-#endif
+		DID_COMMAND_LIGHTS,
 #endif
 #ifdef RECEIVE_CONTROL_LIGHTS
-#ifndef ENABLE_J1939_MODE
-		CAN_SIM_CONTROL_LIGHTS_CANID,
+		DID_CONTROL_LIGHTS,
 #endif
-#endif
+// Diagnostic IDs are standard 11-bit and valid in both traffic modes, so they are always filtered in
+// (independent of the traffic profile). This keeps the ECU diagnosable -- and therefore able to switch
+// traffic mode over UDS -- regardless of which profile is active.
 #ifdef ENABLE_UDS
-#ifndef ENABLE_J1939_MODE
 		UDS_RX_CANID,
 
 #ifdef UDS_ACCEPT_FUNCTIONAL_ADDRESSING
 		UDS_FUNCTIONAL_RX_CANID,
 #endif
 #endif
-#endif
 #ifdef ENABLE_KWP
-#ifndef ENABLE_J1939_MODE
 		KWP_RX_CANID,
 #endif
-#endif
 #ifdef ENABLE_XCP
-#ifndef ENABLE_J1939_MODE
 		XCP_RX_CANID,
-#endif
 #endif
 		RTR_DEMO_ID,
 
@@ -200,13 +163,14 @@ static const uint16_t recvStdCANIDList[] =
 #endif
 };
 
-// List of Extended CAN IDs that can be received when hardware filters are ON
+// List of Extended CAN IDs that can be received when hardware filters are ON.
+// The trailing 0 entry ("accept all extended", used by J1939 emulation) is always allocated so the
+// filter can be toggled at runtime: FDCAN_SetExtendedFilterList enables it only when the active
+// profile uses extended IDs (see RAMN_FDCAN_ReloadProfileFilters), and disables it otherwise.
 static const uint32_t recvExtCANIDList[] =
 {
 		CTF_EXTENDED_ID,
-#ifdef ENABLE_J1939_MODE
-		0 // Use 0 to indicate "accept all extended" for J1939 emulation
-#endif
+		0 // "accept all extended" -- enabled only in J1939 mode (runtime-gated)
 };
 
 static_assert(sizeof(recvStdCANIDList) <= 28U, "Too many hardware filters, update the code to use other types of filters (such as dual or range)");
@@ -255,8 +219,17 @@ static void FDCAN_SetExtendedFilterList(const uint32_t *canidList, uint16_t size
 	{
 		RAMN_FDCAN_Status.sFilterExtConfig.FilterIndex  = i;
 		RAMN_FDCAN_Status.sFilterExtConfig.FilterID1    = canidList[i];
-		if (canidList[i] == 0) RAMN_FDCAN_Status.sFilterExtConfig.FilterID2 = 0; // Accept all extended
-		else RAMN_FDCAN_Status.sFilterExtConfig.FilterID2 	= 0x1FFFFFFF; // Match all 29 bits
+		if (canidList[i] == 0)
+		{
+			// "Accept all extended" slot: only active when the current profile uses J1939 (extended) IDs.
+			RAMN_FDCAN_Status.sFilterExtConfig.FilterID2 = 0;
+			RAMN_FDCAN_Status.sFilterExtConfig.FilterConfig = (g_trafficProfile->usesExtendedId != 0U) ? FDCAN_FILTER_TO_RXFIFO0 : FDCAN_FILTER_DISABLE;
+		}
+		else
+		{
+			RAMN_FDCAN_Status.sFilterExtConfig.FilterID2 	= 0x1FFFFFFF; // Match all 29 bits
+			RAMN_FDCAN_Status.sFilterExtConfig.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
+		}
 		// Configure Filter for EXTENDED CAN IDs
 		if (HAL_FDCAN_ConfigFilter(hfdcan, &(RAMN_FDCAN_Status.sFilterExtConfig)) != HAL_OK)
 		{
@@ -404,6 +377,18 @@ void RAMN_FDCAN_Disable(void)
 	HAL_FDCAN_DeInit(hfdcan);
 }
 
+// Re-apply the RX filters for the currently-active traffic profile (g_trafficProfile). Called by
+// RAMN_DBC_SetProfile on a live mode switch. Only the extended "accept all" slot actually changes
+// between modes (enabled for J1939, disabled otherwise); the standard filters are a superset that
+// stays valid across modes (extra DBC IDs are harmless in J1939, diagnostic IDs are needed in both).
+// No-op on ECUs without hardware filters (e.g. ECU A), which already accept every ID.
+void RAMN_FDCAN_ReloadProfileFilters(void)
+{
+#ifdef USE_HARDWARE_CAN_FILTERS
+	FDCAN_SetExtendedFilterList(recvExtCANIDList, sizeof(recvExtCANIDList)/sizeof(*recvExtCANIDList));
+#endif
+}
+
 RAMN_Result_t RAMN_FDCAN_UpdateBaudrate(uint32_t newSelection)
 {
 	RAMN_Result_t result = RAMN_OK;
@@ -446,47 +431,47 @@ RAMN_Result_t RAMN_FDCAN_UpdateBaudrate(uint32_t newSelection)
 #else
 	switch(newSelection)
 	{
-	case '0': //10K
+	case 10000: //10K
 		hfdcan->Init.NominalPrescaler = 50;
 		hfdcan->Init.NominalTimeSeg1  = 20;
 		hfdcan->Init.NominalTimeSeg2  = 19;
 		break;
-	case '1': //20k
+	case 20000: //20k
 		hfdcan->Init.NominalPrescaler = 25;
 		hfdcan->Init.NominalTimeSeg1  = 20;
 		hfdcan->Init.NominalTimeSeg2  = 19;
 		break;
-	case '2': //50k
+	case 50000: //50k
 		hfdcan->Init.NominalPrescaler = 10;
 		hfdcan->Init.NominalTimeSeg1 = 20;
 		hfdcan->Init.NominalTimeSeg2 = 19;
 		break;
-	case '3': //100k
+	case 100000: //100k
 		hfdcan->Init.NominalPrescaler = 5;
 		hfdcan->Init.NominalTimeSeg1 = 20;
 		hfdcan->Init.NominalTimeSeg2 = 19;
 		break;
-	case '4': //125k
+	case 125000: //125k
 		hfdcan->Init.NominalPrescaler = 4;
 		hfdcan->Init.NominalTimeSeg1 = 20;
 		hfdcan->Init.NominalTimeSeg2 = 19;
 		break;
-	case '5': //250k
+	case 250000: //250k
 		hfdcan->Init.NominalPrescaler = 2;
 		hfdcan->Init.NominalTimeSeg1 = 20;
 		hfdcan->Init.NominalTimeSeg2 = 19;
 		break;
-	case '6': // 500k
+	case 500000: // 500k
 		hfdcan->Init.NominalPrescaler = 1;
 		hfdcan->Init.NominalTimeSeg1 = 63;
 		hfdcan->Init.NominalTimeSeg2 = 16;
 		break;
-	case '7': // 800k
+	case 800000: // 800k
 		hfdcan->Init.NominalPrescaler = 1;
 		hfdcan->Init.NominalTimeSeg1 = 12;
 		hfdcan->Init.NominalTimeSeg2 = 12;
 		break;
-	case '8': // 1M
+	case 1000000: // 1M
 		hfdcan->Init.NominalPrescaler = 1;
 		hfdcan->Init.NominalTimeSeg1 = 20;
 		hfdcan->Init.NominalTimeSeg2 = 19;

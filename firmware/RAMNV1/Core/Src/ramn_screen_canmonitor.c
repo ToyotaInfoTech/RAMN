@@ -14,6 +14,7 @@
  */
 
 #include "ramn_screen_canmonitor.h"
+#include "ramn_traffic.h" // g_trafficProfile: RX accept + ID display format follow the live traffic mode
 
 #ifdef ENABLE_SCREEN
 
@@ -155,11 +156,7 @@ uint8_t removeOldNodes(uint32_t thresholdTick)
 static void SCREENCANMONITOR_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, const uint8_t* data, uint32_t tick)
 {
 	//TODO: process more types (?)
-#ifdef ENABLE_J1939_MODE
-	if ((pHeader->IdType == FDCAN_EXTENDED_ID) && (pHeader->FDFormat == FDCAN_CLASSIC_CAN) && (pHeader->RxFrameType == FDCAN_DATA_FRAME) && (pHeader->DataLength <= 8))
-#else
-	if ((pHeader->IdType == FDCAN_STANDARD_ID) && (pHeader->FDFormat == FDCAN_CLASSIC_CAN) && (pHeader->RxFrameType == FDCAN_DATA_FRAME) && (pHeader->DataLength <= 8))
-#endif
+	if ((pHeader->IdType == (g_trafficProfile->usesExtendedId ? FDCAN_EXTENDED_ID : FDCAN_STANDARD_ID)) && (pHeader->FDFormat == FDCAN_CLASSIC_CAN) && (pHeader->RxFrameType == FDCAN_DATA_FRAME) && (pHeader->DataLength <= 8))
 	{
 
 		if (CANMONITOR_SEMAPHORE == 0U) return; // Module not initialized yet, skip message.
@@ -235,13 +232,16 @@ static void SCREENCANMONITOR_Update(uint32_t tick)
 
 				while (current != NULL)
 				{
-#ifdef ENABLE_J1939_MODE
-					uint16toASCII((current->identifier >> 8) & 0xFFFF, tmp);
-					tmp[4] = 0;
-#else
-					uint12toASCII(current->identifier, tmp);
-					tmp[3] = 0;
-#endif
+					if (g_trafficProfile->usesExtendedId)
+					{
+						uint16toASCII((current->identifier >> 8) & 0xFFFF, tmp);
+						tmp[4] = 0;
+					}
+					else
+					{
+						uint12toASCII(current->identifier, tmp);
+						tmp[3] = 0;
+					}
 					RAMN_SPI_DrawString(7,25+(msgCnt*16), RAMN_SCREENUTILS_COLORTHEME.LIGHT, RAMN_SCREENUTILS_COLORTHEME.BACKGROUND, (char*)tmp);
 					current = current->next;
 					msgCnt += 1;
@@ -252,11 +252,7 @@ static void SCREENCANMONITOR_Update(uint32_t tick)
 			msgCnt = 0;
 			while (current != NULL)
 			{
-#ifdef ENABLE_J1939_MODE
-				uint8_t x_offset = 5;
-#else
-				uint8_t x_offset = 4;
-#endif
+				uint8_t x_offset = g_trafficProfile->usesExtendedId ? 5 : 4;
 				for(uint8_t i=0;i<current->messages[0].header.DataLength*2;i++)
 				{
 					uint4toASCII((current->messages[0].data[i/2] >> (4*((i+1)%2)))&0xF,&tmp[i]);

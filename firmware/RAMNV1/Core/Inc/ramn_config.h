@@ -263,10 +263,18 @@
 // Avoid using if you are not sure what you are doing.
 // #define MEMORY_AUTOLOCK
 
-// Enable this flag to change the CAN signal definitions ('DBC') to use J1939
-// Preserves all knobs, switches and sliders on the RAMN
-// Removes CAN frame freshness and checksums used in the default configuration.
-// #define ENABLE_J1939_MODE
+// Selects the CAN signal definitions traffic profile active at power-on
+// TRAFFIC_MODE_DEFAULT: Default RAMN traffic with freshness counters and CRC32
+// TRAFFIC_MODE_J1939  : J1939signals
+
+// Both profiles are always compiled in; this value only selects the boot profile. The active
+// profile can also be switched live at runtime (see the "trafficmode" USB CLI command).
+#define TRAFFIC_MODE_DEFAULT 0
+#define TRAFFIC_MODE_J1939   1
+
+#ifndef DEFAULT_TRAFFIC_MODE
+#define DEFAULT_TRAFFIC_MODE TRAFFIC_MODE_DEFAULT
+#endif
 
 
 // Value to set to the RDP option byte if flag above is active.

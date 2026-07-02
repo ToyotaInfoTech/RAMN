@@ -20,6 +20,7 @@
 #include "ramn_vehicle_specific.h"
 #include "ramn_sensors.h"
 #include "ramn_dbc.h"
+#include "ramn_traffic.h"
 
 #ifdef EXPANSION_BODY
 // Byte that store the state of each LED of ECU D.
@@ -49,83 +50,53 @@ void RAMN_ACTUATORS_SetLampState(uint8_t mask, uint8_t val)
 
 void RAMN_ACTUATORS_ApplyControls(uint32_t tick)
 {
-#ifdef ENABLE_J1939_MODE
+	// Payload offset is 0 in both traffic modes, so the default/J1939 encode sites are identical
+	// except for which codec bodies run -- that is now selected by the active codec table. The
+	// per-ECU structure is preserved: each ECU encodes only the signals it physically produces
+	// (e.g. ECU A's command_* normally come from USB/sensors, not from here, outside showcase mode).
 #if defined(TARGET_ECUA)
-	RAMN_Encode_Control_Horn((uint8_t)RAMN_DBC_Handle.control_horn, &msg_control_horn.data->rawData[0]);
+	g_trafficProfile->codec[SIG_CONTROL_HORN].encode((uint16_t)RAMN_DBC_Handle.control_horn, &txRuntime[TXIDX_CONTROL_HORN].data->rawData[0]);
 
 #elif defined(EXPANSION_CHASSIS) //CHASSIS
-	RAMN_Encode_Control_Steering((uint16_t)RAMN_DBC_Handle.control_steer, &msg_control_steering.data->rawData[0]);
-	RAMN_Encode_Control_Sidebrake((uint8_t)RAMN_DBC_Handle.control_sidebrake, &msg_control_sidebrake.data->rawData[0]);
-	RAMN_Encode_Command_Lights((uint16_t)RAMN_DBC_Handle.command_lights, &msg_command_lights.data->rawData[0]);
+	g_trafficProfile->codec[SIG_CONTROL_STEERING].encode((uint16_t)RAMN_DBC_Handle.control_steer, &txRuntime[TXIDX_CONTROL_STEERING].data->rawData[0]);
+	g_trafficProfile->codec[SIG_CONTROL_SIDEBRAKE].encode((uint16_t)RAMN_DBC_Handle.control_sidebrake, &txRuntime[TXIDX_CONTROL_SIDEBRAKE].data->rawData[0]);
+	g_trafficProfile->codec[SIG_COMMAND_LIGHTS].encode((uint16_t)RAMN_DBC_Handle.command_lights, &txRuntime[TXIDX_COMMAND_LIGHTS].data->rawData[0]);
 
 #elif defined(EXPANSION_POWERTRAIN) //POWERTRAIN
-	RAMN_Encode_Control_Brake((uint16_t)RAMN_DBC_Handle.control_brake, &msg_control_brake.data->rawData[0]);
-	RAMN_Encode_Control_Accel((uint16_t)RAMN_DBC_Handle.control_accel, &msg_control_accel.data->rawData[0]);
-	RAMN_Encode_Control_Shift_Joystick((uint8_t)RAMN_DBC_Handle.control_shift, (uint8_t)RAMN_DBC_Handle.joystick, &msg_control_shift.data->rawData[0]);
-	RAMN_Encode_Command_Horn((uint8_t)RAMN_DBC_Handle.command_horn, &msg_command_horn.data->rawData[0]);
-	RAMN_Encode_Command_TurnIndicator((uint16_t)RAMN_DBC_Handle.command_turnindicator, &msg_command_turnindicator.data->rawData[0]);
-	RAMN_Encode_JoystickButtons((uint8_t)RAMN_SENSORS_POWERTRAIN.shiftJoystick, &msg_joystick_buttons.data->rawData[0]);
+	g_trafficProfile->codec[SIG_CONTROL_BRAKE].encode((uint16_t)RAMN_DBC_Handle.control_brake, &txRuntime[TXIDX_CONTROL_BRAKE].data->rawData[0]);
+	g_trafficProfile->codec[SIG_CONTROL_ACCEL].encode((uint16_t)RAMN_DBC_Handle.control_accel, &txRuntime[TXIDX_CONTROL_ACCEL].data->rawData[0]);
+	// Control_Shift + Joystick are combined into one message (special, not a codec-table row).
+	g_trafficProfile->encodeShiftJoystick((uint8_t)RAMN_DBC_Handle.control_shift, (uint8_t)RAMN_DBC_Handle.joystick, &txRuntime[TXIDX_CONTROL_SHIFT].data->rawData[0]);
+	g_trafficProfile->codec[SIG_COMMAND_HORN].encode((uint16_t)RAMN_DBC_Handle.command_horn, &txRuntime[TXIDX_COMMAND_HORN].data->rawData[0]);
+	g_trafficProfile->codec[SIG_COMMAND_TURNINDICATOR].encode((uint16_t)RAMN_DBC_Handle.command_turnindicator, &txRuntime[TXIDX_COMMAND_TURNINDICATOR].data->rawData[0]);
+	// In J1939 the joystick buttons ship as their own PGN message (special, not a codec-table row).
+	// The slot exists in both modes; only encode it when the active profile actually transmits it.
+	if (g_trafficProfile->usesExtendedId)
+	{
+		g_trafficProfile->encodeJoystickButtons((uint8_t)RAMN_SENSORS_POWERTRAIN.shiftJoystick, &txRuntime[TXIDX_JOYSTICK_BUTTONS].data->rawData[0]);
+	}
 
 #elif defined(EXPANSION_BODY) //BODY
-	RAMN_Encode_Control_EngineKey((uint8_t)RAMN_DBC_Handle.control_enginekey, &msg_control_enginekey.data->rawData[0]);
-	RAMN_Encode_Control_Lights((uint8_t)RAMN_DBC_Handle.control_lights, &msg_control_lights.data->rawData[0]);
+	g_trafficProfile->codec[SIG_CONTROL_ENGINEKEY].encode((uint16_t)RAMN_DBC_Handle.control_enginekey, &txRuntime[TXIDX_CONTROL_ENGINEKEY].data->rawData[0]);
+	g_trafficProfile->codec[SIG_CONTROL_LIGHTS].encode((uint16_t)RAMN_DBC_Handle.control_lights, &txRuntime[TXIDX_CONTROL_LIGHTS].data->rawData[0]);
 
 	LEDState = (uint8_t)RAMN_DBC_Handle.control_lights;
 #if (LED_TEST_DURATION_MS > 0)
 	if((tick < LED_TEST_DURATION_MS) && (LEDTestOver == False)) LEDState = 0xFF;
 	else LEDTestOver = True;
 #endif
-	RAMN_SPI_UpdateLED(&LEDState);
-#endif
-
-#if defined(RAMN_SHOWCASE_MODE) && defined(TARGET_ECUA)
-	RAMN_Encode_Command_Brake((uint16_t)RAMN_DBC_Handle.command_brake, &msg_command_brake.data->rawData[0]);
-	RAMN_Encode_Command_Accel((uint16_t)RAMN_DBC_Handle.command_accel, &msg_command_accel.data->rawData[0]);
-	RAMN_Encode_Status_RPM((uint16_t)RAMN_DBC_Handle.status_rpm, &msg_status_RPM.data->rawData[0]);
-	RAMN_Encode_Command_Steering((uint16_t)RAMN_DBC_Handle.command_steer, &msg_command_steering.data->rawData[0]);
-	RAMN_Encode_Command_Shift((uint8_t)RAMN_DBC_Handle.command_shift, &msg_command_shift.data->rawData[0]);
-	RAMN_Encode_Command_Sidebrake((uint16_t)RAMN_DBC_Handle.command_sidebrake, &msg_command_parkingbrake.data->rawData[0]);
-#endif
-
-#else // Standard mode (non J1939)
-
-#if defined(TARGET_ECUA)
-	RAMN_Encode_Control_Horn((uint8_t)RAMN_DBC_Handle.control_horn, &msg_control_horn.data->rawData[CAN_SIM_CONTROL_HORN_PAYLOAD_OFFSET / 8]);
-
-#elif defined(EXPANSION_CHASSIS) //CHASSIS
-	RAMN_Encode_Control_Steering((uint16_t)RAMN_DBC_Handle.control_steer, &msg_control_steering.data->rawData[CAN_SIM_CONTROL_STEERING_PAYLOAD_OFFSET / 8]);
-	RAMN_Encode_Control_Sidebrake((uint8_t)RAMN_DBC_Handle.control_sidebrake, &msg_control_sidebrake.data->rawData[CAN_SIM_CONTROL_SIDEBRAKE_PAYLOAD_OFFSET / 8]);
-	RAMN_Encode_Command_Lights((uint16_t)RAMN_DBC_Handle.command_lights, &msg_command_lights.data->rawData[CAN_SIM_COMMAND_LIGHTS_PAYLOAD_OFFSET / 8]);
-
-#elif defined(EXPANSION_POWERTRAIN) //POWERTRAIN
-	RAMN_Encode_Control_Brake((uint16_t)RAMN_DBC_Handle.control_brake, &msg_control_brake.data->rawData[CAN_SIM_CONTROL_BRAKE_PAYLOAD_OFFSET / 8]);
-	RAMN_Encode_Control_Accel((uint16_t)RAMN_DBC_Handle.control_accel, &msg_control_accel.data->rawData[CAN_SIM_CONTROL_ACCEL_PAYLOAD_OFFSET / 8]);
-	RAMN_Encode_Control_Shift_Joystick((uint8_t)RAMN_DBC_Handle.control_shift, (uint8_t)RAMN_DBC_Handle.joystick, &msg_control_shift.data->rawData[CAN_SIM_CONTROL_SHIFT_PAYLOAD_OFFSET / 8]);
-	RAMN_Encode_Command_Horn((uint8_t)RAMN_DBC_Handle.command_horn, &msg_command_horn.data->rawData[CAN_SIM_COMMAND_HORN_PAYLOAD_OFFSET / 8]);
-	RAMN_Encode_Command_TurnIndicator((uint16_t)RAMN_DBC_Handle.command_turnindicator, &msg_command_turnindicator.data->rawData[CAN_SIM_COMMAND_TURNINDICATOR_PAYLOAD_OFFSET / 8]);
-
-#elif defined(EXPANSION_BODY) //BODY
-	RAMN_Encode_Control_EngineKey((uint8_t)RAMN_DBC_Handle.control_enginekey, &msg_control_enginekey.data->rawData[CAN_SIM_CONTROL_ENGINEKEY_PAYLOAD_OFFSET / 8]);
-	RAMN_Encode_Control_Lights((uint8_t)RAMN_DBC_Handle.control_lights, &msg_control_lights.data->rawData[CAN_SIM_CONTROL_LIGHTS_PAYLOAD_OFFSET / 8]);
-
-	LEDState = (uint8_t)RAMN_DBC_Handle.control_lights;
-#if (LED_TEST_DURATION_MS > 0)
-	if((tick < LED_TEST_DURATION_MS) && (LEDTestOver == False)) LEDState = 0xFF;
-	else LEDTestOver = True;
-#endif
-#ifdef ENABLE_SPI
+	// Preserves original per-mode behavior: default guarded by ENABLE_SPI, J1939 was unconditional.
+#if defined(ENABLE_SPI) || (DEFAULT_TRAFFIC_MODE == TRAFFIC_MODE_J1939)
 	RAMN_SPI_UpdateLED(&LEDState);
 #endif
 #endif
 
 #if defined(RAMN_SHOWCASE_MODE) && defined(TARGET_ECUA)
-	RAMN_Encode_Command_Brake((uint16_t)RAMN_DBC_Handle.command_brake, &msg_command_brake.data->rawData[CAN_SIM_COMMAND_BRAKE_PAYLOAD_OFFSET / 8]);
-	RAMN_Encode_Command_Accel((uint16_t)RAMN_DBC_Handle.command_accel, &msg_command_accel.data->rawData[CAN_SIM_COMMAND_ACCEL_PAYLOAD_OFFSET / 8]);
-	RAMN_Encode_Status_RPM((uint16_t)RAMN_DBC_Handle.status_rpm, &msg_status_RPM.data->rawData[CAN_SIM_STATUS_RPM_PAYLOAD_OFFSET / 8]);
-	RAMN_Encode_Command_Steering((uint16_t)RAMN_DBC_Handle.command_steer, &msg_command_steering.data->rawData[CAN_SIM_COMMAND_STEERING_PAYLOAD_OFFSET / 8]);
-	RAMN_Encode_Command_Shift((uint8_t)RAMN_DBC_Handle.command_shift, &msg_command_shift.data->rawData[CAN_SIM_COMMAND_SHIFT_PAYLOAD_OFFSET / 8]);
-	RAMN_Encode_Command_Sidebrake((uint16_t)RAMN_DBC_Handle.command_sidebrake, &msg_command_parkingbrake.data->rawData[CAN_SIM_COMMAND_SIDEBRAKE_PAYLOAD_OFFSET / 8]);
-#endif
-
+	g_trafficProfile->codec[SIG_COMMAND_BRAKE].encode((uint16_t)RAMN_DBC_Handle.command_brake, &txRuntime[TXIDX_COMMAND_BRAKE].data->rawData[0]);
+	g_trafficProfile->codec[SIG_COMMAND_ACCEL].encode((uint16_t)RAMN_DBC_Handle.command_accel, &txRuntime[TXIDX_COMMAND_ACCEL].data->rawData[0]);
+	g_trafficProfile->codec[SIG_STATUS_RPM].encode((uint16_t)RAMN_DBC_Handle.status_rpm, &txRuntime[TXIDX_STATUS_RPM].data->rawData[0]);
+	g_trafficProfile->codec[SIG_COMMAND_STEERING].encode((uint16_t)RAMN_DBC_Handle.command_steer, &txRuntime[TXIDX_COMMAND_STEERING].data->rawData[0]);
+	g_trafficProfile->codec[SIG_COMMAND_SHIFT].encode((uint16_t)RAMN_DBC_Handle.command_shift, &txRuntime[TXIDX_COMMAND_SHIFT].data->rawData[0]);
+	g_trafficProfile->codec[SIG_COMMAND_SIDEBRAKE].encode((uint16_t)RAMN_DBC_Handle.command_sidebrake, &txRuntime[TXIDX_COMMAND_PARKINGBRAKE].data->rawData[0]);
 #endif
 }

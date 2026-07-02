@@ -15,30 +15,32 @@
  */
 
 #include "ramn_screen_canlog.h"
+#include "ramn_traffic.h" // g_trafficProfile: RX-dump filter + display format follow the live traffic mode
 
 #ifdef ENABLE_SCREEN
 
 __attribute__ ((section (".buffers"))) static volatile CAN_MessageBuffer canMessageBuffer = { .head = 0, .count = 0 };
 
-// If you update this list, make sure you also update FILTER_MASK_LIST
-#ifdef ENABLE_J1939_MODE
-const uint32_t FILTER_ID_LIST[]   = {
-		CAN_SIM_CONTROL_BRAKE_CANID,
-		CAN_SIM_CONTROL_ACCEL_CANID,
-		CAN_SIM_CONTROL_STEERING_CANID,
-		CAN_SIM_CONTROL_SHIFT_CANID,
-		CAN_SIM_COMMAND_HORN_CANID,
-		CAN_SIM_COMMAND_LIGHTS_CANID,
-		CAN_SIM_COMMAND_TURNINDICATOR_CANID,
-		CAN_SIM_CONTROL_ENGINEKEY_CANID,
-		CAN_SIM_CONTROL_LIGHTS_CANID,
-		CAN_SIM_CONTROL_SIDEBRAKE_CANID,
+// Both mode filter tables are compiled in; the active one is selected at runtime from g_trafficProfile
+// so the RX-dump filter follows a live traffic-mode switch. The two tables must stay the same length.
+// If you update a list, update its matching mask list.
+static const uint32_t FILTER_ID_LIST_J1939[]   = {
+		J1939_BCAST_ID(6, J1939_PGN_EBC1, J1939_SA_POWERTRAIN_CTRL),      // CONTROL_BRAKE
+		J1939_BCAST_ID(6, J1939_PGN_EEC2, J1939_SA_POWERTRAIN_CTRL),      // CONTROL_ACCEL
+		J1939_BCAST_ID(6, J1939_PGN_VDC2, J1939_SA_STEERING_CTRL),        // CONTROL_STEERING
+		J1939_BCAST_ID(6, J1939_PGN_ETC2, J1939_SA_TRANSMISSION),         // CONTROL_SHIFT
+		J1939_BCAST_ID(6, J1939_PGN_CM3, J1939_SA_POWERTRAIN_CTRL),       // COMMAND_HORN
+		J1939_BCAST_ID(3, J1939_PGN_LIGHTS_CMD, J1939_SA_CHASSIS_CTRL_1), // COMMAND_LIGHTS
+		J1939_BCAST_ID(3, J1939_PGN_OEL, J1939_SA_SHIFT_CONSOLE),         // COMMAND_TURNINDICATOR
+		J1939_BCAST_ID(6, J1939_PGN_CM3, J1939_SA_BODY_CTRL),             // CONTROL_ENGINEKEY
+		J1939_BCAST_ID(6, J1939_PGN_PROPB_65280, J1939_SA_BODY_CTRL),     // CONTROL_LIGHTS
+		J1939_BCAST_ID(6, J1939_PGN_B1, J1939_SA_BRAKES_DRIVE_AXLE_1),    // CONTROL_SIDEBRAKE
 		0x18550000, // Assume XCP
 		0x187E0000, // Assume UDS
 		0x000
 };
 
-const uint32_t FILTER_MASK_LIST[] = {
+static const uint32_t FILTER_MASK_LIST_J1939[] = {
 		0x00FFFF00, // Mask for PGN
 		0x00FFFF00,
 		0x00FFFF00,
@@ -52,24 +54,24 @@ const uint32_t FILTER_MASK_LIST[] = {
 		0x00FFF000,
 		0x00FFF000,
 		0x00000000};
-#else
-const uint32_t FILTER_ID_LIST[]   = {
-		CAN_SIM_CONTROL_BRAKE_CANID,
-		CAN_SIM_CONTROL_ACCEL_CANID,
-		CAN_SIM_CONTROL_STEERING_CANID,
-		CAN_SIM_CONTROL_SHIFT_CANID,
-		CAN_SIM_COMMAND_HORN_CANID,
-		CAN_SIM_COMMAND_LIGHTS_CANID,
-		CAN_SIM_COMMAND_TURNINDICATOR_CANID,
-		CAN_SIM_CONTROL_ENGINEKEY_CANID,
-		CAN_SIM_CONTROL_LIGHTS_CANID,
-		CAN_SIM_CONTROL_SIDEBRAKE_CANID,
+
+static const uint32_t FILTER_ID_LIST_DEFAULT[]   = {
+		DID_CONTROL_BRAKE,
+		DID_CONTROL_ACCEL,
+		DID_CONTROL_STEERING,
+		DID_CONTROL_SHIFT,
+		DID_COMMAND_HORN,
+		DID_COMMAND_LIGHTS,
+		DID_COMMAND_TURNINDICATOR,
+		DID_CONTROL_ENGINEKEY,
+		DID_CONTROL_LIGHTS,
+		DID_CONTROL_SIDEBRAKE,
 		0x550, // Assume XCP all start 0x55
 		0x7E0, // Assume UDS all start 0x7E
 		0x000
 };
 
-const uint32_t FILTER_MASK_LIST[] = {
+static const uint32_t FILTER_MASK_LIST_DEFAULT[] = {
 		0x7FF,
 		0x7FF,
 		0x7FF,
@@ -83,7 +85,12 @@ const uint32_t FILTER_MASK_LIST[] = {
 		0x7F0,
 		0x7F0,
 		0x000};
-#endif
+
+#define NUM_CANLOG_FILTERS (sizeof(FILTER_ID_LIST_DEFAULT)/sizeof(FILTER_ID_LIST_DEFAULT[0]))
+
+// Runtime-selected active filter tables (follow the live traffic profile).
+static const uint32_t* activeFilterId(void)   { return (g_trafficProfile->usesExtendedId != 0U) ? FILTER_ID_LIST_J1939   : FILTER_ID_LIST_DEFAULT; }
+static const uint32_t* activeFilterMask(void) { return (g_trafficProfile->usesExtendedId != 0U) ? FILTER_MASK_LIST_J1939 : FILTER_MASK_LIST_DEFAULT; }
 
 // Index of filter currently used
 static uint8_t filterIndex = 0U;
@@ -106,14 +113,10 @@ static void SCREENCANLOG_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeade
 	volatile CAN_Message *message;
 
 	if (CANLOG_SEMAPHORE == 0U) return; // Module is not initialized yet
-#ifdef ENABLE_J1939_MODE
-	else if ((pHeader->IdType == FDCAN_EXTENDED_ID) && (pHeader->FDFormat == FDCAN_CLASSIC_CAN) && (pHeader->RxFrameType == FDCAN_DATA_FRAME) && (pHeader->DataLength <= 8))
-#else
-	else if ((pHeader->IdType == FDCAN_STANDARD_ID) && (pHeader->FDFormat == FDCAN_CLASSIC_CAN) && (pHeader->RxFrameType == FDCAN_DATA_FRAME) && (pHeader->DataLength <= 8))
-#endif
+	else if ((pHeader->IdType == (g_trafficProfile->usesExtendedId ? FDCAN_EXTENDED_ID : FDCAN_STANDARD_ID)) && (pHeader->FDFormat == FDCAN_CLASSIC_CAN) && (pHeader->RxFrameType == FDCAN_DATA_FRAME) && (pHeader->DataLength <= 8))
 	{
-		// Check filter
-		if ((pHeader->Identifier & FILTER_MASK_LIST[filterIndex]) != (FILTER_ID_LIST[filterIndex] & FILTER_MASK_LIST[filterIndex])) return;
+		// Check filter (active table follows the live traffic profile)
+		if ((pHeader->Identifier & activeFilterMask()[filterIndex]) != (activeFilterId()[filterIndex] & activeFilterMask()[filterIndex])) return;
 
 		// Take semaphore
 		while(xSemaphoreTake(CANLOG_SEMAPHORE, portMAX_DELAY) != pdTRUE);
@@ -135,25 +138,24 @@ static void SCREENCANLOG_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeade
 static void draw_header()
 {
 	uint8_t tmp[11];
-#ifdef ENABLE_J1939_MODE
-	uint16toASCII((FILTER_ID_LIST[filterIndex] >> 8) & 0xFFFF, tmp);
-	tmp[4] = ':';
-	uint16toASCII((FILTER_MASK_LIST[filterIndex] >> 8) & 0xFFFF, &tmp[5]);
-	tmp[9] = 0; // Terminate string
-#else
-	uint12toASCII(FILTER_ID_LIST[filterIndex], tmp);
-	tmp[3] = ':';
-	uint12toASCII(FILTER_MASK_LIST[filterIndex], &tmp[4]);
-	tmp[7] = 0; // Terminate string
-#endif
+	if (g_trafficProfile->usesExtendedId)
+	{
+		uint16toASCII((activeFilterId()[filterIndex] >> 8) & 0xFFFF, tmp);
+		tmp[4] = ':';
+		uint16toASCII((activeFilterMask()[filterIndex] >> 8) & 0xFFFF, &tmp[5]);
+		tmp[9] = 0; // Terminate string
+	}
+	else
+	{
+		uint12toASCII(activeFilterId()[filterIndex], tmp);
+		tmp[3] = ':';
+		uint12toASCII(activeFilterMask()[filterIndex], &tmp[4]);
+		tmp[7] = 0; // Terminate string
+	}
 
 	RAMN_SPI_DrawContour(0, 0, LCD_WIDTH, 16+6, CONTOUR_WIDTH, RAMN_SCREENUTILS_COLORTHEME.LIGHT);
 	RAMN_SPI_RefreshString(5,5, RAMN_SCREENUTILS_COLORTHEME.LIGHT, RAMN_SCREENUTILS_COLORTHEME.BACKGROUND, "RX DUMP");
-#ifdef ENABLE_J1939_MODE
-	RAMN_SPI_RefreshString(5+7*11,5, RAMN_SCREENUTILS_COLORTHEME.LIGHT, RAMN_SCREENUTILS_COLORTHEME.BACKGROUND, (char*)tmp);
-#else
-	RAMN_SPI_RefreshString(5+8*11,5, RAMN_SCREENUTILS_COLORTHEME.LIGHT, RAMN_SCREENUTILS_COLORTHEME.BACKGROUND, (char*)tmp);
-#endif
+	RAMN_SPI_RefreshString(5+(g_trafficProfile->usesExtendedId ? 7 : 8)*11,5, RAMN_SCREENUTILS_COLORTHEME.LIGHT, RAMN_SCREENUTILS_COLORTHEME.BACKGROUND, (char*)tmp);
 
 	if(active) RAMN_SPI_RefreshString(5+16*11,5, RAMN_SCREENUTILS_COLORTHEME.WHITE, RAMN_SCREENUTILS_COLORTHEME.BACKGROUND, "  ON");
 	else RAMN_SPI_RefreshString(5+16*11,5, RAMN_SCREENUTILS_COLORTHEME.LIGHT, RAMN_SCREENUTILS_COLORTHEME.BACKGROUND, "STOP");
@@ -212,34 +214,33 @@ static void SCREENCANLOG_Update(uint32_t tick)
 				}
 
 
-#ifdef ENABLE_J1939_MODE
-				uint16toASCII((message->identifier >> 8) & 0xFFFF, tmp);
-				tmp[4] = ' ';
-				for(uint8_t i=0;i<message->payload_size*2;i++)
+				if (g_trafficProfile->usesExtendedId)
 				{
-					uint4toASCII((message->data[i/2] >> (4*((i+1)%2)))&0xF,&tmp[5+i]);
+					uint16toASCII((message->identifier >> 8) & 0xFFFF, tmp);
+					tmp[4] = ' ';
+					for(uint8_t i=0;i<message->payload_size*2;i++)
+					{
+						uint4toASCII((message->data[i/2] >> (4*((i+1)%2)))&0xF,&tmp[5+i]);
+					}
+					tmp[5+message->payload_size*2] = 0;
 				}
-				tmp[5+message->payload_size*2] = 0;
-#else
-				uint12toASCII(message->identifier, tmp);
-				tmp[3] = ' ';
-				for(uint8_t i=0;i<message->payload_size*2;i++)
+				else
 				{
-					uint4toASCII((message->data[i/2] >> (4*((i+1)%2)))&0xF,&tmp[4+i]);
+					uint12toASCII(message->identifier, tmp);
+					tmp[3] = ' ';
+					for(uint8_t i=0;i<message->payload_size*2;i++)
+					{
+						uint4toASCII((message->data[i/2] >> (4*((i+1)%2)))&0xF,&tmp[4+i]);
+					}
+					tmp[4+message->payload_size*2] = 0;
 				}
-				tmp[4+message->payload_size*2] = 0;
-#endif
 				if (dispIndex < CAN_MESSAGE_BUFFER_SIZE)
 				{
 					RAMN_SPI_RefreshString(9, CANVAS_OFFSET+(16*(dispIndex)), RAMN_SCREENUTILS_COLORTHEME.LIGHT, RAMN_SCREENUTILS_COLORTHEME.BACKGROUND, (char*)tmp);
 					if (8 - message->payload_size > 0)
 					{
 						// Erase bytes after DLC (that could have been written by a previous message with longer DLC)
-#ifdef ENABLE_J1939_MODE
-						RAMN_SPI_DrawRectangle(9+(5*11)+message->payload_size*22,CANVAS_OFFSET+(16*(dispIndex)),22*(8 - message->payload_size),14,RAMN_SCREENUTILS_COLORTHEME.BACKGROUND);
-#else
-						RAMN_SPI_DrawRectangle(9+(4*11)+message->payload_size*22,CANVAS_OFFSET+(16*(dispIndex)),22*(8 - message->payload_size),14,RAMN_SCREENUTILS_COLORTHEME.BACKGROUND);
-#endif
+						RAMN_SPI_DrawRectangle(9+((g_trafficProfile->usesExtendedId ? 5 : 4)*11)+message->payload_size*22,CANVAS_OFFSET+(16*(dispIndex)),22*(8 - message->payload_size),14,RAMN_SCREENUTILS_COLORTHEME.BACKGROUND);
 					}
 				}
 				else
@@ -250,11 +251,7 @@ static void SCREENCANLOG_Update(uint32_t tick)
 					if (8 - message->payload_size > 0)
 					{
 						// Erase bytes after DLC (that could have been written by a previous message with longer DLC)
-#ifdef ENABLE_J1939_MODE
-						RAMN_SPI_DrawRectangle(9+(5*11)+message->payload_size*22,CANVAS_OFFSET+(16*(dispIndex%SCREEN_BUFFER_MESSAGE_COUNT)),22*(8 - message->payload_size),14,RAMN_SCREENUTILS_COLORTHEME.BACKGROUND);
-#else
-						RAMN_SPI_DrawRectangle(9+(4*11)+message->payload_size*22,CANVAS_OFFSET+(16*(dispIndex%SCREEN_BUFFER_MESSAGE_COUNT)),22*(8 - message->payload_size),14,RAMN_SCREENUTILS_COLORTHEME.BACKGROUND);
-#endif
+						RAMN_SPI_DrawRectangle(9+((g_trafficProfile->usesExtendedId ? 5 : 4)*11)+message->payload_size*22,CANVAS_OFFSET+(16*(dispIndex%SCREEN_BUFFER_MESSAGE_COUNT)),22*(8 - message->payload_size),14,RAMN_SCREENUTILS_COLORTHEME.BACKGROUND);
 					}
 				}
 				dispIndex += 1;
@@ -276,13 +273,13 @@ static RAMN_Bool_t SCREENCANLOG_UpdateInput(JoystickEventType event)
 {
 	if (event == JOYSTICK_EVENT_DOWN_PRESSED)
 	{
-		if (filterIndex == 0) filterIndex = (sizeof(FILTER_ID_LIST)/sizeof(FILTER_ID_LIST[0]))-1;
+		if (filterIndex == 0) filterIndex = NUM_CANLOG_FILTERS-1;
 		else filterIndex--;
 		draw_header();
 	}
 	else if (event == JOYSTICK_EVENT_UP_PRESSED)
 	{
-		filterIndex = (filterIndex + 1) % (sizeof(FILTER_ID_LIST)/sizeof(FILTER_ID_LIST[0]));
+		filterIndex = (filterIndex + 1) % NUM_CANLOG_FILTERS;
 		draw_header();
 	}
 	else if (event == JOYSTICK_EVENT_CENTER_PRESSED)

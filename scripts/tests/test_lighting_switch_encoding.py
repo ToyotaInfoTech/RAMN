@@ -50,16 +50,16 @@ def build_bigendian_lib():
 def lib():
     """Load the big-endian non-J1939 shared library."""
     ramn_lib = ctypes.CDLL(LIB_PATH)
-    ramn_lib.RAMN_Encode_Command_Lights.argtypes = [
+    ramn_lib.RAMN_Encode_Command_Lights_Default.argtypes = [
         ctypes.c_uint16,
         ctypes.POINTER(ctypes.c_uint8),
     ]
-    ramn_lib.RAMN_Encode_Command_Lights.restype = None
-    ramn_lib.RAMN_Decode_Command_Lights.argtypes = [
+    ramn_lib.RAMN_Encode_Command_Lights_Default.restype = None
+    ramn_lib.RAMN_Decode_Command_Lights_Default.argtypes = [
         ctypes.POINTER(ctypes.c_uint8),
         ctypes.c_uint32,
     ]
-    ramn_lib.RAMN_Decode_Command_Lights.restype = ctypes.c_uint16
+    ramn_lib.RAMN_Decode_Command_Lights_Default.restype = ctypes.c_uint16
     return ramn_lib
 
 
@@ -85,7 +85,7 @@ def test_command_lights_value_in_first_byte(lib, position):
     in byte 0. The value must be present in byte 0.
     """
     buf = (ctypes.c_uint8 * 8)(*([0] * 8))
-    lib.RAMN_Encode_Command_Lights(ctypes.c_uint16(position), buf)
+    lib.RAMN_Encode_Command_Lights_Default(ctypes.c_uint16(position), buf)
 
     # The value MUST be in byte 0 (first byte), not byte 1
     assert buf[0] != 0, (
@@ -105,8 +105,8 @@ def test_command_lights_roundtrip_first_byte(lib, position):
     Verify encode/decode roundtrip with the value in byte 0.
     """
     buf = (ctypes.c_uint8 * 8)(*([0] * 8))
-    lib.RAMN_Encode_Command_Lights(ctypes.c_uint16(position), buf)
-    decoded = lib.RAMN_Decode_Command_Lights(buf, ctypes.c_uint32(8))
+    lib.RAMN_Encode_Command_Lights_Default(ctypes.c_uint16(position), buf)
+    decoded = lib.RAMN_Decode_Command_Lights_Default(buf, ctypes.c_uint32(8))
     assert decoded == position, (
         f"Roundtrip failed for position {position}: got {decoded}"
     )

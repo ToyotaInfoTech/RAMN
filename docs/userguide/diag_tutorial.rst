@@ -575,6 +575,8 @@ The following routines are available with RAMN ECUs:
 - Routine 0x0220 can be used to update CAN bit timings directly (prescaler, TSEG1, TSEG2).
 - Routine 0x0221 can be used to update the CAN SJW parameter.
 - Routine 0x0222 can be used to update other CAN parameters: bus-off auto-recovery, auto-retransmission, transmit pause.
+- Routine 0x0223 can be used to reset the CAN peripheral (useful to clear CAN errors).
+- Routine 0x0224 can be used to switch the active CAN traffic profile (one option byte: 0x00 for default traffic, 0x01 for J1939).
 - Routine 0xFF00 can be used to erase the alternative firmware.
 - Routine 0xFF01 can be used to validate memory and swap memory banks.
 

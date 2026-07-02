@@ -98,6 +98,10 @@ void 			RAMN_FDCAN_ResetPeripheral(void);
 // Disables the FDCAN peripheral.
 void 			RAMN_FDCAN_Disable(void);
 
+// Re-applies the RX hardware filters for the active traffic profile (default vs J1939). Called on a
+// live traffic-mode switch. No-op where hardware filters are not used (e.g. ECU A accepts all IDs).
+void 			RAMN_FDCAN_ReloadProfileFilters(void);
+
 // Update the FDCAN peripheral with specified baudrate (slcan format: '0' to '8'). Not valid until peripheral is reset.
 // Required after baudrate change or mode change (e.g. listen mode).
 RAMN_Result_t 	RAMN_FDCAN_UpdateBaudrate(uint32_t newSelection);

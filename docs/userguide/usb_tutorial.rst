@@ -580,6 +580,7 @@ Simply type the ``#`` custom slcan command to open it.
 Then, you can type regular commands, such as "help" to display a help page.
 
 You can for example type ``play 1`` to start a Chip-8 game on it, or ``theme 3`` to change the screen's theme to theme number 3.
+You can also type ``trafficmode j1939`` (or ``trafficmode default``) to switch the CAN traffic profile of all ECUs at runtime (see :ref:`traffic_modes`).
 If you type an invalid command, you will get a human-readable error message instead of just a "BELL" sound.
 
 .. image:: img/ramn_cli.png

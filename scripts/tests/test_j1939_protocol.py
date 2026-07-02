@@ -379,11 +379,14 @@ class TestUdsScanner(unittest.TestCase):
 
 
 class TestJ1939ModeGuard(unittest.TestCase):
-    """Verify that J1939 support is compile-time guarded."""
+    """Verify that the traffic-mode selection knob and J1939 handlers exist.
 
-    def test_enable_j1939_mode_defined(self):
-        """ENABLE_J1939_MODE must be defined in ramn_config.h for the
-        protocol handlers to be compiled in."""
+    Both traffic profiles are always compiled in; the boot profile is selected
+    by DEFAULT_TRAFFIC_MODE and can be switched live at runtime."""
+
+    def test_traffic_mode_knob_defined(self):
+        """DEFAULT_TRAFFIC_MODE selects the power-on traffic profile in
+        ramn_config.h."""
         import os
         config_path = os.path.join(os.path.dirname(__file__), '..',
                                    '..', 'firmware', 'RAMNV1', 'Core',
@@ -391,11 +394,12 @@ class TestJ1939ModeGuard(unittest.TestCase):
         config_path = os.path.normpath(config_path)
         with open(config_path) as f:
             content = f.read()
-        self.assertIn('#define ENABLE_J1939_MODE', content)
+        self.assertIn('#define DEFAULT_TRAFFIC_MODE', content)
+        self.assertIn('#define TRAFFIC_MODE_J1939', content)
 
-    def test_handlers_guarded(self):
-        """Protocol handlers in ramn_j1939.c must be inside
-        #ifdef ENABLE_J1939_MODE blocks."""
+    def test_handlers_present(self):
+        """Protocol handlers in ramn_j1939.c are compiled unconditionally
+        (runtime-gated by the active traffic profile)."""
         import os
         src_path = os.path.join(os.path.dirname(__file__), '..',
                                 '..', 'firmware', 'RAMNV1', 'Core',
@@ -403,7 +407,6 @@ class TestJ1939ModeGuard(unittest.TestCase):
         src_path = os.path.normpath(src_path)
         with open(src_path) as f:
             content = f.read()
-        self.assertIn('#ifdef ENABLE_J1939_MODE', content)
         self.assertIn('J1939_SendAddressClaimed', content)
         self.assertIn('J1939_SendEcuIdBAM', content)
         self.assertIn('J1939_SendTPConnAbort', content)

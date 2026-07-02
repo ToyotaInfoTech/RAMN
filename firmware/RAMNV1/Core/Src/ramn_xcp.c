@@ -402,39 +402,29 @@ RAMN_Bool_t RAMN_XCP_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, c
 	RAMN_Bool_t result = False;
 	RAMN_Bool_t matched = False;
 
-#ifdef ENABLE_J1939_MODE
 	uint8_t prio = (pHeader->Identifier >> 26) & 0x7;
 	uint8_t pf = (pHeader->Identifier >> 16) & 0xFF;
 	uint8_t da = (pHeader->Identifier >> 8) & 0xFF;
 	uint8_t sa = pHeader->Identifier & 0xFF;
 
-	// Proprietary A (PF 0xEF) is used for KWP2000 and XCP. Physical only.
-	// TSA must be 0x3F or 0x5A for XCP.
+	// Accept XCP over both addressing schemes regardless of the live traffic profile:
+	// J1939 proprietary-A (PF 0xEF, physical, TSA 0x3F or 0x5A) or standard 11-bit XCP_RX_CANID.
 	if (pHeader->IdType == FDCAN_EXTENDED_ID && pf == 0xEF && da == J1939_ECU_SA)
 	{
-		if (sa == 0x3F || sa == 0x5A)
+		// Avoid ECUC (SA 0x5A) responding to itself if another ECU is using TSA 0x5A
+		if ((sa == 0x3F || sa == 0x5A) && (sa != J1939_ECU_SA))
 		{
-			// Avoid ECUC (SA 0x5A) responding to itself if another ECU is using TSA 0x5A
-			if (sa != J1939_ECU_SA)
-			{
-				RAMN_XCP_TxMsgHeader.Identifier = J1939_UCAST_ID(prio, 0xEF00, sa, J1939_ECU_SA);
-				RAMN_XCP_TxMsgHeader.IdType = FDCAN_EXTENDED_ID;
-				matched = True;
-			}
-		}
-
-		if (matched == False)
-		{
-			RAMN_XCP_TxMsgHeader.Identifier = XCP_TX_CANID;
-			RAMN_XCP_TxMsgHeader.IdType = FDCAN_STANDARD_ID;
+			RAMN_XCP_TxMsgHeader.Identifier = J1939_UCAST_ID(prio, 0xEF00, sa, J1939_ECU_SA);
+			RAMN_XCP_TxMsgHeader.IdType = FDCAN_EXTENDED_ID;
+			matched = True;
 		}
 	}
-#else
-	if (pHeader->Identifier == XCP_RX_CANID)
+	else if (pHeader->IdType == FDCAN_STANDARD_ID && pHeader->Identifier == XCP_RX_CANID)
 	{
+		RAMN_XCP_TxMsgHeader.Identifier = XCP_TX_CANID;
+		RAMN_XCP_TxMsgHeader.IdType = FDCAN_STANDARD_ID;
 		matched = True;
 	}
-#endif
 
 	if (matched == True)
 	{

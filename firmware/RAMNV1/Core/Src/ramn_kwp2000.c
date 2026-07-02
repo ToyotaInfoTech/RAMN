@@ -348,40 +348,33 @@ RAMN_Bool_t RAMN_KWP_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, c
 	RAMN_Bool_t result = False;
 	RAMN_Bool_t matched = False;
 
-#ifdef ENABLE_J1939_MODE
 	uint8_t prio = (pHeader->Identifier >> 26) & 0x7;
 	uint8_t pf = (pHeader->Identifier >> 16) & 0xFF;
 	uint8_t da = (pHeader->Identifier >> 8) & 0xFF;
 	uint8_t sa = pHeader->Identifier & 0xFF;
 
-	// Proprietary A (PF 0xEF) is used for KWP2000 and XCP. Physical only.
-	// TSA must be in range 0xF1-0xFA for KWP2000.
+	// Accept KWP2000 over both addressing schemes regardless of the live traffic profile:
+	// J1939 proprietary-A (PF 0xEF, physical, TSA 0xF1-0xFA) or standard 11-bit KWP_RX_CANID. The reply
+	// header matches the request that arrived.
 	if (pHeader->IdType == FDCAN_EXTENDED_ID && pf == 0xEF && da == J1939_ECU_SA)
 	{
 		if (sa >= 0xF1 && sa <= 0xFA)
 		{
-			uint32_t pgn_val = 0xEF00;
-			kwpMsgHeader.Identifier = J1939_UCAST_ID(prio, pgn_val, sa, J1939_ECU_SA);
+			kwpMsgHeader.Identifier = J1939_UCAST_ID(prio, 0xEF00, sa, J1939_ECU_SA);
 			kwpMsgHeader.IdType = FDCAN_EXTENDED_ID;
 			kwpFCMsgHeader.Identifier = kwpMsgHeader.Identifier;
 			kwpFCMsgHeader.IdType = FDCAN_EXTENDED_ID;
 			matched = True;
 		}
-
-		if (matched == False)
-		{
-			kwpMsgHeader.Identifier = KWP_TX_CANID;
-			kwpMsgHeader.IdType = FDCAN_STANDARD_ID;
-			kwpFCMsgHeader.Identifier = KWP_TX_CANID;
-			kwpFCMsgHeader.IdType = FDCAN_STANDARD_ID;
-		}
 	}
-#else
-	if (pHeader->Identifier == KWP_RX_CANID)
+	else if (pHeader->IdType == FDCAN_STANDARD_ID && pHeader->Identifier == KWP_RX_CANID)
 	{
+		kwpMsgHeader.Identifier = KWP_TX_CANID;
+		kwpMsgHeader.IdType = FDCAN_STANDARD_ID;
+		kwpFCMsgHeader.Identifier = KWP_TX_CANID;
+		kwpFCMsgHeader.IdType = FDCAN_STANDARD_ID;
 		matched = True;
 	}
-#endif
 
 	if (matched == True)
 	{

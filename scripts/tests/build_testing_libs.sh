@@ -26,9 +26,9 @@ touch scripts/tests/mocks/semphr.h
 touch scripts/tests/mocks/eeprom_emul.h
 touch scripts/tests/mocks/eeprom_emul_conf.h
 
-echo "Compiling Serdes Shared Libraries..."
+echo "Compiling Serdes Shared Library..."
+# Both codecs (RAMN_*_Default and RAMN_*_J1939) live in the single library; tests pick by suffix.
 gcc $CFLAGS -D__MAIN_H $INCLUDES -o scripts/tests/librbd_can_db.so firmware/RAMNV1/Core/Src/ramn_can_database.c
-gcc $CFLAGS -DENABLE_J1939_MODE -D__MAIN_H $INCLUDES -o scripts/tests/librbd_can_db_j1939.so firmware/RAMNV1/Core/Src/ramn_can_database.c
 
 echo "Compiling ECU-specific Diagnostic Shared Libraries..."
 
@@ -46,7 +46,7 @@ for ecu in A B C D; do
         -o scripts/tests/librbd_ecu${ecu}_std.so $DIAG_SRCS
     
     echo "  Building ECU $ecu (J1939)..."
-    gcc $CFLAGS -DTARGET_ECU$ecu -DENABLE_J1939_MODE -DENABLE_UDS -DENABLE_KWP -DENABLE_XCP -DENABLE_ISOTP $MOCK_FLAGS $INCLUDES \
+    gcc $CFLAGS -DTARGET_ECU$ecu -DDEFAULT_TRAFFIC_MODE=TRAFFIC_MODE_J1939 -DENABLE_UDS -DENABLE_KWP -DENABLE_XCP -DENABLE_ISOTP $MOCK_FLAGS $INCLUDES \
         -o scripts/tests/librbd_ecu${ecu}_j1939.so $DIAG_SRCS
 done
 

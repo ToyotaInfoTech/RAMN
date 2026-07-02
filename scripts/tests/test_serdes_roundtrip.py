@@ -105,30 +105,36 @@ except subprocess.CalledProcessError as e:
     print(f"Failed to build shared library:\n{e.stderr.decode()}", file=sys.stderr)
     sys.exit(1)
 
-# Load the shared libraries
+# Load the shared library. Both codecs live in the single librbd_can_db.so, as suffixed symbols
+# (RAMN_Encode_Command_Brake_Default / _J1939, etc.).
 lib_path = os.path.join(os.path.dirname(__file__), "librbd_can_db.so")
-lib_j1939_path = os.path.join(os.path.dirname(__file__), "librbd_can_db_j1939.so")
 
 try:
-    ramn_can_db = ctypes.CDLL(lib_path)
+    _can_db_lib = ctypes.CDLL(lib_path)
 except OSError:
-    ramn_can_db = None
+    _can_db_lib = None
 
-try:
-    ramn_can_db_j1939 = ctypes.CDLL(lib_j1939_path)
-except OSError:
-    ramn_can_db_j1939 = None
 
-if ramn_can_db:
-    # Setup Default functions
-    # ... (signatures are the same for both libraries, we can reuse setup logic)
-    pass
+class SuffixedLib:
+    """Resolves unsuffixed RAMN codec names to the _Default / _J1939 symbols, so test code can
+    keep using the historical names against either codec."""
+
+    def __init__(self, lib, suffix):
+        self._lib = lib
+        self._suffix = suffix
+
+    def __getattr__(self, name):
+        return getattr(self._lib, name + self._suffix)
+
+
+ramn_can_db = SuffixedLib(_can_db_lib, "_Default") if _can_db_lib else None
+ramn_can_db_j1939 = SuffixedLib(_can_db_lib, "_J1939") if _can_db_lib else None
 
 
 def setup_lib_functions(lib):
     if not lib:
         return
-    # void (uint16_t, uint8_t*)
+    # void (uint16_t, uint8_t*) -- all encoders take uint16_t (uint8_t-valued signals are widened)
     encode_funcs_16 = [
         "RAMN_Encode_Command_Brake",
         "RAMN_Encode_Control_Brake",
@@ -140,6 +146,12 @@ def setup_lib_functions(lib):
         "RAMN_Encode_Command_TurnIndicator",
         "RAMN_Encode_Command_Sidebrake",
         "RAMN_Encode_Command_Lights",
+        "RAMN_Encode_Command_Shift",
+        "RAMN_Encode_Command_Horn",
+        "RAMN_Encode_Control_Horn",
+        "RAMN_Encode_Control_Sidebrake",
+        "RAMN_Encode_Control_EngineKey",
+        "RAMN_Encode_Control_Lights",
     ]
     for func_name in encode_funcs_16:
         try:
@@ -149,7 +161,7 @@ def setup_lib_functions(lib):
         except AttributeError:
             pass
 
-    # uint16_t (uint8_t*, uint32_t)
+    # uint16_t (uint8_t*, uint32_t) -- all decoders return uint16_t
     decode_funcs_16 = [
         "RAMN_Decode_Command_Brake",
         "RAMN_Decode_Control_Brake",
@@ -161,6 +173,13 @@ def setup_lib_functions(lib):
         "RAMN_Decode_Command_TurnIndicator",
         "RAMN_Decode_Command_Sidebrake",
         "RAMN_Decode_Command_Lights",
+        "RAMN_Decode_Command_Shift",
+        "RAMN_Decode_Control_Shift",
+        "RAMN_Decode_Command_Horn",
+        "RAMN_Decode_Control_Horn",
+        "RAMN_Decode_Control_Sidebrake",
+        "RAMN_Decode_Control_EngineKey",
+        "RAMN_Decode_Control_Lights",
     ]
     for func_name in decode_funcs_16:
         try:
@@ -170,23 +189,7 @@ def setup_lib_functions(lib):
         except AttributeError:
             pass
 
-    # void (uint8_t, uint8_t*)
-    encode_funcs_8 = [
-        "RAMN_Encode_Command_Shift",
-        "RAMN_Encode_Command_Horn",
-        "RAMN_Encode_Control_Horn",
-        "RAMN_Encode_Control_Sidebrake",
-        "RAMN_Encode_Control_EngineKey",
-        "RAMN_Encode_Control_Lights",
-    ]
-    for func_name in encode_funcs_8:
-        try:
-            f = getattr(lib, func_name)
-            f.argtypes = [ctypes.c_uint8, ctypes.POINTER(ctypes.c_uint8)]
-            f.restype = None
-        except AttributeError:
-            pass
-
+    # Special joystick codecs keep uint8_t signatures.
     # void (uint8_t, uint8_t, uint8_t*)
     try:
         f = getattr(lib, "RAMN_Encode_Control_Shift_Joystick")
@@ -196,17 +199,7 @@ def setup_lib_functions(lib):
         pass
 
     # uint8_t (uint8_t*, uint32_t)
-    decode_funcs_8 = [
-        "RAMN_Decode_Command_Shift",
-        "RAMN_Decode_Control_Shift",
-        "RAMN_Decode_Joystick",
-        "RAMN_Decode_Command_Horn",
-        "RAMN_Decode_Control_Horn",
-        "RAMN_Decode_Control_Sidebrake",
-        "RAMN_Decode_Control_EngineKey",
-        "RAMN_Decode_Control_Lights",
-    ]
-    for func_name in decode_funcs_8:
+    for func_name in ["RAMN_Decode_Joystick", "RAMN_Decode_JoystickButtons"]:
         try:
             f = getattr(lib, func_name)
             f.argtypes = [ctypes.POINTER(ctypes.c_uint8), ctypes.c_uint32]
@@ -214,14 +207,21 @@ def setup_lib_functions(lib):
         except AttributeError:
             pass
 
+    # void (uint8_t, uint8_t*)
+    try:
+        f = getattr(lib, "RAMN_Encode_JoystickButtons")
+        f.argtypes = [ctypes.c_uint8, ctypes.POINTER(ctypes.c_uint8)]
+        f.restype = None
+    except AttributeError:
+        pass
+
 
 setup_lib_functions(ramn_can_db)
 setup_lib_functions(ramn_can_db_j1939)
 
 
 def test_ctypes_loaded():
-    assert ramn_can_db is not None, "Failed to load librbd_can_db.so"
-    assert ramn_can_db_j1939 is not None, "Failed to load librbd_can_db_j1939.so"
+    assert _can_db_lib is not None, "Failed to load librbd_can_db.so"
 
 
 @pytest.mark.parametrize(

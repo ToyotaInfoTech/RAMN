@@ -112,8 +112,6 @@
 /* Command_Steering (PGN 61184): SA AEBS (160), DA Steering Controller (19). Bytes 1-2. j1939_val = ramn_val */
 /* Command_Horn (PGN 61184): SA Shift Console (5), DA Body Controller (33). Byte 1. j1939_val = ramn_val & 0xFF */
 
-#ifdef ENABLE_J1939_MODE
 void RAMN_J1939_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, const uint8_t* data);
-#endif
 
 #endif /* INC_RAMN_J1939_H_ */
