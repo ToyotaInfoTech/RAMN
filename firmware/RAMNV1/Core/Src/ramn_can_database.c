@@ -160,9 +160,6 @@ uint16_t RAMN_Decode_Control_Horn_Default(const uint8_t* payload, uint32_t dlc) 
 }
 
 void RAMN_Encode_Command_TurnIndicator_Default(uint16_t value, uint8_t* payload) {
-    /* Bypass PACK_SIGNAL: with USE_BIG_ENDIAN_CAN it byte-swaps any 0xFFFF-masked signal, which is
-     * wrong here since Left/Right are two independent flag bytes (high byte = Left, low byte =
-     * Right), not one 16-bit value. Same fix pattern as RAMN_Encode_Command_Lights_Default. */
     payload[0] = (uint8_t)(value & 0xFF);
     payload[1] = (uint8_t)((value >> 8) & 0xFF);
 }
