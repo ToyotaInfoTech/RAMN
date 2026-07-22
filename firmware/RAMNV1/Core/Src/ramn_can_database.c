@@ -160,14 +160,13 @@ uint16_t RAMN_Decode_Control_Horn_Default(const uint8_t* payload, uint32_t dlc) 
 }
 
 void RAMN_Encode_Command_TurnIndicator_Default(uint16_t value, uint8_t* payload) {
-    uint16_t packed = PACK_SIGNAL(value, COMMAND_TURNINDICATOR_MASK, COMMAND_TURNINDICATOR_OFFSET);
-    RAMN_memcpy(payload, (uint8_t*)&packed, sizeof(packed));
+    payload[0] = (uint8_t)(value & 0xFF);
+    payload[1] = (uint8_t)((value >> 8) & 0xFF);
 }
 uint16_t RAMN_Decode_Command_TurnIndicator_Default(const uint8_t* payload, uint32_t dlc) {
-    uint16_t packed = 0;
-    RAMN_memcpy((uint8_t*)&packed, payload, sizeof(packed));
-    if (dlc <= 1U) packed = packed & 0xFF;
-    return UNPACK_SIGNAL(packed, COMMAND_TURNINDICATOR_MASK, COMMAND_TURNINDICATOR_OFFSET);
+    uint16_t result = (uint16_t)payload[0];
+    if (dlc >= 2U) result |= ((uint16_t)payload[1] << 8);
+    return result;
 }
 
 void RAMN_Encode_Command_Sidebrake_Default(uint16_t value, uint8_t* payload) {
