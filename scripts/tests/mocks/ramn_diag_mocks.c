@@ -137,6 +137,15 @@ size_t xStreamBufferSend(StreamBufferHandle_t xStreamBuffer, const void *pvTxDat
                     RAMN_KWP_ISOTPHandler.txSize = ans_size;
                     RAMN_KWP_ISOTPHandler.txStatus = ISOTP_TX_TRANSFERRING;
                     RAMN_KWP_Continue_TX(0);
+                    // Complete any multi-frame transfer the same way a tester would: after the
+                    // FirstFrame, feed a FlowControl "Continue To Send" and pump ConsecutiveFrames.
+                    for (int guard = 0; (RAMN_KWP_ISOTPHandler.txStatus != ISOTP_TX_IDLE) && (guard < 8192); guard++) {
+                        if (RAMN_KWP_ISOTPHandler.txStatus == ISOTP_TX_WAITING_FLAG) {
+                            uint8_t fc[3] = {0x30, 0x00, 0x00}; // FlowControl: CTS, BS=0, STmin=0
+                            RAMN_ISOTP_ProcessRxMsg(&RAMN_KWP_ISOTPHandler, 3, fc, False, 0);
+                        }
+                        RAMN_KWP_Continue_TX(0);
+                    }
                 }
                 kwp_expected = 0;
             }

@@ -409,12 +409,12 @@ RAMN_Bool_t RAMN_XCP_ProcessRxCANMessage(const FDCAN_RxHeaderTypeDef* pHeader, c
 
 	// Accept XCP over both addressing schemes regardless of the live traffic profile:
 	// J1939 proprietary-A (PF 0xEF, physical, TSA 0x3F or 0x5A) or standard 11-bit XCP_RX_CANID.
-	if (pHeader->IdType == FDCAN_EXTENDED_ID && pf == 0xEF && da == J1939_ECU_SA)
+	if (pHeader->IdType == FDCAN_EXTENDED_ID && pf == 0xEF && da == J1939_ECU_XCP_SA)
 	{
-		// Avoid ECUC (SA 0x5A) responding to itself if another ECU is using TSA 0x5A
-		if ((sa == 0x3F || sa == 0x5A) && (sa != J1939_ECU_SA))
+		// Avoid responding to self if tester uses same SA
+		if ((sa == 0x3F || sa == 0x5A) && (sa != J1939_ECU_XCP_SA))
 		{
-			RAMN_XCP_TxMsgHeader.Identifier = J1939_UCAST_ID(prio, 0xEF00, sa, J1939_ECU_SA);
+			RAMN_XCP_TxMsgHeader.Identifier = J1939_UCAST_ID(prio, 0xEF00, sa, J1939_ECU_XCP_SA);
 			RAMN_XCP_TxMsgHeader.IdType = FDCAN_EXTENDED_ID;
 			matched = True;
 		}

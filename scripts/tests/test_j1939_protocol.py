@@ -49,17 +49,17 @@ ECU_SA = {
 
 # J1939 NAME per ECU: (function, identity_number) — all other fields zero
 ECU_NAME_FIELDS = {
-    'A': {'function': 42, 'identity': 1},
-    'B': {'function': 19, 'identity': 2},
-    'C': {'function': 90, 'identity': 3},
-    'D': {'function': 33, 'identity': 4},
+    'A': {'function': 42, 'identity': 0xEC0A},
+    'B': {'function': 52, 'identity': 0xEC0B},
+    'C': {'function': 90, 'identity': 0xEC0C},
+    'D': {'function': 33, 'identity': 0xEC0D},
 }
 
 ECU_ID_STRINGS = {
-    'A': "RAMN*ECU_A*0001*UNIT1*",
-    'B': "RAMN*ECU_B*0002*UNIT2*",
-    'C': "RAMN*ECU_C*0003*UNIT3*",
-    'D': "RAMN*ECU_D*0004*UNIT4*",
+    'A': "RAMN*ECU_A*EC0A*UNIT1*",
+    'B': "RAMN*ECU_B*EC0B*UNIT2*",
+    'C': "RAMN*ECU_C*EC0C*UNIT3*",
+    'D': "RAMN*ECU_D*EC0D*UNIT4*",
 }
 
 # ---------------------------------------------------------------------------
