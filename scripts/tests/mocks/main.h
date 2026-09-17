@@ -54,6 +54,10 @@ typedef struct {
 #define FDCAN_DLC_BYTES_0   0
 #define FDCAN_DLC_BYTES_8   8
 
+#define RAMN_CAN_ORIGIN_BUS       0x00U
+#define RAMN_CAN_ORIGIN_HOST      0xA1U
+#define RAMN_CAN_ORIGIN_INTERNAL  0x02U
+
 // ISO-TP Config
 #define ISOTP_RXBUFFER_SIZE 4096
 #define ISOTP_TXBUFFER_SIZE 4096

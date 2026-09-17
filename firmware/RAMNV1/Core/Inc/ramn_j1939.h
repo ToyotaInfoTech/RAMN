@@ -89,23 +89,56 @@
 #define J1939_MANUFACTURER_NEBRASKA_TEST    522
 #define J1939_MANUFACTURER_DLG_TEST         251
 
-/* Per-ECU primary source address for J1939 Address Claim */
+#define J1939_ECUA_IDENTITY                 0xEC0A  /* Identity number: EC0A */
+#define J1939_ECUB_IDENTITY                 0xEC0B  /* Identity number: EC0B */
+#define J1939_ECUC_IDENTITY                 0xEC0C  /* Identity number: EC0C */
+#define J1939_ECUD_IDENTITY                 0xEC0D  /* Identity number: EC0D */
+
+/* Per-ECU primary source address for J1939 Address Claim and diagnostic routing */
 #if defined(TARGET_ECUA)
 #define J1939_ECU_SA                J1939_SA_HEADWAY_CTRL       /* 42 */
 #define J1939_ECU_FUNCTION          J1939_FUNCTION_HEADWAY_CTRL /* 32 */
+#define J1939_ECU_IDENTITY          J1939_ECUA_IDENTITY
 #define J1939_ECU_MANUFACTURER      J1939_MANUFACTURER_NEVADA_TEST
+#define J1939_ECU_KWP_SA            J1939_ECU_SA
+#define J1939_ECU_XCP_SA            J1939_ECU_SA
+#define J1939_ECU_KWP_XCP_SA        J1939_ECU_SA
 #elif defined(TARGET_ECUB)
 #define J1939_ECU_SA                J1939_SA_STEERING_CTRL      /* 19 */
-#define J1939_ECU_FUNCTION          J1939_FUNCTION_STEERING_CTRL /* 16 */
+#define J1939_ECU_FUNCTION          J1939_FUNCTION_CHASSIS_CTRL /* 52: Chassis Controller */
+#define J1939_ECU_IDENTITY          J1939_ECUB_IDENTITY
 #define J1939_ECU_MANUFACTURER      J1939_MANUFACTURER_ISOBUS_TEST
+#define J1939_ECU_KWP_SA            J1939_ECU_SA
+#define J1939_ECU_XCP_SA            J1939_ECU_SA
+#define J1939_ECU_KWP_XCP_SA        J1939_ECU_SA
 #elif defined(TARGET_ECUC)
 #define J1939_ECU_SA                J1939_SA_POWERTRAIN_CTRL    /* 90 */
 #define J1939_ECU_FUNCTION          J1939_FUNCTION_ELECTRIC_POWERTRAIN /* 80 */
+#define J1939_ECU_IDENTITY          J1939_ECUC_IDENTITY
 #define J1939_ECU_MANUFACTURER      J1939_MANUFACTURER_NEBRASKA_TEST
+#define J1939_ECU_KWP_SA            J1939_ECU_SA
+#define J1939_ECU_XCP_SA            J1939_ECU_SA
+#define J1939_ECU_KWP_XCP_SA        J1939_ECU_SA
 #elif defined(TARGET_ECUD)
 #define J1939_ECU_SA                J1939_SA_BODY_CTRL          /* 33 */
 #define J1939_ECU_FUNCTION          J1939_FUNCTION_BODY_CTRL    /* 26 */
+#define J1939_ECU_IDENTITY          J1939_ECUD_IDENTITY
 #define J1939_ECU_MANUFACTURER      J1939_MANUFACTURER_DLG_TEST
+#define J1939_ECU_KWP_SA            J1939_ECU_SA
+#define J1939_ECU_XCP_SA            J1939_ECU_SA
+#define J1939_ECU_KWP_XCP_SA        J1939_ECU_SA
+#else
+/* Fallback definitions when no TARGET_ECUx macro is defined.
+ * This branch exists specifically for IDE code assistance / indexers,
+ * static analysis tools, and standalone / mock compilation units.
+ * Defaults safely to the primary ECU D (Body Controller) configuration. */
+#define J1939_ECU_SA                J1939_SA_BODY_CTRL
+#define J1939_ECU_FUNCTION          J1939_FUNCTION_BODY_CTRL
+#define J1939_ECU_IDENTITY          J1939_ECUD_IDENTITY
+#define J1939_ECU_MANUFACTURER      J1939_MANUFACTURER_DLG_TEST
+#define J1939_ECU_KWP_SA            J1939_ECU_SA
+#define J1939_ECU_XCP_SA            J1939_ECU_SA
+#define J1939_ECU_KWP_XCP_SA        J1939_ECU_SA
 #endif
 
 /* Proprietary A Payload Definitions */

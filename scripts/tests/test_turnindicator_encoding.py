@@ -35,7 +35,7 @@ def build_bigendian_lib():
     USE_BIG_ENDIAN_CAN) to reproduce the on-target byte layout.
     """
     includes = "-I scripts/tests/mocks/ -I firmware/RAMNV1/Core/Inc/"
-    cflags = "-shared -fPIC -DCPYTHON_TESTING -D__MAIN_H -DUSE_BIG_ENDIAN_CAN"
+    cflags = "-shared -fPIC -DCPYTHON_TESTING -D__MAIN_H -DUSE_BIG_ENDIAN_CAN -include stddef.h -include string.h"
     src = "firmware/RAMNV1/Core/Src/ramn_can_database.c"
     cmd = f"gcc {cflags} {includes} -o {LIB_PATH} {src}"
     result = subprocess.run(

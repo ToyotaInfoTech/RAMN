@@ -1727,89 +1727,95 @@ void RAMN_ReceiveCANFunc(void *argument)
 #endif
 			RAMN_CUSTOM_ProcessRxCANMessage(&CANRxHeader, CANRxData, xTaskGetTickCount());
 
-#if defined(ENABLE_CDC)
-			if (RAMN_USB_Config.slcanOpened)
-			{
-				uint8_t index = 0;
-
-				// Add prefix if frame is of CAN-FD type
-				if(CANRxHeader.FDFormat == FDCAN_FD_CAN)
-				{
-					if(CANRxHeader.BitRateSwitch  == FDCAN_BRS_ON) slCAN_USBTxBuffer[index++] = '1';
-					else slCAN_USBTxBuffer[index++] = '0';
-				}
-				else
-				{
-					if (payloadSize > 8U) payloadSize = 8U;
-				}
-
-				if(CANRxHeader.RxFrameType == FDCAN_DATA_FRAME)
-				{
-					// Message with Data
-					slCAN_USBTxBuffer[index++] = CANRxHeader.IdType == FDCAN_STANDARD_ID ? 't' : 'T';
-				}
-				else
-				{
-					// FDCAN_REMOTE_FRAME is the only other option
-					slCAN_USBTxBuffer[index++] = CANRxHeader.IdType == FDCAN_STANDARD_ID ? 'r' : 'R';
-					payloadSize = 0; //no payload will be sent.
-				}
-
-				if (CANRxHeader.IdType == FDCAN_STANDARD_ID)
-				{
-					// Standard ID (FDCAN_STANDARD_ID)
-					index += uint12toASCII(CANRxHeader.Identifier,&slCAN_USBTxBuffer[index]);
-				}
-				else
-				{
-					// Extended ID (FDCAN_EXTENDED_ID)
-					index += uint32toASCII(CANRxHeader.Identifier,&slCAN_USBTxBuffer[index]);
-				}
-
-				//TODO: unify
-				if (CANRxHeader.FDFormat == FDCAN_FD_CAN)
-				{
-					index += uint4toASCII((CANRxHeader.DataLength) & 0xF,&slCAN_USBTxBuffer[index]);
-				}
-				else
-				{
-					index += uint4toASCII((payloadSize) & 0xF,&slCAN_USBTxBuffer[index]);
-				}
-
-				for(uint8_t i=0;i<payloadSize;i++)
-				{
-					index += uint8toASCII(CANRxData[i],&slCAN_USBTxBuffer[index]);
-				}
-
-				if (RAMN_USB_Config.slcan_enableTimestamp != 0U)
-				{
-					index += uint16toASCII((xTaskGetTickCount() * (1000 /*ms per sec*/ / configTICK_RATE_HZ) ) % 0xEA60 /* 60,000 ms*/,&slCAN_USBTxBuffer[index]);
-				}
-
-				if ((RAMN_USB_Config.addESIFlag != 0U) && (CANRxHeader.FDFormat == FDCAN_FD_CAN) && (CANRxHeader.ErrorStateIndicator == FDCAN_ESI_PASSIVE))
-				{
-					slCAN_USBTxBuffer[index++] = 'i';
-				}
-				slCAN_USBTxBuffer[index++] = '\r';
-				if (RAMN_USB_SendFromTask(slCAN_USBTxBuffer,index) != RAMN_OK)
-				{
-#ifdef CLOSE_DEVICE_ON_USB_TX_OVERFLOW
-					// USB overflow, user probably forgot to close the device
-					RAMN_USB_Config.slcanOpened = False;
+#if defined(ENABLE_ECUA_HOST_INTERACTION)
+			// Do not echo host-originated frames back to USB to prevent host echo storms
+			if (CANRxHeader.IsFilterMatchingFrame != RAMN_CAN_ORIGIN_HOST)
 #endif
+			{
+#if defined(ENABLE_CDC)
+				if (RAMN_USB_Config.slcanOpened)
+				{
+					uint8_t index = 0;
+
+					// Add prefix if frame is of CAN-FD type
+					if(CANRxHeader.FDFormat == FDCAN_FD_CAN)
+					{
+						if(CANRxHeader.BitRateSwitch  == FDCAN_BRS_ON) slCAN_USBTxBuffer[index++] = '1';
+						else slCAN_USBTxBuffer[index++] = '0';
+					}
+					else
+					{
+						if (payloadSize > 8U) payloadSize = 8U;
+					}
+
+					if(CANRxHeader.RxFrameType == FDCAN_DATA_FRAME)
+					{
+						// Message with Data
+						slCAN_USBTxBuffer[index++] = CANRxHeader.IdType == FDCAN_STANDARD_ID ? 't' : 'T';
+					}
+					else
+					{
+						// FDCAN_REMOTE_FRAME is the only other option
+						slCAN_USBTxBuffer[index++] = CANRxHeader.IdType == FDCAN_STANDARD_ID ? 'r' : 'R';
+						payloadSize = 0; //no payload will be sent.
+					}
+
+					if (CANRxHeader.IdType == FDCAN_STANDARD_ID)
+					{
+						// Standard ID (FDCAN_STANDARD_ID)
+						index += uint12toASCII(CANRxHeader.Identifier,&slCAN_USBTxBuffer[index]);
+					}
+					else
+					{
+						// Extended ID (FDCAN_EXTENDED_ID)
+						index += uint32toASCII(CANRxHeader.Identifier,&slCAN_USBTxBuffer[index]);
+					}
+
+					//TODO: unify
+					if (CANRxHeader.FDFormat == FDCAN_FD_CAN)
+					{
+						index += uint4toASCII((CANRxHeader.DataLength) & 0xF,&slCAN_USBTxBuffer[index]);
+					}
+					else
+					{
+						index += uint4toASCII((payloadSize) & 0xF,&slCAN_USBTxBuffer[index]);
+					}
+
+					for(uint8_t i=0;i<payloadSize;i++)
+					{
+						index += uint8toASCII(CANRxData[i],&slCAN_USBTxBuffer[index]);
+					}
+
+					if (RAMN_USB_Config.slcan_enableTimestamp != 0U)
+					{
+						index += uint16toASCII((xTaskGetTickCount() * (1000 /*ms per sec*/ / configTICK_RATE_HZ) ) % 0xEA60 /* 60,000 ms*/,&slCAN_USBTxBuffer[index]);
+					}
+
+					if ((RAMN_USB_Config.addESIFlag != 0U) && (CANRxHeader.FDFormat == FDCAN_FD_CAN) && (CANRxHeader.ErrorStateIndicator == FDCAN_ESI_PASSIVE))
+					{
+						slCAN_USBTxBuffer[index++] = 'i';
+					}
+					slCAN_USBTxBuffer[index++] = '\r';
+					if (RAMN_USB_SendFromTask(slCAN_USBTxBuffer,index) != RAMN_OK)
+					{
+#ifdef CLOSE_DEVICE_ON_USB_TX_OVERFLOW
+						// USB overflow, user probably forgot to close the device
+						RAMN_USB_Config.slcanOpened = False;
+#endif
+					}
 				}
-			}
 #endif
 
 #ifdef ENABLE_GSUSB
-			if(RAMN_USB_Config.gsusbOpened && GSUSB_IsConnected((USBD_HandleTypeDef*)hpcd_USB_FS.pData))
-			{
-				if(RAMN_GSUSB_ProcessRX(&CANRxHeader, CANRxData) == RAMN_ERROR)
+				if(RAMN_USB_Config.gsusbOpened && GSUSB_IsConnected((USBD_HandleTypeDef*)hpcd_USB_FS.pData))
 				{
-					RAMN_USB_Config.queueErrorCnt++;
+					if(RAMN_GSUSB_ProcessRX(&CANRxHeader, CANRxData) == RAMN_ERROR)
+					{
+						RAMN_USB_Config.queueErrorCnt++;
+					}
 				}
-			}
 #endif
+			}
 		}
 		else
 		{
@@ -1865,18 +1871,89 @@ void RAMN_SendCANFunc(void *argument)
 #endif
 		}
 
-#ifdef ENABLE_GSUSB
-		/* echo transmission
-		if(RAMN_USB_Config.gsusbOpened && GSUSB_IsConnected((USBD_HandleTypeDef*)hpcd_USB_FS.pData))
+#if defined(ENABLE_ECUA_HOST_INTERACTION)
+		if (CANTxHeader.MessageMarker != RAMN_CAN_ORIGIN_HOST)
 		{
-			// Wait for queue empty
-			while (uxQueueMessagesWaiting(RAMN_GSUSB_PoolQueueHandle) < FDCAN_GetQueueSize())
+#if defined(ENABLE_CDC)
+			if (RAMN_USB_Config.slcanOpened)
 			{
-				ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+				uint8_t slcanBuf[64];
+				uint8_t slcanIdx = 0;
+				uint8_t pSize = payloadSize;
+
+				if (CANTxHeader.FDFormat == FDCAN_FD_CAN)
+				{
+					if (CANTxHeader.BitRateSwitch == FDCAN_BRS_ON) slcanBuf[slcanIdx++] = '1';
+					else slcanBuf[slcanIdx++] = '0';
+				}
+				else
+				{
+					if (pSize > 8U) pSize = 8U;
+				}
+
+				if (CANTxHeader.TxFrameType == FDCAN_DATA_FRAME)
+				{
+					slcanBuf[slcanIdx++] = (CANTxHeader.IdType == FDCAN_STANDARD_ID) ? 't' : 'T';
+				}
+				else
+				{
+					slcanBuf[slcanIdx++] = (CANTxHeader.IdType == FDCAN_STANDARD_ID) ? 'r' : 'R';
+					pSize = 0;
+				}
+
+				if (CANTxHeader.IdType == FDCAN_STANDARD_ID)
+				{
+					slcanIdx += uint12toASCII(CANTxHeader.Identifier, &slcanBuf[slcanIdx]);
+				}
+				else
+				{
+					slcanIdx += uint32toASCII(CANTxHeader.Identifier, &slcanBuf[slcanIdx]);
+				}
+
+				if (CANTxHeader.FDFormat == FDCAN_FD_CAN)
+				{
+					slcanIdx += uint4toASCII((CANTxHeader.DataLength) & 0xF, &slcanBuf[slcanIdx]);
+				}
+				else
+				{
+					slcanIdx += uint4toASCII((pSize) & 0xF, &slcanBuf[slcanIdx]);
+				}
+
+				for (uint8_t i = 0; i < pSize; i++)
+				{
+					slcanIdx += uint8toASCII(CANTxData[i], &slcanBuf[slcanIdx]);
+				}
+
+				if (RAMN_USB_Config.slcan_enableTimestamp != 0U)
+				{
+					slcanIdx += uint16toASCII((xTaskGetTickCount() * (1000 /*ms per sec*/ / configTICK_RATE_HZ)) % 0xEA60, &slcanBuf[slcanIdx]);
+				}
+
+				if ((RAMN_USB_Config.addESIFlag != 0U) && (CANTxHeader.FDFormat == FDCAN_FD_CAN) && (CANTxHeader.ErrorStateIndicator == FDCAN_ESI_PASSIVE))
+				{
+					slcanBuf[slcanIdx++] = 'i';
+				}
+
+				slcanBuf[slcanIdx++] = '\r';
+				if (RAMN_USB_SendFromTask(slcanBuf, slcanIdx) != RAMN_OK)
+				{
+#ifdef CLOSE_DEVICE_ON_USB_TX_OVERFLOW
+					RAMN_USB_Config.slcanOpened = False;
+#endif
+				}
 			}
-			RAMN_SocketCAN_SendTX(&CANTxHeader, CANTxData);
+#endif
+
+#ifdef ENABLE_GSUSB
+			if (RAMN_USB_Config.gsusbOpened && GSUSB_IsConnected((USBD_HandleTypeDef*)hpcd_USB_FS.pData))
+			{
+				if (RAMN_GSUSB_ProcessTX(&CANTxHeader, CANTxData) == RAMN_ERROR)
+				{
+					RAMN_USB_Config.queueErrorCnt++;
+				}
+			}
+#endif
 		}
-		 */
 #endif
 
 		RAMN_FDCAN_Status.CANTXRequestCnt++;
@@ -2439,7 +2516,7 @@ void RAMN_RxTask2Func(void *argument)
 			CANTxHeader.FDFormat = FDCAN_CLASSIC_CAN;
 			CANTxHeader.TxEventFifoControl = FDCAN_NO_TX_EVENTS;
 
-			//CANTxHeader.MessageMarker = 0U;
+			CANTxHeader.MessageMarker = RAMN_CAN_ORIGIN_HOST;
 
 			if (CANTxHeader.TxFrameType == FDCAN_DATA_FRAME)
 			{
@@ -2449,7 +2526,8 @@ void RAMN_RxTask2Func(void *argument)
 			//TODO: implement better error reports
 			if (RAMN_FDCAN_SendMessage(&CANTxHeader,CANTxData) == RAMN_OK)
 			{
-				// for host candump
+				// for host candump (timestamps are ignored on host send echo)
+				recvFrame->timestamp_us = 0;
 				ret = xQueueSendToBack(RAMN_GSUSB_SendQueueHandle, &recvFrame, CAN_QUEUE_TIMEOUT);
 				if (ret != pdPASS)
 				{
@@ -2457,6 +2535,9 @@ void RAMN_RxTask2Func(void *argument)
 					// Drop frame and return buffer to pool
 					xQueueSendToBack(RAMN_GSUSB_PoolQueueHandle, &recvFrame, portMAX_DELAY);
 				}
+#if defined(ENABLE_ECUA_HOST_INTERACTION)
+				RAMN_FDCAN_InjectHostRxMessage(&CANTxHeader, CANTxData);
+#endif
 			}
 		}
 	}

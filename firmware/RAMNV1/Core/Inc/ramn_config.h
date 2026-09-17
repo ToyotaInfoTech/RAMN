@@ -108,9 +108,10 @@
 // If used with HARDENING, make sure you make the "#" slcan command available again.
 //#define START_IN_CLI_MODE
 
-// Define this flag to let ECU A process slcan message that it receives as regular RX messages (and update their value on screen, for example).
-// This is useful to demonstrate the impact of CAN fuzzing on ECU A's screen when using ECU A's slcan interface, even though ECU A did not actually receive the fuzzed CAN message (since it was the transmitter).
-#define PROCESS_SLCAN_BY_DBC
+// Enable PC interaction with ECU A over slcan and gs_usb.
+// Injects host-transmitted frames into ECU A's local RX stream buffer (for UDS, J1939, DBC)
+// and forwards ECU A's internal transmissions to the host PC over USB.
+#define ENABLE_ECUA_HOST_INTERACTION
 
 // Define this flag to enable the USB debugging module.
 // Note that it also needs to be activated by a slcan command, or by setting RAMN_DEBUG_ENABLE in ramn_debug.c to True.
