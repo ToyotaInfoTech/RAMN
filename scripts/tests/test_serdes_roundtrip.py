@@ -64,6 +64,9 @@ atexit.register(save_report)
 class RecordingDescriber:
     def __init__(self, signal_name, *args, **kwargs):
         self.signal_name = signal_name
+        da_json_path = kwargs.get("da_json")
+        if da_json_path and not os.path.exists(da_json_path):
+            pytest.skip(f"Skipping because database file '{da_json_path}' is missing.")
         self._describer = pretty_j1939.describe.get_describer(*args, **kwargs)
 
     def __call__(self, data, can_id):
