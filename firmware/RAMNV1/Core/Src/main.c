@@ -1749,7 +1749,7 @@ void RAMN_ReceiveCANFunc(void *argument)
 			RAMN_CUSTOM_ProcessRxCANMessage(&CANRxHeader, CANRxData, xTaskGetTickCount());
 
 #if defined(ENABLE_ECUA_HOST_INTERACTION)
-			// Do not echo host-originated frames back to USB to prevent host echo storms
+			// Do not echo host-originated frames back to USB/UART to prevent host echo storms
 			if (CANRxHeader.IsFilterMatchingFrame != RAMN_CAN_ORIGIN_HOST)
 #endif
 			{
@@ -1895,7 +1895,7 @@ void RAMN_SendCANFunc(void *argument)
 #if defined(ENABLE_ECUA_HOST_INTERACTION)
 		if (CANTxHeader.MessageMarker != RAMN_CAN_ORIGIN_HOST)
 		{
-#if defined(ENABLE_CDC)
+#if (defined(ENABLE_CDC) || defined(RAMN_SERIAL_CMD_TRANSPORT_LPUART1)) && defined(TARGET_ECUA)
 			if (RAMN_USB_Config.slcanOpened)
 			{
 				uint8_t slcanBuf[64];
@@ -1956,7 +1956,7 @@ void RAMN_SendCANFunc(void *argument)
 				}
 
 				slcanBuf[slcanIdx++] = '\r';
-				if (RAMN_USB_SendFromTask(slcanBuf, slcanIdx) != RAMN_OK)
+				if (RAMN_Serial_SendFromTask(slcanBuf, slcanIdx) != RAMN_OK)
 				{
 #ifdef CLOSE_DEVICE_ON_USB_TX_OVERFLOW
 					RAMN_USB_Config.slcanOpened = False;
