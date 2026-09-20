@@ -1,0 +1,72 @@
+:name: RAMN 4-ECU Multi-Node Simulation
+:description: Simulates ECUA, ECUB, ECUC, ECUD on a shared CAN bus with ECUA LPUART1 SLCAN export
+
+emulation CreateCANHub "canHub"
+
+$bin_ecua?=@/firmware/ECUA.hex
+$bin_ecub?=@/firmware/ECUB.hex
+$bin_ecuc?=@/firmware/ECUC.hex
+$bin_ecud?=@/firmware/ECUD.hex
+
+# 1. ECU A (Gateway) with LPUART1 SLCAN terminal export
+mach create "ECUA"
+include @platforms/boards/ramn.repl
+include @platforms/boards/ramn/GATEWAY.repl
+macro reset
+"""
+    sysbus LoadHEX $bin_ecua
+    cpu VectorTableOffset 0x08000000
+    cpu PC `sysbus ReadDoubleWord 0x08000004`
+    cpu SP `sysbus ReadDoubleWord 0x08000000`
+"""
+runMacro $reset
+connector Connect sysbus.fdcan1 canHub
+
+# Export ECU A LPUART1 over TCP port 29536 (emitConfigBytes=false for raw slcan stream)
+emulation CreateServerSocketTerminal 29536 "ecua_slcan_term" false
+connector Connect sysbus.lpuart1 ecua_slcan_term
+
+# 2. ECU B (Chassis)
+mach create "ECUB"
+include @platforms/boards/ramn.repl
+include @platforms/boards/ramn/CHASSIS.repl
+macro reset
+"""
+    sysbus LoadHEX $bin_ecub
+    cpu VectorTableOffset 0x08000000
+    cpu PC `sysbus ReadDoubleWord 0x08000004`
+    cpu SP `sysbus ReadDoubleWord 0x08000000`
+"""
+runMacro $reset
+connector Connect sysbus.fdcan1 canHub
+
+# 3. ECU C (Powertrain)
+mach create "ECUC"
+include @platforms/boards/ramn.repl
+include @platforms/boards/ramn/POWERTRAIN.repl
+macro reset
+"""
+    sysbus LoadHEX $bin_ecuc
+    cpu VectorTableOffset 0x08000000
+    cpu PC `sysbus ReadDoubleWord 0x08000004`
+    cpu SP `sysbus ReadDoubleWord 0x08000000`
+"""
+runMacro $reset
+connector Connect sysbus.fdcan1 canHub
+
+# 4. ECU D (Body)
+mach create "ECUD"
+include @platforms/boards/ramn.repl
+include @platforms/boards/ramn/BODY.repl
+macro reset
+"""
+    sysbus LoadHEX $bin_ecud
+    cpu VectorTableOffset 0x08000000
+    cpu PC `sysbus ReadDoubleWord 0x08000004`
+    cpu SP `sysbus ReadDoubleWord 0x08000000`
+"""
+runMacro $reset
+connector Connect sysbus.fdcan1 canHub
+
+emulation SetGlobalQuantum "0.00001"
+start
