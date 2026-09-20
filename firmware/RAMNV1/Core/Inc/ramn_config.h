@@ -42,8 +42,30 @@
 
 #if defined(TARGET_ECUA)
 //#define ENABLE_ADC
+
+// --- ECUA serial command transport selection ---
+// Exactly one of the two transports below must be defined.
+// USB CDC: commands arrive/depart over the USB CDC (virtual COM port) interface.
+// LPUART1: commands arrive/depart over the LPUART1 (hardware UART) interface.
+//#define RAMN_SERIAL_CMD_TRANSPORT_USB_CDC
+//#define RAMN_SERIAL_CMD_TRANSPORT_LPUART1
+#if !defined(RAMN_SERIAL_CMD_TRANSPORT_USB_CDC) && !defined(RAMN_SERIAL_CMD_TRANSPORT_LPUART1)
+// Default transport when neither is pre-defined by the build system.
+#define RAMN_SERIAL_CMD_TRANSPORT_USB_CDC
+#endif
+
+#if defined(RAMN_SERIAL_CMD_TRANSPORT_USB_CDC) && defined(RAMN_SERIAL_CMD_TRANSPORT_LPUART1)
+#error "ECUA: select exactly one command transport (RAMN_SERIAL_CMD_TRANSPORT_USB_CDC XOR RAMN_SERIAL_CMD_TRANSPORT_LPUART1)"
+#endif
+
+// Wire feature dependencies based on transport selection.
+#if defined(RAMN_SERIAL_CMD_TRANSPORT_USB_CDC)
 #define ENABLE_USB
 #define ENABLE_CDC // USB serial (CDC) interface
+#elif defined(RAMN_SERIAL_CMD_TRANSPORT_LPUART1)
+#define ENABLE_UART
+// USB and CDC are not needed for the LPUART1 transport.
+#endif
 
 // Enable this flag to enable the candlelight interface (gs_usb drivers)
 // Current implementation is experimental:
@@ -115,7 +137,10 @@
 
 // Define this flag to enable the USB debugging module.
 // Note that it also needs to be activated by a slcan command, or by setting RAMN_DEBUG_ENABLE in ramn_debug.c to True.
+// Only available when USB transport is selected (debug output goes through USB).
+#if defined(RAMN_SERIAL_CMD_TRANSPORT_USB_CDC) && defined(ENABLE_USB)
 #define ENABLE_USB_DEBUG
+#endif
 
 // Number of times to retry entering bootloader mode of another ECU before giving up
 #define BOOTLOADER_MAX_ATTEMPTS 20
@@ -375,10 +400,15 @@
 // Define this flag to pad CAN-FD ISO-TP answer frames up to the full configured ISOTP_TX_DL (64 bytes by default) instead of the smallest.
 // #define ISOTP_FD_FULL_PADDING
 
+#if (defined(ENABLE_CDC) || defined(RAMN_SERIAL_CMD_TRANSPORT_LPUART1)) && defined(TARGET_ECUA)
+#ifndef USB_COMMAND_BUFFER_SIZE
+#define USB_COMMAND_BUFFER_SIZE		(8195)
+#endif
+#endif
+
 #ifdef ENABLE_CDC
 #define APP_RX_DATA_SIZE  2048
 #define APP_TX_DATA_SIZE  2048
-#define USB_COMMAND_BUFFER_SIZE		(8195)
 #endif
 
 #ifdef TARGET_ECUA

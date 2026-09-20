@@ -33,7 +33,7 @@
 #include "ramn_usb.h"
 #endif
 
-#ifdef ENABLE_CDC
+#if (defined(ENABLE_CDC) || defined(RAMN_SERIAL_CMD_TRANSPORT_LPUART1)) && defined(TARGET_ECUA)
 #include "ramn_cdc.h"
 #endif
 
@@ -62,6 +62,9 @@
 #include "ramn_customize.h"
 #ifdef ENABLE_UART
 #include "ramn_uart.h"
+#endif
+#if (defined(ENABLE_CDC) || defined(RAMN_SERIAL_CMD_TRANSPORT_LPUART1)) && defined(TARGET_ECUA)
+#include "ramn_serial_cmd.h"
 #endif
 #include "usb_device.h"
 #include "usbd_gsusb_if.h"
@@ -304,6 +307,12 @@ static uint8_t uart_rx_data[1];
 
 // Current index of uart command.
 static uint16_t uart_current_index = 0;
+
+#if defined(RAMN_SERIAL_CMD_TRANSPORT_LPUART1) && !defined(ENABLE_CDC)
+// When UART is the command transport (no CDC), provide the slCAN TX buffer and
+// a command RX buffer alias so the CLI/sLCAN processor code can be shared.
+__attribute__ ((section (".buffers")))  uint8_t slCAN_USBTxBuffer[0x200];
+#endif
 
 #endif
 
@@ -904,7 +913,7 @@ static void MX_FDCAN1_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN FDCAN1_Init 2 */
-#ifdef ENABLE_CDC
+#if (defined(ENABLE_CDC) || defined(RAMN_SERIAL_CMD_TRANSPORT_LPUART1)) && defined(TARGET_ECUA)
 	// Initialize header for the "spoof asap" replace module
 	ReplaceTxHeader.BitRateSwitch = FDCAN_BRS_OFF;
 	ReplaceTxHeader.FDFormat = FDCAN_CLASSIC_CAN;
@@ -1610,8 +1619,8 @@ void RAMN_ReceiveUSBFunc(void *argument)
 		if (invalidBuffer == True)
 		{
 			// Error counter should already have been increased by CDC_Receive_FS
-			if (USB_CLI_ENABLE == True) RAMN_USB_SendStringFromTask("Error processing USB Buffer.\r");
-			else RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
+			if (USB_CLI_ENABLE == True) RAMN_Serial_SendStringFromTask("Error processing USB Buffer.\r");
+			else RAMN_Serial_SendFromTask((uint8_t*)"\a",1U);
 			continue;
 		}
 
@@ -1650,7 +1659,19 @@ void RAMN_ReceiveUSBFunc(void *argument)
 #endif
 		}
 
+#if defined(RAMN_SERIAL_CMD_TRANSPORT_LPUART1)
+		// LPUART1 command transport: route received lines through CLI/sLCAN processors.
+		if (USB_CLI_ENABLE == True)
+		{
+			if (RAMN_CDC_ProcessCLIBuffer(UARTRxBuffer, commandLength) == True) USB_CLI_ENABLE = !USB_CLI_ENABLE;
+		}
+		else
+		{
+			if (RAMN_CDC_ProcessSLCANBuffer(UARTRxBuffer, commandLength) == True) USB_CLI_ENABLE = !USB_CLI_ENABLE;
+		}
+#else
 		RAMN_CUSTOM_ReceiveUART(UARTRxBuffer, commandLength);
+#endif
 
 	}
 #else
@@ -1688,7 +1709,7 @@ void RAMN_ReceiveCANFunc(void *argument)
 			}
 
 			if(CANRxHeader.RxFrameType == FDCAN_DATA_FRAME) {
-#if defined(ENABLE_CDC)
+#if (defined(ENABLE_CDC) || defined(RAMN_SERIAL_CMD_TRANSPORT_LPUART1)) && defined(TARGET_ECUA)
 				// Spoof ASAP module: if we receive the target ID, we immediately send the defined CAN message instead.
 				if (CANRxHeader.Identifier == ReplaceTxHeader.Identifier)
 				{
@@ -1732,7 +1753,7 @@ void RAMN_ReceiveCANFunc(void *argument)
 			if (CANRxHeader.IsFilterMatchingFrame != RAMN_CAN_ORIGIN_HOST)
 #endif
 			{
-#if defined(ENABLE_CDC)
+#if (defined(ENABLE_CDC) || defined(RAMN_SERIAL_CMD_TRANSPORT_LPUART1)) && defined(TARGET_ECUA)
 				if (RAMN_USB_Config.slcanOpened)
 				{
 					uint8_t index = 0;
@@ -1796,7 +1817,7 @@ void RAMN_ReceiveCANFunc(void *argument)
 						slCAN_USBTxBuffer[index++] = 'i';
 					}
 					slCAN_USBTxBuffer[index++] = '\r';
-					if (RAMN_USB_SendFromTask(slCAN_USBTxBuffer,index) != RAMN_OK)
+					if (RAMN_Serial_SendFromTask(slCAN_USBTxBuffer,index) != RAMN_OK)
 					{
 #ifdef CLOSE_DEVICE_ON_USB_TX_OVERFLOW
 						// USB overflow, user probably forgot to close the device
@@ -2018,7 +2039,7 @@ void RAMN_PeriodicTaskFunc(void *argument)
 #endif
 		}
 #endif
-#ifdef ENABLE_CDC
+#if (defined(ENABLE_CDC) || defined(RAMN_SERIAL_CMD_TRANSPORT_LPUART1)) && defined(TARGET_ECUA)
 		if ((ReplaceTxHeader.Identifier != 0xFFFFFFFF) || (FloodTxHeader.Identifier != 0xFFFFFFFF))
 		{
 			if(FloodTxHeader.Identifier != 0xFFFFFFFF)
@@ -2424,6 +2445,20 @@ void RAMN_SendUSBFunc(void *argument)
 	RAMN_USB_Init(&USBD_TxStreamBufferHandle,&RAMN_SendUSBHandle);
 	RAMN_CDC_Init(&USBD_RxStreamBufferHandle, &RAMN_ReceiveUSBHandle, &RAMN_SendUSBHandle);
 
+	// Register USB CDC as the serial command backend.
+	static const RAMN_SerialBackend_t usbCdcBackend = {
+		.SendFromTask          = RAMN_USB_SendFromTask,
+		.SendStringFromTask    = RAMN_USB_SendStringFromTask,
+		.SendFromTask_Blocking = RAMN_USB_SendFromTask_Blocking,
+		.AcquireLock           = RAMN_USB_AcquireLock,
+		.ReleaseLock           = RAMN_USB_ReleaseLock,
+		.SendFromTask_Locked   = RAMN_USB_SendFromTask_Locked,
+		.SendASCIIUint8        = RAMN_USB_SendASCIIUint8,
+		.SendASCIIUint16       = RAMN_USB_SendASCIIUint16,
+		.SendASCIIUint32       = RAMN_USB_SendASCIIUint32,
+	};
+	RAMN_Serial_RegisterBackend(&usbCdcBackend);
+
 #ifdef ENABLE_USB_AUTODETECT
 	//We expect a notification from the serial close/open detection module
 	//ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
@@ -2450,6 +2485,22 @@ void RAMN_SendUSBFunc(void *argument)
 	}
 #elif defined(ENABLE_UART)
 	RAMN_UART_Init(&UART_TxStreamBufferHandle,&RAMN_SendUSBHandle);
+
+#if defined(RAMN_SERIAL_CMD_TRANSPORT_LPUART1)
+	// Register LPUART1 as the serial command backend.
+	static const RAMN_SerialBackend_t lpuart1Backend = {
+		.SendFromTask          = (RAMN_SerialSendFunc_t)RAMN_UART_SendFromTask,
+		.SendStringFromTask    = RAMN_UART_SendStringFromTask,
+		.SendFromTask_Blocking = NULL,
+		.AcquireLock           = RAMN_UART_AcquireLock,
+		.ReleaseLock           = RAMN_UART_ReleaseLock,
+		.SendFromTask_Locked   = (RAMN_SerialSendLockedFunc_t)RAMN_UART_SendFromTask_Locked,
+		.SendASCIIUint8        = RAMN_UART_SendASCIIUint8,
+		.SendASCIIUint16       = RAMN_UART_SendASCIIUint16,
+		.SendASCIIUint32       = RAMN_UART_SendASCIIUint32,
+	};
+	RAMN_Serial_RegisterBackend(&lpuart1Backend);
+#endif
 	for(;;)
 	{
 		size_t size = xStreamBufferReceive(UART_TxStreamBufferHandle,UARTIntermediateTxBuffer,sizeof(UARTIntermediateTxBuffer), portMAX_DELAY);

@@ -64,7 +64,7 @@ void 	RAMN_DBC_ProcessCANMessage(uint32_t canid, uint32_t dlc, RAMN_CANFrameData
 // Function to request the sending of CAN messages maintained by the DBC handler
 void 	RAMN_DBC_Send(uint32_t tick);
 
-#if defined(ENABLE_USB)
+#if (defined(ENABLE_USB) || defined(RAMN_SERIAL_CMD_TRANSPORT_LPUART1)) && defined(TARGET_ECUA)
 // Function to update the DBC when a USB message has been received
 void 	RAMN_DBC_ProcessUSBBuffer(const uint8_t* buf);
 #endif
