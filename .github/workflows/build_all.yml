@@ -247,6 +247,13 @@ jobs:
           name: macro-results-${{ matrix.variant }}
           path: macro-results/
 
+      - name: Run Renode runtime simulation test
+        if: steps.build.outcome == 'success' && contains(matrix.enable, 'RAMN_SERIAL_CMD_TRANSPORT_LPUART1')
+        run: |
+          python3 -m pip install -r scripts/requirements.txt -r scripts/tests/requirements.txt
+          chmod +x scripts/tests/run_renode_test.sh
+          ./scripts/tests/run_renode_test.sh
+
       - name: Upload firmware
         if: steps.build.outcome == 'success'
         uses: actions/upload-artifact@v4
