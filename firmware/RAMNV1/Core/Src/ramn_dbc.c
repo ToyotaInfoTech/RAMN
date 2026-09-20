@@ -288,7 +288,7 @@ void RAMN_DBC_Send(uint32_t tick)
 	}
 }
 
-#if defined(ENABLE_USB)
+#if (defined(ENABLE_USB) || defined(RAMN_SERIAL_CMD_TRANSPORT_LPUART1)) && defined(TARGET_ECUA)
 void RAMN_DBC_ProcessUSBBuffer(const uint8_t* buf)
 {
 #if defined(TARGET_ECUA)

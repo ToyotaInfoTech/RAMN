@@ -565,6 +565,47 @@ RAMN_Result_t RAMN_FDCAN_SendMessage(const FDCAN_TxHeaderTypeDef* header, const 
 }
 
 #if defined(TARGET_ECUA)
+RAMN_Result_t RAMN_FDCAN_InjectHostRxMessage(const FDCAN_TxHeaderTypeDef* txHeader, const uint8_t* data)
+{
+	FDCAN_RxHeaderTypeDef rxHeader;
+	size_t xBytesSent;
+	size_t messageSize;
+	uint8_t dlc;
+
+	rxHeader.Identifier = txHeader->Identifier;
+	rxHeader.IdType = txHeader->IdType;
+	rxHeader.RxFrameType = txHeader->TxFrameType;
+	rxHeader.DataLength = txHeader->DataLength;
+	rxHeader.ErrorStateIndicator = txHeader->ErrorStateIndicator;
+	rxHeader.BitRateSwitch = txHeader->BitRateSwitch;
+	rxHeader.FDFormat = txHeader->FDFormat;
+	rxHeader.RxTimestamp = 0U;
+	rxHeader.FilterIndex = 0U;
+	rxHeader.IsFilterMatchingFrame = RAMN_CAN_ORIGIN_HOST;
+
+	dlc = DLCtoUINT8(rxHeader.DataLength);
+	if (rxHeader.RxFrameType == FDCAN_REMOTE_FRAME) dlc = 0U;
+	messageSize = sizeof(rxHeader) + dlc;
+
+	if (xStreamBufferSpacesAvailable(CANRxDataStreamBufferHandle) < messageSize)
+	{
+		RAMN_FDCAN_Status.CANRxOverrunCnt++;
+		return RAMN_TRY_LATER;
+	}
+
+	xBytesSent = xStreamBufferSend(CANRxDataStreamBufferHandle, (void*)&rxHeader, sizeof(rxHeader), 0U);
+	if (dlc > 0U)
+	{
+		xBytesSent += xStreamBufferSend(CANRxDataStreamBufferHandle, (void*)data, dlc, 0U);
+	}
+	if (xBytesSent != messageSize)
+	{
+		return RAMN_ERROR;
+	}
+
+	return RAMN_OK;
+}
+
 void RAMN_FDCAN_SetupForSTBootloader(void)
 {
 	//Assumes a 40MHz clock

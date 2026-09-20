@@ -1,0 +1,4 @@
+pytest>=8.0.0
+scapy>=2.5.0
+pretty_j1939>=0.0.5
+python-can>=4.3.0

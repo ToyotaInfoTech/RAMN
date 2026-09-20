@@ -85,11 +85,24 @@ RAMN_Result_t RAMN_GSUSB_ProcessTX(FDCAN_TxHeaderTypeDef *canTxHeader, uint8_t *
 		}
 
 		frameData->can_id = canTxHeader->Identifier;
+		if (canTxHeader->IdType != FDCAN_STANDARD_ID) frameData->can_id |= CAN_EFF_FLAG;
+		if (canTxHeader->TxFrameType != FDCAN_DATA_FRAME) frameData->can_id |= CAN_RTR_FLAG;
+
 		frameData->echo_id = 0xFFFFFFFF;
 		frameData->channel = 0;
+		frameData->flags = 0;
 		frameData->can_dlc = canTxHeader->DataLength;
-		frameData->timestamp_us = 0;  // timestamps are ignored on send
-		RAMN_memcpy(frameData->data, canRxData, frameData->can_dlc);
+
+		if (canTxHeader->MessageMarker == RAMN_CAN_ORIGIN_HOST)
+		{
+			frameData->timestamp_us = 0;  // Timestamps are ignored on host send
+		}
+		else
+		{
+			frameData->timestamp_us = (xTaskGetTickCount() * (1000000 /*us per sec*/ / configTICK_RATE_HZ));
+		}
+
+		if (!(frameData->can_id & CAN_RTR_FLAG)) RAMN_memcpy(frameData->data, canRxData, DLCtoUINT8(canTxHeader->DataLength));
 
 		// Send to task
 		qret = xQueueSendToBack(RAMN_GSUSB_SendQueueHandle, &frameData, CAN_QUEUE_TIMEOUT);

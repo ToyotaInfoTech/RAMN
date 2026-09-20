@@ -18,6 +18,8 @@
 
 #ifdef ENABLE_UART
 
+#include "ramn_utils.h"
+
 // Buffer that holds outgoing UART data
 static StreamBufferHandle_t* uartTxBuffer;
 
@@ -55,6 +57,53 @@ RAMN_Result_t RAMN_UART_SendFromTask(uint8_t* data, uint32_t length)
 RAMN_Result_t RAMN_UART_SendStringFromTask(const char* data)
 {
 	return RAMN_UART_SendFromTask((uint8_t*)data, RAMN_strlen(data));
+}
+
+void RAMN_UART_AcquireLock(void)
+{
+	while (xSemaphoreTake(UART_TX_SEMAPHORE, portMAX_DELAY ) != pdTRUE);
+}
+
+void RAMN_UART_ReleaseLock(void)
+{
+	xSemaphoreGive(UART_TX_SEMAPHORE);
+}
+
+RAMN_Result_t RAMN_UART_SendFromTask_Locked(uint8_t* data, uint32_t length)
+{
+	size_t xBytesSent = 0;
+	RAMN_Result_t result = RAMN_OK;
+
+	// Caller already holds UART_TX_SEMAPHORE.
+	xBytesSent = xStreamBufferSend(*uartTxBuffer, data, length, 2000U);
+	if (xBytesSent != length)
+	{
+		result = RAMN_ERROR;
+		while(xStreamBufferReset(*uartTxBuffer) != pdPASS) osDelay(10U);
+	}
+
+	return result;
+}
+
+RAMN_Result_t RAMN_UART_SendASCIIUint8(uint8_t val)
+{
+	uint8_t tmp[2U];
+	uint8toASCII(val, tmp);
+	return RAMN_UART_SendFromTask(tmp, 2U);
+}
+
+RAMN_Result_t RAMN_UART_SendASCIIUint16(uint16_t val)
+{
+	uint8_t tmp[4U];
+	uint16toASCII(val, tmp);
+	return RAMN_UART_SendFromTask(tmp, 4U);
+}
+
+RAMN_Result_t RAMN_UART_SendASCIIUint32(uint32_t val)
+{
+	uint8_t tmp[8U];
+	uint32toASCII(val, tmp);
+	return RAMN_UART_SendFromTask(tmp, 8U);
 }
 
 #endif
