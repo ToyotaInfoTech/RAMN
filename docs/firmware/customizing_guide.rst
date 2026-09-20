@@ -145,6 +145,39 @@ You may also want to adjust timeout values such as ``ISOTP_TX_TIMEOUT_MS`` or ``
 For example, ``UDS_SESSION_TIMEOUT_MS`` is set to ``5000``, which forces the ECU to revert to the UDS default session if no request is received for more than 5 seconds during an extended diagnostics session.
 If you increase this value, it will be easier for the user to experiment with UDS, but it will not be representative of real ECUs (which require periodic "Tester Present" requests).
 
+.. _ecua_transport_selection:
+
+ECUA Command Transport Selection (USB CDC XOR LPUART1)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+ECU A supports two mutually exclusive serial command transports for the CLI and sLCAN interfaces.
+Exactly one must be selected at compile time in ``ramn_config.h``:
+
+- ``RAMN_SERIAL_CMD_TRANSPORT_USB_CDC`` *(default)*: Commands arrive and depart over the USB CDC (virtual COM port) interface. This is the default for compatibility with existing USB scripts and tools.
+- ``RAMN_SERIAL_CMD_TRANSPORT_LPUART1``: Commands arrive and depart over the LPUART1 hardware UART interface (115200 baud, 8N1). Use this when ECU A does not have a USB connection or when the CLI/sLCAN interface should be accessible via a UART host.
+
+To select the LPUART1 transport, uncomment ``RAMN_SERIAL_CMD_TRANSPORT_LPUART1`` in ``ramn_config.h`` (in the ECU A configuration section).
+The default fallback is USB CDC if neither macro is explicitly defined.
+Defining both transports simultaneously will trigger a compile-time error.
+
+**Implications of transport selection:**
+
+- When USB CDC is selected, USB-specific features are available (e.g., ``ENABLE_USB_DEBUG``, ``ENABLE_USB_AUTODETECT``, ``ENABLE_GSUSB``, bitbang CLI commands).
+- When LPUART1 is selected, USB is not initialized and the USB-only features listed above are not available. The LPUART1 build expects an external UART host connected to the LPUART1 pins.
+- All other CLI and sLCAN commands (CAN send/receive, UDS over slcan, screen control, etc.) work identically on both transports.
+- Simultaneous USB + UART command mode is **not supported**. Only one command transport can be active at a time.
+
+**Build examples:**
+
+.. code-block:: bash
+
+    # Default (USB CDC) build — no changes needed:
+    bash scripts/build/docker_BUILD_Clean_Release.sh
+
+    # LPUART1 transport build — via modify_config.py:
+    python3 .github/modify_config.py --enable "RAMN_SERIAL_CMD_TRANSPORT_LPUART1"
+    bash scripts/build/docker_BUILD_Clean_Release.sh
+
 .. _simple_can_modifications:
 
 Simple Modifications to CAN Traffic (Identifiers, Periods, etc.)
