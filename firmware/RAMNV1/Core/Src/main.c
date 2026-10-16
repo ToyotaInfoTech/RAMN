@@ -2335,7 +2335,7 @@ void RAMN_DiagTXFunc(void *argument)
 								// Consider the transfer over and move to next request.
 								break;
 							}
-							osDelay(RAMN_DBC_RequestSilence ? RAMN_UDS_ISOTPHandler.targetST : SIM_LOOP_CLOCK_MS);
+							osDelay((RAMN_UDS_ISOTPHandler.targetST > 0U) ? RAMN_UDS_ISOTPHandler.targetST : 1U);
 						}
 					}
 
@@ -2368,7 +2368,7 @@ void RAMN_DiagTXFunc(void *argument)
 								// Consider the transfer over and move to next request.
 								break;
 							}
-							osDelay(RAMN_DBC_RequestSilence ? RAMN_KWP_ISOTPHandler.targetST : SIM_LOOP_CLOCK_MS);
+							osDelay((RAMN_KWP_ISOTPHandler.targetST > 0U) ? RAMN_KWP_ISOTPHandler.targetST : 1U);
 						}
 					}
 
