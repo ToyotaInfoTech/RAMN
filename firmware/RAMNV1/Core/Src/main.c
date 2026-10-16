@@ -1559,26 +1559,13 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 		if ((uart_current_index > 0) && (uart_current_index <= sizeof(UART_recvBuf))) //Don't forward empty commands or commands longer than buffer
 		{
 			if(UART_RxStreamBufferHandle != NULL){
-
-				if (xStreamBufferSendFromISR(UART_RxStreamBufferHandle,&uart_current_index, 2U, NULL ) != 2U)
+				size_t req_space = (size_t)uart_current_index + 2U;
+				if (xStreamBufferSpacesAvailable(UART_RxStreamBufferHandle) >= req_space)
 				{
-#ifdef HANG_ON_ERRORS
-					Error_Handler()
-#endif
-				}
-				else
-				{
-					if (xStreamBufferSendFromISR(UART_RxStreamBufferHandle,UART_recvBuf, uart_current_index, NULL ) != uart_current_index)
-					{
-#ifdef HANG_ON_ERRORS
-						Error_Handler()
-#endif
-					}
-					else
-					{
-						vTaskNotifyGiveFromISR(RAMN_ReceiveUSBHandle,&xHigherPriorityTaskWoken);
-						portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
-					}
+					xStreamBufferSendFromISR(UART_RxStreamBufferHandle,&uart_current_index, 2U, NULL);
+					xStreamBufferSendFromISR(UART_RxStreamBufferHandle,UART_recvBuf, uart_current_index, NULL);
+					vTaskNotifyGiveFromISR(RAMN_ReceiveUSBHandle,&xHigherPriorityTaskWoken);
+					portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
 				}
 			}
 		}
