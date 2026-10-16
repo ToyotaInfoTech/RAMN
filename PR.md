@@ -35,6 +35,16 @@ The PR is organized into three atomic, logical commits on top of `ecua-host-inte
 - Adds test orchestrator `scripts/tests/run_renode_test.sh` for local developer execution and automated GitHub Actions CI.
 - Integrates the runtime simulation test into `.github/workflows/build_all.yml` `macro_coverage` for any variant enabling `RAMN_SERIAL_CMD_TRANSPORT_LPUART1` or `ENABLE_UART`.
 
+### 5. `renode, ci: add dual-transport simulator proxy, offline SVD caching, and .NET runtime optimizations`
+- Integrates a standalone Python superserver proxy (`scripts/renode/simulator_proxy.py` and `scripts/renode/entrypoint.sh`):
+  - Bridges external TCP port 29536 to Renode's internal LPUART1 terminal (port 29600).
+  - Dynamically detects protocol handshakes on port 29536 to serve both RFC 6455 WebSocket clients (such as SloppyCAN browser tooling) and raw SLCAN TCP streams (such as `python-can`, `socat`, and automation scripts) concurrently from a single exposed port.
+  - Performs active startup readiness probing against Renode before accepting incoming traffic.
+- Pre-downloads the STM32L552 SVD file during Docker image build time in `scripts/renode/Dockerfile` and patches `stm32l552.repl` to point to `/opt/renode/platforms/cpus/STM32L552.svd`, eliminating outbound HTTP requests during runtime container startup.
+- Configures .NET runtime environment variables (`DOTNET_gcServer=0`, `DOTNET_TieredPGO=0`, `DOTNET_ReadyToRun=1`) for single-core/constrained-memory container efficiency.
+- Adds `test_renode_websocket_handshake` in `scripts/tests/test_renode_runtime.py` to verify WebSocket protocol upgrading and frame delivery.
+- Adds `test_renode_disable_streaming_traffic` in `scripts/tests/test_renode_runtime.py` to verify pausing and resuming periodic DBC background traffic via UDS RoutineControl (0x0200).
+
 ---
 
 ## Testing & Verification
@@ -51,7 +61,9 @@ The PR is organized into three atomic, logical commits on top of `ecua-host-inte
      - `test_renode_background_traffic_forwarding`: PASSED
      - `test_renode_uds_physical_tester_present`: PASSED
      - `test_renode_uds_functional_broadcast`: PASSED
-     - `test_renode_j1939_address_claims_if_active`: PASSED
-   - All 4 tests passed in ~9.8 seconds against real emulated ARM Cortex-M33 hardware.
+     - `test_renode_j1939_address_claims_if_active`: SKIPPED (as expected when standard 11-bit CAN mode is active)
+     - `test_renode_websocket_handshake`: PASSED
+     - `test_renode_disable_streaming_traffic`: PASSED
+   - All 6 tests passed/skipped cleanly against emulated ARM Cortex-M33 hardware.
 
 

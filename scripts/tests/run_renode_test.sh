@@ -29,17 +29,29 @@ docker build -t "${IMAGE_NAME}" "${REPO_ROOT}/scripts/renode/"
 docker rm -f "${CONTAINER_NAME}" 2>/dev/null || true
 
 # Register trap to clean up simulator container on exit or failure
-trap 'echo "[+] Cleaning up Renode container ${CONTAINER_NAME}..."; docker rm -f "${CONTAINER_NAME}" >/dev/null 2>&1 || true' EXIT
+trap 'status=$?; if [ $status -ne 0 ]; then echo "[-] Container logs on failure:"; docker logs "${CONTAINER_NAME}"; fi; echo "[+] Cleaning up Renode container ${CONTAINER_NAME}..."; docker rm -f "${CONTAINER_NAME}" >/dev/null 2>&1 || true' EXIT
 
 echo "[+] Starting RAMN 4-ECU simulation in Renode Docker container..."
 docker run -d --name "${CONTAINER_NAME}" -p "${RENODE_PORT}:29536" \
     -v "${FIRMWARE_DIR}:/firmware:ro" \
     -v "${REPO_ROOT}/scripts/renode/ramn_4ecu.resc:/opt/renode/ramn_4ecu.resc:ro" \
-    "${IMAGE_NAME}" \
-    renode --plain --disable-gui -e "include @/opt/renode/ramn_4ecu.resc"
+    "${IMAGE_NAME}"
 
-echo "[+] Waiting for Renode simulation and virtual network initialization..."
-sleep 3
+echo "[+] Waiting for Renode simulation and superserver proxy readiness..."
+start_time=$(date +%s)
+ready=0
+while [ $(($(date +%s) - start_time)) -lt 90 ]; do
+    if python3 -c "import socket; s = socket.socket(); s.settimeout(1.5); s.connect(('127.0.0.1', ${RENODE_PORT})); s.sendall(b'O\r'); resp = s.recv(16); s.close(); exit(0 if (b'\r' in resp or b'\n' in resp) else 1)" 2>/dev/null; then
+        ready=1
+        break
+    fi
+    sleep 0.5
+done
+if [ "${ready}" -ne 1 ]; then
+    echo "[-] Error: Simulator port ${RENODE_PORT} failed to become ready within 90s" >&2
+    docker logs "${CONTAINER_NAME}"
+    exit 1
+fi
 
 
 echo "[+] Executing Renode runtime test suite..."

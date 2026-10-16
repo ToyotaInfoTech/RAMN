@@ -22,8 +22,8 @@ macro reset
 runMacro $reset
 connector Connect sysbus.fdcan1 canHub
 
-# Export ECU A LPUART1 over TCP port 29536 (emitConfigBytes=false for raw slcan stream)
-emulation CreateServerSocketTerminal 29536 "ecua_slcan_term" false
+# Export ECU A LPUART1 over internal TCP port 29600 (bridged to 29536 by superserver proxy)
+emulation CreateServerSocketTerminal 29600 "ecua_slcan_term" false
 connector Connect sysbus.lpuart1 ecua_slcan_term
 
 # 2. ECU B (Chassis)
