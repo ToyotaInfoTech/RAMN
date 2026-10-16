@@ -636,9 +636,9 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
 	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 	uint8_t dlc;
 
-	if((RxFifo0ITs & FDCAN_IT_RX_FIFO0_NEW_MESSAGE) != RESET)
+	while (HAL_FDCAN_GetRxFifoFillLevel(hfdcan, FDCAN_RX_FIFO0) > 0)
 	{
-		if (HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO0, &CANRxHeader, CANRxData) != HAL_OK) FDCAN_Error_Handler();
+		if (HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO0, &CANRxHeader, CANRxData) != HAL_OK) break;
 		RAMN_FDCAN_Status.CANRXCnt++;
 		dlc = DLCtoUINT8(CANRxHeader.DataLength);
 		messageSize = dlc + sizeof(CANRxHeader);

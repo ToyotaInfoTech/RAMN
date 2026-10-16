@@ -1674,16 +1674,21 @@ void RAMN_ReceiveCANFunc(void *argument)
 
 	for(;;)
 	{
-		if (xStreamBufferReceive(CANRxDataStreamBufferHandle, (void *)&CANRxHeader,sizeof(CANRxHeader), portMAX_DELAY) == sizeof(CANRxHeader))
+		uint32_t rxIndex = 0;
+		while(rxIndex < sizeof(CANRxHeader))
+		{
+			rxIndex += xStreamBufferReceive(CANRxDataStreamBufferHandle, (void *)(((uint8_t *)&CANRxHeader) + rxIndex), sizeof(CANRxHeader) - rxIndex, portMAX_DELAY);
+		}
+
+		if (rxIndex == sizeof(CANRxHeader))
 		{
 			uint8_t payloadSize = DLCtoUINT8(CANRxHeader.DataLength);
 			if (payloadSize > 0)
 			{
-				if (xStreamBufferReceive(CANRxDataStreamBufferHandle, (void *) CANRxData,payloadSize, portMAX_DELAY ) != payloadSize)
+				rxIndex = 0;
+				while(rxIndex < payloadSize)
 				{
-#ifdef HANG_ON_ERRORS
-					Error_Handler();
-#endif
+					rxIndex += xStreamBufferReceive(CANRxDataStreamBufferHandle, (void *)(CANRxData + rxIndex), payloadSize - rxIndex, portMAX_DELAY);
 				}
 			}
 
@@ -1848,7 +1853,7 @@ void RAMN_SendCANFunc(void *argument)
 		uint32_t index = 0;
 		while(index < sizeof(CANTxHeader))
 		{
-			index += xStreamBufferReceive(CANTxDataStreamBufferHandle, (void *)(&CANTxHeader+index),sizeof(CANTxHeader)-index, portMAX_DELAY);
+			index += xStreamBufferReceive(CANTxDataStreamBufferHandle, (void *)(((uint8_t *)&CANTxHeader)+index),sizeof(CANTxHeader)-index, portMAX_DELAY);
 		}
 		payloadSize = DLCtoUINT8(CANTxHeader.DataLength);
 		if (CANTxHeader.TxFrameType == FDCAN_REMOTE_FRAME) payloadSize = 0U;  // No payload for remote requests
