@@ -86,6 +86,15 @@ void RAMN_CUSTOM_Update(uint32_t tick)
 	// This function is called by a dedicated periodic task, which means code can here won't block other functionalities (such as receiving CAN messages).
 	// Modify SIM_LOOP_CLOCK_MS if you want to use another period than 10ms.
 
+#ifdef ENABLE_UART
+	static RAMN_Bool_t bannerSent = False;
+	if (bannerSent == False)
+	{
+		RAMN_UART_SendStringFromTask(";Hello from RAMN\r");
+		bannerSent = True;
+	}
+#endif
+
 	// Code here is executed every 10ms
 
 	if ((loopCounter % 10) == 0)
@@ -97,10 +106,6 @@ void RAMN_CUSTOM_Update(uint32_t tick)
 	{
 		// Code here is executed every 1s
 
-		// Example: send UART data every second
-#ifdef ENABLE_UART
-		RAMN_UART_SendStringFromTask("Hello from RAMN\r");
-#endif
 
 		// Example: Send a CAN message every second.
 		// Note that if it is sent from ECU A, it will not show up on ECU A's USB interface (e.g., slcan), because ECU A will be the sender (and therefore not a receiver).
