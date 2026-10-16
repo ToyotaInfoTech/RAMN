@@ -1863,17 +1863,10 @@ void RAMN_SendCANFunc(void *argument)
 			while(index < payloadSize) index += xStreamBufferReceive(CANTxDataStreamBufferHandle, (void *)(CANTxData+index),payloadSize-index, portMAX_DELAY);
 		}
 
-		// Wait for TX space to be available in FIFO
-		while (HAL_FDCAN_GetTxFifoFreeLevel(&hfdcan1) < 1)
+		// Wait for TX space to be available in FIFO and add message
+		while (HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan1, &CANTxHeader, CANTxData) != HAL_OK)
 		{
-			ulTaskNotifyTake(pdTRUE, portMAX_DELAY );
-		}
-
-		if (HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan1, &CANTxHeader, CANTxData) != HAL_OK)
-		{
-#ifdef HANG_ON_ERRORS
-			Error_Handler();
-#endif
+			ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(10));
 		}
 
 #if defined(ENABLE_ECUA_HOST_INTERACTION)

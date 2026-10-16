@@ -560,7 +560,6 @@ RAMN_Result_t RAMN_FDCAN_SendMessage(const FDCAN_TxHeaderTypeDef* header, const 
 		}
 	}
 	xSemaphoreGive(CAN_TX_SEMAPHORE);
-	xTaskNotifyGive(*sendTask); //TODO: notify needed ?
 	return result;
 }
 
