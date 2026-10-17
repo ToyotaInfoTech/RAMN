@@ -36,6 +36,8 @@ Contains various scripts to interact with the ECUs:
 ### Firmware folder
 Contains firmware source code for RAMN's ECUs.
 
+ECU A supports selectable serial command transports: USB CDC (default) or LPUART1. See the [Customization Guide](https://ramn.readthedocs.io/page/firmware/customizing_guide.html#ecua-transport-selection) for details.
+
 ## License
 Please check the LICENSE.md file for more details.
 

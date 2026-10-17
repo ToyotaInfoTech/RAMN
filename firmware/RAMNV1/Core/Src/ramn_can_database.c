@@ -5,6 +5,8 @@
 #include "ramn_traffic.h"
 
 #ifdef CPYTHON_TESTING
+#include <stddef.h>
+#include <string.h>
 #ifndef RAMN_memcpy
 #define RAMN_memcpy memcpy
 #ifndef RAMN_memset

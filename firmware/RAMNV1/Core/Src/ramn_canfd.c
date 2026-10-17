@@ -560,11 +560,54 @@ RAMN_Result_t RAMN_FDCAN_SendMessage(const FDCAN_TxHeaderTypeDef* header, const 
 		}
 	}
 	xSemaphoreGive(CAN_TX_SEMAPHORE);
-	xTaskNotifyGive(*sendTask); //TODO: notify needed ?
 	return result;
 }
 
 #if defined(TARGET_ECUA)
+RAMN_Result_t RAMN_FDCAN_InjectHostRxMessage(const FDCAN_TxHeaderTypeDef* txHeader, const uint8_t* data)
+{
+	FDCAN_RxHeaderTypeDef rxHeader;
+	size_t xBytesSent;
+	size_t messageSize;
+	uint8_t dlc;
+
+	rxHeader.Identifier = txHeader->Identifier;
+	rxHeader.IdType = txHeader->IdType;
+	rxHeader.RxFrameType = txHeader->TxFrameType;
+	rxHeader.DataLength = txHeader->DataLength;
+	rxHeader.ErrorStateIndicator = txHeader->ErrorStateIndicator;
+	rxHeader.BitRateSwitch = txHeader->BitRateSwitch;
+	rxHeader.FDFormat = txHeader->FDFormat;
+	rxHeader.RxTimestamp = 0U;
+	rxHeader.FilterIndex = 0U;
+	rxHeader.IsFilterMatchingFrame = RAMN_CAN_ORIGIN_HOST;
+
+	dlc = DLCtoUINT8(rxHeader.DataLength);
+	if (rxHeader.RxFrameType == FDCAN_REMOTE_FRAME) dlc = 0U;
+	messageSize = sizeof(rxHeader) + dlc;
+
+	taskENTER_CRITICAL();
+	if (xStreamBufferSpacesAvailable(CANRxDataStreamBufferHandle) < messageSize)
+	{
+		taskEXIT_CRITICAL();
+		RAMN_FDCAN_Status.CANRxOverrunCnt++;
+		return RAMN_TRY_LATER;
+	}
+
+	xBytesSent = xStreamBufferSend(CANRxDataStreamBufferHandle, (void*)&rxHeader, sizeof(rxHeader), 0U);
+	if (dlc > 0U)
+	{
+		xBytesSent += xStreamBufferSend(CANRxDataStreamBufferHandle, (void*)data, dlc, 0U);
+	}
+	taskEXIT_CRITICAL();
+	if (xBytesSent != messageSize)
+	{
+		return RAMN_ERROR;
+	}
+
+	return RAMN_OK;
+}
+
 void RAMN_FDCAN_SetupForSTBootloader(void)
 {
 	//Assumes a 40MHz clock
@@ -595,9 +638,9 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
 	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 	uint8_t dlc;
 
-	if((RxFifo0ITs & FDCAN_IT_RX_FIFO0_NEW_MESSAGE) != RESET)
+	while (HAL_FDCAN_GetRxFifoFillLevel(hfdcan, FDCAN_RX_FIFO0) > 0)
 	{
-		if (HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO0, &CANRxHeader, CANRxData) != HAL_OK) FDCAN_Error_Handler();
+		if (HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO0, &CANRxHeader, CANRxData) != HAL_OK) break;
 		RAMN_FDCAN_Status.CANRXCnt++;
 		dlc = DLCtoUINT8(CANRxHeader.DataLength);
 		messageSize = dlc + sizeof(CANRxHeader);

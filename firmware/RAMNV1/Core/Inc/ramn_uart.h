@@ -37,6 +37,24 @@ RAMN_Result_t 	RAMN_UART_SendFromTask(uint8_t* data, uint32_t length);
 // Sends a string over serial UART.
 RAMN_Result_t 	RAMN_UART_SendStringFromTask(const char* data);
 
+// Acquires the UART TX lock. Must be paired with RAMN_UART_ReleaseLock.
+void 			RAMN_UART_AcquireLock(void);
+
+// Releases the UART TX lock previously acquired by RAMN_UART_AcquireLock.
+void 			RAMN_UART_ReleaseLock(void);
+
+// Sends data over UART while the TX lock is already held by the caller.
+RAMN_Result_t 	RAMN_UART_SendFromTask_Locked(uint8_t* data, uint32_t length);
+
+// Sends an unsigned byte (in ASCII) over serial UART.
+RAMN_Result_t 	RAMN_UART_SendASCIIUint8(uint8_t val);
+
+// Sends an unsigned short (in ASCII) over serial UART.
+RAMN_Result_t 	RAMN_UART_SendASCIIUint16(uint16_t val);
+
+// Sends an unsigned integer (in ASCII) over serial UART.
+RAMN_Result_t 	RAMN_UART_SendASCIIUint32(uint32_t val);
+
 
 #endif
 

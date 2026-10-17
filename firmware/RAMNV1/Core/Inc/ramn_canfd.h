@@ -135,7 +135,14 @@ RAMN_Bool_t 	RAMN_FDCAN_IsTXBufferSpaceAvailable(uint8_t payloadSize);
  */
 RAMN_Result_t 	RAMN_FDCAN_SendMessage(const FDCAN_TxHeaderTypeDef* header, const uint8_t* data);
 
+// Origin identifiers for CAN frames (used in MessageMarker / IsFilterMatchingFrame)
+#define RAMN_CAN_ORIGIN_BUS       0x00U
+#define RAMN_CAN_ORIGIN_HOST      0xA1U
+#define RAMN_CAN_ORIGIN_INTERNAL  0x02U
+
 #if defined(TARGET_ECUA)
+// Injects a host-originated CAN frame into local RX stream buffer so ECU A internal stacks process it.
+RAMN_Result_t 	RAMN_FDCAN_InjectHostRxMessage(const FDCAN_TxHeaderTypeDef* txHeader, const uint8_t* data);
 // Setups the peripheral for communication with ROM FDCAN Bootloader. Cf AN5405.
 void RAMN_FDCAN_SetupForSTBootloader(void);
 #endif

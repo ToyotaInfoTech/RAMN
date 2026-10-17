@@ -20,9 +20,12 @@
 
 #include "main.h"
 
-#ifdef ENABLE_CDC
+#if (defined(ENABLE_CDC) || defined(RAMN_SERIAL_CMD_TRANSPORT_LPUART1)) && defined(TARGET_ECUA)
 
+#include "ramn_serial_cmd.h"
+#ifdef ENABLE_CDC
 #include "ramn_usb.h"
+#endif
 #include "ramn_canfd.h"
 #include "ramn_ecucontrol.h"
 #include "ramn_memory.h"
