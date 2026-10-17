@@ -586,8 +586,10 @@ RAMN_Result_t RAMN_FDCAN_InjectHostRxMessage(const FDCAN_TxHeaderTypeDef* txHead
 	if (rxHeader.RxFrameType == FDCAN_REMOTE_FRAME) dlc = 0U;
 	messageSize = sizeof(rxHeader) + dlc;
 
+	taskENTER_CRITICAL();
 	if (xStreamBufferSpacesAvailable(CANRxDataStreamBufferHandle) < messageSize)
 	{
+		taskEXIT_CRITICAL();
 		RAMN_FDCAN_Status.CANRxOverrunCnt++;
 		return RAMN_TRY_LATER;
 	}
@@ -597,6 +599,7 @@ RAMN_Result_t RAMN_FDCAN_InjectHostRxMessage(const FDCAN_TxHeaderTypeDef* txHead
 	{
 		xBytesSent += xStreamBufferSend(CANRxDataStreamBufferHandle, (void*)data, dlc, 0U);
 	}
+	taskEXIT_CRITICAL();
 	if (xBytesSent != messageSize)
 	{
 		return RAMN_ERROR;
