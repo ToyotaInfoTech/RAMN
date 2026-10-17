@@ -36,7 +36,7 @@ def build_bigendian_lib():
     includes = "-I scripts/tests/mocks/ -I firmware/RAMNV1/Core/Inc/"
     # -D__MAIN_H blocks the real main.h (same as build_testing_libs.sh)
     # -DUSE_BIG_ENDIAN_CAN matches the firmware's ramn_config.h setting
-    cflags = "-shared -fPIC -DCPYTHON_TESTING -D__MAIN_H -DUSE_BIG_ENDIAN_CAN"
+    cflags = "-shared -fPIC -DCPYTHON_TESTING -D__MAIN_H -DUSE_BIG_ENDIAN_CAN -include stddef.h -include string.h"
     src = "firmware/RAMNV1/Core/Src/ramn_can_database.c"
     cmd = f"gcc {cflags} {includes} -o {LIB_PATH} {src}"
     result = subprocess.run(

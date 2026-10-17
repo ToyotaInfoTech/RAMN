@@ -120,10 +120,11 @@ class RAMNFirmwareBus:
         self.responses.append({
             'id': header.Identifier,
             'data': data,
-            'is_extended': bool(header.IdType == 1)
+            'is_extended': bool(header.IdType == 1),
+            'marker': header.MessageMarker,
         })
 
-    def process_msg(self, can_id, data, is_extended=True, tick=0, is_fd=False):
+    def process_msg(self, can_id, data, is_extended=True, tick=0, is_fd=False, origin=0):
         """Feed a CAN message into the firmware's diagnostic stack."""
         FDCAN_FD_CAN = 0x00200000  # matches mocks/main.h
         all_responses = []
@@ -133,6 +134,7 @@ class RAMNFirmwareBus:
         header.IdType = 1 if is_extended else 0
         header.DataLength = len(data)
         header.FDFormat = FDCAN_FD_CAN if is_fd else 0
+        header.IsFilterMatchingFrame = origin
         
         c_data = (ctypes.c_uint8 * len(data))(*data)
         

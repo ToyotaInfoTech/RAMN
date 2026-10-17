@@ -1,4 +1,4 @@
-﻿/*
+/*
  * ramn_cdc.c
  ******************************************************************************
  * @attention
@@ -1096,7 +1096,7 @@ RAMN_Bool_t RAMN_CDC_ProcessSLCANBuffer(uint8_t* USBRxBuffer, uint32_t commandLe
 	else CANTxHeader.ErrorStateIndicator = RAMN_FDCAN_Status.ErrorStateIndicator;
 
 	CANTxHeader.TxEventFifoControl = FDCAN_NO_TX_EVENTS;
-	CANTxHeader.MessageMarker = 0U;
+	CANTxHeader.MessageMarker = RAMN_CAN_ORIGIN_HOST;
 
 	// Sending and Receiving are the most likely commands, so check for them first
 
@@ -1161,8 +1161,8 @@ RAMN_Bool_t RAMN_CDC_ProcessSLCANBuffer(uint8_t* USBRxBuffer, uint32_t commandLe
 				RAMN_USB_SendFromTask(USBRxBuffer,commandLength);
 #endif
 
-#if defined(PROCESS_SLCAN_BY_DBC)
-				RAMN_DBC_ProcessCANMessage(CANTxHeader.Identifier,DLCtoUINT8(dlc),(RAMN_CANFrameData_t*)CANTxData);
+#if defined(ENABLE_ECUA_HOST_INTERACTION)
+				RAMN_FDCAN_InjectHostRxMessage(&CANTxHeader,CANTxData);
 #endif
 			}
 			else RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
@@ -1216,8 +1216,8 @@ RAMN_Bool_t RAMN_CDC_ProcessSLCANBuffer(uint8_t* USBRxBuffer, uint32_t commandLe
 				RAMN_USB_SendFromTask(USBRxBuffer,commandLength);
 #endif
 
-#if defined(PROCESS_SLCAN_BY_DBC)
-				RAMN_DBC_ProcessCANMessage(CANTxHeader.Identifier,DLCtoUINT8(dlc),(RAMN_CANFrameData_t*)CANTxData);
+#if defined(ENABLE_ECUA_HOST_INTERACTION)
+				RAMN_FDCAN_InjectHostRxMessage(&CANTxHeader,CANTxData);
 #endif
 			}
 			else RAMN_USB_SendFromTask((uint8_t*)"\a",1U);
