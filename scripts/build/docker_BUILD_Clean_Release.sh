@@ -10,14 +10,18 @@ if [ -e /workspace ]; then
 	mkdir -p "${OUTPUT_FOLDER}"
 	bash "${SCRIPT_DIR}/_build_ecu.sh" TARGET_ECUA Release "$@"
 	cp -pr "/workspace/firmware/${PROJECT_NAME}/Release/${PROJECT_NAME}.hex" "${OUTPUT_FOLDER}/ECUA.hex"
+	cp -p "/workspace/firmware/${PROJECT_NAME}/Release/${PROJECT_NAME}.elf" "${OUTPUT_FOLDER}/ECUA.elf"
 	bash "${SCRIPT_DIR}/_build_ecu.sh" TARGET_ECUB Release --skip-import "$@"
 	cp -pr "/workspace/firmware/${PROJECT_NAME}/Release/${PROJECT_NAME}.hex" "${OUTPUT_FOLDER}/ECUB.hex"
+	cp -p "/workspace/firmware/${PROJECT_NAME}/Release/${PROJECT_NAME}.elf" "${OUTPUT_FOLDER}/ECUB.elf"
 	bash "${SCRIPT_DIR}/_build_ecu.sh" TARGET_ECUB Release --skip-import -D CHASSIS_LINEAR_POTENTIOMETER "$@"
 	cp -pr "/workspace/firmware/${PROJECT_NAME}/Release/${PROJECT_NAME}.hex" "${OUTPUT_FOLDER}/ECUB_LINEAR.hex"
 	bash "${SCRIPT_DIR}/_build_ecu.sh" TARGET_ECUC Release --skip-import "$@"
 	cp -pr "/workspace/firmware/${PROJECT_NAME}/Release/${PROJECT_NAME}.hex" "${OUTPUT_FOLDER}/ECUC.hex"
+	cp -p "/workspace/firmware/${PROJECT_NAME}/Release/${PROJECT_NAME}.elf" "${OUTPUT_FOLDER}/ECUC.elf"
 	bash "${SCRIPT_DIR}/_build_ecu.sh" TARGET_ECUD Release --skip-import "$@"
 	cp -pr "/workspace/firmware/${PROJECT_NAME}/Release/${PROJECT_NAME}.hex" "${OUTPUT_FOLDER}/ECUD.hex"
+	cp -p "/workspace/firmware/${PROJECT_NAME}/Release/${PROJECT_NAME}.elf" "${OUTPUT_FOLDER}/ECUD.elf"
 	exit 0
 fi
 

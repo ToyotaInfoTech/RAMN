@@ -132,6 +132,13 @@ jobs:
           name: firmware-default-${{ matrix.conf }}-${{ matrix.cubeide_docker_tag }}
           path: scripts/firmware/*.hex
 
+      - name: Upload ELF
+        if: ${{ matrix.conf == 'Release' && matrix.cubeide_docker_tag == '2.1.1' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-elf-${{ matrix.conf }}-${{ matrix.cubeide_docker_tag }}
+          path: scripts/firmware/*.elf
+
   macro_coverage:
     name: ${{ matrix.variant }}
     needs: [prepare, warm_cache]
@@ -463,3 +470,38 @@ jobs:
             echo "Uploading ${zipfile}..."
             gh release upload "$RELEASE_TAG" "$zipfile" --clobber --repo "$GH_REPO"
           done
+
+  smoke_tests:
+    name: Smoke tests for firmware ${{ matrix.conf }} (tag ${{ matrix.cubeide_docker_tag }})
+    needs: [build_all]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        conf: [Release]
+        cubeide_docker_tag: [2.1.1]
+    steps:
+      - name: checkout
+        uses: actions/checkout@v7
+
+      - name: Download ELF artifacts
+        uses: actions/download-artifact@v8
+        with:
+          pattern: firmware-elf-Release*
+
+      - name: Run robot test suite on Renode
+        uses: antmicro/renode-test-action@v5
+        with:
+          tests-to-run: firmware/RAMNV1/Tests/RAMN_smoke_tests.robot
+          renode-arguments: >-
+            --variable ECUA_ELF:../ECUA.elf
+            --variable ECUB_ELF:../ECUB.elf
+            --variable ECUC_ELF:../ECUC.elf
+            --variable ECUD_ELF:../ECUD.elf
+          artifacts-path: tests-results/
+
+      - name: Upload tests results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          path: tests-results/*
+          name: smoke-tests-results

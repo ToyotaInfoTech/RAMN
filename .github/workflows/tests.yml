@@ -1,0 +1,45 @@
+name: Tests
+
+on:
+  workflow_run:
+    workflows: ["Build"]
+    types: [completed]
+    branches:
+      - 'main'
+
+jobs:
+  run_full_test_suite:
+    name: Full tests suite for firmware ${{ matrix.conf }} (tag ${{ matrix.cubeide_docker_tag }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        conf: [Release]
+        cubeide_docker_tag: [2.1.1]
+    steps:
+      - name: checkout
+        uses: actions/checkout@v7
+
+      - name: Download ELF artifacts
+        uses: actions/download-artifact@v8
+        with:
+          pattern: firmware-elf-Release*
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Run robot test suite on Renode
+        uses: antmicro/renode-test-action@v5
+        with:
+          tests-to-run: firmware/RAMNV1/Tests/RAMN_full_test_suite.robot
+          renode-arguments: >-
+            --variable ECUA_ELF:../ECUA.elf
+            --variable ECUB_ELF:../ECUB.elf
+            --variable ECUC_ELF:../ECUC.elf
+            --variable ECUD_ELF:../ECUD.elf
+          artifacts-path: tests-results/
+
+      - name: Upload tests results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          path: tests-results/*
+          name: tests-results
