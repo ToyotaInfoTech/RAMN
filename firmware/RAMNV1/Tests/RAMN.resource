@@ -49,6 +49,18 @@ Prepare RAMN With Frame Buffer Tester
     Execute Command         emulation CreateFrameBufferTester "${fb_tester_name}" 10
     Execute Command         ${fb_tester_name} AttachTo sysbus.spi2.screen   machine=ECUA
 
+Provide Started Platform
+    [Documentation]     Boot the 4-ECU platforms and run the emulation to skip startup sequence.
+
+    Execute Command     emulation RunFor "5s"
+    Provides            post-startup
+
 Restore Started Platform
-    Requires                 post-startup
+    TRY
+        Requires                post-startup
+        Log                     post-startup state found                    level=DEBUG
+    EXCEPT  KeywordException: Required state post-startup not found.*       type=glob
+        Log                     Restart platform to get post-startup state  level=DEBUG
+        Provide Started Platform
+    END
     Create CAN Tester        canHub  1

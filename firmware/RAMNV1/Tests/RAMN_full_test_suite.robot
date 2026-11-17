@@ -28,12 +28,6 @@ ${UDS_SHELLCODE}                        4BF6EF60CDF6AD6040F20001C2F2000108607047
 
 
 *** Test Cases ***
-Should Provide Started Platform
-    [Documentation]     Boot the 4-ECU platforms and run the emulation to skip startup sequence.
-
-    Execute Command     emulation RunFor "5s"
-    Provides            post-startup
-
 ECUA Should Display Actuators Changes
     [Documentation]         Test that ECU{C,B,D} communicate to ECUA over CAN and that new actuator values are
     ...                     reflected on screen.

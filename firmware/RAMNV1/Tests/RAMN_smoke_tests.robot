@@ -23,12 +23,6 @@ ECUA Should Display Boot Menu
     Prepare RAMN With Frame Buffer Tester   fb_tester
     Execute Command         fb_tester WaitForFrame @${CURDIR}/ramn_boot_menu.png
 
-Should Provide Started Platform
-    [Documentation]     Boot the 4-ECU platforms and run the emulation to skip startup sequence
-
-    Execute Command     emulation RunFor "5s"
-    Provides            post-startup
-
 Brake Should Affect Brake LED
     [Documentation]     Using Renode's LED tester to validate the data path ECUC's ADC --> ECUC's
     ...                 CAN --> ECUD's CAN --> ECUD's SPI.
