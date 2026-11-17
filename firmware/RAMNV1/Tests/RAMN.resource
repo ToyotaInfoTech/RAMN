@@ -48,3 +48,7 @@ Prepare RAMN With Frame Buffer Tester
     Execute Command         emulation SetSeed 0
     Execute Command         emulation CreateFrameBufferTester "${fb_tester_name}" 10
     Execute Command         ${fb_tester_name} AttachTo sysbus.spi2.screen   machine=ECUA
+
+Restore Started Platform
+    Requires                 post-startup
+    Create CAN Tester        canHub  1

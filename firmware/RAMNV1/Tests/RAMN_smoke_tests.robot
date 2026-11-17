@@ -33,7 +33,7 @@ Brake Should Affect Brake LED
     [Documentation]     Using Renode's LED tester to validate the data path ECUC's ADC --> ECUC's
     ...                 CAN --> ECUD's CAN --> ECUD's SPI.
 
-    Requires            post-startup
+    Restore Started Platform
 
     Create LED Tester   sysbus.spi2.ledController.parkingBrake  machine=ECUD
     Execute Command     adc1.brake SetPercentage 0              machine=ECUC
@@ -50,8 +50,7 @@ ECUs Should Respond To Tester Present UDS Command
     ${TESTER_PRESENT_RESP} =    Evaluate        ${UDS_TESTER_PRESENT} + ${POSITIVE_RESPONSE_OFFSET}
     ${EXPECTED_RESP} =          Convert To Hex  ${TESTER_PRESENT_RESP}
 
-    Requires                    post-startup
-    Create CAN Tester           canHub  1
+    Restore Started Platform
 
     FOR     ${ECU}  IN  ECUA    ECUB    ECUC    ECUD
         ${send_id} =        Evaluate    ${UDS_RX_ID}[${ECU}]

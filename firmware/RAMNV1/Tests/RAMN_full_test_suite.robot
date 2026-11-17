@@ -175,10 +175,6 @@ ECUA Should Execute Shellcode Via Routine Control UDS Command
 
 
 *** Keywords ***
-Restore Started Platform
-    Requires                 post-startup
-    Create CAN Tester        canHub  1
-
 Send UDS Command To ECU
     [Arguments]              ${ECU}  ${service}  ${data}  ${session}=01
     ${send_id}=  Evaluate    ${UDS_RX_ID}[${ECU}]
