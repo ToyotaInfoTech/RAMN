@@ -28,7 +28,7 @@ touch scripts/tests/mocks/eeprom_emul_conf.h
 
 echo "Compiling Serdes Shared Library..."
 # Both codecs (RAMN_*_Default and RAMN_*_J1939) live in the single library; tests pick by suffix.
-gcc $CFLAGS -D__MAIN_H $INCLUDES -o scripts/tests/librbd_can_db.so firmware/RAMNV1/Core/Src/ramn_can_database.c
+gcc $CFLAGS -D__MAIN_H -include stddef.h -include string.h $INCLUDES -o scripts/tests/librbd_can_db.so firmware/RAMNV1/Core/Src/ramn_can_database.c
 
 echo "Compiling ECU-specific Diagnostic Shared Libraries..."
 

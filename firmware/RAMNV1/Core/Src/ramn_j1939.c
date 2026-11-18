@@ -33,30 +33,40 @@ static uint32_t J1939_MakeId(uint8_t prio, uint8_t pf, uint8_t da, uint8_t sa)
 }
 
 /*
- * J1939 NAME (8 bytes).
+ * J1939 NAME (8 bytes, transmitted Least Significant Byte (LSB) first per SAE J1939-81).
+ *
+ * CAN Data Byte layout (Little-Endian / LSB first):
+ *   Byte 0: Identity Number bits 7-0
+ *   Byte 1: Identity Number bits 15-8
+ *   Byte 2: Identity Number bits 20-16 (bits 4-0), Manufacturer Code bits 2-0 (bits 7-5)
+ *   Byte 3: Manufacturer Code bits 10-3
+ *   Byte 4: ECU Instance bits 2-0 (bits 2-0), Function Instance bits 4-0 (bits 7-3)
+ *   Byte 5: Function (bits 7-0)
+ *   Byte 6: Reserved bit 48 (bit 0, must be 0), Vehicle System bits 6-0 (bits 7-1)
+ *   Byte 7: Vehicle System Instance bits 3-0 (bits 3-0), Industry Group bits 2-0 (bits 6-4), Arbitrary Address Capable (bit 7)
  */
 static const uint8_t j1939_name[8] = {
 #if defined(TARGET_ECUA)
-	0x10, 0x02, J1939_ECU_FUNCTION, 0x00, 0x0F, 0xA0, 0x00, 0x01  /* Identity=1, MC=125, Function=32 (Headway Ctrl) */
+	0x0A, 0xEC, 0xA0, 0x0F, 0x00, J1939_ECU_FUNCTION, 0x02, 0x10  /* Identity=0xEC0A, MC=125, Function=32 (Headway Ctrl) */
 #elif defined(TARGET_ECUB)
-	0x10, 0x02, J1939_ECU_FUNCTION, 0x00, 0x3F, 0x60, 0x00, 0x02  /* Identity=2, MC=507, Function=16 (Steering Ctrl) */
+	0x0B, 0xEC, 0x60, 0x3F, 0x00, J1939_ECU_FUNCTION, 0x02, 0x10  /* Identity=0xEC0B, MC=507, Function=52 (Chassis Ctrl) */
 #elif defined(TARGET_ECUC)
-	0x10, 0x02, J1939_ECU_FUNCTION, 0x00, 0x41, 0x40, 0x00, 0x03  /* Identity=3, MC=522, Function=80 (Powertrain Ctrl) */
+	0x0C, 0xEC, 0x40, 0x41, 0x00, J1939_ECU_FUNCTION, 0x02, 0x10  /* Identity=0xEC0C, MC=522, Function=80 (Powertrain Ctrl) */
 #elif defined(TARGET_ECUD)
-	0x10, 0x02, J1939_ECU_FUNCTION, 0x00, 0x1F, 0x60, 0x00, 0x04  /* Identity=4, MC=251, Function=26 (Body Ctrl) */
+	0x0D, 0xEC, 0x60, 0x1F, 0x00, J1939_ECU_FUNCTION, 0x02, 0x10  /* Identity=0xEC0D, MC=251, Function=26 (Body Ctrl) */
 #endif
 };
 
 /* ECU Identification string for PGN 64965 (fields delimited by '*') */
 static const char j1939_ecu_id[] =
 #if defined(TARGET_ECUA)
-	"RAMN*ECU_A*0001*UNIT1*";
+	"RAMN*ECU_A*EC0A*UNIT1*";
 #elif defined(TARGET_ECUB)
-	"RAMN*ECU_B*0002*UNIT2*";
+	"RAMN*ECU_B*EC0B*UNIT2*";
 #elif defined(TARGET_ECUC)
-	"RAMN*ECU_C*0003*UNIT3*";
+	"RAMN*ECU_C*EC0C*UNIT3*";
 #elif defined(TARGET_ECUD)
-	"RAMN*ECU_D*0004*UNIT4*";
+	"RAMN*ECU_D*EC0D*UNIT4*";
 #else
 	"RAMN*ECU_UNKNOWN*";
 #endif
