@@ -28,7 +28,7 @@ jobs:
           run-id: ${{ github.event.workflow_run.id }}
 
       - name: Run robot test suite on Renode
-        uses: antmicro/renode-test-action@v5
+        uses: antmicro/renode-test-action@v6
         with:
           renode-revision: 'master' # Can also be set to a tag or commit SHA
           tests-to-run: firmware/RAMNV1/Tests/RAMN_full_test_suite.robot
