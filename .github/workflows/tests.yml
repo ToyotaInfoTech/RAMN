@@ -20,6 +20,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Download ELF artifacts
+        id: download-elfs
         uses: actions/download-artifact@v8
         with:
           pattern: firmware-elf-Release*
@@ -27,14 +28,15 @@ jobs:
           run-id: ${{ github.event.workflow_run.id }}
 
       - name: Run robot test suite on Renode
-        uses: antmicro/renode-test-action@v5
+        uses: antmicro/renode-test-action@v6
         with:
+          renode-revision: 'master' # Can also be set to a tag or commit SHA
           tests-to-run: firmware/RAMNV1/Tests/RAMN_full_test_suite.robot
           renode-arguments: >-
-            --variable ECUA_ELF:../ECUA.elf
-            --variable ECUB_ELF:../ECUB.elf
-            --variable ECUC_ELF:../ECUC.elf
-            --variable ECUD_ELF:../ECUD.elf
+            --variable ECUA_ELF:${{ steps.download-elfs.outputs.download-path }}/ECUA.elf
+            --variable ECUB_ELF:${{ steps.download-elfs.outputs.download-path }}/ECUB.elf
+            --variable ECUC_ELF:${{ steps.download-elfs.outputs.download-path }}/ECUC.elf
+            --variable ECUD_ELF:${{ steps.download-elfs.outputs.download-path }}/ECUD.elf
           artifacts-path: tests-results/
 
       - name: Upload tests results

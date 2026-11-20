@@ -28,12 +28,6 @@ ${UDS_SHELLCODE}                        4BF6EF60CDF6AD6040F20001C2F2000108607047
 
 
 *** Test Cases ***
-Should Provide Started Platform
-    [Documentation]     Boot the 4-ECU platforms and run the emulation to skip startup sequence.
-
-    Execute Command     emulation RunFor "5s"
-    Provides            post-startup
-
 ECUA Should Display Actuators Changes
     [Documentation]         Test that ECU{C,B,D} communicate to ECUA over CAN and that new actuator values are
     ...                     reflected on screen.
@@ -175,10 +169,6 @@ ECUA Should Execute Shellcode Via Routine Control UDS Command
 
 
 *** Keywords ***
-Restore Started Platform
-    Requires                 post-startup
-    Create CAN Tester        canHub  1
-
 Send UDS Command To ECU
     [Arguments]              ${ECU}  ${service}  ${data}  ${session}=01
     ${send_id}=  Evaluate    ${UDS_RX_ID}[${ECU}]
